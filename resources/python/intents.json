@@ -1,0 +1,224 @@
+{
+    "intents": [
+        {
+            "tag": "greeting",
+            "patterns": [
+                "Hi",
+                "Hello",
+                "Good morning",
+                "Good afternoon",
+                "Hey",
+                "Greetings",
+                "Kumusta",
+                "Magandang umaga",
+                "Magandang hapon",
+                "Tao po",
+                "Hello po"
+            ],
+            "responses": [
+                "Hello! I am The Sentinel. How can I assist you with VAWC or women's protection services today?",
+                "Greetings! I am here to help. Maaari kang magtanong tungkol sa VAWC, Officials, o mga Anunsyo."
+            ]
+        },
+        {
+            "tag": "goodbye",
+            "patterns": [
+                "Bye",
+                "Goodbye",
+                "Thank you",
+                "Salamat",
+                "Alis na ako",
+                "Paalam"
+            ],
+            "responses": [
+                "Goodbye. Stay safe.",
+                "Walang anuman. Mag-ingat po kayo palagi."
+            ]
+        },
+        {
+            "tag": "vawc_filing",
+            "patterns": [
+                "How do I file a VAWC case?",
+                "Report abuse",
+                "File a complaint",
+                "Paano magreklamo ng VAWC?",
+                "Binubugbog ako ng asawa ko",
+                "Gusto ko magpa blotter",
+                "Sinasaktan ako",
+                "Report violence",
+                "Violence against women"
+            ],
+            "responses": [
+                "To file a VAWC case, go to 'Services' > 'VAWC'. For emergencies, call 911. (Para mag-file, pumunta sa 'Services' > 'VAWC'. Sa emergency, tumawag sa 911.)"
+            ]
+        },
+        {
+            "tag": "bcpc_filing",
+            "patterns": [
+                "Report child abuse",
+                "Rights of a child",
+                "BCPC report",
+                "Paano mag report ng pang-aabuso sa bata?",
+                "Sinasaktan ang anak ko",
+                "May batang sinasaktan",
+                "Child protection"
+            ],
+            "responses": [
+                "To report child abuse, go to 'Services' > 'BCPC'. We treat this with urgency. (Para sa proteksyon ng bata, pumunta sa 'Services' > 'BCPC'.)"
+            ]
+        },
+        {
+            "tag": "general_report_inquiry",
+            "patterns": [
+                "Paano mag report?",
+                "I want to report",
+                "Help me report",
+                "May irereklamo ako",
+                "File a case",
+                "Report"
+            ],
+            "responses": [
+                "ACTION_DISAMBIGUATE_REPORT"
+            ]
+        },
+        {
+            "tag": "gad_initiatives",
+            "patterns": [
+                "What are the GAD projects?",
+                "GAD budget",
+                "Tell me about GAD",
+                "Ano ang programa para sa kababaihan?",
+                "Proyekto ng GAD",
+                "Gender and Development"
+            ],
+            "responses": [
+                "Our GAD initiatives include women's empowerment and child protection programs. Check 'Services' > 'GAD' for details."
+            ]
+        },
+        {
+            "tag": "officials",
+            "patterns": [
+                "Who are the officials?",
+                "List of barangay officials",
+                "Who is the captain?",
+                "Sino ang kapitan?",
+                "Mga kagawad",
+                "Barangay council",
+                "Sino ang mga opisyales?"
+            ],
+            "responses": [
+                "ACTION_FETCH_OFFICIALS"
+            ]
+        },
+        {
+            "tag": "laws_info",
+            "patterns": [
+                "What laws protect women?",
+                "Tell me about RA 9262",
+                "Safe Spaces Act",
+                "Anong batas para sa kababaihan?",
+                "Karapatan ng babae",
+                "RA 9262 info"
+            ],
+            "responses": [
+                "ACTION_FETCH_LAWS"
+            ]
+        },
+        {
+            "tag": "organizations_general",
+            "patterns": [
+                "What organizations can I join?",
+                "List of groups",
+                "Community organizations",
+                "NGOs in the barangay",
+                "Who are the accredited organizations?",
+                "Group for women",
+                "Group for parents",
+                "What are the organizations?",
+                "Show me the organizations",
+                "Anong mga organisasyon?"
+            ],
+            "responses": [
+                "ACTION_FETCH_ALL_ORGANIZATIONS"
+            ]
+        },
+        {
+            "tag": "organization_info",
+            "patterns": [
+                "Tell me about KALIPI",
+                "Tell me about Solo Parent",
+                "Details of ERPAT",
+                "How to join PWD Association",
+                "Requirements for KALIPI",
+                "Requirements for Solo Parent",
+                "Application form for KALIPI",
+                "Info about senior citizens group",
+                "Paano sumali sa KALIPI?",
+                "Anong requirements sa Solo Parent?"
+            ],
+            "responses": [
+                "ACTION_FETCH_ORG_INFO"
+            ]
+        },
+        {
+            "tag": "announcements",
+            "patterns": [
+                "Any news?",
+                "Latest announcements",
+                "What is happening?",
+                "Anong balita?",
+                "May mga anunsyo ba?",
+                "Activities sa barangay"
+            ],
+            "responses": [
+                "ACTION_FETCH_ANNOUNCEMENTS"
+            ]
+        },
+        {
+            "tag": "emergency",
+            "patterns": [
+                "Help me",
+                "Emergency",
+                "I am in danger",
+                "Saklolo",
+                "Tulong",
+                "Police number",
+                "Ambulance",
+                "Who to call?"
+            ],
+            "responses": [
+                "EMERGENCY: Call 911 or the local police immediately! (TUMAWAG AGAD SA 911!)"
+            ]
+        },
+        {
+            "tag": "contact_numbers",
+            "patterns": [
+                "What is the contact number?",
+                "Give me the hotline",
+                "Emergency number",
+                "Ano ang number ng VAWC?",
+                "Contact details",
+                "Hotlines",
+                "Who to call?",
+                "VAWC desk number",
+                "BCPC contact number",
+                "Telephone number"
+            ],
+            "responses": [
+                "ACTION_FETCH_CONTACTS"
+            ]
+        },
+        {
+            "tag": "irrelevant",
+            "patterns": [
+                "Sinong nanalo sa basketball?",
+                "Luto ng adobo",
+                "Weather",
+                "Kailan ang pasko?"
+            ],
+            "responses": [
+                "I am focused on barangay services. Please ask about VAWC, Officials, or Announcements."
+            ]
+        }
+    ]
+}

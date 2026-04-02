@@ -1,0 +1,347 @@
+// import AppLayout from '@/layouts/app-layout';
+// import { Head, Link, useForm } from '@inertiajs/react';
+// import React from 'react';
+// import { route } from 'ziggy-js';
+// import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
+// import { Button } from '@/components/ui/button';
+// import { Badge } from '@/components/ui/badge';
+// import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+// import { Input } from '@/components/ui/input';
+// import { Label } from '@/components/ui/label';
+// import { Textarea } from '@/components/ui/textarea';
+
+// interface Props {
+//     case: any;
+// }
+
+// export default function Show({ case: vawcCase }: Props) {
+//     const victim = vawcCase.involved_parties.find((p: any) => p.role === 'Victim');
+//     const respondent = vawcCase.involved_parties.find((p: any) => p.role === 'Respondent');
+
+//     const bpoForm = useForm<any>({ type: 'BPO' });
+//     const issuanceForm = useForm<any>({});
+//     const serviceForm = useForm<any>({
+//         service_method: 'Personally Received',
+//         served_datetime: new Date().toISOString().slice(0, 16),
+//         receiver_name: ''
+//     });
+
+//     const complianceForm = useForm<any>({
+//         monitor_date: new Date().toISOString().slice(0, 16),
+//         is_compliant: true,
+//         notes: '',
+//         needs_counseling: false,
+//     });
+
+//     const escalationForm = useForm<any>({
+//         referral_target: 'PNP Women and Children Protection',
+//         violation_datetime: new Date().toISOString().slice(0, 16),
+//         escorted_by_pb: true,
+//         violation_description: '',
+//     });
+
+//     const handleApplyBpo = () => { if (confirm('File Application for BPO?')) bpoForm.post(route('admin.vawc.apply-bpo', vawcCase.id)); };
+//     const handleIssueBpo = () => { if (confirm('Confirm Issuance?')) issuanceForm.post(route('admin.vawc.issue-bpo', vawcCase.id)); };
+//     const handleRecordService = (e: React.FormEvent) => { e.preventDefault(); serviceForm.post(route('admin.vawc.record-service', vawcCase.id)); };
+//     const handleLogCompliance = (e: React.FormEvent) => { e.preventDefault(); complianceForm.post(route('admin.vawc.log-compliance', vawcCase.id), { onSuccess: () => complianceForm.reset() }); };
+//     const handleEscalate = (e: React.FormEvent) => { e.preventDefault(); escalationForm.post(route('admin.vawc.escalate', vawcCase.id)); };
+
+//     const activeBpo = vawcCase.protection_orders.find((o: any) => ['Applied', 'Issued', 'Served'].includes(o.status));
+//     const issuedBpo = vawcCase.protection_orders.find((o: any) => o.status === 'Issued');
+
+//     return (
+//         <AppLayout>
+//             <Head title={`VAWC Case: ${vawcCase.case_report.case_number}`} />
+
+//             <div className="p-6 space-y-6 max-w-7xl mx-auto">
+//                 <div className="flex justify-between items-center">
+//                     <div className="flex items-center gap-4">
+//                         <Button variant="outline" size="sm" asChild>
+//                             <Link href={route('admin.vawc.index')}>← Back</Link>
+//                         </Button>
+//                         <div>
+//                             <h1 className="text-2xl font-bold font-mono">{vawcCase.case_report.case_number}</h1>
+//                             <Badge variant="outline">{vawcCase.status.toUpperCase()}</Badge>
+//                         </div>
+//                     </div>
+//                     <div className="flex gap-2">
+//                         <Button variant="outline" size="sm">[PHASE 5: LOG COMPLIANCE]</Button>
+//                     </div>
+//                 </div>
+
+//                 {/* BPO CONTROL CENTER */}
+//                 <Card className="border-primary/20 bg-primary/5">
+//                     <CardHeader>
+//                         <CardTitle className="text-lg">BPO Workflow Control Center</CardTitle>
+//                         <CardDescription>Legal Protection Lifecycle & SLA Monitor</CardDescription>
+//                     </CardHeader>
+//                     <CardContent className="space-y-4">
+//                         {vawcCase.protection_orders.length === 0 ? (
+//                             <div className="text-center py-4 border-2 border-dashed rounded-lg bg-background/50">
+//                                 <p className="text-muted-foreground text-sm">No Protection Order filed for this case yet.</p>
+//                                 <Button onClick={handleApplyBpo} disabled={bpoForm.processing} className="mt-2">
+//                                     [1] File BPO Application (RA 9262)
+//                                 </Button>
+//                             </div>
+//                         ) : (
+//                             <div className="space-y-4">
+//                                 {vawcCase.protection_orders.map((order: any) => (
+//                                     <Alert key={order.id} variant={order.is_sla_breached ? "destructive" : "default"}>
+//                                         <AlertTitle className="font-bold uppercase">
+//                                             {order.status} - {order.type} {order.is_sla_breached ? "(SLA BREACHED)" : ""}
+//                                         </AlertTitle>
+//                                         <AlertDescription className="grid grid-cols-2 gap-2 mt-2">
+//                                             <div>
+//                                                 <p className="text-xs opacity-70">Application Timestamp</p>
+//                                                 <p>{new Date(order.application_datetime).toLocaleString()}</p>
+//                                             </div>
+//                                             {order.issued_datetime && (
+//                                                 <div>
+//                                                     <p className="text-xs opacity-70">Issuance Timestamp</p>
+//                                                     <p>{new Date(order.issued_datetime).toLocaleString()}</p>
+//                                                 </div>
+//                                             )}
+//                                         </AlertDescription>
+//                                     </Alert>
+//                                 ))}
+
+//                                 <div className="flex flex-wrap gap-2">
+//                                     {vawcCase.protection_orders.some((o: any) => o.status === 'Applied') && (
+//                                         <Button onClick={handleIssueBpo} disabled={issuanceForm.processing} variant="secondary">
+//                                             [2] Finalize & Issue BPO (Verify SLA)
+//                                         </Button>
+//                                     )}
+//                                     {issuedBpo && (
+//                                         <Card className="w-full mt-4 bg-background">
+//                                             <CardHeader className="py-4">
+//                                                 <CardTitle className="text-sm">Step 3: Service of Order</CardTitle>
+//                                             </CardHeader>
+//                                             <CardContent>
+//                                                 <form onSubmit={handleRecordService} className="flex flex-col md:flex-row items-end gap-4">
+//                                                     <div className="flex-1 space-y-2">
+//                                                         <Label className="text-xs">Service Method</Label>
+//                                                         <select
+//                                                             className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+//                                                             value={serviceForm.data.service_method}
+//                                                             onChange={e => serviceForm.setData('service_method', e.target.value)}
+//                                                         >
+//                                                             <option value="Personally Received">Personally Received</option>
+//                                                             <option value="Left at Residence">Left at Residence (Substituted)</option>
+//                                                         </select>
+//                                                     </div>
+//                                                     <div className="flex-1 space-y-2">
+//                                                         <Label className="text-xs">Service Date/Time</Label>
+//                                                         <Input type="datetime-local" value={serviceForm.data.served_datetime} onChange={e => serviceForm.setData('served_datetime', e.target.value)} />
+//                                                         {serviceForm.errors.served_datetime && <p className="text-xs text-destructive">{serviceForm.errors.served_datetime}</p>}
+//                                                     </div>
+//                                                     <div className="flex-1 space-y-2">
+//                                                         <Label className="text-xs">Received By</Label>
+//                                                         <Input placeholder="Full Name" value={serviceForm.data.receiver_name} onChange={e => serviceForm.setData('receiver_name', e.target.value)} />
+//                                                     </div>
+//                                                     <Button type="submit" disabled={serviceForm.processing}>
+//                                                         [3] Log Service
+//                                                     </Button>
+//                                                 </form>
+//                                             </CardContent>
+//                                         </Card>
+//                                     )}
+//                                     {(activeBpo?.status === 'Issued' || activeBpo?.status === 'Served') && (
+//                                         <div className="space-y-2">
+//                                             <Button variant="outline" className="w-full bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200" asChild>
+//                                                 <a href={route('admin.vawc.print-bpo', vawcCase.id)} target="_blank" rel="noreferrer">
+//                                                     🖨️ Print Formal BPO Document (RA 9262)
+//                                                 </a>
+//                                             </Button>
+//                                             <Button variant="outline" className="w-full" asChild>
+//                                                 <a href={route('admin.vawc.pnp-transmittal', vawcCase.id)} target="_blank" rel="noreferrer">
+//                                                     [4] Print PNP Transmittal Letter (Section 14)
+//                                                 </a>
+//                                             </Button>
+//                                         </div>
+//                                     )}
+//                                 </div>
+//                             </div>
+//                         )}
+//                     </CardContent>
+//                 </Card>
+
+//                 {/* INFO GRID */}
+//                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+//                     <Card>
+//                         <CardHeader><CardTitle className="text-sm uppercase tracking-wider">Victim Information</CardTitle></CardHeader>
+//                         <CardContent className="space-y-2 text-sm">
+//                             <div className="flex justify-between"><span className="text-muted-foreground">Name:</span> <span>{victim?.name}</span></div>
+//                             <div className="flex justify-between"><span className="text-muted-foreground">Age/Gender:</span> <span>{victim?.age} / {victim?.gender}</span></div>
+//                             <div className="flex justify-between"><span className="text-muted-foreground">Minority Status:</span> <span>{victim?.is_minor ? 'Minor' : 'Adult'}</span></div>
+//                             <div className="flex justify-between"><span className="text-muted-foreground">Contact:</span> <span className="p-1 bg-muted rounded">ENCRYPTED</span></div>
+//                         </CardContent>
+//                     </Card>
+
+//                     <Card>
+//                         <CardHeader><CardTitle className="text-sm uppercase tracking-wider">Respondent Information</CardTitle></CardHeader>
+//                         <CardContent className="space-y-2 text-sm">
+//                             <div className="flex justify-between"><span className="text-muted-foreground">Name:</span> <span>{respondent?.name || '[NOT RECORDED]'}</span></div>
+//                             <div className="flex justify-between"><span className="text-muted-foreground">Age/Gender:</span> <span>{respondent?.age || '?'} / {respondent?.gender || '?'}</span></div>
+//                             <div className="flex justify-between border-t pt-2 mt-4"><span className="text-muted-foreground">Warrantless Arrest:</span> <span>{vawcCase.warrantless_arrest_made ? 'Yes' : 'No'}</span></div>
+//                             <div className="flex justify-between"><span className="text-muted-foreground">Weapons Seized:</span> <span>{vawcCase.weapons_confiscated ? 'Yes' : 'No'}</span></div>
+//                         </CardContent>
+//                     </Card>
+
+//                     <Card className="md:col-span-2">
+//                         <CardHeader><CardTitle className="text-sm uppercase tracking-wider">Step 12: Legal Assistance & Court Escalation</CardTitle></CardHeader>
+//                         <CardContent className="space-y-6">
+//                             {vawcCase.escalations.length > 0 ? (
+//                                 <Alert variant="default" className="border-orange-500 bg-orange-50/50">
+//                                     <AlertTitle className="text-orange-700 font-bold">CASE ESCALATED TO AUTHORITIES</AlertTitle>
+//                                     <AlertDescription className="mt-2 space-y-2">
+//                                         <p>This case has been officially referred for BPO Violation/Formal Prosecution.</p>
+//                                         <div className="flex gap-4 text-xs font-mono uppercase opacity-70">
+//                                             <span>Target: {vawcCase.escalations[0].referral_target}</span>
+//                                             <span>Status: {vawcCase.escalations[0].status}</span>
+//                                         </div>
+//                                         <Button asChild size="sm" variant="outline" className="mt-2 bg-white">
+//                                             <a href={route('admin.vawc.complaint-form', vawcCase.id)} target="_blank" rel="noreferrer">
+//                                                 [PRINTER] Court Complaint Assistance Form
+//                                             </a>
+//                                         </Button>
+//                                     </AlertDescription>
+//                                 </Alert>
+//                             ) : (
+//                                 <form onSubmit={handleEscalate} className="space-y-4">
+//                                     <div className="grid grid-cols-2 gap-4">
+//                                         <div className="space-y-2">
+//                                             <Label className="text-xs">Escalation Date</Label>
+//                                             <Input type="datetime-local" value={escalationForm.data.violation_datetime} onChange={e => escalationForm.setData('violation_datetime', e.target.value)} />
+//                                             {escalationForm.errors.violation_datetime && <p className="text-xs text-destructive">{escalationForm.errors.violation_datetime}</p>}
+//                                         </div>
+//                                         <div className="space-y-2">
+//                                             <Label className="text-xs">Referral Authority</Label>
+//                                             <select
+//                                                 className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors"
+//                                                 value={escalationForm.data.referral_target}
+//                                                 onChange={e => escalationForm.setData('referral_target', e.target.value)}
+//                                             >
+//                                                 <option value="PNP Women and Children Protection">PNP (Violation of Order)</option>
+//                                                 <option value="Municipal Trial Court">Court (Legal Assistance)</option>
+//                                                 <option value="Prosecutor's Office">Office of the Prosecutor</option>
+//                                             </select>
+//                                             {escalationForm.errors.referral_target && <p className="text-xs text-destructive">{escalationForm.errors.referral_target}</p>}
+//                                         </div>
+//                                     </div>
+//                                     <div className="space-y-2">
+//                                         <Label className="text-xs">Violation Narrative / Assistance Details</Label>
+//                                         <Textarea
+//                                             placeholder="Describe the violation or assistance provided to the victim..."
+//                                             value={escalationForm.data.violation_description}
+//                                             onChange={e => escalationForm.setData('violation_description', e.target.value)}
+//                                         />
+//                                         {escalationForm.errors.violation_description && <p className="text-xs text-destructive">{escalationForm.errors.violation_description}</p>}
+//                                     </div>
+//                                     <div className="flex items-center gap-2 italic text-xs">
+//                                         <input
+//                                             type="checkbox"
+//                                             checked={escalationForm.data.escorted_by_pb}
+//                                             onChange={e => escalationForm.setData('escorted_by_pb', e.target.checked)}
+//                                         />
+//                                         <span>PB/Kagawad Escorted Victim? (RA 9262 Mandate)</span>
+//                                     </div>
+//                                     <Button type="submit" variant="destructive" size="sm" disabled={escalationForm.processing}>
+//                                         Flag BPO Violation & Escalate Case
+//                                     </Button>
+//                                 </form>
+//                             )}
+//                         </CardContent>
+//                     </Card>
+
+//                     <Card className="md:col-span-2">
+//                         <CardHeader><CardTitle className="text-sm uppercase tracking-wider">Compliance Monitoring & Counseling (Steps 8-11)</CardTitle></CardHeader>
+//                         <CardContent className="space-y-6">
+//                             {vawcCase.compliance_logs.length > 0 && (
+//                                 <div className="space-y-4">
+//                                     {vawcCase.compliance_logs.map((log: any) => (
+//                                         <div key={log.id} className="p-3 border rounded-lg bg-muted/20 text-sm">
+//                                             <div className="flex justify-between items-center mb-2">
+//                                                 <Badge variant={log.is_compliant ? "default" : "destructive"}>
+//                                                     {log.is_compliant ? "COMPLIANT" : "VIOLATION"}
+//                                                 </Badge>
+//                                                 <span className="text-xs text-muted-foreground">{new Date(log.monitor_date).toLocaleDateString()}</span>
+//                                             </div>
+//                                             <p className="italic">"{log.notes}"</p>
+//                                             {log.referral_type && (
+//                                                 <div className="mt-2 text-xs font-semibold text-primary uppercase">
+//                                                     Action: {log.referral_type}
+//                                                 </div>
+//                                             )}
+//                                         </div>
+//                                     ))}
+//                                 </div>
+//                             )}
+
+//                             <div className="border-t pt-4">
+//                                 <Label className="text-xs font-bold mb-4 block">Log New Monitoring Session</Label>
+//                                 <form onSubmit={handleLogCompliance} className="space-y-4">
+//                                     <div className="grid grid-cols-2 gap-4">
+//                                         <div className="flex flex-col gap-2">
+//                                             <Label className="text-xs">Monitoring Date/Time</Label>
+//                                             <Input type="datetime-local" value={complianceForm.data.monitor_date} onChange={e => complianceForm.setData('monitor_date', e.target.value)} />
+//                                             {complianceForm.errors.monitor_date && <p className="text-xs text-destructive">{complianceForm.errors.monitor_date}</p>}
+//                                         </div>
+//                                         <div className="flex flex-col gap-2">
+//                                             <Label className="text-xs">Respondent Status</Label>
+//                                             <select
+//                                                 className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors"
+//                                                 value={complianceForm.data.is_compliant ? 'true' : 'false'}
+//                                                 onChange={e => complianceForm.setData('is_compliant', e.target.value === 'true')}
+//                                             >
+//                                                 <option value="true">Compliant (Observing BPO)</option>
+//                                                 <option value="false">Non-Compliant (VIOLATION)</option>
+//                                             </select>
+//                                         </div>
+//                                         <div className="flex items-center gap-2 pt-6 italic text-xs">
+//                                             <input
+//                                                 type="checkbox"
+//                                                 checked={complianceForm.data.needs_counseling}
+//                                                 onChange={e => complianceForm.setData('needs_counseling', e.target.checked)}
+//                                             />
+//                                             <span>Recommend Counseling? (DSWD Referral)</span>
+//                                         </div>
+//                                     </div>
+//                                     <div className="space-y-2">
+//                                         <Label className="text-xs">Monitoring Notes / Narrative</Label>
+//                                         <Input
+//                                             placeholder="Detail the respondent behavior or survivor needs..."
+//                                             value={complianceForm.data.notes}
+//                                             onChange={e => complianceForm.setData('notes', e.target.value)}
+//                                         />
+//                                         {complianceForm.errors.notes && <p className="text-xs text-destructive">{complianceForm.errors.notes}</p>}
+//                                     </div>
+//                                     <Button type="submit" size="sm" disabled={complianceForm.processing}>
+//                                         Save Compliance Log
+//                                     </Button>
+//                                 </form>
+//                             </div>
+//                         </CardContent>
+//                     </Card>
+
+//                     <Card className="md:col-span-2">
+//                         <CardHeader><CardTitle className="text-sm uppercase tracking-wider">Incident & Assessment Summary</CardTitle></CardHeader>
+//                         <CardContent className="space-y-4">
+//                             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm border-b pb-4">
+//                                 <div><p className="text-muted-foreground text-xs uppercase">Intake Type</p><p className="font-semibold">{vawcCase.intake_type}</p></div>
+//                                 <div><p className="text-muted-foreground text-xs uppercase">Abuse Type</p><p className="font-semibold">{vawcCase.case_report.abuse_type?.name || 'N/A'}</p></div>
+//                                 <div><p className="text-muted-foreground text-xs uppercase">Medical Referral</p><Badge variant={vawcCase.assessment?.requires_medical ? 'destructive' : 'outline'}>{vawcCase.assessment?.requires_medical ? 'Urgent' : 'None'}</Badge></div>
+//                                 <div><p className="text-muted-foreground text-xs uppercase">Housing/Shelter</p><Badge variant={vawcCase.assessment?.requires_alternative_housing ? 'destructive' : 'outline'}>{vawcCase.assessment?.requires_alternative_housing ? 'Required' : 'None'}</Badge></div>
+//                             </div>
+//                             <div className="space-y-2">
+//                                 <Label className="text-xs uppercase opacity-70">Narrative Description</Label>
+//                                 <div className="p-4 rounded-lg bg-muted text-sm leading-relaxed max-h-48 overflow-y-auto italic">
+//                                     "{vawcCase.case_report.description}"
+//                                 </div>
+//                             </div>
+//                         </CardContent>
+//                     </Card>
+//                 </div>
+//             </div>
+//         </AppLayout>
+//     );
+// }
