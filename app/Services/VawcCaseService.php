@@ -82,10 +82,14 @@ class VawcCaseService
             }
 
             // 4. Create Initial Assessment
-            VawcAssessment::create([
+            $assessment = VawcAssessment::create([
                 'vawc_case_id' => $vawcCase->id,
                 'requires_medical' => $data['requires_medical'] ?? false,
                 'requires_alternative_housing' => $data['requires_alternative_housing'] ?? false,
+                'abuse_frequency' => $data['abuse_frequency'] ?? 0,
+                'abuse_severity' => $data['abuse_severity'] ?? 0,
+                'weapon_access' => $data['weapon_access'] ?? 0,
+                'life_threat_level' => $data['life_threat_level'] ?? 0,
             ]);
 
             return $vawcCase;

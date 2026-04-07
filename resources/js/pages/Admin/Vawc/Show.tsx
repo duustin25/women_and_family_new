@@ -9,7 +9,7 @@ import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { CheckCircle2, ChevronRight, Gavel, Printer, Search, ShieldCheck, MapPin, ClipboardList, Info, ArchiveX, Lock } from 'lucide-react';
+import { CheckCircle2, ChevronRight, Gavel, Printer, Search, ShieldCheck, MapPin, ClipboardList, Info, ArchiveX, Lock, AlertTriangle, Activity, HeartPulse } from 'lucide-react';
 
 interface Props {
     case: any;
@@ -88,17 +88,81 @@ export default function Show({ case: vawcCase }: Props) {
                     ))}
                 </div>
 
-                {/* 🚨 CRITICAL RISK ALERTS */}
-                {(vawcCase.is_repeat_offense || vawcCase.has_weapon_involved) && (
-                    <Alert variant="destructive" className="bg-destructive/5 border-destructive/50 animate-in fade-in slide-in-from-top-4">
-                        <Gavel className="w-5 h-5 text-destructive" />
-                        <AlertTitle className="text-destructive font-black uppercase tracking-tighter">High-Risk Case Detected</AlertTitle>
-                        <AlertDescription className="text-destructive/80 font-medium">
-                            {vawcCase.is_repeat_offense && "• REPORTED REPEAT OFFENSE (HISTORY OF ABUSE) "}
-                            {vawcCase.has_weapon_involved && "• WEAPONS/ARMS WERE INVOLVED AT THE SCENE"}
-                            <p className="mt-1 text-[10px] uppercase underline">Immediate BPO Issuance strongly recommended per RA 9262 Guidelines.</p>
-                        </AlertDescription>
-                    </Alert>
+                {/* 🔍 VRA RISK SCORECARD (Complexity Feature) */}
+                {vawcCase.assessment && vawcCase.assessment.risk_score > 0 && (
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 animate-in fade-in slide-in-from-top-4 duration-500">
+                        <Card className={`md:col-span-1 border-2 ${
+                            vawcCase.assessment.risk_level === 'CRITICAL' ? 'border-destructive bg-destructive/5' : 
+                            vawcCase.assessment.risk_level === 'HIGH' ? 'border-orange-500 bg-orange-50' :
+                            vawcCase.assessment.risk_level === 'MODERATE' ? 'border-yellow-500 bg-yellow-50' : 'border-blue-500 bg-blue-50'
+                        }`}>
+                            <CardContent className="pt-6 text-center">
+                                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1">Vulnerability Score</p>
+                                <div className={`text-5xl font-black italic tracking-tighter ${
+                                    vawcCase.assessment.risk_level === 'CRITICAL' ? 'text-destructive' : 
+                                    vawcCase.assessment.risk_level === 'HIGH' ? 'text-orange-600' :
+                                    vawcCase.assessment.risk_level === 'MODERATE' ? 'text-yellow-600' : 'text-blue-600'
+                                }`}>
+                                    {vawcCase.assessment.risk_score}
+                                </div>
+                                <Badge className={`mt-2 uppercase font-black tracking-widest ${
+                                    vawcCase.assessment.risk_level === 'CRITICAL' ? 'bg-destructive' : 
+                                    vawcCase.assessment.risk_level === 'HIGH' ? 'bg-orange-600' :
+                                    vawcCase.assessment.risk_level === 'MODERATE' ? 'bg-yellow-600 text-black' : 'bg-blue-600'
+                                }`}>
+                                    {vawcCase.assessment.risk_level} RISK
+                                </Badge>
+                            </CardContent>
+                        </Card>
+
+                        <Card className="md:col-span-3 border-2 border-slate-200">
+                            <CardHeader className="py-3 bg-slate-50/50 border-b flex flex-row items-center justify-between">
+                                <CardTitle className="text-xs font-bold uppercase tracking-widest flex items-center gap-2">
+                                    <Activity className="w-3 h-3" /> VAWC-RAVE Algorithm Analysis
+                                </CardTitle>
+                                <Badge variant="outline" className="text-[8px] bg-primary/5 text-primary border-primary/20 animate-pulse font-black px-1.5 py-0">
+                                    SMART-TRIAGE ENGINE ACTIVE
+                                </Badge>
+                            </CardHeader>
+                            <CardContent className="pt-4">
+                                <div className="grid grid-cols-4 gap-4 mb-4">
+                                    {[
+                                        { label: 'Frequency', val: vawcCase.assessment.abuse_frequency },
+                                        { label: 'Severity', val: vawcCase.assessment.abuse_severity },
+                                        { label: 'Weapons', val: vawcCase.assessment.weapon_access },
+                                        { label: 'Lethality', val: vawcCase.assessment.life_threat_level },
+                                    ].map((factor) => (
+                                        <div key={factor.label} className="text-center group">
+                                            <div className="flex justify-center gap-0.5 mb-1">
+                                                {[1, 2, 3].map(i => (
+                                                    <div key={i} className={`h-1.5 w-3 rounded-full ${i <= factor.val ? (factor.val === 3 ? 'bg-destructive' : (factor.val === 2 ? 'bg-orange-400' : 'bg-blue-400')) : 'bg-slate-200'}`} />
+                                                ))}
+                                            </div>
+                                            <span className="text-[9px] uppercase font-bold text-muted-foreground group-hover:text-primary transition-colors">{factor.label}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                                <div className={`p-3 rounded-lg border flex gap-3 items-start ${
+                                    vawcCase.assessment.risk_level === 'CRITICAL' ? 'bg-destructive/10 border-destructive/20' : 'bg-primary/5 border-primary/10'
+                                }`}>
+                                    <div className={`p-2 rounded-full mt-0.5 ${
+                                        vawcCase.assessment.risk_level === 'CRITICAL' ? 'bg-destructive text-white animate-pulse' : 'bg-primary text-white'
+                                    }`}>
+                                        {vawcCase.assessment.risk_level === 'CRITICAL' ? <AlertTriangle className="w-4 h-4" /> : <ShieldCheck className="w-4 h-4" />}
+                                    </div>
+                                    <div>
+                                        <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest mb-0.5">Algorithm Recommendation</p>
+                                        <p className={`text-sm font-bold leading-tight ${vawcCase.assessment.risk_level === 'CRITICAL' ? 'text-destructive italic' : 'text-slate-800'}`}>
+                                            {vawcCase.assessment.risk_level === 'CRITICAL' && "EMERGENCY: Immediate police escort and medical intervention required. Shelter placement recommended."}
+                                            {vawcCase.assessment.risk_level === 'HIGH' && "URGENT: Legal protection order (BPO/TPO) recommended. Safety planning and temporary relocation required."}
+                                            {vawcCase.assessment.risk_level === 'MODERATE' && "MONITORING: Regular counseling and social worker check-ins required. Legal consultation recommended."}
+                                            {vawcCase.assessment.risk_level === 'LOW' && "ROUTINE: Case monitoring and standard support services. No immediate danger detected."}
+                                        </p>
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </div>
                 )}
 
                 {/* 🚀 PRIMARY GUIDED ACTION CARD */}

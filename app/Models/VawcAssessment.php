@@ -20,6 +20,12 @@ class VawcAssessment extends Model
         'housing_notes',
         'lswo_referral_made',
         'dswd_referral_made',
+        'abuse_frequency',
+        'abuse_severity',
+        'weapon_access',
+        'life_threat_level',
+        'risk_score',
+        'risk_level',
     ];
 
     protected $casts = [
@@ -29,7 +35,24 @@ class VawcAssessment extends Model
         'dswd_referral_made' => 'boolean',
         'medical_notes' => 'encrypted',
         'housing_notes' => 'encrypted',
+        'risk_score' => 'float',
     ];
+
+    /**
+     * The model's boot method.
+     */
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::saving(function ($assessment) {
+            $service = new \App\Services\RiskAssessmentService();
+            $result = $service->calculateVawcRisk($assessment);
+            
+            $assessment->risk_score = $result['score'];
+            $assessment->risk_level = $result['level'];
+        });
+    }
 
     /**
      * The VAWC case this assessment belongs to.

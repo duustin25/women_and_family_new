@@ -34,6 +34,10 @@ export default function Create({ abuseTypes, zones }: Props) {
         weapons_confiscated: false,
         requires_medical: false,
         requires_alternative_housing: false,
+        abuse_frequency: 0,
+        abuse_severity: 0,
+        weapon_access: 0,
+        life_threat_level: 0,
     });
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -267,26 +271,87 @@ export default function Create({ abuseTypes, zones }: Props) {
                             </CardContent>
                         </Card>
 
-                        <Card className="bg-primary/5 border-primary/20 p-4">
-                            <CardHeader className="p-0 mb-4">
-                                <CardTitle className="text-sm">Safety & Medical Referrals</CardTitle>
+                        <Card className="bg-primary/5 border-primary/20">
+                            <CardHeader>
+                                <CardTitle className="text-sm flex items-center gap-2">
+                                    <span className="p-1 bg-primary/10 rounded">🔍</span>
+                                    Vulnerability Risk Assessment (VRA)
+                                </CardTitle>
+                                <CardDescription className="text-[10px]">VAWC-RAVE Scoring Algorithm (1=Low, 3=Critical)</CardDescription>
                             </CardHeader>
-                            <CardContent className="p-0 space-y-2">
-                                <div className="flex items-center space-x-2">
-                                    <Checkbox
-                                        id="medical"
-                                        checked={data.requires_medical}
-                                        onCheckedChange={(checked) => setData('requires_medical', !!checked)}
-                                    />
-                                    <Label htmlFor="medical">Immediate Medical Attention?</Label>
+                            <CardContent className="space-y-3">
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div className="space-y-1">
+                                        <Label className="text-[10px] uppercase font-bold">Abuse Frequency</Label>
+                                        <select
+                                            className="flex h-8 w-full rounded-md border border-input bg-background px-2 py-1 text-xs shadow-sm"
+                                            value={data.abuse_frequency}
+                                            onChange={e => setData('abuse_frequency', parseInt(e.target.value))}
+                                        >
+                                            <option value="0">Not Assessed</option>
+                                            <option value="1">1 - Occasional</option>
+                                            <option value="2">2 - Frequent</option>
+                                            <option value="3">3 - Constant/Daily</option>
+                                        </select>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <Label className="text-[10px] uppercase font-bold">Abuse Severity</Label>
+                                        <select
+                                            className="flex h-8 w-full rounded-md border border-input bg-background px-2 py-1 text-xs shadow-sm"
+                                            value={data.abuse_severity}
+                                            onChange={e => setData('abuse_severity', parseInt(e.target.value))}
+                                        >
+                                            <option value="0">Not Assessed</option>
+                                            <option value="1">1 - Minor/Threats</option>
+                                            <option value="2">2 - Serious Injuries</option>
+                                            <option value="3">3 - Life-Threatening</option>
+                                        </select>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <Label className="text-[10px] uppercase font-bold">Weapon Access</Label>
+                                        <select
+                                            className="flex h-8 w-full rounded-md border border-input bg-background px-2 py-1 text-xs shadow-sm"
+                                            value={data.weapon_access}
+                                            onChange={e => setData('weapon_access', parseInt(e.target.value))}
+                                        >
+                                            <option value="0">Not Assessed</option>
+                                            <option value="1">1 - None/No Access</option>
+                                            <option value="2">2 - Possible Access</option>
+                                            <option value="3">3 - Weapon Involved</option>
+                                        </select>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <Label className="text-[10px] uppercase font-bold">Threat Level</Label>
+                                        <select
+                                            className="flex h-8 w-full rounded-md border border-input bg-background px-2 py-1 text-xs shadow-sm"
+                                            value={data.life_threat_level}
+                                            onChange={e => setData('life_threat_level', parseInt(e.target.value))}
+                                        >
+                                            <option value="0">Not Assessed</option>
+                                            <option value="1">1 - Low/Verbal</option>
+                                            <option value="2">2 - Explicit Threats</option>
+                                            <option value="3">3 - Attempted Lethal</option>
+                                        </select>
+                                    </div>
                                 </div>
-                                <div className="flex items-center space-x-2">
-                                    <Checkbox
-                                        id="housing"
-                                        checked={data.requires_alternative_housing}
-                                        onCheckedChange={(checked) => setData('requires_alternative_housing', !!checked)}
-                                    />
-                                    <Label htmlFor="housing">Alternative Housing/Shelter?</Label>
+
+                                <div className="pt-3 border-t space-y-2">
+                                    <div className="flex items-center space-x-2">
+                                        <Checkbox
+                                            id="medical"
+                                            checked={data.requires_medical}
+                                            onCheckedChange={(checked) => setData('requires_medical', !!checked)}
+                                        />
+                                        <Label htmlFor="medical" className="text-xs">Immediate Medical Attention?</Label>
+                                    </div>
+                                    <div className="flex items-center space-x-2">
+                                        <Checkbox
+                                            id="housing"
+                                            checked={data.requires_alternative_housing}
+                                            onCheckedChange={(checked) => setData('requires_alternative_housing', !!checked)}
+                                        />
+                                        <Label htmlFor="housing" className="text-xs">Alternative Housing/Shelter?</Label>
+                                    </div>
                                 </div>
                             </CardContent>
                         </Card>
