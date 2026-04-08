@@ -80,16 +80,6 @@ class BcpcCaseService
         
         // Update general case lifecycle
         $case->caseReport->update(['lifecycle_status' => 'In Progress']);
-
-        // SMS NOTIFICATION: Notify involved parties
-        $smsService = app(\App\Services\SmsService::class);
-        $case->load('involvedParties');
-        
-        foreach ($case->involvedParties as $party) {
-            if ($party->contact) {
-                $smsService->send($party->contact, "BCPC Alert [Case #{$case->caseReport->case_number}]: Diversion proceedings have officially started. Please coordinate with the BCPC office.");
-            }
-        }
     }
 
     /**
@@ -104,16 +94,6 @@ class BcpcCaseService
         ]);
         
         $case->caseReport->update(['lifecycle_status' => 'In Progress']);
-
-        // SMS NOTIFICATION: Notify involved parties of program implementation
-        $smsService = app(\App\Services\SmsService::class);
-        $case->load('involvedParties');
-        
-        foreach ($case->involvedParties as $party) {
-            if ($party->contact) {
-                $smsService->send($party->contact, "BCPC Alert [Case #{$case->caseReport->case_number}]: Diversion contract signed. Program implementation is now active.");
-            }
-        }
     }
     
     /**
@@ -155,16 +135,6 @@ class BcpcCaseService
         ]);
         
         $case->caseReport->update(['lifecycle_status' => 'Resolved']);
-
-        // SMS NOTIFICATION: Successful Termination
-        $smsService = app(\App\Services\SmsService::class);
-        $case->load('involvedParties');
-        
-        foreach ($case->involvedParties as $party) {
-            if ($party->contact) {
-                $smsService->send($party->contact, "BCPC Notice: Your case (#{$case->caseReport->case_number}) has been Terminated/Closed successfully. Status: Resolved.");
-            }
-        }
     }
 
     /**

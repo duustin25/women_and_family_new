@@ -465,6 +465,54 @@ class AnalyticsService
     }
 
     /**
+     * Get distribution of risk levels (CRITICAL, HIGH, MODERATE, LOW).
+     * This aggregates the VAWC-RAVE algorithm's output.
+     */
+    public function getRiskSeverityDistribution(int $year): array
+    {
+        $colors = [
+            'CRITICAL' => '#ef4444', // Red 500
+            'HIGH'     => '#f97316', // Orange 500
+            'MODERATE' => '#eab308', // Yellow 500
+            'LOW'      => '#3b82f6', // Blue 500
+        ];
+
+        return DB::table('vawc_assessments')
+            ->whereYear('created_at', $year)
+            ->select('risk_level', DB::raw('count(*) as total'))
+            ->groupBy('risk_level')
+            ->get()
+            ->map(fn($row) => [
+                'name'  => $row->risk_level ?: 'Incomplete',
+                'value' => $row->total,
+                'fill'  => $colors[$row->risk_level] ?? '#94a3b8',
+            ])
+            ->values()
+            ->toArray();
+    }
+
+    /**
+     * Get average risk scores per Zone to identify hotspots.
+     */
+    public function getZoneRiskImpact(int $year): array
+    {
+        return DB::table('vawc_assessments')
+            ->join('vawc_cases', 'vawc_assessments.vawc_case_id', '=', 'vawc_cases.id')
+            ->join('case_reports', 'vawc_cases.case_report_id', '=', 'case_reports.id')
+            ->join('zones', 'case_reports.zone_id', '=', 'zones.id')
+            ->whereYear('vawc_assessments.created_at', $year)
+            ->select('zones.name', DB::raw('AVG(vawc_assessments.risk_score) as avg_score'))
+            ->groupBy('zones.name')
+            ->orderByDesc('avg_score')
+            ->get()
+            ->map(fn($row) => [
+                'name'  => $row->name,
+                'score' => (float) round($row->avg_score, 2),
+            ])
+            ->toArray();
+    }
+
+    /**
      * Get membership application growth trends.
      */
     public function getMembershipTrends(int $year, ?\App\Models\User $user = null): array

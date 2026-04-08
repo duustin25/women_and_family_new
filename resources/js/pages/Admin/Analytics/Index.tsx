@@ -45,12 +45,15 @@ interface PageProps {
     zoneDistribution: any[];
     bpoTrends: any[];
     vawcStatusBreakdown: any[];
+    riskDistribution: any[];
+    zoneRiskImpact: any[];
 }
 
 export default function Index({
     stats, vawcData, currentYear, vawcChartConfig,
     membershipStats, caseResolutionStats, ageDemographics,
-    locationDemographics, zoneDistribution, bpoTrends, vawcStatusBreakdown
+    locationDemographics, zoneDistribution, bpoTrends, vawcStatusBreakdown,
+    riskDistribution, zoneRiskImpact
 }: PageProps) {
 
     const ribbonStats = [
@@ -242,6 +245,87 @@ export default function Index({
                         </div>
                     </CardContent>
                 </Card>
+
+                {/* ── 🔍 VULNERABILITY & RISK ANALYSIS (Complexity Feature) ── */}
+                <div>
+                    <h2 className="text-lg font-black tracking-tight flex items-center gap-2 py-4 mb-2 border-b uppercase text-[#ce1126] dark:text-red-400">
+                        <ShieldAlert className="w-5 h-5" />
+                        Vulnerability & Risk Intelligence (VAWC-RAVE)
+                    </h2>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {/* Risk Severity Distribution */}
+                        <Card className="">
+                            <CardHeader>
+                                <CardTitle className="uppercase tracking-widest text-xs font-black text-slate-800">Risk Severity Distribution</CardTitle>
+                                <CardDescription className="text-xs font-bold text-slate-400 uppercase tracking-tighter">Aggregated Algorithm Results for {currentYear}</CardDescription>
+                            </CardHeader>
+                            <CardContent className="h-[300px] flex flex-col items-center">
+                                {riskDistribution.length > 0 ? (
+                                    <>
+                                        <div className="h-full w-full">
+                                            <ResponsiveContainer width="100%" height="100%">
+                                                <PieChart>
+                                                    <Pie
+                                                        data={riskDistribution}
+                                                        cx="50%"
+                                                        cy="50%"
+                                                        innerRadius={60}
+                                                        outerRadius={100}
+                                                        paddingAngle={5}
+                                                        dataKey="value"
+                                                        label={({ name, value }: any) => `${name} (${value})`}
+                                                        labelLine={false}
+                                                    >
+                                                        {riskDistribution.map((entry: any, index: number) => (
+                                                            <Cell key={`cell-${index}`} fill={entry.fill} />
+                                                        ))}
+                                                    </Pie>
+                                                    <Tooltip />
+                                                </PieChart>
+                                            </ResponsiveContainer>
+                                        </div>
+                                    </>
+                                ) : (
+                                    <div className="flex flex-col items-center justify-center h-full text-slate-400">
+                                        <Activity className="w-8 h-8 mb-2 opacity-20" />
+                                        <p className="text-[10px] font-black uppercase tracking-widest">No Risk Assessments Recorded</p>
+                                    </div>
+                                )}
+                            </CardContent>
+                        </Card>
+
+                        {/* Zone Risk Impact (Hotspots) */}
+                        <Card className="">
+                            <CardHeader>
+                                <CardTitle className="uppercase tracking-widest text-xs font-black text-slate-800">Zone Risk Hotspots</CardTitle>
+                                <CardDescription className="text-xs font-bold text-slate-400 uppercase tracking-tighter">Average Vulnerability Score by Area</CardDescription>
+                            </CardHeader>
+                            <CardContent className="h-[300px]">
+                                {zoneRiskImpact.length > 0 ? (
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <BarChart data={zoneRiskImpact} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                                            <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 'bold' }} />
+                                            <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 'bold' }} domain={[0, 10]} />
+                                            <Tooltip formatter={(value) => [`${value} / 10.0`, 'Avg Risk Score']} />
+                                            <Bar dataKey="score" radius={[4, 4, 0, 0]}>
+                                                {zoneRiskImpact.map((entry: any, index: number) => (
+                                                    <Cell key={`cell-${index}`} fill={entry.score > 7 ? '#ef4444' : entry.score > 4 ? '#f97316' : '#3b82f6'} />
+                                                ))}
+                                            </Bar>
+                                        </BarChart>
+                                    </ResponsiveContainer>
+                                ) : (
+                                    <div className="flex flex-col items-center justify-center h-full text-slate-400">
+                                        <Activity className="w-8 h-8 mb-2 opacity-20" />
+                                        <p className="text-[10px] font-black uppercase tracking-widest">Awaiting Algorithm Data</p>
+                                    </div>
+                                )}
+                            </CardContent>
+                        </Card>
+                    </div>
+                </div>
 
                 {/* ── DEMOGRAPHIC SECTION ─────────────────────────── */}
                 <div>

@@ -76,18 +76,10 @@ class AnnouncementController extends Controller
         }
 
         $members = $memberQuery->get();
-        $smsService = app(\App\Services\SmsService::class);
-        $smsCount = 0;
 
         foreach ($members as $member) {
-            // 1. Dispatching Email notification
+            // Dispatching email notification
             Mail::to($member->email)->send(new AnnouncementBroadcast($announcement));
-
-            // 2. Dispatching SMS notification (New Integration)
-            if ($member->phone) {
-                $smsService->send($member->phone, "Brgy. 183 Alert: " . $announcement->title . ". " . $announcement->excerpt);
-                $smsCount++;
-            }
 
             // Audit Trail: Log every communication in the hub
             \App\Models\MemberCommunication::create([
@@ -95,12 +87,12 @@ class AnnouncementController extends Controller
                 'sent_by' => Auth::id(),
                 'subject' => ($announcement->organization_id ? 'Organization Update: ' : 'Brgy. 183 Official Announcement: ') . $announcement->title,
                 'body' => $announcement->excerpt,
-                'type' => 'Bulk (Email+SMS)',
+                'type' => 'Bulk',
                 'status' => 'Sent'
             ]);
         }
 
-        return redirect()->route('admin.announcements.index')->with('message', "Announcement Published! Dispatched to {$members->count()} members via Email and {$smsCount} members via SMS Gateway.");
+        return redirect()->route('admin.announcements.index')->with('message', 'Announcement Published & Dispatched to ' . $members->count() . ' members via Secure Messaging Hub.');
     }
 
     public function edit(Announcement $announcement)

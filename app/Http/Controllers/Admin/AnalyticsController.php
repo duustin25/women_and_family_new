@@ -38,6 +38,8 @@ class AnalyticsController extends Controller
             'zoneDistribution'    => $this->analyticsService->getZoneDistribution($currentYear),
             'bpoTrends'           => $this->analyticsService->getVawcBpoTrends($currentYear),
             'vawcStatusBreakdown' => $this->analyticsService->getVawcStatusBreakdown($currentYear),
+            'riskDistribution'    => $this->analyticsService->getRiskSeverityDistribution($currentYear),
+            'zoneRiskImpact'      => $this->analyticsService->getZoneRiskImpact($currentYear),
         ]);
     }
 
