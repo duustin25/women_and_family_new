@@ -76,8 +76,36 @@ export default function Show({ case: vawcCase }: Props) {
             <Head title={`Case Workflow: ${vawcCase.case_report.case_number}`} />
 
             <div className="p-6 space-y-8 max-w-5xl mx-auto">
+                {vawcCase.assessment?.risk_level === 'CRITICAL' && vawcCase.status !== 'Closed' && (
+                    <div className="bg-destructive text-destructive-foreground p-6 rounded-xl shadow-2xl animate-in slide-in-from-top flex flex-col md:flex-row items-center justify-between gap-6 ring-4 ring-destructive/50">
+                        <div className="flex items-start gap-4">
+                            <div className="p-3 bg-white/20 rounded-full animate-pulse">
+                                <AlertTriangle className="w-8 h-8 text-white" />
+                            </div>
+                            <div>
+                                <h2 className="text-xl font-black uppercase tracking-widest flex items-center gap-2">
+                                    <Activity className="w-5 h-5 animate-spin-slow" /> CRITICAL EMERGENCY IDENTIFIED
+                                </h2>
+                                <p className="text-sm text-destructive-foreground/90 font-medium mt-1">
+                                    The VAWC Algorithm scored this case as a <strong>{vawcCase.assessment.risk_score}/12</strong>. Immediate physical intervention is required to secure the victim's safety.
+                                </p>
+                            </div>
+                        </div>
+                        <Button 
+                            variant="secondary" 
+                            size="lg" 
+                            className="bg-white text-destructive hover:bg-slate-100 font-black uppercase tracking-widest whitespace-nowrap h-14 shadow-xl shadow-destructive/50"
+                            onClick={() => {
+                                alert("SOP: Contacting Quick Response Team (QRT).\\n\\nBarangay Emergency: 0912-345-6789\\nPNP Station: 911\\n\\nPlease secure victim location immediately before legally processing the BPO.");
+                            }}
+                        >
+                            <HeartPulse className="w-5 h-5 mr-2" /> Dispatch QRT Now
+                        </Button>
+                    </div>
+                )}
+
                 {/* 🩺 PHASE TRACKER */}
-                <div className="grid grid-cols-7 gap-2 px-1">
+                <div className="grid grid-cols-7 gap-2 px-1 mt-4">
                     {[1, 2, 3, 4, 5, 6, 7].map((s) => (
                         <div key={s} className="flex flex-col gap-2">
                             <div className={`h-1.5 rounded-full ${s < stepNum ? 'bg-primary' : (s === stepNum ? (s === 7 ? 'bg-slate-500' : 'bg-primary animate-pulse') : 'bg-muted')}`} />
@@ -91,25 +119,22 @@ export default function Show({ case: vawcCase }: Props) {
                 {/* 🔍 VRA RISK SCORECARD (Complexity Feature) */}
                 {vawcCase.assessment && vawcCase.assessment.risk_score > 0 && (
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4 animate-in fade-in slide-in-from-top-4 duration-500">
-                        <Card className={`md:col-span-1 border-2 ${
-                            vawcCase.assessment.risk_level === 'CRITICAL' ? 'border-destructive bg-destructive/5' : 
-                            vawcCase.assessment.risk_level === 'HIGH' ? 'border-orange-500 bg-orange-50' :
-                            vawcCase.assessment.risk_level === 'MODERATE' ? 'border-yellow-500 bg-yellow-50' : 'border-blue-500 bg-blue-50'
-                        }`}>
+                        <Card className={`md:col-span-1 border-2 ${vawcCase.assessment.risk_level === 'CRITICAL' ? 'border-destructive bg-destructive/5' :
+                                vawcCase.assessment.risk_level === 'HIGH' ? 'border-orange-500 bg-orange-50' :
+                                    vawcCase.assessment.risk_level === 'MODERATE' ? 'border-yellow-500 bg-yellow-50' : 'border-blue-500 bg-blue-50'
+                            }`}>
                             <CardContent className="pt-6 text-center">
                                 <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1">Vulnerability Score</p>
-                                <div className={`text-5xl font-black italic tracking-tighter ${
-                                    vawcCase.assessment.risk_level === 'CRITICAL' ? 'text-destructive' : 
-                                    vawcCase.assessment.risk_level === 'HIGH' ? 'text-orange-600' :
-                                    vawcCase.assessment.risk_level === 'MODERATE' ? 'text-yellow-600' : 'text-blue-600'
-                                }`}>
+                                <div className={`text-5xl font-black italic tracking-tighter ${vawcCase.assessment.risk_level === 'CRITICAL' ? 'text-destructive' :
+                                        vawcCase.assessment.risk_level === 'HIGH' ? 'text-orange-600' :
+                                            vawcCase.assessment.risk_level === 'MODERATE' ? 'text-yellow-600' : 'text-blue-600'
+                                    }`}>
                                     {vawcCase.assessment.risk_score}
                                 </div>
-                                <Badge className={`mt-2 uppercase font-black tracking-widest ${
-                                    vawcCase.assessment.risk_level === 'CRITICAL' ? 'bg-destructive' : 
-                                    vawcCase.assessment.risk_level === 'HIGH' ? 'bg-orange-600' :
-                                    vawcCase.assessment.risk_level === 'MODERATE' ? 'bg-yellow-600 text-black' : 'bg-blue-600'
-                                }`}>
+                                <Badge className={`mt-2 uppercase font-black tracking-widest ${vawcCase.assessment.risk_level === 'CRITICAL' ? 'bg-destructive' :
+                                        vawcCase.assessment.risk_level === 'HIGH' ? 'bg-orange-600' :
+                                            vawcCase.assessment.risk_level === 'MODERATE' ? 'bg-yellow-600 text-black' : 'bg-blue-600'
+                                    }`}>
                                     {vawcCase.assessment.risk_level} RISK
                                 </Badge>
                             </CardContent>
@@ -142,12 +167,10 @@ export default function Show({ case: vawcCase }: Props) {
                                         </div>
                                     ))}
                                 </div>
-                                <div className={`p-3 rounded-lg border flex gap-3 items-start ${
-                                    vawcCase.assessment.risk_level === 'CRITICAL' ? 'bg-destructive/10 border-destructive/20' : 'bg-primary/5 border-primary/10'
-                                }`}>
-                                    <div className={`p-2 rounded-full mt-0.5 ${
-                                        vawcCase.assessment.risk_level === 'CRITICAL' ? 'bg-destructive text-white animate-pulse' : 'bg-primary text-white'
+                                <div className={`p-3 rounded-lg border flex gap-3 items-start ${vawcCase.assessment.risk_level === 'CRITICAL' ? 'bg-destructive/10 border-destructive/20' : 'bg-primary/5 border-primary/10'
                                     }`}>
+                                    <div className={`p-2 rounded-full mt-0.5 ${vawcCase.assessment.risk_level === 'CRITICAL' ? 'bg-destructive text-white animate-pulse' : 'bg-primary text-white'
+                                        }`}>
                                         {vawcCase.assessment.risk_level === 'CRITICAL' ? <AlertTriangle className="w-4 h-4" /> : <ShieldCheck className="w-4 h-4" />}
                                     </div>
                                     <div>

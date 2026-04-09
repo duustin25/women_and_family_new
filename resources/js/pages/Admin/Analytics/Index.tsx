@@ -307,11 +307,11 @@ export default function Index({
                                         <BarChart data={zoneRiskImpact} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
                                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                                             <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 'bold' }} />
-                                            <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 'bold' }} domain={[0, 10]} />
-                                            <Tooltip formatter={(value) => [`${value} / 10.0`, 'Avg Risk Score']} />
+                                            <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 'bold' }} domain={[0, 12]} />
+                                            <Tooltip formatter={(value) => [`${value} / 12.0`, 'Avg Risk Score']} />
                                             <Bar dataKey="score" radius={[4, 4, 0, 0]}>
                                                 {zoneRiskImpact.map((entry: any, index: number) => (
-                                                    <Cell key={`cell-${index}`} fill={entry.score > 7 ? '#ef4444' : entry.score > 4 ? '#f97316' : '#3b82f6'} />
+                                                    <Cell key={`cell-${index}`} fill={entry.score >= 9 ? '#ef4444' : entry.score >= 7 ? '#f97316' : '#eab308'} />
                                                 ))}
                                             </Bar>
                                         </BarChart>

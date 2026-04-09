@@ -42,7 +42,7 @@ class OfficialController extends Controller
             'position' => 'required|string|max:255',
             'committee' => 'nullable|string|max:255',
             'level' => 'required|in:head,secretary,staff',
-            'image_path' => 'nullable|image|max:10240|dimensions:ratio=1/1',
+            'image_path' => 'nullable|image|max:10240',
         ];
 
         $validated = $request->validate($rules);
@@ -90,7 +90,7 @@ class OfficialController extends Controller
             'position' => 'required|string|max:255',
             'committee' => 'nullable|string|max:255',
             'level' => 'required|in:head,secretary,staff',
-            'image_path' => 'nullable|image|max:10240|dimensions:ratio=1/1',
+            'image_path' => 'nullable|image|max:10240',
             'is_active' => 'boolean'
         ];
 

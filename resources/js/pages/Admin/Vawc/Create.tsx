@@ -274,10 +274,9 @@ export default function Create({ abuseTypes, zones }: Props) {
                         <Card className="bg-primary/5 border-primary/20">
                             <CardHeader>
                                 <CardTitle className="text-sm flex items-center gap-2">
-                                    <span className="p-1 bg-primary/10 rounded">🔍</span>
                                     Vulnerability Risk Assessment (VRA)
                                 </CardTitle>
-                                <CardDescription className="text-[10px]">VAWC-RAVE Scoring Algorithm (1=Low, 3=Critical)</CardDescription>
+                                <CardDescription className="text-[10px]">VAWC-RAVE Additive Scoring Algorithm (Max Score: 12). Values map adaptively to the abuse type chosen.</CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-3">
                                 <div className="grid grid-cols-2 gap-3">

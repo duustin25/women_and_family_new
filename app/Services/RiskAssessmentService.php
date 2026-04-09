@@ -40,39 +40,17 @@ class RiskAssessmentService
         }
 
         /**
-         * ALGORITHM: Weighted Linear Combination (WLC)
-         * Weights:
-         * - Severity: 30% (Highest biological/physical risk)
-         * - Weapon Access: 25% (Lethality index)
-         * - Threat level: 25% (Intent index)
-         * - Frequency: 20% (Systemic risk)
+         * ALGORITHM V2: Direct Additive Model
+         * The user suggested a strict additive scoring guide where all 4 factors
+         * are summed. Max score per factor is 3, total max score is 12.
          */
-        $wSev = 0.30;
-        $wWeapon = 0.25;
-        $wThreat = 0.25;
-        $wFreq = 0.20;
+        $rawScore = $freq + $sev + $weapon + $threat;
 
-        $rawScore = ($sev * $wSev) + ($weapon * $wWeapon) + ($threat * $wThreat) + ($freq * $wFreq);
-
-        /**
-         * Normalization: Map [1.0, 3.0] to [0.0, 10.0]
-         * Formula: ((Raw - Min) / (Max - Min)) * 10
-         * Min Raw: 1.0 (all factors are 1)
-         * Max Raw: 3.0 (all factors are 3)
-         */
-        if ($rawScore <= 0) {
-            $normalizedScore = 0;
-        } else {
-            // We use a slightly more aggressive normalization to match the user's examples
-            // where 3s and 2s result in 9s and 10s.
-            $normalizedScore = round(($rawScore / 3.0) * 10, 2);
-        }
-
-        // Determine Level and Recommendations
-        $result = $this->determineLevel($normalizedScore);
+        // Determine Level and Recommendations based on 1-12 scale
+        $result = $this->determineLevel($rawScore);
         
         return [
-            'score' => $normalizedScore,
+            'score' => (float) $rawScore,
             'level' => $result['level'],
             'recommendation' => $result['recommendation']
         ];
@@ -111,21 +89,21 @@ class RiskAssessmentService
     }
 
     /**
-     * Determine risk level and recommendation based on score.
+     * Determine risk level and recommendation based on the VRA 1-12 score.
      */
     private function determineLevel(float $score): array
     {
-        if ($score >= 8.6) {
+        if ($score >= 9) {
             return [
                 'level' => 'CRITICAL',
                 'recommendation' => 'EMERGENCY: Immediate police escort and medical intervention required. Shelter placement recommended.'
             ];
-        } elseif ($score >= 6.1) {
+        } elseif ($score >= 7) {
             return [
                 'level' => 'HIGH',
                 'recommendation' => 'URGENT: Legal protection order (BPO/TPO) recommended. Safety planning and temporary relocation required.'
             ];
-        } elseif ($score >= 3.1) {
+        } elseif ($score >= 4) {
             return [
                 'level' => 'MODERATE',
                 'recommendation' => 'MONITORING: Regular counseling and social worker check-ins required. Legal consultation recommended.'

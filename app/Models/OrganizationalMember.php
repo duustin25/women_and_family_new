@@ -15,6 +15,7 @@ class OrganizationalMember extends Model
         'position',
         'committee',
         'level',
+        'image_path',
         'display_order',
         'is_active'
     ];

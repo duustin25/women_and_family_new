@@ -135,9 +135,10 @@ export default function Index({ cases, filters }: Props) {
                         <Table>
                             <TableHeader className="bg-muted/10">
                                 <TableRow>
-                                    <TableHead className="w-[300px] font-bold py-4">Case Number</TableHead>
+                                    <TableHead className="w-[250px] font-bold py-4">Case Number</TableHead>
                                     <TableHead className="font-bold">Victim</TableHead>
                                     <TableHead className="font-bold text-center">Status</TableHead>
+                                    <TableHead className="font-bold text-center">Triage Priority</TableHead>
                                     <TableHead className="font-bold">Involved Parties</TableHead>
                                     <TableHead className="font-bold">Date Reported</TableHead>
                                     <TableHead className="text-right font-bold pr-6">Registry</TableHead>
@@ -151,32 +152,52 @@ export default function Index({ cases, filters }: Props) {
                                         </TableCell>
                                     </TableRow>
                                 )}
-                                {cases.map((vawc: any) => (
-                                    <TableRow key={vawc.id} className="hover:bg-muted/5">
-                                        <TableCell className="font-mono font-bold text-sm pl-6 text-primary">
-                                            {vawc.case_report.case_number}
-                                        </TableCell>
-                                        <TableCell>
-                                            <div className="flex flex-col">
-                                                <span className="font-semibold text-sm">
-                                                    {vawc.involved_parties.find((p: any) => p.role === 'Victim')?.name || 'N/A'}
-                                                </span>
-                                                <span className="text-[10px] text-muted-foreground uppercase">{vawc.case_report.abuse_type?.name}</span>
-                                            </div>
-                                        </TableCell>
-                                        <TableCell className="text-center">
-                                            <Badge variant={getStatusVariant(vawc.status)} className="text-[10px] uppercase font-bold tracking-wider h-6 px-3">
-                                                {vawc.status}
-                                            </Badge>
-                                        </TableCell>
-                                        <TableCell>
-                                            <div className="flex items-center gap-1">
-                                                <Badge variant="outline" className="text-[9px] border-amber-200 bg-amber-50 text-amber-700">Victim</Badge>
-                                                {vawc.involved_parties.some((p: any) => p.role === 'Respondent') &&
-                                                    <Badge variant="outline" className="text-[9px] border-slate-200 bg-slate-50 text-slate-700">Respondent</Badge>
-                                                }
-                                            </div>
-                                        </TableCell>
+                                {cases.map((vawc: any) => {
+                                    const isCritical = vawc.assessment?.risk_level === 'CRITICAL' && vawc.status !== 'Closed';
+                                    
+                                    return (
+                                        <TableRow key={vawc.id} className={`transition-all ${isCritical ? 'bg-red-50/50 hover:bg-red-100/50 dark:bg-red-950/20' : 'hover:bg-muted/5'}`}>
+                                            <TableCell className="font-mono font-bold text-sm pl-6 text-primary flex items-center gap-2">
+                                                {isCritical && <span className="flex h-2 w-2 rounded-full bg-red-600 animate-pulse"></span>}
+                                                {vawc.case_report.case_number}
+                                            </TableCell>
+                                            <TableCell>
+                                                <div className="flex flex-col">
+                                                    <span className="font-semibold text-sm">
+                                                        {vawc.involved_parties.find((p: any) => p.role === 'Victim')?.name || 'N/A'}
+                                                    </span>
+                                                    <span className="text-[10px] text-muted-foreground uppercase">{vawc.case_report.abuse_type?.name}</span>
+                                                </div>
+                                            </TableCell>
+                                            <TableCell className="text-center">
+                                                <Badge variant={getStatusVariant(vawc.status)} className="text-[10px] uppercase font-bold tracking-wider h-6 px-3">
+                                                    {vawc.status}
+                                                </Badge>
+                                            </TableCell>
+                                            <TableCell className="text-center">
+                                                {vawc.assessment ? (
+                                                    <Badge 
+                                                        className={`text-[9px] uppercase font-black tracking-widest ${
+                                                            vawc.assessment.risk_level === 'CRITICAL' ? 'bg-red-600 hover:bg-red-700 text-white' :
+                                                            vawc.assessment.risk_level === 'HIGH' ? 'bg-orange-500 hover:bg-orange-600 text-white' :
+                                                            vawc.assessment.risk_level === 'MODERATE' ? 'bg-yellow-500 hover:bg-yellow-600 text-white' :
+                                                            'bg-blue-500 hover:bg-blue-600 text-white'
+                                                        }`}
+                                                    >
+                                                        {vawc.assessment.risk_level}
+                                                    </Badge>
+                                                ) : (
+                                                    <span className="text-[10px] text-muted-foreground italic">Pending</span>
+                                                )}
+                                            </TableCell>
+                                            <TableCell>
+                                                <div className="flex items-center gap-1">
+                                                    <Badge variant="outline" className="text-[9px] border-amber-200 bg-amber-50 text-amber-700">Victim</Badge>
+                                                    {vawc.involved_parties.some((p: any) => p.role === 'Respondent') &&
+                                                        <Badge variant="outline" className="text-[9px] border-slate-200 bg-slate-50 text-slate-700">Respondent</Badge>
+                                                    }
+                                                </div>
+                                            </TableCell>
                                         <TableCell className="text-muted-foreground text-sm font-medium">
                                             {new Date(vawc.created_at).toLocaleDateString(undefined, {
                                                 year: 'numeric', month: 'short', day: 'numeric'
@@ -190,9 +211,10 @@ export default function Index({ cases, filters }: Props) {
                                             </Button>
                                         </TableCell>
                                     </TableRow>
-                                ))}
+                                    );
+                                })}
                             </TableBody>
-                        </Table>
+                            </Table>
                     </CardContent>
                 </Card>
             </div>

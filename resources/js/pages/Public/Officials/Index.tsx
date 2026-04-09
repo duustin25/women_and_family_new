@@ -72,15 +72,14 @@ export default function Index({ head, secretary, staff }: Props) {
                         </p>
                     )}
 
-                    {/* Hierarchy Level Badge */}
+                    {/* Hierarchy Level Badge
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest ${badgeColor}`}>
                         {isHead ? 'Committee Head' : isSecretary ? 'Secretary' : 'Staff Member'}
-                    </span>
+                    </span> */}
 
                     {/* Optional Committee Info */}
                     {member.committee && (
                         <div className="flex items-center gap-1.5 mt-4 pt-4 border-t border-slate-100 dark:border-neutral-800 w-full justify-center">
-                            <Building2 className="w-3.5 h-3.5 text-slate-400" />
                             <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">
                                 {member.committee}
                             </p>

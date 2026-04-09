@@ -41,7 +41,7 @@ class VawcController extends Controller
      */
     public function index(Request $request)
     {
-        $query = VawcCase::with(['caseReport.abuseType', 'involvedParties']);
+        $query = VawcCase::with(['caseReport.abuseType', 'involvedParties', 'assessment']);
 
         // Filter by Search (Case Number or Victim Name)
         if ($request->filled('search')) {
@@ -64,11 +64,15 @@ class VawcController extends Controller
         // The "Archived vs Active" Strategy Pattern Separation
         if ($request->input('archived') === '1') {
             $query->where('status', 'Closed'); // Only show the Historical records
+            $cases = $query->orderByDesc('created_at')->get();
         } else {
             $query->where('status', '!=', 'Closed'); // Only show Active Worklist
+            
+            // PRIORITY TRIAGE QUEUE: Sort by Risk Score first, then date
+            $cases = $query->get()->sortByDesc(function ($case) {
+                return $case->assessment ? $case->assessment->risk_score : 0;
+            })->values();
         }
-
-        $cases = $query->orderByDesc('created_at')->get();
 
         return Inertia::render('Admin/Vawc/Index', [
             'cases' => $cases,
