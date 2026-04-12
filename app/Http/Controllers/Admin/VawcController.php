@@ -141,11 +141,7 @@ class VawcController extends Controller
             'requires_medical' => 'boolean',
             'requires_alternative_housing' => 'boolean',
 
-            // New Risk Assessment Fields
-            'abuse_frequency' => 'nullable|integer|min:1|max:3',
-            'abuse_severity' => 'nullable|integer|min:1|max:3',
-            'weapon_access' => 'nullable|integer|min:1|max:3',
-            'life_threat_level' => 'nullable|integer|min:1|max:3',
+            // Risk assessment is now fully automated via VAWC-RAVE Engine
         ]);
 
         $this->vawcService->createVawcCase($validated);

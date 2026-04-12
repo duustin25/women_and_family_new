@@ -58,8 +58,8 @@ export default function Index({ cases, filters }: Props) {
                 {/* Header */}
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <div>
-                        <h1 className="text-2xl font-bold tracking-tight">VAWC Digital Registry</h1>
-                        <p className="text-muted-foreground text-sm">[RA 9262] Violence Against Women and Children Case Management</p>
+                        <h1 className="text-2xl font-bold tracking-tight bg-clip-text text-foreground">VAWC Registry</h1>
+                        <p className="text-muted-foreground text-sm">[Republic Act 9262] Violence Against Women and Children Case Management</p>
                     </div>
                     <div className="flex gap-2">
                         <Button asChild variant="outline" size="sm" className="flex items-center gap-2">
@@ -78,15 +78,15 @@ export default function Index({ cases, filters }: Props) {
                 </div>
 
                 {/* WORKFLOW MODE SWITCHER */}
-                <div className="flex bg-neutral-100 p-1 rounded-xl max-w-md">
+                <div className="flex bg-muted p-1 rounded-xl max-w-md border border-border/50">
                     <button
-                        className={`flex-1 text-xs font-black uppercase tracking-widest py-3 rounded-lg transition-all ${archived === '0' ? 'bg-primary text-primary-foreground shadow-md' : 'text-muted-foreground hover:bg-slate-200/50 hover:text-slate-700'}`}
+                        className={`flex-1 text-xs font-black uppercase tracking-widest py-3 rounded-lg transition-all ${archived === '0' ? 'bg-primary text-primary-foreground shadow-md' : 'text-muted-foreground hover:bg-background/50 hover:text-foreground'}`}
                         onClick={() => { setArchived('0'); setStatus('all'); }}
                     >
                         Active Registry
                     </button>
                     <button
-                        className={`flex-1 text-xs font-black uppercase tracking-widest py-3 rounded-lg transition-all ${archived === '1' ? 'bg-slate-600 text-white shadow-md' : 'text-muted-foreground hover:bg-slate-200/50 hover:text-slate-700'}`}
+                        className={`flex-1 text-xs font-black uppercase tracking-widest py-3 rounded-lg transition-all ${archived === '1' ? 'bg-slate-600 dark:bg-slate-700 text-white shadow-md' : 'text-muted-foreground hover:bg-background/50 hover:text-foreground'}`}
                         onClick={() => { setArchived('1'); setStatus('all'); }}
                     >
                         Closed Records
@@ -97,9 +97,9 @@ export default function Index({ cases, filters }: Props) {
                 <Card className="border-muted shadow-md overflow-hidden">
                     <CardHeader className={`pb-3 border-b bg-muted/5 flex flex-row items-center justify-between text-right ${archived === '1'}`}>
                         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                            <CardTitle className={`text-sm font-semibold flex items-center gap-2 whitespace-nowrap ${archived === '1'}`}>
-                                {archived === '1' ? 'Closed & Archived Cases' : 'Active Case Logbook'}
-                                <Badge variant="secondary" className="ml-2 h-5">{cases.length}</Badge>
+                            <CardTitle className={`text-sm font-black flex items-center gap-2 whitespace-nowrap uppercase tracking-widest ${archived === '1'}`}>
+                                {archived === '1' ? 'Closed & Archived Records' : 'Priority Triage Queue [Republic Act 9262]'}
+                                <Badge variant="secondary" className="ml-2 h-5 text-[10px]">{cases.length} Total</Badge>
                             </CardTitle>
 
                             <div className="flex flex-1 flex-col sm:flex-row items-center justify-end gap-2 w-full">
@@ -111,11 +111,11 @@ export default function Index({ cases, filters }: Props) {
                                         </div>
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="all">All Status</SelectItem>
-                                        <SelectItem value="Intake">Intake</SelectItem>
-                                        <SelectItem value="BPO Processing">BPO Processing</SelectItem>
-                                        <SelectItem value="Monitoring">Monitoring</SelectItem>
-                                        <SelectItem value="Escalated">Escalated</SelectItem>
+                                        <SelectItem value="all">All Registry Stages</SelectItem>
+                                        <SelectItem value="Intake">Initial Intake</SelectItem>
+                                        <SelectItem value="BPO Processing">Protection Order Processing</SelectItem>
+                                        <SelectItem value="Monitoring">Monitoring & Compliance</SelectItem>
+                                        <SelectItem value="Escalated">Legally Escalated</SelectItem>
                                     </SelectContent>
                                 </Select>
 
@@ -139,7 +139,7 @@ export default function Index({ cases, filters }: Props) {
                                     <TableHead className="font-bold">Victim</TableHead>
                                     <TableHead className="font-bold text-center">Status</TableHead>
                                     <TableHead className="font-bold text-center">Triage Priority</TableHead>
-                                    <TableHead className="font-bold">Involved Parties</TableHead>
+                                    <TableHead className="font-bold">Protocol Status</TableHead>
                                     <TableHead className="font-bold">Date Reported</TableHead>
                                     <TableHead className="text-right font-bold pr-6">Registry</TableHead>
                                 </TableRow>
@@ -154,11 +154,22 @@ export default function Index({ cases, filters }: Props) {
                                 )}
                                 {cases.map((vawc: any) => {
                                     const isCritical = vawc.assessment?.risk_level === 'CRITICAL' && vawc.status !== 'Closed';
-                                    
+
+                                    // CENTRALIZED RISK THEMES FOR INDEX (No blinking, just professional colors)
+                                    const RISK_THEMES: Record<string, string> = {
+                                        'CRITICAL': 'bg-red-600 text-white',
+                                        'HIGH': 'bg-orange-500 text-white',
+                                        'MODERATE': 'bg-yellow-500 text-black dark:text-white',
+                                        'LOW': 'bg-blue-500 text-white'
+                                    };
+
+                                    const riskLevel = vawc.assessment?.risk_level || 'LOW';
+                                    const riskClass = RISK_THEMES[riskLevel] || 'bg-slate-500 text-white';
+
                                     return (
-                                        <TableRow key={vawc.id} className={`transition-all ${isCritical ? 'bg-red-50/50 hover:bg-red-100/50 dark:bg-red-950/20' : 'hover:bg-muted/5'}`}>
+                                        <TableRow key={vawc.id} className={`transition-all group ${isCritical ? 'bg-destructive/5 hover:bg-destructive/10 dark:bg-red-950/20' : 'hover:bg-muted/5'}`}>
                                             <TableCell className="font-mono font-bold text-sm pl-6 text-primary flex items-center gap-2">
-                                                {isCritical && <span className="flex h-2 w-2 rounded-full bg-red-600 animate-pulse"></span>}
+                                                {isCritical && <span className="flex h-2 w-2 rounded-full bg-red-600"></span>}
                                                 {vawc.case_report.case_number}
                                             </TableCell>
                                             <TableCell>
@@ -176,45 +187,38 @@ export default function Index({ cases, filters }: Props) {
                                             </TableCell>
                                             <TableCell className="text-center">
                                                 {vawc.assessment ? (
-                                                    <Badge 
-                                                        className={`text-[9px] uppercase font-black tracking-widest ${
-                                                            vawc.assessment.risk_level === 'CRITICAL' ? 'bg-red-600 hover:bg-red-700 text-white' :
-                                                            vawc.assessment.risk_level === 'HIGH' ? 'bg-orange-500 hover:bg-orange-600 text-white' :
-                                                            vawc.assessment.risk_level === 'MODERATE' ? 'bg-yellow-500 hover:bg-yellow-600 text-white' :
-                                                            'bg-blue-500 hover:bg-blue-600 text-white'
-                                                        }`}
-                                                    >
+                                                    <Badge className={`text-[9px] uppercase font-black tracking-widest px-2 ${riskClass}`}>
                                                         {vawc.assessment.risk_level}
                                                     </Badge>
                                                 ) : (
-                                                    <span className="text-[10px] text-muted-foreground italic">Pending</span>
+                                                    <span className="text-[10px] text-muted-foreground italic">New / Pending</span>
                                                 )}
                                             </TableCell>
                                             <TableCell>
                                                 <div className="flex items-center gap-1">
-                                                    <Badge variant="outline" className="text-[9px] border-amber-200 bg-amber-50 text-amber-700">Victim</Badge>
+                                                    <Badge variant="outline" className="text-[9px] border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/20 text-amber-700 dark:text-amber-400">Victim</Badge>
                                                     {vawc.involved_parties.some((p: any) => p.role === 'Respondent') &&
-                                                        <Badge variant="outline" className="text-[9px] border-slate-200 bg-slate-50 text-slate-700">Respondent</Badge>
+                                                        <Badge variant="outline" className="text-[9px] border-border bg-muted/50 text-muted-foreground">Respondent</Badge>
                                                     }
                                                 </div>
                                             </TableCell>
-                                        <TableCell className="text-muted-foreground text-sm font-medium">
-                                            {new Date(vawc.created_at).toLocaleDateString(undefined, {
-                                                year: 'numeric', month: 'short', day: 'numeric'
-                                            })}
-                                        </TableCell>
-                                        <TableCell className="text-right pr-6">
-                                            <Button variant="ghost" size="sm" asChild className="opacity-70 group-hover:opacity-100 group-hover:bg-primary/10 transition-all font-bold text-xs ring-offset-background hover:text-primary">
-                                                <Link href={route('admin.vawc.show', vawc.id)}>
-                                                    Open <ChevronRight className="w-3 h-3 ml-1" />
-                                                </Link>
-                                            </Button>
-                                        </TableCell>
-                                    </TableRow>
+                                            <TableCell className="text-muted-foreground text-sm font-medium">
+                                                {new Date(vawc.created_at).toLocaleDateString(undefined, {
+                                                    year: 'numeric', month: 'short', day: 'numeric'
+                                                })}
+                                            </TableCell>
+                                            <TableCell className="text-right pr-6">
+                                                <Button variant="ghost" size="sm" asChild className="opacity-70 group-hover:opacity-100 group-hover:bg-primary/10 transition-all font-bold text-xs ring-offset-background hover:text-primary">
+                                                    <Link href={route('admin.vawc.show', vawc.id)}>
+                                                        Open <ChevronRight className="w-3 h-3 ml-1" />
+                                                    </Link>
+                                                </Button>
+                                            </TableCell>
+                                        </TableRow>
                                     );
                                 })}
                             </TableBody>
-                            </Table>
+                        </Table>
                     </CardContent>
                 </Card>
             </div>

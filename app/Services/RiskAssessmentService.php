@@ -21,23 +21,14 @@ class RiskAssessmentService
      */
     public function calculateVawcRisk(VawcAssessment $assessment): array
     {
-        // 1. SMART-TRIAGE: Prefill values from parent case if they are 0
-        $this->prefillFromCase($assessment);
+        // 1. SMART-TRIAGE: Automatically assess values based on case parameters
+        $this->autoAssessRisk($assessment);
 
-        // Factors (Scale 1-3, where 0 means not evaluated)
-        $freq = $assessment->abuse_frequency ?: 0;
-        $sev = $assessment->abuse_severity ?: 0;
-        $weapon = $assessment->weapon_access ?: 0;
-        $threat = $assessment->life_threat_level ?: 0;
-
-        // If no values are provided, return empty
-        if ($freq === 0 && $sev === 0 && $weapon === 0 && $threat === 0) {
-            return [
-                'score' => 0.00,
-                'level' => 'Incomplete',
-                'recommendation' => 'Please complete the risk assessment factors.'
-            ];
-        }
+        // Factors (Scale 1-3)
+        $freq = $assessment->abuse_frequency;
+        $sev = $assessment->abuse_severity;
+        $weapon = $assessment->weapon_access;
+        $threat = $assessment->life_threat_level;
 
         /**
          * ALGORITHM V2: Direct Additive Model
@@ -48,7 +39,7 @@ class RiskAssessmentService
 
         // Determine Level and Recommendations based on 1-12 scale
         $result = $this->determineLevel($rawScore);
-        
+
         return [
             'score' => (float) $rawScore,
             'level' => $result['level'],
@@ -57,34 +48,46 @@ class RiskAssessmentService
     }
 
     /**
-     * PREFILL / SMART-TRIAGE ENGINE
+     * AUTOMATED SMART-TRIAGE ENGINE
      * 
-     * Analyzes existing case flags (Weapons, Repeat Offense, Children) to 
-     * suggest a baseline risk score if the user hasn't provided one.
+     * Analyzes existing case flags (Weapons, Repeat Offense, Children, Medical) 
+     * to automatically assign the full risk score. Removes manual input requirement.
      */
-    public function prefillFromCase(VawcAssessment $assessment): void
+    public function autoAssessRisk(VawcAssessment $assessment): void
     {
         $case = $assessment->vawcCase;
         if (!$case) return;
 
-        // 1. WEAPON ACCESS: If 'has_weapon_involved' is TRUE, set to 3
-        if ($case->has_weapon_involved && $assessment->weapon_access === 0) {
+        // 1. WEAPON ACCESS:
+        if ($case->has_weapon_involved || $case->weapons_confiscated) {
             $assessment->weapon_access = 3;
+        } else {
+            $assessment->weapon_access = 1;
         }
 
-        // 2. FREQUENCY: If 'is_repeat_offense' is TRUE, set to at least 2
-        if ($case->is_repeat_offense && $assessment->abuse_frequency === 0) {
-            $assessment->abuse_frequency = 2;
+        // 2. FREQUENCY / HISTORY:
+        if ($case->is_repeat_offense) {
+            $assessment->abuse_frequency = 3;
+        } else {
+            $assessment->abuse_frequency = 1;
         }
 
-        // 3. SEVERITY: If perpetrator is present at scene, increment severity
-        if ($case->perpetrator_present && $assessment->abuse_severity === 0) {
-            $assessment->abuse_severity = 2;
+        // 3. SEVERITY / INJURIES:
+        if ($assessment->requires_medical) {
+            $assessment->abuse_severity = 3; // Life-threatening / Requires Medical
+        } elseif ($case->perpetrator_present || $case->incident_veracity) {
+            $assessment->abuse_severity = 2; // Verified / Perpetrator aggressive
+        } else {
+            $assessment->abuse_severity = 1; // Unverified or Minor
         }
 
-        // 4. LETHALITY/THREAT: If children are involved, increment threat baseline
-        if ($case->children_count > 0 && $assessment->life_threat_level === 0) {
-            $assessment->life_threat_level = 1;
+        // 4. LETHALITY / THREAT:
+        if ($case->warrantless_arrest_made) {
+            $assessment->life_threat_level = 3; // Extreme threat justifying warrantless arrest
+        } elseif ($case->children_count > 0 || $assessment->requires_alternative_housing) {
+            $assessment->life_threat_level = 2; // Medium threat, children at risk or displaced
+        } else {
+            $assessment->life_threat_level = 1; // Baseline verbal/minor threat
         }
     }
 
@@ -101,7 +104,7 @@ class RiskAssessmentService
         } elseif ($score >= 7) {
             return [
                 'level' => 'HIGH',
-                'recommendation' => 'URGENT: Legal protection order (BPO/TPO) recommended. Safety planning and temporary relocation required.'
+                'recommendation' => 'URGENT: Legal protection order (Barangay Protection Order/Temporary Protection Order) recommended. Safety planning and temporary relocation required.'
             ];
         } elseif ($score >= 4) {
             return [

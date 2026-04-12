@@ -46,9 +46,9 @@ class VawcAssessment extends Model
         parent::boot();
 
         static::saving(function ($assessment) {
-            $service = new \App\Services\RiskAssessmentService();
+            $service = app(\App\Services\RiskAssessmentService::class);
             $result = $service->calculateVawcRisk($assessment);
-            
+
             $assessment->risk_score = $result['score'];
             $assessment->risk_level = $result['level'];
         });

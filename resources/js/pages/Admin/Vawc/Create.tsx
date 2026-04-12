@@ -2,12 +2,13 @@ import AppLayout from '@/layouts/app-layout';
 import { Head, useForm, Link } from '@inertiajs/react';
 import React from 'react';
 import { route } from 'ziggy-js';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
+import { ShieldAlert, AlertTriangle, UserPlus, Save, ArrowLeft, FileText, MapPin } from 'lucide-react';
 
 interface Props {
     abuseTypes: any[];
@@ -49,18 +50,28 @@ export default function Create({ abuseTypes, zones }: Props) {
         <AppLayout>
             <Head title="VAWC Case Intake" />
 
-            <form onSubmit={handleSubmit} className="p-6 space-y-6 max-w-7xl mx-auto">
-                <div className="flex justify-between items-center">
-                    <div>
-                        <h1 className="text-2xl font-bold tracking-tight">New Case Intake</h1>
-                        <p className="text-muted-foreground text-sm font-mono">[RA 9262] Documenting Incident & Immediate Response</p>
+            <form onSubmit={handleSubmit} className="p-6 space-y-8 max-w-7xl mx-auto">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-card p-6 rounded-2xl border border-border shadow-sm relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
+                    <div className="flex gap-4 items-center z-10">
+                        <div className="bg-gradient-to-br from-primary/20 to-primary/5 p-4 rounded-xl border border-primary/20 text-primary">
+                            <ShieldAlert className="w-8 h-8" />
+                        </div>
+                        <div>
+                            <h1 className="text-3xl font-black tracking-tight bg-gradient-to-br from-slate-900 to-slate-600 dark:from-slate-100 dark:to-slate-400 bg-clip-text text-transparent">New Case Intake</h1>
+                            <p className="text-muted-foreground text-sm font-medium tracking-wide mt-1">[Republic Act 9262] Documenting Incident & Immediate Response</p>
+                        </div>
                     </div>
-                    <div className="space-x-2">
-                        <Button variant="outline" asChild>
-                            <Link href={route('admin.vawc.index')}>Cancel</Link>
+                    <div className="space-x-3 mt-4 sm:mt-0 z-10">
+                        <Button variant="outline" size="lg" className="rounded-xl border-border hover:bg-muted transition-all font-semibold" asChild>
+                            <Link href={route('admin.vawc.index')} className="flex gap-2 items-center">
+                                <ArrowLeft className="w-4 h-4" /> Cancel
+                            </Link>
                         </Button>
-                        <Button type="submit" disabled={processing}>
-                            {processing ? 'Saving...' : 'Save to Registry'}
+                        <Button type="submit" size="lg" disabled={processing} className="rounded-xl bg-primary hover:bg-primary/90 shadow-md shadow-primary/20 transition-all font-semibold px-6">
+                            {processing ? 'Saving...' : (
+                                <span className="flex gap-2 items-center"><Save className="w-4 h-4" /> Save to Registry</span>
+                            )}
                         </Button>
                     </div>
                 </div>
@@ -68,40 +79,54 @@ export default function Create({ abuseTypes, zones }: Props) {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {/* LEFT COLUMN: VICTIM & INTAKE */}
                     <div className="space-y-6">
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Intake Information</CardTitle>
-                                <CardDescription>How the case was reported and verified.</CardDescription>
+                        <Card className="border-muted shadow-sm hover:shadow-md transition-shadow duration-300">
+                            <CardHeader className="border-b bg-muted/20 pb-4">
+                                <div className="flex items-center gap-2">
+                                    <FileText className="w-5 h-5 text-muted-foreground" />
+                                    <div>
+                                        <CardTitle className="text-lg">Intake Information</CardTitle>
+                                        <CardDescription>How the case was reported and verified.</CardDescription>
+                                    </div>
+                                </div>
                             </CardHeader>
-                            <CardContent className="space-y-4">
+                            <CardContent className="space-y-5 pt-6">
                                 <div className="space-y-2">
-                                    <Label>Intake Type</Label>
+                                    <Label className="font-semibold text-slate-700 dark:text-slate-300">Reporting Method</Label>
                                     <select
-                                        className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-colors"
                                         value={data.intake_type}
                                         onChange={e => setData('intake_type', e.target.value)}
                                     >
-                                        <option value="Direct">Direct (Victim Reports)</option>
-                                        <option value="Third-Party">Third-Party (PB/Kagawad Verified)</option>
+                                        <option value="Direct">Direct Complaint (Victim Reports Personally)</option>
+                                        <option value="Third-Party">Third-Party (Reported by neighbor/Kagawad)</option>
                                     </select>
                                 </div>
-                                <div className="flex items-center space-x-2">
+                                <label htmlFor="incident_veracity" className="flex items-start space-x-3 p-4 rounded-lg border border-border bg-muted/30 hover:border-primary/50 cursor-pointer transition-all">
                                     <Checkbox
                                         id="incident_veracity"
                                         checked={data.incident_veracity}
                                         onCheckedChange={(checked) => setData('incident_veracity', !!checked)}
+                                        className="mt-0.5"
                                     />
-                                    <Label htmlFor="incident_veracity">Incident Verified by PB/Kagawad?</Label>
-                                </div>
+                                    <div className="space-y-1">
+                                        <p className="text-sm font-bold leading-none text-foreground">Incident Verified</p>
+                                        <p className="text-xs text-muted-foreground">Has a Barangay Official physically verified the incident?</p>
+                                    </div>
+                                </label>
                             </CardContent>
                         </Card>
 
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Victim Details</CardTitle>
-                                <CardDescription>Personal information of the survivor.</CardDescription>
+                        <Card className="border-muted shadow-sm hover:shadow-md transition-shadow duration-300">
+                            <CardHeader className="border-b bg-muted/20 pb-4">
+                                <div className="flex items-center gap-2">
+                                    <UserPlus className="w-5 h-5 text-muted-foreground" />
+                                    <div>
+                                        <CardTitle className="text-lg">Victim Profile</CardTitle>
+                                        <CardDescription>Personal information of the survivor.</CardDescription>
+                                    </div>
+                                </div>
                             </CardHeader>
-                            <CardContent className="space-y-4">
+                            <CardContent className="space-y-5 pt-6">
                                 <div className="space-y-2">
                                     <Label htmlFor="v_name">Full Name</Label>
                                     <Input id="v_name" value={data.victim.name} onChange={e => setData('victim', { ...data.victim, name: e.target.value })} />
@@ -139,20 +164,21 @@ export default function Create({ abuseTypes, zones }: Props) {
 
                     {/* RIGHT COLUMN: RESPONDENT & INCIDENT */}
                     <div className="space-y-6">
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Respondent (Perpetrator)</CardTitle>
+                        <Card className="border-muted shadow-sm hover:shadow-md transition-shadow duration-300 relative overflow-hidden">
+                            <div className="absolute left-0 top-0 bottom-0 w-1 bg-border dark:bg-muted"></div>
+                            <CardHeader className="border-b bg-muted/20 pb-4 pl-6">
+                                <CardTitle className="text-lg">Respondent (Perpetrator)</CardTitle>
                                 <CardDescription>Information on the person involved in the incident.</CardDescription>
                             </CardHeader>
-                            <CardContent className="space-y-4">
+                            <CardContent className="space-y-5 pt-6 pl-6">
                                 <div className="space-y-2">
                                     <Label htmlFor="r_name">Full Name</Label>
-                                    <Input id="r_name" value={data.respondent.name} onChange={e => setData('respondent', { ...data.respondent, name: e.target.value })} />
+                                    <Input id="r_name" placeholder="Leave blank if unknown" value={data.respondent.name} onChange={e => setData('respondent', { ...data.respondent, name: e.target.value })} className="h-10 transition-colors focus-visible:ring-primary/30" />
                                 </div>
                                 <div className="space-y-2">
                                     <Label>Relationship to Victim</Label>
                                     <select
-                                        className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm"
+                                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 transition-colors"
                                         value={data.respondent.relationship}
                                         onChange={e => setData('respondent', { ...data.respondent, relationship: e.target.value })}
                                     >
@@ -166,53 +192,80 @@ export default function Create({ abuseTypes, zones }: Props) {
                                         <option value="Other Family Member">Other Family Member</option>
                                     </select>
                                 </div>
-                                <div className="flex items-center space-x-2">
-                                    <Checkbox
-                                        id="perpetrator_present"
-                                        checked={data.perpetrator_present}
-                                        onCheckedChange={(checked) => setData('perpetrator_present', !!checked)}
-                                    />
-                                    <Label htmlFor="perpetrator_present">Perpetrator Present at Scene?</Label>
-                                </div>
-                                <div className="flex flex-col gap-2 border-l-2 pl-4 py-2 bg-muted/30">
-                                    <div className="flex items-center space-x-2">
+
+                                {/* Modern Checkbox Actions */}
+                                <div className="grid grid-cols-1 gap-2 border-t pt-4">
+                                    <label htmlFor="perpetrator_present" className="flex items-start space-x-3 p-3 rounded-lg border border-transparent hover:bg-muted cursor-pointer transition-colors group">
+                                        <Checkbox
+                                            id="perpetrator_present"
+                                            checked={data.perpetrator_present}
+                                            onCheckedChange={(checked) => setData('perpetrator_present', !!checked)}
+                                            className="mt-0.5 group-hover:border-primary"
+                                        />
+                                        <div>
+                                            <p className="text-sm font-semibold leading-none text-foreground">Perpetrator Present at Scene?</p>
+                                            <p className="text-xs text-muted-foreground mt-1">Was the perpetrator caught in the act or still in the vicinity?</p>
+                                        </div>
+                                    </label>
+
+                                    <label htmlFor="warrantless_arrest" className="flex items-start space-x-3 p-3 rounded-lg border border-transparent hover:bg-muted cursor-pointer transition-colors group">
                                         <Checkbox
                                             id="warrantless_arrest"
                                             checked={data.warrantless_arrest_made}
                                             onCheckedChange={(checked) => setData('warrantless_arrest_made', !!checked)}
+                                            className="mt-0.5 group-hover:border-primary"
                                         />
-                                        <Label htmlFor="warrantless_arrest">Warrantless Arrest Made?</Label>
-                                    </div>
-                                    <div className="flex items-center space-x-2">
+                                        <div>
+                                            <p className="text-sm font-semibold leading-none text-foreground">Warrantless Arrest Made?</p>
+                                            <p className="text-xs text-muted-foreground mt-1">Did the barangay/police execute a legal citizen's arrest?</p>
+                                        </div>
+                                    </label>
+
+                                    <label htmlFor="weapons" className="flex items-start space-x-3 p-3 rounded-lg border border-transparent hover:bg-muted cursor-pointer transition-colors group">
                                         <Checkbox
                                             id="weapons"
                                             checked={data.weapons_confiscated}
                                             onCheckedChange={(checked) => {
                                                 setData(d => ({ ...d, weapons_confiscated: !!checked, has_weapon_involved: !!checked }));
                                             }}
+                                            className="mt-0.5 group-hover:border-primary"
                                         />
-                                        <Label htmlFor="weapons">Weapons/Arms Confiscated?</Label>
-                                    </div>
-                                </div>
-                                <div className="pt-2 border-t mt-2">
-                                    <div className="flex items-center space-x-2">
-                                        <Checkbox
-                                            id="repeat"
-                                            checked={data.is_repeat_offense}
-                                            onCheckedChange={(checked) => setData('is_repeat_offense', !!checked)}
-                                        />
-                                        <Label htmlFor="repeat" className="text-destructive font-bold">Repeat Offense / History of Abuse?</Label>
+                                        <div>
+                                            <p className="text-sm font-semibold leading-none text-foreground">Weapons/Arms Confiscated?</p>
+                                            <p className="text-xs text-muted-foreground mt-1">Were knifes, firearms, or blunt objects seized?</p>
+                                        </div>
+                                    </label>
+
+                                    <div className="mt-2 bg-destructive/5 dark:bg-destructive/10 rounded-lg border border-destructive/20 overflow-hidden">
+                                        <label htmlFor="repeat" className="flex items-start space-x-3 p-3 cursor-pointer hover:bg-destructive/10 dark:hover:bg-destructive/20 transition-colors">
+                                            <Checkbox
+                                                id="repeat"
+                                                checked={data.is_repeat_offense}
+                                                onCheckedChange={(checked) => setData('is_repeat_offense', !!checked)}
+                                                className="mt-0.5 border-destructive data-[state=checked]:bg-destructive data-[state=checked]:text-destructive-foreground"
+                                            />
+                                            <div>
+                                                <p className="text-sm font-bold leading-none text-destructive">Repeat Offense / History of Abuse</p>
+                                                <p className="text-xs text-destructive/80 mt-1">Is there a record of prior abuse from this respondent?</p>
+                                            </div>
+                                        </label>
                                     </div>
                                 </div>
                             </CardContent>
                         </Card>
 
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Incident Details</CardTitle>
-                                <CardDescription>Nature and narrative of the abuse.</CardDescription>
+                        <Card className="border-muted shadow-sm hover:shadow-md transition-shadow duration-300 relative overflow-hidden">
+                            <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-500"></div>
+                            <CardHeader className="border-b bg-muted/20 pb-4 pl-6">
+                                <div className="flex items-center gap-2">
+                                    <MapPin className="w-5 h-5 text-muted-foreground" />
+                                    <div>
+                                        <CardTitle className="text-lg">Incident Details</CardTitle>
+                                        <CardDescription>Nature and narrative of the abuse.</CardDescription>
+                                    </div>
+                                </div>
                             </CardHeader>
-                            <CardContent className="space-y-4">
+                            <CardContent className="space-y-5 pt-6 pl-6">
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-2">
                                         <Label>Date/Time</Label>
@@ -242,7 +295,7 @@ export default function Create({ abuseTypes, zones }: Props) {
                                         >
                                             <option value="">Select Category...</option>
                                             {abuseTypes.map((type: any) => (
-                                                <option key={type.id} value={type.name}>{type.name}</option>
+                                                <option key={type.id} value={type.name} className="bg-background text-foreground">{type.name}</option>
                                             ))}
                                         </select>
                                         {errors.abuse_type && <p className="text-xs text-destructive">{errors.abuse_type}</p>}
@@ -255,7 +308,7 @@ export default function Create({ abuseTypes, zones }: Props) {
                                     <div className="space-y-2 col-span-2">
                                         <Label>Children Involved / Present at Scene</Label>
                                         <Input type="number" min="0" value={data.children_count} onChange={e => setData('children_count', parseInt(e.target.value) || 0)} />
-                                        <p className="text-[10px] text-muted-foreground uppercase mt-1">Legally critical for DSWD social work referrals.</p>
+                                        <p className="text-[10px] text-muted-foreground uppercase mt-1">Legally critical for Social Welfare (DSWD) referrals.</p>
                                     </div>
                                 </div>
                                 <div className="space-y-2">
@@ -271,86 +324,43 @@ export default function Create({ abuseTypes, zones }: Props) {
                             </CardContent>
                         </Card>
 
-                        <Card className="bg-primary/5 border-primary/20">
-                            <CardHeader>
-                                <CardTitle className="text-sm flex items-center gap-2">
-                                    Vulnerability Risk Assessment (VRA)
+                        <Card className="bg-destructive/5 border-destructive/30 shadow-none overflow-hidden relative">
+                            <div className="absolute right-0 top-0 bottom-0 w-1 bg-destructive"></div>
+                            <CardHeader className="pb-3 border-b border-destructive/10">
+                                <CardTitle className="text-sm font-black flex items-center gap-2 text-destructive tracking-widest uppercase">
+                                    <AlertTriangle className="w-5 h-5 animate-pulse" />
+                                    Phase 1 Interventions
                                 </CardTitle>
-                                <CardDescription className="text-[10px]">VAWC-RAVE Additive Scoring Algorithm (Max Score: 12). Values map adaptively to the abuse type chosen.</CardDescription>
+                                <CardDescription className="text-xs text-destructive/80 font-medium">Check all that apply for immediate Republic Act 9262 Phase 1 response.</CardDescription>
                             </CardHeader>
-                            <CardContent className="space-y-3">
-                                <div className="grid grid-cols-2 gap-3">
-                                    <div className="space-y-1">
-                                        <Label className="text-[10px] uppercase font-bold">Abuse Frequency</Label>
-                                        <select
-                                            className="flex h-8 w-full rounded-md border border-input bg-background px-2 py-1 text-xs shadow-sm"
-                                            value={data.abuse_frequency}
-                                            onChange={e => setData('abuse_frequency', parseInt(e.target.value))}
-                                        >
-                                            <option value="0">Not Assessed</option>
-                                            <option value="1">1 - Occasional</option>
-                                            <option value="2">2 - Frequent</option>
-                                            <option value="3">3 - Constant/Daily</option>
-                                        </select>
-                                    </div>
-                                    <div className="space-y-1">
-                                        <Label className="text-[10px] uppercase font-bold">Abuse Severity</Label>
-                                        <select
-                                            className="flex h-8 w-full rounded-md border border-input bg-background px-2 py-1 text-xs shadow-sm"
-                                            value={data.abuse_severity}
-                                            onChange={e => setData('abuse_severity', parseInt(e.target.value))}
-                                        >
-                                            <option value="0">Not Assessed</option>
-                                            <option value="1">1 - Minor/Threats</option>
-                                            <option value="2">2 - Serious Injuries</option>
-                                            <option value="3">3 - Life-Threatening</option>
-                                        </select>
-                                    </div>
-                                    <div className="space-y-1">
-                                        <Label className="text-[10px] uppercase font-bold">Weapon Access</Label>
-                                        <select
-                                            className="flex h-8 w-full rounded-md border border-input bg-background px-2 py-1 text-xs shadow-sm"
-                                            value={data.weapon_access}
-                                            onChange={e => setData('weapon_access', parseInt(e.target.value))}
-                                        >
-                                            <option value="0">Not Assessed</option>
-                                            <option value="1">1 - None/No Access</option>
-                                            <option value="2">2 - Possible Access</option>
-                                            <option value="3">3 - Weapon Involved</option>
-                                        </select>
-                                    </div>
-                                    <div className="space-y-1">
-                                        <Label className="text-[10px] uppercase font-bold">Threat Level</Label>
-                                        <select
-                                            className="flex h-8 w-full rounded-md border border-input bg-background px-2 py-1 text-xs shadow-sm"
-                                            value={data.life_threat_level}
-                                            onChange={e => setData('life_threat_level', parseInt(e.target.value))}
-                                        >
-                                            <option value="0">Not Assessed</option>
-                                            <option value="1">1 - Low/Verbal</option>
-                                            <option value="2">2 - Explicit Threats</option>
-                                            <option value="3">3 - Attempted Lethal</option>
-                                        </select>
-                                    </div>
-                                </div>
+                            <CardContent className="space-y-3 pt-4">
 
-                                <div className="pt-3 border-t space-y-2">
-                                    <div className="flex items-center space-x-2">
+                                <div className="space-y-2">
+                                    <label htmlFor="medical" className="flex items-start space-x-3 p-3 rounded-lg border border-destructive/20 bg-background hover:border-destructive transition-colors cursor-pointer group">
                                         <Checkbox
                                             id="medical"
                                             checked={data.requires_medical}
                                             onCheckedChange={(checked) => setData('requires_medical', !!checked)}
+                                            className="mt-0.5 data-[state=checked]:bg-destructive data-[state=checked]:border-destructive"
                                         />
-                                        <Label htmlFor="medical" className="text-xs">Immediate Medical Attention?</Label>
-                                    </div>
-                                    <div className="flex items-center space-x-2">
+                                        <div>
+                                            <p className="text-sm font-bold leading-none text-foreground group-hover:text-destructive transition-colors">Immediate Medical Attention Required?</p>
+                                            <p className="text-[11px] text-muted-foreground mt-1 leading-relaxed">Does the victim have visible injuries needing clinic/hospital transfer?</p>
+                                        </div>
+                                    </label>
+
+                                    <label htmlFor="housing" className="flex items-start space-x-3 p-3 rounded-lg border border-blue-500/20 bg-background hover:border-blue-500 transition-colors cursor-pointer group">
                                         <Checkbox
                                             id="housing"
                                             checked={data.requires_alternative_housing}
                                             onCheckedChange={(checked) => setData('requires_alternative_housing', !!checked)}
+                                            className="mt-0.5 data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
                                         />
-                                        <Label htmlFor="housing" className="text-xs">Alternative Housing/Shelter?</Label>
-                                    </div>
+                                        <div>
+                                            <p className="text-sm font-bold leading-none text-foreground group-hover:text-blue-600 transition-colors">Alternative Housing / Shelter Needed?</p>
+                                            <p className="text-[11px] text-muted-foreground mt-1 leading-relaxed">Is the victim unsafe at home and requiring temporary safehouse placement?</p>
+                                        </div>
+                                    </label>
                                 </div>
                             </CardContent>
                         </Card>

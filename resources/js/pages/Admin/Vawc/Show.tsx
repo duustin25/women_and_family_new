@@ -76,31 +76,33 @@ export default function Show({ case: vawcCase }: Props) {
             <Head title={`Case Workflow: ${vawcCase.case_report.case_number}`} />
 
             <div className="p-6 space-y-8 max-w-5xl mx-auto">
-                {vawcCase.assessment?.risk_level === 'CRITICAL' && vawcCase.status !== 'Closed' && (
-                    <div className="bg-destructive text-destructive-foreground p-6 rounded-xl shadow-2xl animate-in slide-in-from-top flex flex-col md:flex-row items-center justify-between gap-6 ring-4 ring-destructive/50">
+                {vawcCase.assessment?.risk_score > 0 && vawcCase.status !== 'Closed' && (
+                    <div className={`p-6 rounded-xl shadow-lg ring-4 flex flex-col md:flex-row items-center justify-between gap-6 transition-all animate-in slide-in-from-top ${vawcCase.assessment.risk_level === 'CRITICAL' ? 'bg-destructive text-destructive-foreground ring-destructive/50' :
+                        vawcCase.assessment.risk_level === 'HIGH' ? 'bg-orange-600 dark:bg-orange-700 text-white ring-orange-600/50' :
+                            vawcCase.assessment.risk_level === 'MODERATE' ? 'bg-yellow-500 dark:bg-yellow-600 text-black dark:text-white ring-yellow-500/50' :
+                                'bg-blue-600 dark:bg-blue-700 text-white ring-blue-600/50'
+                        }`}>
                         <div className="flex items-start gap-4">
-                            <div className="p-3 bg-white/20 rounded-full animate-pulse">
-                                <AlertTriangle className="w-8 h-8 text-white" />
+                            <div className={`p-3 rounded-full ${vawcCase.assessment.risk_level === 'CRITICAL' ? 'bg-white/20' : 'bg-black/10 dark:bg-white/10'}`}>
+                                <AlertTriangle className="w-8 h-8" />
                             </div>
                             <div>
                                 <h2 className="text-xl font-black uppercase tracking-widest flex items-center gap-2">
-                                    <Activity className="w-5 h-5 animate-spin-slow" /> CRITICAL EMERGENCY IDENTIFIED
+                                    <Activity className="w-5 h-5" />
+                                    {vawcCase.assessment.risk_level === 'CRITICAL' ? 'CRITICAL EMERGENCY IDENTIFIED' : `${vawcCase.assessment.risk_level} PRIORITY TRIAGE`}
                                 </h2>
-                                <p className="text-sm text-destructive-foreground/90 font-medium mt-1">
-                                    The VAWC Algorithm scored this case as a <strong>{vawcCase.assessment.risk_score}/12</strong>. Immediate physical intervention is required to secure the victim's safety.
-                                </p>
+                                <div className={`mt-3 text-sm font-medium pl-3 border-l-4 ${vawcCase.assessment.risk_level === 'MODERATE' ? 'border-black/20 dark:border-white/20' : 'border-white/20'
+                                    }`}>
+                                    <p className="font-black uppercase text-[10px] tracking-widest mb-1 opacity-75">Algorithm Recommendation:</p>
+                                    <p className="leading-relaxed">
+                                        {vawcCase.assessment.risk_level === 'CRITICAL' && "Immediate QRT dispatch and police escort required. Prioritize physical rescue/medical triage before processing legal documents! Secure temporary shelter."}
+                                        {vawcCase.assessment.risk_level === 'HIGH' && "Expedite BPO issuance. Inform Punong Barangay immediately for same-day processing. Initiate DSWD safety planning and alternative housing coordination."}
+                                        {vawcCase.assessment.risk_level === 'MODERATE' && "Proceed with standard BPO application. Assign social worker for active counseling and schedule frequent compliance check-ins to monitor the situation."}
+                                        {vawcCase.assessment.risk_level === 'LOW' && "Standard intake processing. Issue BPO normally and schedule routine monthly check-ins for compliance monitoring."}
+                                    </p>
+                                </div>
                             </div>
                         </div>
-                        <Button 
-                            variant="secondary" 
-                            size="lg" 
-                            className="bg-white text-destructive hover:bg-slate-100 font-black uppercase tracking-widest whitespace-nowrap h-14 shadow-xl shadow-destructive/50"
-                            onClick={() => {
-                                alert("SOP: Contacting Quick Response Team (QRT).\\n\\nBarangay Emergency: 0912-345-6789\\nPNP Station: 911\\n\\nPlease secure victim location immediately before legally processing the BPO.");
-                            }}
-                        >
-                            <HeartPulse className="w-5 h-5 mr-2" /> Dispatch QRT Now
-                        </Button>
                     </div>
                 )}
 
@@ -109,7 +111,7 @@ export default function Show({ case: vawcCase }: Props) {
                     {[1, 2, 3, 4, 5, 6, 7].map((s) => (
                         <div key={s} className="flex flex-col gap-2">
                             <div className={`h-1.5 rounded-full ${s < stepNum ? 'bg-primary' : (s === stepNum ? (s === 7 ? 'bg-slate-500' : 'bg-primary animate-pulse') : 'bg-muted')}`} />
-                            <span className={`text-[9px] uppercase font-bold tracking-tight text-center ${s === stepNum ? (s === 7 ? 'text-slate-600' : 'text-primary') : 'text-muted-foreground'}`}>
+                            <span className={`text-[9px] uppercase font-bold tracking-tight text-center ${s === stepNum ? (s === 7 ? 'text-slate-600 dark:text-slate-400' : 'text-primary') : 'text-muted-foreground'}`}>
                                 {s === 1 ? 'Intake' : s === 2 ? 'Apply' : s === 3 ? 'Issue' : s === 4 ? 'Serve' : s === 5 ? 'Monitor' : s === 6 ? 'Referral' : 'Archive'}
                             </span>
                         </div>
@@ -119,29 +121,32 @@ export default function Show({ case: vawcCase }: Props) {
                 {/* 🔍 VRA RISK SCORECARD (Complexity Feature) */}
                 {vawcCase.assessment && vawcCase.assessment.risk_score > 0 && (
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4 animate-in fade-in slide-in-from-top-4 duration-500">
-                        <Card className={`md:col-span-1 border-2 ${vawcCase.assessment.risk_level === 'CRITICAL' ? 'border-destructive bg-destructive/5' :
-                                vawcCase.assessment.risk_level === 'HIGH' ? 'border-orange-500 bg-orange-50' :
-                                    vawcCase.assessment.risk_level === 'MODERATE' ? 'border-yellow-500 bg-yellow-50' : 'border-blue-500 bg-blue-50'
+                        <Card className={`md:col-span-1 border-2 transition-colors ${vawcCase.assessment.risk_level === 'CRITICAL' ? 'border-destructive bg-destructive/5' :
+                            vawcCase.assessment.risk_level === 'HIGH' ? 'border-orange-500 bg-orange-50 dark:bg-orange-950/20' :
+                                vawcCase.assessment.risk_level === 'MODERATE' ? 'border-yellow-500 bg-yellow-50 dark:bg-yellow-950/20' :
+                                    'border-blue-500 bg-blue-50 dark:bg-blue-950/20'
                             }`}>
                             <CardContent className="pt-6 text-center">
                                 <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1">Vulnerability Score</p>
                                 <div className={`text-5xl font-black italic tracking-tighter ${vawcCase.assessment.risk_level === 'CRITICAL' ? 'text-destructive' :
-                                        vawcCase.assessment.risk_level === 'HIGH' ? 'text-orange-600' :
-                                            vawcCase.assessment.risk_level === 'MODERATE' ? 'text-yellow-600' : 'text-blue-600'
+                                    vawcCase.assessment.risk_level === 'HIGH' ? 'text-orange-600 dark:text-orange-400' :
+                                        vawcCase.assessment.risk_level === 'MODERATE' ? 'text-yellow-600 dark:text-yellow-400' :
+                                            'text-blue-600 dark:text-blue-400'
                                     }`}>
                                     {vawcCase.assessment.risk_score}
                                 </div>
                                 <Badge className={`mt-2 uppercase font-black tracking-widest ${vawcCase.assessment.risk_level === 'CRITICAL' ? 'bg-destructive' :
-                                        vawcCase.assessment.risk_level === 'HIGH' ? 'bg-orange-600' :
-                                            vawcCase.assessment.risk_level === 'MODERATE' ? 'bg-yellow-600 text-black' : 'bg-blue-600'
+                                    vawcCase.assessment.risk_level === 'HIGH' ? 'bg-orange-600 dark:bg-orange-700' :
+                                        vawcCase.assessment.risk_level === 'MODERATE' ? 'bg-yellow-600 dark:bg-yellow-700 text-black dark:text-white' :
+                                            'bg-blue-600 dark:bg-blue-700'
                                     }`}>
                                     {vawcCase.assessment.risk_level} RISK
                                 </Badge>
                             </CardContent>
                         </Card>
 
-                        <Card className="md:col-span-3 border-2 border-slate-200">
-                            <CardHeader className="py-3 bg-slate-50/50 border-b flex flex-row items-center justify-between">
+                        <Card className="md:col-span-3 border-2 border-border">
+                            <CardHeader className="py-3 bg-muted/50 border-b flex flex-row items-center justify-between">
                                 <CardTitle className="text-xs font-bold uppercase tracking-widest flex items-center gap-2">
                                     <Activity className="w-3 h-3" /> VAWC-RAVE Algorithm Analysis
                                 </CardTitle>
@@ -169,17 +174,14 @@ export default function Show({ case: vawcCase }: Props) {
                                 </div>
                                 <div className={`p-3 rounded-lg border flex gap-3 items-start ${vawcCase.assessment.risk_level === 'CRITICAL' ? 'bg-destructive/10 border-destructive/20' : 'bg-primary/5 border-primary/10'
                                     }`}>
-                                    <div className={`p-2 rounded-full mt-0.5 ${vawcCase.assessment.risk_level === 'CRITICAL' ? 'bg-destructive text-white animate-pulse' : 'bg-primary text-white'
+                                    <div className={`p-2 rounded-full mt-0.5 ${vawcCase.assessment.risk_level === 'CRITICAL' ? 'bg-destructive text-white' : 'bg-primary text-white'
                                         }`}>
                                         {vawcCase.assessment.risk_level === 'CRITICAL' ? <AlertTriangle className="w-4 h-4" /> : <ShieldCheck className="w-4 h-4" />}
                                     </div>
                                     <div>
-                                        <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest mb-0.5">Algorithm Recommendation</p>
-                                        <p className={`text-sm font-bold leading-tight ${vawcCase.assessment.risk_level === 'CRITICAL' ? 'text-destructive italic' : 'text-slate-800'}`}>
-                                            {vawcCase.assessment.risk_level === 'CRITICAL' && "EMERGENCY: Immediate police escort and medical intervention required. Shelter placement recommended."}
-                                            {vawcCase.assessment.risk_level === 'HIGH' && "URGENT: Legal protection order (BPO/TPO) recommended. Safety planning and temporary relocation required."}
-                                            {vawcCase.assessment.risk_level === 'MODERATE' && "MONITORING: Regular counseling and social worker check-ins required. Legal consultation recommended."}
-                                            {vawcCase.assessment.risk_level === 'LOW' && "ROUTINE: Case monitoring and standard support services. No immediate danger detected."}
+                                        <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest mb-0.5">Assessment Status</p>
+                                        <p className={`text-xs font-medium leading-tight ${vawcCase.assessment.risk_level === 'CRITICAL' ? 'text-destructive italic font-bold' : 'text-slate-600'}`}>
+                                            Risk factors actively evaluated. View the primary triage recommendation at the top of the workflow.
                                         </p>
                                     </div>
                                 </div>
@@ -189,22 +191,22 @@ export default function Show({ case: vawcCase }: Props) {
                 )}
 
                 {/* 🚀 PRIMARY GUIDED ACTION CARD */}
-                <Card className={`shadow-lg ring-4 ${stepNum === 7 ? 'border-slate-300 ring-slate-100' : 'border-primary/30 ring-primary/5'}`}>
-                    <CardHeader className={`${stepNum === 7 ? 'bg-slate-50' : 'bg-primary/5'} pb-6`}>
+                <Card className={`shadow-lg ring-4 ${stepNum === 7 ? 'border-border ring-muted' : 'border-primary/30 ring-primary/5'}`}>
+                    <CardHeader className={`${stepNum === 7 ? 'bg-muted/50' : 'bg-primary/5'} pb-6`}>
                         <div className="flex justify-between items-start">
                             <div className="w-full">
                                 <Badge className={`mb-2 ${stepNum === 7 ? 'bg-slate-600' : 'bg-primary/90'}`}>STEP {stepNum}: CURRENT PHASE</Badge>
                                 <div className="flex justify-between items-center w-full">
                                     <CardTitle className="text-2xl font-bold flex items-center gap-2">
-                                        {stepNum === 2 && "File Application for BPO"}
-                                        {stepNum === 3 && "Barangay Head: Issue the BPO"}
-                                        {stepNum === 4 && "Print & Serve the Official BPO"}
+                                        {stepNum === 2 && "File Application for Protection Order"}
+                                        {stepNum === 3 && "Barangay Head: Issue the Protection Order"}
+                                        {stepNum === 4 && "Print & Serve the Official Protection Order"}
                                         {stepNum === 5 && "Ongoing Monitoring & Compliance"}
                                         {stepNum === 6 && "Case Referred to Higher Authorities"}
                                         {stepNum === 7 && <><Lock className="w-5 h-5" /> Case Closed & Archived</>}
                                     </CardTitle>
                                     {(stepNum === 5 || stepNum === 6) && (
-                                        <Button variant="outline" className={`h-8 text-[10px] font-black uppercase tracking-widest border-2 hover:bg-slate-100`} onClick={() => setShowCloseModal(true)}>
+                                        <Button variant="outline" className={`h-8 text-[10px] font-black uppercase tracking-widest border-2 hover:bg-muted`} onClick={() => setShowCloseModal(true)}>
                                             <ArchiveX className="w-3 h-3 mr-1" /> Close Case File
                                         </Button>
                                     )}
@@ -212,7 +214,7 @@ export default function Show({ case: vawcCase }: Props) {
                                 <CardDescription className="text-base mt-2">
                                     {stepNum === 2 && "The resident has reported the case. Click below to officially open the 15-day Protection Order application."}
                                     {stepNum === 3 && "The application is filed. Now, the Punong Barangay must review and 'Confirm Issuance' to make it a legal document."}
-                                    {stepNum === 4 && "The BPO is Issued! DO THIS NEXT: (1) Print the BPO below, (2) Get it signed, (3) Deliver it (Serve) to the respondent, then (4) Record the service status in the form below."}
+                                    {stepNum === 4 && "The Protection Order is Issued! DO THIS NEXT: (1) Print the document below, (2) Get it signed, (3) Deliver it (Serve) to the respondent, then (4) Record the service status in the form below."}
                                     {stepNum === 5 && "Documentation is complete. Use this phase to record regular check-ins with the victim and monitor for any violations."}
                                     {stepNum === 6 && "This case is no longer under Barangay Jurisdiction alone. It has been officially referred for external legal action/investigation."}
                                     {stepNum === 7 && "This record is now locked in adherence to RA 9262 standards. It has reached its legal conclusion and is preserved for historical and audit purposes."}
@@ -226,23 +228,23 @@ export default function Show({ case: vawcCase }: Props) {
                             <div className="flex flex-col items-center justify-center py-8 gap-4">
                                 <ShieldCheck className="w-16 h-16 text-primary/20" />
                                 <Button size="lg" onClick={handleApplyBpo} disabled={bpoForm.processing} className="h-14 px-12 text-lg font-bold shadow-xl hover:scale-105 transition-transform">
-                                    [STEP 2] Click to File BPO Application
+                                    [STEP 2] Click to File Protection Order Application
                                 </Button>
-                                <p className="text-xs text-muted-foreground italic font-mono uppercase tracking-widest text-center">Reference: RA 9262 - Section 14</p>
+                                <p className="text-xs text-muted-foreground italic font-mono uppercase tracking-widest text-center">Reference: Republic Act 9262 - Section 14</p>
                             </div>
                         )}
 
                         {stepNum === 3 && (
                             <div className="space-y-6 text-center py-4">
-                                <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg inline-block mx-auto">
-                                    <p className="text-amber-700 text-sm font-bold flex items-center gap-2">
+                                <div className="p-4 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg inline-block mx-auto">
+                                    <p className="text-amber-700 dark:text-amber-400 text-sm font-bold flex items-center gap-2">
                                         <Info className="w-4 h-4" /> ACTION REQUIRED FROM HEAD COMMITTEE
                                     </p>
-                                    <p className="text-amber-800 text-xs mt-1">Legally, the BPO must be officially issued on the same day it was reported.</p>
+                                    <p className="text-amber-800 dark:text-amber-500 text-xs mt-1">Legally, the BPO must be officially issued on the same day it was reported.</p>
                                 </div>
                                 <div className="flex justify-center gap-2">
                                     <Button size="lg" variant="secondary" onClick={handleIssueBpo} disabled={issuanceForm.processing} className="h-14 px-12 border-2 border-primary/20 shadow-md">
-                                        [STEP 3] Confirm BPO Issuance
+                                        [STEP 3] Confirm Protection Order Issuance
                                     </Button>
                                 </div>
                             </div>
@@ -252,21 +254,21 @@ export default function Show({ case: vawcCase }: Props) {
                             <div className="space-y-8">
                                 {/* SUB-STEP: PRINTING */}
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <Button variant="outline" className="h-12 bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100 flex items-center gap-2" asChild>
+                                    <Button variant="outline" className="h-12 bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30 flex items-center gap-2" asChild>
                                         <a href={route('admin.vawc.print-bpo', vawcCase.id)} target="_blank" rel="noreferrer">
-                                            <Printer className="w-4 h-4" /> (1) Print Official BPO Document
+                                            <Printer className="w-4 h-4" /> (1) Print Official Protection Order Document
                                         </a>
                                     </Button>
-                                    <Button variant="outline" className="h-12 flex items-center gap-2 border-slate-300" asChild>
+                                    <Button variant="outline" className="h-12 flex items-center gap-2 border-border" asChild>
                                         <a href={route('admin.vawc.pnp-transmittal', vawcCase.id)} target="_blank" rel="noreferrer">
-                                            <Info className="w-4 h-4" /> (2) Print PNP Transmittal
+                                            <Info className="w-4 h-4" /> (2) Print Police Transmittal
                                         </a>
                                     </Button>
                                 </div>
 
                                 <div className="relative">
                                     <div className="absolute inset-x-0 top-0 flex items-center" aria-hidden="true">
-                                        <div className="w-full border-t border-slate-200"></div>
+                                        <div className="w-full border-t border-border"></div>
                                     </div>
                                     <div className="relative flex justify-center">
                                         <span className="bg-background px-2 text-xs text-muted-foreground uppercase font-bold">Then, Record Service Status</span>
@@ -303,22 +305,22 @@ export default function Show({ case: vawcCase }: Props) {
 
                         {stepNum === 5 && (
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <Button variant="outline" className="h-16 flex flex-col items-center bg-blue-50/50 border-blue-200 text-blue-700 hover:bg-blue-100" asChild>
+                                <Button variant="outline" className="h-16 flex flex-col items-center bg-blue-50/50 dark:bg-blue-950/10 border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30" asChild>
                                     <a href={route('admin.vawc.print-bpo', vawcCase.id)} target="_blank" rel="noreferrer">
                                         <Printer className="w-5 h-5 mb-1" />
-                                        <span className="text-xs font-bold uppercase tracking-widest">Print Formal BPO Document</span>
+                                        <span className="text-xs font-bold uppercase tracking-widest">Print Official Protection Order</span>
                                     </a>
                                 </Button>
-                                <Button variant="outline" className="h-16 flex flex-col items-center border-slate-300 text-slate-700 hover:bg-slate-50" asChild>
+                                <Button variant="outline" className="h-16 flex flex-col items-center border-border text-foreground hover:bg-muted" asChild>
                                     <a href={route('admin.vawc.pnp-transmittal', vawcCase.id)} target="_blank" rel="noreferrer">
                                         <Info className="w-5 h-5 mb-1" />
-                                        <span className="text-xs font-bold uppercase tracking-widest">Print PNP Transmittal</span>
+                                        <span className="text-xs font-bold uppercase tracking-widest">Print Police Transmittal</span>
                                     </a>
                                 </Button>
-                                <Alert className="md:col-span-2 border-green-200 bg-green-50">
-                                    <CheckCircle2 className="w-4 h-4 text-green-600" />
-                                    <AlertTitle className="text-green-800 font-bold uppercase text-[10px] tracking-widest">Status: Monitoring Mode</AlertTitle>
-                                    <AlertDescription className="text-green-700 text-sm">
+                                <Alert className="md:col-span-2 border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-950/20">
+                                    <CheckCircle2 className="w-4 h-4 text-green-600 dark:text-green-400" />
+                                    <AlertTitle className="text-green-800 dark:text-green-400 font-bold uppercase text-[10px] tracking-widest">Status: Monitoring Mode</AlertTitle>
+                                    <AlertDescription className="text-green-700 dark:text-green-500 text-sm">
                                         All legal documents have been generated. Your primary task now is to log compliance sessions and ensure victim safety.
                                     </AlertDescription>
                                 </Alert>
@@ -326,19 +328,19 @@ export default function Show({ case: vawcCase }: Props) {
                         )}
                         {stepNum === 6 && (
                             <div className="space-y-4 py-4 text-center">
-                                <Alert className="border-red-600 bg-red-50 ring-4 ring-red-100 mb-6">
-                                    <Gavel className="w-5 h-5 text-red-600" />
-                                    <AlertTitle className="text-red-800 font-black uppercase text-xs tracking-widest">Official Escalation Notice</AlertTitle>
-                                    <AlertDescription className="text-red-700 text-sm">
-                                        This case has been referred to higher legal authorities (PNP/Court) due to a BPO violation or high-risk classification.
+                                <Alert className="border-red-600 dark:border-red-800 bg-red-50 dark:bg-red-950/20 ring-4 ring-red-100 dark:ring-red-900/20 mb-6">
+                                    <Gavel className="w-5 h-5 text-red-600 dark:text-red-400" />
+                                    <AlertTitle className="text-red-800 dark:text-red-400 font-black uppercase text-xs tracking-widest">Official Escalation Notice</AlertTitle>
+                                    <AlertDescription className="text-red-700 dark:text-red-500 text-sm">
+                                        This case has been referred to higher legal authorities (Police/Court) due to a Protection Order violation or high-risk classification.
                                         Barangay responsibilities now focus on assisting with technical coordination and victim safety.
                                     </AlertDescription>
                                 </Alert>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl mx-auto">
-                                    <Button variant="outline" className="h-14 font-bold border-red-200" onClick={() => stepNum === 6 && alert('Detailed referral report printing is being generated...')}>
+                                    <Button variant="outline" className="h-14 font-bold border-red-200 dark:border-red-800 hover:bg-red-50 dark:hover:bg-red-950/30" onClick={() => stepNum === 6 && alert('Detailed referral report printing is being generated...')}>
                                         Print Referral Dossier
                                     </Button>
-                                    <Button variant="outline" className="h-14 font-bold border-red-200" asChild>
+                                    <Button variant="outline" className="h-14 font-bold border-red-200 dark:border-red-800 hover:bg-red-50 dark:hover:bg-red-950/30" asChild>
                                         <a href={route('admin.vawc.complaint-form', vawcCase.id)} target="_blank">View Court Complaint Template</a>
                                     </Button>
                                 </div>
@@ -347,21 +349,21 @@ export default function Show({ case: vawcCase }: Props) {
 
                         {stepNum === 7 && (
                             <div className="space-y-4 py-8 text-center max-w-xl mx-auto">
-                                <Alert className="border-slate-300 bg-slate-100 text-left">
-                                    <ArchiveX className="w-5 h-5 text-slate-700 mt-1" />
-                                    <AlertTitle className="text-slate-800 font-black uppercase text-xs tracking-widest">Case Conclusion Record</AlertTitle>
-                                    <AlertDescription className="text-slate-600 space-y-2 mt-2">
+                                <Alert className="border-border bg-muted/50 text-left">
+                                    <ArchiveX className="w-5 h-5 text-muted-foreground mt-1" />
+                                    <AlertTitle className="text-foreground font-black uppercase text-xs tracking-widest">Case Conclusion Record</AlertTitle>
+                                    <AlertDescription className="text-muted-foreground space-y-2 mt-2">
                                         <div className="grid grid-cols-[120px_1fr] text-sm">
                                             <span className="font-bold">Date Closed:</span>
                                             <span>{new Date(vawcCase.closed_at).toLocaleDateString()}</span>
                                         </div>
                                         <div className="grid grid-cols-[120px_1fr] text-sm">
                                             <span className="font-bold">Legal Reason:</span>
-                                            <span className="font-mono text-[10px] uppercase font-bold tracking-tight bg-slate-200 px-1 py-0.5 rounded inline-block">{vawcCase.closure_reason}</span>
+                                            <span className="font-mono text-[10px] uppercase font-bold tracking-tight bg-muted px-1 py-0.5 rounded inline-block">{vawcCase.closure_reason}</span>
                                         </div>
-                                        <div className="grid grid-cols-[120px_1fr] text-sm mt-2 border-t border-slate-200 pt-2">
-                                            <span className="font-bold text-xs uppercase text-slate-400">Archival Remarks:</span>
-                                            <span className="italic text-slate-700 bg-slate-50 p-2 rounded-md block">"{vawcCase.closure_remarks || 'No additional remarks provided.'}"</span>
+                                        <div className="grid grid-cols-[120px_1fr] text-sm mt-2 border-t border-border pt-2">
+                                            <span className="font-bold text-xs uppercase text-muted-foreground">Archival Remarks:</span>
+                                            <span className="italic text-foreground bg-muted p-2 rounded-md block">"{vawcCase.closure_remarks || 'No additional remarks provided.'}"</span>
                                         </div>
                                     </AlertDescription>
                                 </Alert>
@@ -372,8 +374,8 @@ export default function Show({ case: vawcCase }: Props) {
 
                 {/* 📋 REFERRAL HISTORY (Only if Step 6 reached) */}
                 {stepNum === 6 && (
-                    <Card className="border-red-200">
-                        <CardHeader className="border-b pb-4 bg-red-50/30">
+                    <Card className="border-red-200 dark:border-red-800">
+                        <CardHeader className="border-b pb-4 bg-red-50/30 dark:bg-red-950/10">
                             <CardTitle className="text-sm font-bold uppercase tracking-widest flex items-center gap-2">
                                 <Search className="w-4 h-4" /> Legal Referral History
                             </CardTitle>
@@ -381,13 +383,13 @@ export default function Show({ case: vawcCase }: Props) {
                         <CardContent className="pt-6">
                             <div className="space-y-4">
                                 {vawcCase.escalations.map((esc: any) => (
-                                    <div key={esc.id} className="p-4 border border-red-100 rounded-lg bg-red-50/20 flex flex-col gap-2">
+                                    <div key={esc.id} className="p-4 border border-red-100 dark:border-red-900/40 rounded-lg bg-red-50/20 dark:bg-red-950/5 flex flex-col gap-2">
                                         <div className="flex justify-between items-center">
                                             <Badge variant="destructive" className="text-[9px] uppercase tracking-widest">{esc.referral_target}</Badge>
                                             <span className="text-[10px] text-muted-foreground font-mono italic">Case Prepared on {new Date(esc.created_at).toLocaleDateString()}</span>
                                         </div>
-                                        <p className="text-xs font-bold text-slate-800">Reason for Escalation:</p>
-                                        <p className="text-xs italic text-slate-600">"{esc.violation_description}"</p>
+                                        <p className="text-xs font-bold text-foreground">Reason for Escalation:</p>
+                                        <p className="text-xs italic text-muted-foreground">"{esc.violation_description}"</p>
                                     </div>
                                 ))}
                             </div>
@@ -409,7 +411,7 @@ export default function Show({ case: vawcCase }: Props) {
                                     <div className="space-y-2">
                                         <Label className="text-xs font-bold uppercase">Status</Label>
                                         <select className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm" value={complianceForm.data.is_compliant ? 'true' : 'false'} onChange={e => complianceForm.setData('is_compliant', e.target.value === 'true')}>
-                                            <option value="true">Compliant (Following BPO)</option>
+                                            <option value="true">Compliant (Following Order)</option>
                                             <option value="false">Non-Compliant (VIOLATION)</option>
                                         </select>
                                     </div>
@@ -419,18 +421,18 @@ export default function Show({ case: vawcCase }: Props) {
                                                 <Label className="text-xs font-bold uppercase">Incident/Session Notes</Label>
                                                 <Input placeholder="Enter brief notes about the victim's situation..." value={complianceForm.data.notes} onChange={e => complianceForm.setData('notes', e.target.value)} />
                                             </div>
-                                            <Button type="submit" variant="outline" className="w-full bg-slate-50 border-slate-300 font-bold uppercase tracking-widest text-[10px]" disabled={complianceForm.processing}>Save Monitoring Log</Button>
+                                            <Button type="submit" variant="outline" className="w-full bg-muted border-border font-bold uppercase tracking-widest text-[10px]" disabled={complianceForm.processing}>Save Monitoring Log</Button>
                                         </>
                                     )}
                                 </form>
                                 <div className="space-y-4 max-h-60 overflow-y-auto pr-2">
                                     {vawcCase.compliance_logs.map((log: any) => (
-                                        <div key={log.id} className="p-4 border border-slate-100 rounded-lg bg-slate-50/50 flex flex-col gap-2">
+                                        <div key={log.id} className="p-4 border border-border rounded-lg bg-muted/30 flex flex-col gap-2">
                                             <div className="flex justify-between items-center">
                                                 <Badge variant={log.is_compliant ? "outline" : "destructive"} className="text-[9px] uppercase tracking-widest">{log.is_compliant ? "Compliance OK" : "VIOLATION LOGGED"}</Badge>
                                                 <span className="text-[10px] text-muted-foreground font-mono">{new Date(log.monitor_date).toLocaleDateString()}</span>
                                             </div>
-                                            <p className="text-xs italic text-slate-600">"{log.notes}"</p>
+                                            <p className="text-xs italic text-muted-foreground">"{log.notes}"</p>
                                         </div>
                                     ))}
                                 </div>
@@ -440,12 +442,12 @@ export default function Show({ case: vawcCase }: Props) {
                         {/* LEGAL ACTION (VIOLATION) - Only show form if not already escalated */}
                         {stepNum === 5 && (
                             <Card className="border-destructive/20 bg-destructive/5 self-start">
-                                <CardHeader><CardTitle className="text-sm font-bold uppercase tracking-widest flex items-center gap-2"><Gavel className="w-4 h-4" /> BPO Violation?</CardTitle></CardHeader>
+                                <CardHeader><CardTitle className="text-sm font-bold uppercase tracking-widest flex items-center gap-2"><Gavel className="w-4 h-4" /> Order Violation?</CardTitle></CardHeader>
                                 <CardContent>
-                                    <p className="text-xs text-muted-foreground mb-4">If the respondent violates any part of the BPO, escalate immediately to the PNP/Court.</p>
+                                    <p className="text-xs text-muted-foreground mb-4">If the respondent violates any part of the Protection Order, escalate immediately to the Police/Court.</p>
                                     <form onSubmit={handleEscalate} className="space-y-4">
                                         <select className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-xs" value={escalationForm.data.referral_target} onChange={e => escalationForm.setData('referral_target', e.target.value)}>
-                                            <option value="PNP Women and Children Protection">Escalate to PNP (Violation)</option>
+                                            <option value="Police Women and Children Protection">Escalate to Police (Violation)</option>
                                             <option value="Prosecutor's Office">Refer to Prosecutor</option>
                                         </select>
                                         <Textarea placeholder="Briefly describe the violation..." className="h-20 text-xs" value={escalationForm.data.violation_description} onChange={e => escalationForm.setData('violation_description', e.target.value)} />
@@ -494,7 +496,7 @@ export default function Show({ case: vawcCase }: Props) {
                         </div>
                         <div>
                             <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest mb-2 flex items-center gap-1"><ClipboardList className="w-3 h-3" /> Intake Notes</p>
-                            <div className="p-3 bg-white border border-slate-200 rounded-lg text-xs italic leading-relaxed line-clamp-4">
+                            <div className="p-3 bg-card border border-border rounded-lg text-xs italic leading-relaxed line-clamp-4">
                                 "{vawcCase.case_report.description}"
                             </div>
                         </div>
@@ -504,11 +506,11 @@ export default function Show({ case: vawcCase }: Props) {
 
             {/* CLOSURE MODAL OVERLAY */}
             {showCloseModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-                    <Card className="w-full max-w-md shadow-2xl animate-in zoom-in-95">
-                        <CardHeader className="border-b bg-slate-50 pb-4">
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+                    <Card className="w-full max-w-md shadow-2xl animate-in zoom-in-95 border-border">
+                        <CardHeader className="border-b bg-muted/30 pb-4">
                             <CardTitle className="text-sm font-black uppercase flex items-center gap-2">
-                                <ArchiveX className="w-4 h-4 text-slate-600" /> Close & Archive Case File
+                                <ArchiveX className="w-4 h-4 text-muted-foreground" /> Close & Archive Case File
                             </CardTitle>
                             <CardDescription className="text-xs">
                                 Archiving this case locks the record and removes it from active monitoring. Provide the legal justification for concluding the barangay's role in this case.
@@ -527,8 +529,8 @@ export default function Show({ case: vawcCase }: Props) {
                                         <option value="" disabled>Select Reason...</option>
                                         {vawcCase.status === 'Monitoring' ? (
                                             <>
-                                                <option value="15-Day BPO Lapsed Successfully (No Violation)">15-Day BPO Lapsed Successfully (No Violation)</option>
-                                                <option value="Referred to DSWD for Sustained Intervention (Monitoring Complete)">Referred to DSWD for Sustained Intervention (Monitoring Complete)</option>
+                                                <option value="15-Day Protection Order Lapsed Successfully (No Violation)">15-Day Protection Order Lapsed Successfully (No Violation)</option>
+                                                <option value="Referred to Social Welfare for Sustained Intervention (Monitoring Complete)">Referred to Social Welfare for Sustained Intervention (Monitoring Complete)</option>
                                             </>
                                         ) : (
                                             <>
@@ -550,9 +552,9 @@ export default function Show({ case: vawcCase }: Props) {
                                     />
                                 </div>
                             </CardContent>
-                            <CardFooter className="border-t bg-slate-50 pt-4 flex justify-end gap-2">
+                            <CardFooter className="border-t bg-muted/30 pt-4 flex justify-end gap-2">
                                 <Button type="button" variant="ghost" onClick={() => setShowCloseModal(false)}>Cancel</Button>
-                                <Button type="submit" disabled={closeForm.processing} className="font-black uppercase tracking-widest bg-slate-800 text-white hover:bg-black">
+                                <Button type="submit" disabled={closeForm.processing} className="font-black uppercase tracking-widest bg-primary text-primary-foreground hover:bg-primary/90">
                                     [STEP 7] Confirm Archival
                                 </Button>
                             </CardFooter>
