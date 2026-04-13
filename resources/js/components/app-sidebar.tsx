@@ -50,7 +50,7 @@ const mainNavItems: NavItem[] = [
         icon: ShieldAlert,
     },
     {
-        title: 'BCPC Registry',
+        title: 'BCPC Monitoring',
         href: '/admin/bcpc/cases',
         icon: Activity,
     },
@@ -133,7 +133,7 @@ export function AppSidebar() {
         if (role === 'president') {
             const hiddenFromPresident = [
                 'VAWC Registry',
-                'BCPC Registry',
+                'BCPC Monitoring',
                 'System Users',
                 'Officials',
                 'Data Analytics',

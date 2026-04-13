@@ -1,273 +1,237 @@
 import AppLayout from '@/layouts/app-layout';
-import { Head, useForm } from '@inertiajs/react';
-import React, { useState } from 'react';
-import { route } from 'ziggy-js';
+import React from 'react';
+import { Head, Link, useForm } from '@inertiajs/react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { ShieldAlert, Plus, Trash2, Info, UserPlus } from 'lucide-react';
+import { ArrowLeft, Save, Activity, Calculator } from 'lucide-react';
+import { toast } from 'sonner';
 
-interface Props {
-    abuseTypes: any[];
-    zones: any[];
-}
-
-const ROLES = ['CICL', 'Victim', 'Parent/Guardian', 'Other'] as const;
-
-export default function Create({ abuseTypes, zones }: Props) {
-    const { data, setData, post, processing, errors } = useForm<any>({
-        parties: [
-            { role: 'CICL', name: '', age: '', gender: '', contact: '', address: '' },
-            { role: 'Victim', name: '', age: '', gender: '', contact: '', address: '' },
-        ],
-        complainant: { name: '', contact: '' },
-        incident_date: new Date().toISOString().slice(0, 16),
-        incident_location: '',
-        description: '',
-        abuse_type: '',
-        zone_id: '',
-        acted_with_discernment: false,
-        is_victimless_crime: false,
+export default function BcpcCreate() {
+    const { data, setData, post, processing, errors } = useForm({
+        guardian_name: '',
+        address: '',
+        contact_number: '',
+        child_first_name: '',
+        child_last_name: '',
+        child_middle_name: '',
+        date_of_birth: '',
+        sex: '',
+        date_of_weighing: new Date().toISOString().split('T')[0],
+        weight_kg: '',
+        height_cm: '',
     });
 
-    const addParty = () => {
-        setData('parties', [...data.parties, { role: 'Other', name: '', age: '', gender: '', contact: '', address: '' }]);
-    };
-
-    const removeParty = (index: number) => {
-        setData('parties', data.parties.filter((_: any, i: number) => i !== index));
-    };
-
-    const updateParty = (index: number, field: string, value: any) => {
-        const updated = [...data.parties];
-        updated[index] = { ...updated[index], [field]: value };
-        setData('parties', updated);
-    };
-
-    const handleSubmit = (e: React.FormEvent) => {
+    const submit = (e: React.FormEvent) => {
         e.preventDefault();
-        post(route('admin.bcpc.store'));
+        post('/admin/bcpc/cases', {
+            onSuccess: () => {
+                toast.success('Child profile registered successfully');
+            },
+            onError: () => {
+                toast.error('Please check the form for errors');
+            }
+        });
     };
 
     return (
-        <AppLayout breadcrumbs={[{ title: 'BCPC Registry', href: route('admin.bcpc.index') }, { title: 'New Intake', href: '#' }]}>
-            <Head title="New BCPC Case Intake" />
-
-            <div className="p-6 max-w-5xl mx-auto space-y-6">
-                {/* Header */}
-                <div>
-                    <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-                        <ShieldAlert className="w-6 h-6 text-primary" />
-                        New BCPC Case Intake
-                    </h1>
-                    <p className="text-muted-foreground text-sm">[RA 9344] Children in Conflict with the Law — Initial Report</p>
+        <AppLayout breadcrumbs={[
+            { title: 'BCPC Monitoring Database', href: '/admin/bcpc/cases' },
+            { title: 'Register Child', href: '/admin/bcpc/cases/create' }
+        ]}>
+            <Head title="Register Child - BCPC" />
+            <div className="flex flex-1 flex-col gap-8 p-6 max-w-5xl mx-auto w-full">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-card p-6 rounded-2xl border border-border shadow-sm relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
+                    <div className="flex gap-4 items-center z-10">
+                        <div className="bg-gradient-to-br from-primary/20 to-primary/5 p-4 rounded-xl border border-primary/20 text-primary">
+                            <Activity className="w-8 h-8" />
+                        </div>
+                        <div>
+                            <h1 className="text-3xl font-black tracking-tight bg-gradient-to-br from-slate-900 to-slate-600 dark:from-slate-100 dark:to-slate-400 bg-clip-text text-transparent">Child Profile Intake</h1>
+                            <p className="text-muted-foreground text-sm font-medium tracking-wide mt-1">[RA 11037] Health & Nutrition Monitoring Registry</p>
+                        </div>
+                    </div>
                 </div>
 
-                {/* Advisory */}
-                <Alert className="border-blue-200 bg-blue-50">
-                    <Info className="w-4 h-4 text-blue-600" />
-                    <AlertDescription className="text-blue-800 text-xs">
-                        <strong>RA 9344 Coverage:</strong> This form is for CICL who are above 15 but below 18 years old, assessed to have acted with discernment,
-                        and allegedly committed an offense with an imposable penalty of not more than 6 years.
-                        The BCPC shall assist the LSWDO in the corresponding diversion proceedings.
-                    </AlertDescription>
-                </Alert>
+                <form onSubmit={submit}>
+                    <div className="grid gap-6">
 
-                <form onSubmit={handleSubmit} className="space-y-6">
-
-                    {/* Involved Parties */}
-                    <Card>
-                        <CardHeader className="border-b pb-4">
-                            <div className="flex justify-between items-center">
-                                <div>
-                                    <CardTitle className="text-base font-bold uppercase tracking-widest">Involved Parties</CardTitle>
-                                    <CardDescription className="text-xs">Add the CICL, victim(s), and parents/guardians.</CardDescription>
+                        {/* Guardian Section */}
+                        <Card className="border-muted shadow-sm hover:shadow-md transition-shadow duration-300">
+                            <CardHeader className="border-b bg-muted/20 pb-4">
+                                <CardTitle className="text-xs font-black uppercase tracking-widest text-muted-foreground">Guardian / Parent Information</CardTitle>
+                            </CardHeader>
+                            <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground" htmlFor="guardian_name">Full Name required</Label>
+                                    <Input
+                                        id="guardian_name"
+                                        value={data.guardian_name}
+                                        onChange={e => setData('guardian_name', e.target.value)}
+                                        placeholder="Enter parent or guardian name"
+                                    />
+                                    {errors.guardian_name && <p className="text-sm text-red-500">{errors.guardian_name}</p>}
                                 </div>
-                                <Button type="button" size="sm" variant="outline" onClick={addParty} className="flex items-center gap-1 text-xs">
-                                    <UserPlus className="w-3.5 h-3.5" /> Add Party
+                                <div className="space-y-2">
+                                    <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground" htmlFor="contact_number">Contact Number optional</Label>
+                                    <Input
+                                        id="contact_number"
+                                        value={data.contact_number}
+                                        onChange={e => setData('contact_number', e.target.value)}
+                                        placeholder="09XXXXXXXXX"
+                                    />
+                                </div>
+                                <div className="md:col-span-2 space-y-2">
+                                    <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground" htmlFor="address">Complete Address required</Label>
+                                    <Input
+                                        id="address"
+                                        value={data.address}
+                                        onChange={e => setData('address', e.target.value)}
+                                        placeholder="Purok, Street, etc."
+                                    />
+                                    {errors.address && <p className="text-sm text-red-500">{errors.address}</p>}
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        {/* Child Details */}
+                        <Card className="border-muted shadow-sm hover:shadow-md transition-shadow duration-300">
+                            <CardHeader className="border-b bg-muted/20 pb-4">
+                                <CardTitle className="text-xs font-black uppercase tracking-widest text-muted-foreground">Child Demographic Data</CardTitle>
+                            </CardHeader>
+                            <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div className="space-y-2">
+                                    <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground" htmlFor="child_first_name">First Name required</Label>
+                                    <Input
+                                        id="child_first_name"
+                                        value={data.child_first_name}
+                                        onChange={e => setData('child_first_name', e.target.value)}
+                                    />
+                                    {errors.child_first_name && <p className="text-sm text-red-500">{errors.child_first_name}</p>}
+                                </div>
+                                <div className="space-y-2">
+                                    <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground" htmlFor="child_middle_name">Middle Name optional</Label>
+                                    <Input
+                                        id="child_middle_name"
+                                        value={data.child_middle_name}
+                                        onChange={e => setData('child_middle_name', e.target.value)}
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground" htmlFor="child_last_name">Last Name required</Label>
+                                    <Input
+                                        id="child_last_name"
+                                        value={data.child_last_name}
+                                        onChange={e => setData('child_last_name', e.target.value)}
+                                    />
+                                    {errors.child_last_name && <p className="text-sm text-red-500">{errors.child_last_name}</p>}
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground" htmlFor="date_of_birth">Date of Birth required</Label>
+                                    <Input
+                                        id="date_of_birth"
+                                        type="date"
+                                        value={data.date_of_birth}
+                                        onChange={e => setData('date_of_birth', e.target.value)}
+                                    />
+                                    {errors.date_of_birth && <p className="text-sm text-red-500">{errors.date_of_birth}</p>}
+                                </div>
+                                <div className="space-y-2">
+                                    <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Sex required</Label>
+                                    <Select
+                                        onValueChange={(val: any) => setData('sex', val)}
+                                        defaultValue={data.sex}
+                                    >
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Select sex" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="Male">Male</SelectItem>
+                                            <SelectItem value="Female">Female</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                    {errors.sex && <p className="text-sm text-red-500">{errors.sex}</p>}
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        {/* OPT Metrics */}
+                        <Card className="border-indigo-100 shadow-sm hover:shadow-md transition-shadow duration-300 relative overflow-hidden">
+                            <div className="absolute left-0 top-0 bottom-0 w-1 bg-indigo-500"></div>
+                            <CardHeader className="border-b bg-indigo-50/30 pb-4">
+                                <div className="flex items-center gap-2">
+                                    <Activity className="h-4 w-4 text-indigo-600" />
+                                    <CardTitle className="text-xs font-black uppercase tracking-widest text-indigo-700 dark:text-indigo-400">Nutritional Assessment (Electronic Operation Timbang)</CardTitle>
+                                </div>
+                                <CardDescription className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mt-1">Automatic malnutrition triage system</CardDescription>
+                            </CardHeader>
+                            <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-6">
+                                <div className="space-y-2">
+                                    <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground" htmlFor="date_of_weighing">Date of Measurement</Label>
+                                    <Input
+                                        id="date_of_weighing"
+                                        type="date"
+                                        value={data.date_of_weighing}
+                                        onChange={e => setData('date_of_weighing', e.target.value)}
+                                    />
+                                    {errors.date_of_weighing && <p className="text-sm text-red-500">{errors.date_of_weighing}</p>}
+                                </div>
+                                <div className="space-y-2">
+                                    <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground" htmlFor="weight_kg">Weight (kg)</Label>
+                                    <div className="relative">
+                                        <Input
+                                            id="weight_kg"
+                                            type="number"
+                                            step="0.01"
+                                            value={data.weight_kg}
+                                            onChange={e => setData('weight_kg', e.target.value)}
+                                            placeholder="e.g. 14.5"
+                                        />
+                                        <span className="absolute right-3 top-2 text-muted-foreground text-sm">kg</span>
+                                    </div>
+                                    {errors.weight_kg && <p className="text-sm text-red-500">{errors.weight_kg}</p>}
+                                </div>
+                                <div className="space-y-2">
+                                    <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground" htmlFor="height_cm">Height (cm)</Label>
+                                    <div className="relative">
+                                        <Input
+                                            id="height_cm"
+                                            type="number"
+                                            step="0.1"
+                                            value={data.height_cm}
+                                            onChange={e => setData('height_cm', e.target.value)}
+                                            placeholder="e.g. 95.0"
+                                        />
+                                        <span className="absolute right-3 top-2 text-muted-foreground text-sm">cm</span>
+                                    </div>
+                                    {errors.height_cm && <p className="text-sm text-red-500">{errors.height_cm}</p>}
+                                </div>
+
+                            </CardContent>
+                            <div className="bg-muted/50 px-6 py-4 flex items-center gap-3 border-t">
+                                <Calculator className="h-4 w-4 text-muted-foreground" />
+                                <p className="text-[10px] text-muted-foreground flex-1 uppercase font-bold tracking-tight">
+                                     The WHO Standard Algorithm will automatically verify z-scores for SAM/MAM indicators.
+                                </p>
+                            </div>
+                        </Card>
+
+                        <div className="flex justify-between items-center mt-4">
+                            <Link href="/admin/bcpc/cases">
+                                <Button variant="outline" size="lg" className="rounded-xl border-border px-8 font-black uppercase text-[10px] tracking-widest" type="button">
+                                    <ArrowLeft className="h-4 w-4 mr-2" />
+                                    Cancel
                                 </Button>
-                            </div>
-                        </CardHeader>
-                        <CardContent className="pt-6 space-y-4">
-                            {data.parties.map((party: any, index: number) => (
-                                <div key={index} className="border border-muted rounded-xl p-4 space-y-4 bg-muted/5 relative">
-                                    <div className="flex justify-between items-center">
-                                        <Badge variant="outline" className={`text-[10px] font-bold uppercase tracking-wider ${party.role === 'CICL' ? 'border-blue-300 bg-blue-50 text-blue-700' : party.role === 'Victim' ? 'border-amber-300 bg-amber-50 text-amber-700' : 'border-slate-300'}`}>
-                                            {party.role}
-                                        </Badge>
-                                        {index > 1 && (
-                                            <button type="button" onClick={() => removeParty(index)} className="text-destructive hover:text-destructive/80 transition-colors">
-                                                <Trash2 className="w-4 h-4" />
-                                            </button>
-                                        )}
-                                    </div>
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                                        <div className="space-y-1.5">
-                                            <Label className="text-xs uppercase font-bold text-muted-foreground">Role</Label>
-                                            <select
-                                                className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm"
-                                                value={party.role}
-                                                onChange={e => updateParty(index, 'role', e.target.value)}
-                                            >
-                                                {ROLES.map(r => <option key={r} value={r}>{r}</option>)}
-                                            </select>
-                                        </div>
-                                        <div className="space-y-1.5 md:col-span-2">
-                                            <Label className="text-xs uppercase font-bold text-muted-foreground">Full Name <span className="text-destructive">*</span></Label>
-                                            <Input
-                                                required
-                                                value={party.name}
-                                                onChange={e => updateParty(index, 'name', e.target.value)}
-                                                placeholder="e.g., Juan Dela Cruz"
-                                                className="h-9"
-                                            />
-                                        </div>
-                                        <div className="space-y-1.5">
-                                            <Label className="text-xs uppercase font-bold text-muted-foreground">Age</Label>
-                                            <Input
-                                                type="number"
-                                                min="0"
-                                                max="120"
-                                                value={party.age}
-                                                onChange={e => updateParty(index, 'age', e.target.value)}
-                                                className="h-9"
-                                                placeholder="Age"
-                                            />
-                                        </div>
-                                        <div className="space-y-1.5">
-                                            <Label className="text-xs uppercase font-bold text-muted-foreground">Gender</Label>
-                                            <select
-                                                className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm"
-                                                value={party.gender}
-                                                onChange={e => updateParty(index, 'gender', e.target.value)}
-                                            >
-                                                <option value="">Select...</option>
-                                                <option value="Male">Male</option>
-                                                <option value="Female">Female</option>
-                                            </select>
-                                        </div>
-                                        <div className="space-y-1.5">
-                                            <Label className="text-xs uppercase font-bold text-muted-foreground">Contact Number</Label>
-                                            <Input value={party.contact} onChange={e => updateParty(index, 'contact', e.target.value)} className="h-9" placeholder="09XX..." />
-                                        </div>
-                                        <div className="space-y-1.5 sm:col-span-2 md:col-span-3">
-                                            <Label className="text-xs uppercase font-bold text-muted-foreground">Address</Label>
-                                            <Input value={party.address} onChange={e => updateParty(index, 'address', e.target.value)} className="h-9" placeholder="Purok / Street, Barangay, City" />
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
-                        </CardContent>
-                    </Card>
-
-                    {/* Incident Details */}
-                    <Card>
-                        <CardHeader className="border-b pb-4">
-                            <CardTitle className="text-base font-bold uppercase tracking-widest">Incident Details</CardTitle>
-                        </CardHeader>
-                        <CardContent className="pt-6 grid grid-cols-1 md:grid-cols-2 gap-5">
-                            <div className="space-y-1.5">
-                                <Label className="text-xs uppercase font-bold text-muted-foreground">Date of Incident <span className="text-destructive">*</span></Label>
-                                <Input
-                                    required
-                                    type="datetime-local"
-                                    className="h-9"
-                                    value={data.incident_date}
-                                    onChange={e => setData('incident_date', e.target.value)}
-                                />
-                            </div>
-                            <div className="space-y-1.5">
-                                <Label className="text-xs uppercase font-bold text-muted-foreground">Zone <span className="text-destructive">*</span></Label>
-                                <select
-                                    required
-                                    className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm"
-                                    value={data.zone_id}
-                                    onChange={e => setData('zone_id', e.target.value)}
-                                >
-                                    <option value="">Select Zone...</option>
-                                    {zones.map(z => <option key={z.id} value={z.id}>{z.name}</option>)}
-                                </select>
-                            </div>
-                            <div className="space-y-1.5 md:col-span-2">
-                                <Label className="text-xs uppercase font-bold text-muted-foreground">Incident Location <span className="text-destructive">*</span></Label>
-                                <Input
-                                    required
-                                    value={data.incident_location}
-                                    onChange={e => setData('incident_location', e.target.value)}
-                                    className="h-9"
-                                    placeholder="Specific location of the incident"
-                                />
-                            </div>
-                            <div className="space-y-1.5 md:col-span-2">
-                                <Label className="text-xs uppercase font-bold text-muted-foreground">Type of Offense <span className="text-destructive">*</span></Label>
-                                <select
-                                    required
-                                    className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm"
-                                    value={data.abuse_type}
-                                    onChange={e => setData('abuse_type', e.target.value)}
-                                >
-                                    <option value="">Select offense type...</option>
-                                    {abuseTypes.map((t: any) => <option key={t.id} value={t.id}>{t.name}</option>)}
-                                    <option value="BCPC-General">General BCPC Case</option>
-                                </select>
-                            </div>
-                            <div className="space-y-1.5 md:col-span-2">
-                                <Label className="text-xs uppercase font-bold text-muted-foreground">Description / Narrative <span className="text-destructive">*</span></Label>
-                                <Textarea
-                                    required
-                                    rows={4}
-                                    value={data.description}
-                                    onChange={e => setData('description', e.target.value)}
-                                    placeholder="Provide a detailed narrative of the incident..."
-                                />
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                    {/* BCPC Assessment Flags */}
-                    <Card>
-                        <CardHeader className="border-b pb-4">
-                            <CardTitle className="text-base font-bold uppercase tracking-widest">RA 9344 Assessment Flags</CardTitle>
-                            <CardDescription className="text-xs">Initial determination for diversion eligibility.</CardDescription>
-                        </CardHeader>
-                        <CardContent className="pt-6 grid grid-cols-1 sm:grid-cols-2 gap-5">
-                            <div className="flex items-start space-x-3 p-4 rounded-lg border border-muted bg-muted/5">
-                                <Checkbox
-                                    id="discernment"
-                                    checked={data.acted_with_discernment}
-                                    onCheckedChange={(checked) => setData('acted_with_discernment', checked)}
-                                />
-                                <div className="space-y-0.5">
-                                    <Label htmlFor="discernment" className="text-sm font-bold cursor-pointer">Acted With Discernment</Label>
-                                    <p className="text-xs text-muted-foreground">CICL understood the nature and consequences of the act.</p>
-                                </div>
-                            </div>
-                            <div className="flex items-start space-x-3 p-4 rounded-lg border border-muted bg-muted/5">
-                                <Checkbox
-                                    id="victimless"
-                                    checked={data.is_victimless_crime}
-                                    onCheckedChange={(checked) => setData('is_victimless_crime', checked)}
-                                />
-                                <div className="space-y-0.5">
-                                    <Label htmlFor="victimless" className="text-sm font-bold cursor-pointer">Victimless Crime</Label>
-                                    <p className="text-xs text-muted-foreground">No private party was directly offended (LSWDO shall lead).</p>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                    {/* Submit */}
-                    <div className="flex justify-end gap-3">
-                        <Button type="button" variant="ghost" onClick={() => window.history.back()}>Cancel</Button>
-                        <Button type="submit" disabled={processing} className="font-bold uppercase tracking-widest px-8">
-                            {processing ? 'Recording...' : 'Record BCPC Case'}
-                        </Button>
+                            </Link>
+                            <Button type="submit" size="lg" disabled={processing} className="rounded-xl shadow-md px-8 font-black uppercase text-[10px] tracking-widest">
+                                <Save className="h-4 w-4 mr-2" />
+                                {processing ? 'Analyzing...' : 'Save & Triage Profile'}
+                            </Button>
+                        </div>
                     </div>
                 </form>
             </div>

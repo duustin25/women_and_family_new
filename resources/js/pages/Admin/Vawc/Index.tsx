@@ -112,10 +112,10 @@ export default function Index({ cases, filters }: Props) {
                                     </SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="all">All Registry Stages</SelectItem>
-                                        <SelectItem value="Intake">Initial Intake</SelectItem>
-                                        <SelectItem value="BPO Processing">Protection Order Processing</SelectItem>
-                                        <SelectItem value="Monitoring">Monitoring & Compliance</SelectItem>
-                                        <SelectItem value="Escalated">Legally Escalated</SelectItem>
+                                        <SelectItem value="Intake">Intake</SelectItem>
+                                        <SelectItem value="BPO Processing">BPO Processing</SelectItem>
+                                        <SelectItem value="Monitoring">Monitoring</SelectItem>
+                                        <SelectItem value="Escalated">Escalated</SelectItem>
                                     </SelectContent>
                                 </Select>
 
@@ -139,7 +139,7 @@ export default function Index({ cases, filters }: Props) {
                                     <TableHead className="font-bold">Victim</TableHead>
                                     <TableHead className="font-bold text-center">Status</TableHead>
                                     <TableHead className="font-bold text-center">Triage Priority</TableHead>
-                                    <TableHead className="font-bold">Protocol Status</TableHead>
+                                    <TableHead className="font-bold">Intervention Status</TableHead>
                                     <TableHead className="font-bold">Date Reported</TableHead>
                                     <TableHead className="text-right font-bold pr-6">Registry</TableHead>
                                 </TableRow>
@@ -174,10 +174,16 @@ export default function Index({ cases, filters }: Props) {
                                             </TableCell>
                                             <TableCell>
                                                 <div className="flex flex-col">
-                                                    <span className="font-semibold text-sm">
+                                                    <span className="font-bold text-sm text-foreground">
                                                         {vawc.involved_parties.find((p: any) => p.role === 'Victim')?.name || 'N/A'}
                                                     </span>
-                                                    <span className="text-[10px] text-muted-foreground uppercase">{vawc.case_report.abuse_type?.name}</span>
+                                                    <div className="flex gap-1 mt-1">
+                                                        <span className="text-[9px] px-1.5 py-0.5 rounded-sm bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 font-bold uppercase tracking-tighter">Victim</span>
+                                                        {vawc.involved_parties.some((p: any) => p.role === 'Respondent') &&
+                                                            <span className="text-[9px] px-1.5 py-0.5 rounded-sm bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-400 font-bold uppercase tracking-tighter">Respondent</span>
+                                                        }
+                                                    </div>
+                                                    <span className="text-[10px] text-muted-foreground uppercase font-medium mt-1">{vawc.case_report.abuse_type?.name}</span>
                                                 </div>
                                             </TableCell>
                                             <TableCell className="text-center">
@@ -195,17 +201,42 @@ export default function Index({ cases, filters }: Props) {
                                                 )}
                                             </TableCell>
                                             <TableCell>
-                                                <div className="flex items-center gap-1">
-                                                    <Badge variant="outline" className="text-[9px] border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/20 text-amber-700 dark:text-amber-400">Victim</Badge>
-                                                    {vawc.involved_parties.some((p: any) => p.role === 'Respondent') &&
-                                                        <Badge variant="outline" className="text-[9px] border-border bg-muted/50 text-muted-foreground">Respondent</Badge>
-                                                    }
+                                                <div className="flex flex-wrap gap-1 max-w-[200px]">
+                                                    {vawc.is_repeat_offense && (
+                                                        <Badge variant="outline" className="text-[8px] border-red-200 bg-red-50 text-red-700 dark:bg-red-950/20 dark:text-red-400 font-black">REPEATED ABUSE</Badge>
+                                                    )}
+                                                    {vawc.children_count > 0 && (
+                                                        <Badge variant="outline" className="text-[8px] border-indigo-200 bg-indigo-50 text-indigo-700 dark:bg-indigo-950/20 dark:text-indigo-400 font-black">CHILDREN AT RISK</Badge>
+                                                    )}
+                                                    {vawc.status === 'Monitoring' && (
+                                                        <Badge variant="outline" className="text-[8px] border-emerald-200 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/20 dark:text-emerald-400 font-black whitespace-nowrap">BPO ACTIVE</Badge>
+                                                    )}
+                                                    {vawc.assessment?.requires_alternative_housing && (
+                                                        <Badge variant="outline" className="text-[8px] border-blue-200 bg-blue-50 text-blue-700 dark:bg-blue-950/20 dark:text-blue-400 font-black">SHELTER REQ</Badge>
+                                                    )}
+                                                    {!vawc.is_repeat_offense && vawc.children_count === 0 && vawc.status !== 'Monitoring' && !vawc.assessment?.requires_alternative_housing && (
+                                                        <span className="text-[10px] text-muted-foreground italic">No urgent flags</span>
+                                                    )}
                                                 </div>
                                             </TableCell>
-                                            <TableCell className="text-muted-foreground text-sm font-medium">
-                                                {new Date(vawc.created_at).toLocaleDateString(undefined, {
-                                                    year: 'numeric', month: 'short', day: 'numeric'
-                                                })}
+                                            <TableCell className="text-muted-foreground text-[12px] font-medium leading-tight">
+                                                <div className="flex flex-col">
+                                                    <span>
+                                                        {new Date(vawc.created_at).toLocaleDateString(undefined, {
+                                                            year: 'numeric', month: 'short', day: 'numeric'
+                                                        })}
+                                                    </span>
+                                                    <span className="text-[10px] text-muted-foreground/70 uppercase">
+                                                        {new Date(vawc.created_at).toLocaleTimeString(undefined, {
+                                                            hour: '2-digit', minute: '2-digit'
+                                                        })}
+                                                    </span>
+                                                    {Math.abs(new Date().getTime() - new Date(vawc.created_at).getTime()) < 600000 && (
+                                                        <Badge className="w-fit mt-1 bg-emerald-500 hover:bg-emerald-600 text-[8px] h-4 px-1 font-black">
+                                                            JUST ADDED
+                                                        </Badge>
+                                                    )}
+                                                </div>
                                             </TableCell>
                                             <TableCell className="text-right pr-6">
                                                 <Button variant="ghost" size="sm" asChild className="opacity-70 group-hover:opacity-100 group-hover:bg-primary/10 transition-all font-bold text-xs ring-offset-background hover:text-primary">

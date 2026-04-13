@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Resources\CaseReportResource;
 use App\Models\Announcement;
 use App\Models\Organization;
 use App\Models\CaseReport;

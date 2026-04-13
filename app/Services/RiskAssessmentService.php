@@ -73,10 +73,10 @@ class RiskAssessmentService
         }
 
         // 3. SEVERITY / INJURIES:
-        if ($assessment->requires_medical) {
-            $assessment->abuse_severity = 3; // Life-threatening / Requires Medical
-        } elseif ($case->perpetrator_present || $case->incident_veracity) {
-            $assessment->abuse_severity = 2; // Verified / Perpetrator aggressive
+        if ($assessment->requires_medical || $case->perpetrator_present) {
+            $assessment->abuse_severity = 3; // Life-threatening / Perpetrator active at scene
+        } elseif ($case->incident_veracity) {
+            $assessment->abuse_severity = 2; // Verified incident
         } else {
             $assessment->abuse_severity = 1; // Unverified or Minor
         }
@@ -96,17 +96,17 @@ class RiskAssessmentService
      */
     private function determineLevel(float $score): array
     {
-        if ($score >= 9) {
+        if ($score >= 10) {
             return [
                 'level' => 'CRITICAL',
                 'recommendation' => 'EMERGENCY: Immediate police escort and medical intervention required. Shelter placement recommended.'
             ];
-        } elseif ($score >= 7) {
+        } elseif ($score >= 8) {
             return [
                 'level' => 'HIGH',
                 'recommendation' => 'URGENT: Legal protection order (Barangay Protection Order/Temporary Protection Order) recommended. Safety planning and temporary relocation required.'
             ];
-        } elseif ($score >= 4) {
+        } elseif ($score >= 6) {
             return [
                 'level' => 'MODERATE',
                 'recommendation' => 'MONITORING: Regular counseling and social worker check-ins required. Legal consultation recommended.'

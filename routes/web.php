@@ -10,7 +10,6 @@ use App\Http\Controllers\HomeController;
 // Admin Routes:
 use App\Http\Controllers\Admin\AnnouncementController;
 use App\Http\Controllers\Admin\OrganizationController;
-use App\Http\Controllers\Admin\CaseController;
 use App\Http\Controllers\Admin\OfficialController;
 use App\Http\Controllers\Admin\AnalyticsController;
 use App\Http\Controllers\Admin\AuditLogController;
@@ -87,12 +86,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('organizations/{organization:slug}/members', [OrganizationController::class, 'members'])->name('organizations.members');
         Route::resource('organizations', OrganizationController::class);
 
-        Route::patch('cases/update-status', [CaseController::class, 'updateStatus'])->name('cases.update-status');
-        Route::get('cases/{id}/print', [CaseController::class, 'print'])->name('cases.print');
-        Route::patch('cases/{id}/restore', [CaseController::class, 'restore'])->name('cases.restore');
-        Route::get('cases/archive', [CaseController::class, 'archive'])->name('cases.archive');
-        Route::resource('cases', CaseController::class);
-
 
         // ------------------------------------------------------------
 
@@ -161,18 +154,13 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.', 'middleware' => ['auth', 'v
     Route::post('vawc/cases/{id}/close', [\App\Http\Controllers\Admin\VawcController::class, 'closeCase'])->name('vawc.close');
     // ------------------------------------------------------------
 
-    // BCPC Diversion Program Management (RA 9344)
-    Route::get('bcpc/cases/create', [\App\Http\Controllers\Admin\BcpcController::class, 'create'])->name('bcpc.create');
-    Route::post('bcpc/cases', [\App\Http\Controllers\Admin\BcpcController::class, 'store'])->name('bcpc.store');
-    Route::get('bcpc/cases', [\App\Http\Controllers\Admin\BcpcController::class, 'index'])->name('bcpc.index');
-    Route::get('bcpc/cases/{id}', [\App\Http\Controllers\Admin\BcpcController::class, 'show'])->name('bcpc.show');
-    
-    // BCPC Lifecycle Routes
-    Route::post('bcpc/cases/{id}/proceeding', [\App\Http\Controllers\Admin\BcpcController::class, 'startProceeding'])->name('bcpc.start-proceeding');
-    Route::post('bcpc/cases/{id}/implement', [\App\Http\Controllers\Admin\BcpcController::class, 'implementProgram'])->name('bcpc.implement-program');
-    Route::post('bcpc/cases/{id}/log-compliance', [\App\Http\Controllers\Admin\BcpcController::class, 'logCompliance'])->name('bcpc.log-compliance');
-    Route::post('bcpc/cases/{id}/terminate', [\App\Http\Controllers\Admin\BcpcController::class, 'terminate'])->name('bcpc.terminate');
-    Route::post('bcpc/cases/{id}/forward', [\App\Http\Controllers\Admin\BcpcController::class, 'forward'])->name('bcpc.forward');
+    // BCPC Nutrition Monitoring (e-OPT Plus)
+    Route::get('bcpc/cases/create', [\App\Http\Controllers\Admin\BcpcMonitoringController::class, 'create'])->name('bcpc.create');
+    Route::post('bcpc/cases', [\App\Http\Controllers\Admin\BcpcMonitoringController::class, 'store'])->name('bcpc.store');
+    Route::get('bcpc/cases', [\App\Http\Controllers\Admin\BcpcMonitoringController::class, 'index'])->name('bcpc.index');
+    Route::get('bcpc/dashboard', [\App\Http\Controllers\Admin\BcpcMonitoringController::class, 'dashboard'])->name('bcpc.dashboard');
+    Route::get('bcpc/cases/{id}', [\App\Http\Controllers\Admin\BcpcMonitoringController::class, 'show'])->name('bcpc.show');
+    Route::put('bcpc/cases/{id}', [\App\Http\Controllers\Admin\BcpcMonitoringController::class, 'update'])->name('bcpc.update');
     // ------------------------------------------------------------
 });
 
