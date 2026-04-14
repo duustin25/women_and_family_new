@@ -1,29 +1,44 @@
 <x-mail::message>
-# 📢 New Announcement: {{ $announcement->title }}
-## Official Update from {{ $announcement->organization->name ?? 'Barangay 183 Hall' }}
+{{-- ═══════════════════ HEADER ═══════════════════ --}}
+<div style="border-bottom: 3px solid #ce1126; padding-bottom: 12px; margin-bottom: 20px;">
+
+# 📢 Official Announcement
+
+**Barangay 183 — Women & Family Protection System**
+
+</div>
+
+---
 
 Hello **Verified Member**,
 
-A new official announcement has been posted that may be relevant to you.
+An official announcement has been issued by **{{ $announcement->organization->name ?? 'Barangay 183 Hall' }}** that requires your attention.
 
 <x-mail::panel>
-**Category:** {{ $announcement->category }}  
-**Posted on:** {{ $announcement->created_at->format('F j, Y') }}  
-**Location:** {{ $announcement->location ?? 'N/A' }}
+**📌 Title:** {{ $announcement->title }}  
+**🗂 Category:** {{ $announcement->category }}  
+**📅 Posted on:** {{ $announcement->created_at->format('F j, Y') }}  
+@if($announcement->location)
+**📍 Location:** {{ $announcement->location }}
+@endif
 </x-mail::panel>
 
 ### Summary:
 {{ $announcement->excerpt }}
 
-Please click the button below to read the full details of this announcement on our official website.
+Please click the button below to read the full announcement on the Official Barangay Hub.
 
-<x-mail::button :url="config('app.url') . '/announcements/' . $announcement->slug">
+<x-mail::button :url="config('app.url') . '/announcements/' . $announcement->slug" color="error">
 Read Full Announcement
 </x-mail::button>
 
-**Innovation Note:** This automated broadcast ensures 100% reach to active members with Zero Cost to the local government budget by eliminating SMS and paper overhead.
+---
 
-Sincerely,<br>
-**{{ $announcement->organization->name ?? 'Barangay 183' }} Admin Team**  
-*Barangay 183 Women and Family Support System*
+📌 **Data Privacy Notice**  
+This broadcast was sent to you as a registered Barangay 183 member. Your data is processed in compliance with Republic Act 10173 (Data Privacy Act of 2012).
+
+Respectfully,  
+**{{ $announcement->organization->name ?? 'Barangay 183' }} Administrative Team**  
+*Women & Family Protection Information System*  
+📍 Barangay 183, Pasay City
 </x-mail::message>

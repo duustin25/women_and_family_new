@@ -8,7 +8,7 @@ use App\Models\Organization;
 use App\Models\MemberCommunication;
 use App\Models\BeneficiaryDispatch;
 use App\Mail\GeneralMessage;
-use App\Mail\MembershipApproved;
+use App\Jobs\SendBulkMemberEmail;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Mail;
@@ -25,7 +25,7 @@ class MembersController extends Controller
     {
         /** @var \App\Models\User $user */
         $user = Auth::user();
-        $query = Member::with(['organization', 'communications', 'dispatches'])->latest();
+        $query = Member::with(['organization', 'application', 'communications', 'dispatches'])->latest();
 
         // RBAC: President sees only their organization's members
         if ($user->isPresident()) {
@@ -98,39 +98,23 @@ class MembersController extends Controller
     public function sendBulkEmail(Request $request)
     {
         $validated = $request->validate([
-            'subject' => 'required|string|max:255',
-            'body' => 'required|string',
-            'recipient_group' => 'required|string' // 'all', 'solo_parents', etc.
+            'subject'          => 'required|string|max:255',
+            'body'             => 'required|string',
+            'recipient_group'  => 'required|string',
         ]);
 
         /** @var \App\Models\User $user */
         $user = Auth::user();
-        $query = Member::query();
 
-        // RBAC: President only messages their members
-        if ($user->isPresident()) {
-            $query->where('organization_id', $user->organization_id);
-        }
+        // Dispatch a background job — admin gets an instant response
+        SendBulkMemberEmail::dispatch(
+            $validated['subject'],
+            $validated['body'],
+            Auth::id(),
+            $user->isPresident() ? $user->organization_id : null
+        );
 
-        // Further filtering based on group (implementation depends on member attributes)
-        // For now, we'll support 'all'
-        $members = $query->whereNotNull('email')->get();
-
-        foreach ($members as $member) {
-            // Ideally, this should be a queued job to prevent timeout
-            Mail::to($member->email)->send(new GeneralMessage($validated['subject'], $validated['body']));
-
-            MemberCommunication::create([
-                'member_id' => $member->id,
-                'sent_by' => Auth::id(),
-                'subject' => $validated['subject'],
-                'body' => $validated['body'],
-                'type' => 'Bulk',
-                'status' => 'Sent'
-            ]);
-        }
-
-        return back()->with('success', 'Bulk message dispatched successfully to ' . $members->count() . ' members.');
+        return back()->with('success', 'Bulk message queued and will be delivered to all eligible members shortly.');
     }
 
     /**
@@ -163,7 +147,7 @@ class MembersController extends Controller
         if ($member->email) {
             $subject = 'Benefit Notification: ' . $validated['benefit_name'];
             $instructions = $validated['instructions'] ?? 'Present this Reference ID at the Barangay Hall.';
-            
+
             Mail::to($member->email)->send(new \App\Mail\BeneficiaryDispatchMail($member, $dispatch, $instructions));
 
             MemberCommunication::create([
@@ -177,5 +161,25 @@ class MembersController extends Controller
         }
 
         return back()->with('success', 'Member has been tagged for benefit. Reference: ' . $referenceNumber);
+    }
+
+    /**
+     * Mark a beneficiary dispatch as claimed.
+     */
+    public function claimDispatch(Request $request, Member $member, BeneficiaryDispatch $dispatch)
+    {
+        // RBAC: President can only manage their org's members
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        if ($user->isPresident() && $user->organization_id !== $member->organization_id) {
+            abort(403, 'Unauthorized.');
+        }
+
+        $dispatch->update([
+            'status'     => 'Claimed',
+            'claimed_at' => now(),
+        ]);
+
+        return back()->with('success', "Benefit '{$dispatch->benefit_name}' marked as claimed for {$member->fullname}.");
     }
 }

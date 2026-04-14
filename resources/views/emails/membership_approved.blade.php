@@ -1,28 +1,46 @@
 <x-mail::message>
-# Congratulations, {{ $member->fullname }}!
-## Barangay 183 - Official Membership Approved
+{{-- ═══════════════════ HEADER ═══════════════════ --}}
+<div style="border-bottom: 3px solid #ce1126; padding-bottom: 12px; margin-bottom: 20px;">
 
-This is an official notice that your membership application to **{{ $member->organization->name }}** has been **Approved**.
+# 🎉 Membership Approved!
 
-Your record has been successfully registered in our Barangay 183 Information System. You will now receive:
-- Official Announcements
-- Event & Seminar Invitations
-- Benefit Notifications
+**Barangay 183 — Women & Family Protection System**
+
+</div>
+
+---
+
+Dear **{{ $member->fullname }}**,
+
+We are delighted to officially inform you that your membership application to **{{ $member->organization->name ?? 'Barangay 183' }}** has been **approved and verified**.
+
+Your profile has been registered in the Barangay 183 Information System. You will now receive:
+
+- ✅ Official Barangay Announcements
+- 📅 Community Event & Seminar Invitations
+- 🎁 Benefit & Assistance Notifications
+
+---
 
 <x-mail::panel>
-### Official Member Profile ID
+### 🔐 Your Official Member Profile ID
+
 **`{{ strtoupper(substr($member->secure_token, 0, 8)) }}`**
+
+Please keep this code confidential. Present it at the Barangay Hall for event check-in and benefit claims.
 </x-mail::panel>
 
-Please keep this email for your records. You may be asked to present your Member Profile ID during Barangay events or when claiming organizational benefits.
-
-**Sustainability Note:** This digital ID replaces physical cards, saving resources while ensuring your data is always accessible.
-
-<x-mail::button :url="config('app.url')">
-View Our Official Hub
+<x-mail::button :url="config('app.url')" color="error">
+Access the Official Hub
 </x-mail::button>
 
-Sincerely,<br>
-**{{ $member->organization->name }} Admin Team**
-*Barangay 183 Women and Family Support System*
+---
+
+📌 **Data Privacy Notice**  
+Your information is protected under Republic Act 10173 (Data Privacy Act of 2012). Barangay 183 will never share your data with third parties without your consent.
+
+Respectfully,  
+**{{ $member->organization->name ?? 'Barangay 183' }} Administrative Team**  
+*Women & Family Protection Information System*  
+📍 Barangay 183, Pasay City
 </x-mail::message>

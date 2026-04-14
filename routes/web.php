@@ -117,6 +117,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/members/{member}/email', [MembersController::class, 'sendIndividualEmail'])->name('members.email.individual');
         Route::post('/members/bulk-email', [MembersController::class, 'sendBulkEmail'])->name('members.email.bulk');
         Route::post('/members/{member}/beneficiary', [MembersController::class, 'tagBeneficiary'])->name('members.beneficiary.tag');
+        Route::patch('/members/{member}/beneficiary/{dispatch}/claim', [MembersController::class, 'claimDispatch'])->name('members.beneficiary.claim');
 
         // GAD Events Module (Admin)
         Route::resource('gad/events', \App\Http\Controllers\Admin\GadEventController::class, ['names' => 'gad.events']);

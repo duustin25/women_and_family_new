@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 
-class SendMembershipWelcomeEmail
+class SendMembershipWelcomeEmail implements ShouldQueue
 {
     use InteractsWithQueue;
 
