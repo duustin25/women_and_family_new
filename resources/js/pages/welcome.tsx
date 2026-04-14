@@ -13,15 +13,9 @@ import {
 interface WelcomeProps {
     announcements: { data: any[] };
     organizations: { data: any[] };
-    stats: {
-        caseTotal: any[],
-        eventTotal: any[],
-        orgTotal: any[],
-        memTotal: any[]
-    };
 }
 
-export default function Welcome({ announcements, organizations, stats }: WelcomeProps) {
+export default function Welcome({ announcements, organizations }: WelcomeProps) {
     const [api, setApi] = React.useState<CarouselApi>()
     const plugin = React.useRef(
         Autoplay({ delay: 4000, stopOnInteraction: false })
@@ -102,30 +96,6 @@ export default function Welcome({ announcements, organizations, stats }: Welcome
                             <Link href="/gad" className="px-10 py-4 bg-white/10 hover:bg-white/20 text-white font-black uppercase tracking-wider text-sm rounded-lg transition-all border border-white/20 backdrop-blur-sm">
                                 View GAD Programs
                             </Link>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            {/* ======================== IMPACT STATS SECTION ==========================*/}
-            <section className="relative z-20 py-10 mx-4 lg:mx-auto max-w-5xl bg-neutral-100 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl shadow-sm mt-15">
-                <div className="container mx-auto px-6">
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-8 text-neutral-900 dark:text-white text-center divide-y md:divide-y-0 md:divide-x divide-neutral-200 dark:divide-neutral-800">
-                        <div className="flex flex-col items-center py-2 md:py-0">
-                            <h4 className="text-4xl font-bold mb-1">{stats.caseTotal || '0'}</h4>
-                            <p className="uppercase tracking-wide text-sm text-neutral-500 dark:text-neutral-400">Cases Managed</p>
-                        </div>
-                        <div className="flex flex-col items-center py-2 md:py-0">
-                            <h4 className="text-4xl font-bold mb-1">{stats.orgTotal || '0'}</h4>
-                            <p className="uppercase tracking-wide text-sm text-neutral-500 dark:text-neutral-400">Accredited Partners</p>
-                        </div>
-                        <div className="flex flex-col items-center py-2 md:py-0">
-                            <h4 className="text-4xl font-bold mb-1">{stats.eventTotal || '0'}</h4>
-                            <p className="uppercase tracking-wide text-sm text-neutral-500 dark:text-neutral-400">GAD Events</p>
-                        </div>
-                        <div className="flex flex-col items-center py-2 md:py-0">
-                            <h4 className="text-4xl font-bold mb-1">{stats.memTotal || '0'}</h4>
-                            <p className="uppercase tracking-wide text-sm text-neutral-500 dark:text-neutral-400">Members Applied</p>
                         </div>
                     </div>
                 </div>
@@ -292,7 +262,7 @@ export default function Welcome({ announcements, organizations, stats }: Welcome
 
                             ))
                         ) : (
-                            <div>
+                            <div className="col-span-full py-16 text-center border-2 border-dashed border-neutral-200 dark:border-neutral-800 rounded-2xl">
                                 <h1>No organizations found</h1>
                             </div>
                         )}

@@ -12,6 +12,7 @@ use App\Jobs\SendBulkMemberEmail;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
@@ -76,20 +77,27 @@ class MembersController extends Controller
             return back()->with('error', 'Member does not have a recorded email address.');
         }
 
-        // Send Professional Email
-        Mail::to($member->email)->send(new GeneralMessage($validated['subject'], $validated['body']));
+        try {
+            // Send Professional Email
+            Mail::to($member->email)->send(new GeneralMessage($validated['subject'], $validated['body']));
 
-        // Log the communication
-        MemberCommunication::create([
-            'member_id' => $member->id,
-            'sent_by' => Auth::id(),
-            'subject' => $validated['subject'],
-            'body' => $validated['body'],
-            'type' => 'Individual',
-            'status' => 'Sent'
-        ]);
+            // Log the communication to the audit trail
+            MemberCommunication::create([
+                'member_id' => $member->id,
+                'sent_by'   => Auth::id(),
+                'subject'   => $validated['subject'],
+                'body'      => $validated['body'],
+                'type'      => 'Individual',
+                'status'    => 'Sent',
+            ]);
 
-        return back()->with('success', 'Message sent successfully to ' . $member->fullname);
+            return back()->with('success', 'Message sent successfully to ' . $member->fullname);
+
+        } catch (\Throwable $e) {
+            // Mail server or SMTP error — log for admin review, return friendly message
+            Log::error("IndividualEmail failed for Member ID {$member->id}: " . $e->getMessage());
+            return back()->with('error', 'Failed to send the message. Please check the mail configuration and try again.');
+        }
     }
 
     /**
@@ -144,20 +152,29 @@ class MembersController extends Controller
         ]);
 
         // Official Branding via Mailable
+        // NOTE: The benefit dispatch record is already saved above — this email is a secondary
+        // notification. A mail failure must NOT roll back the tagging operation.
         if ($member->email) {
-            $subject = 'Benefit Notification: ' . $validated['benefit_name'];
-            $instructions = $validated['instructions'] ?? 'Present this Reference ID at the Barangay Hall.';
+            try {
+                $subject = 'Benefit Notification: ' . $validated['benefit_name'];
+                $instructions = $validated['instructions'] ?? 'Present this Reference ID at the Barangay Hall.';
 
-            Mail::to($member->email)->send(new \App\Mail\BeneficiaryDispatchMail($member, $dispatch, $instructions));
+                Mail::to($member->email)->send(new \App\Mail\BeneficiaryDispatchMail($member, $dispatch, $instructions));
 
-            MemberCommunication::create([
-                'member_id' => $member->id,
-                'sent_by' => Auth::id(),
-                'subject' => $subject,
-                'body' => "Benefit Tagged: {$validated['benefit_name']}. Ref: {$referenceNumber}",
-                'type' => 'Beneficiary',
-                'status' => 'Sent'
-            ]);
+                MemberCommunication::create([
+                    'member_id' => $member->id,
+                    'sent_by'   => Auth::id(),
+                    'subject'   => $subject,
+                    'body'      => "Benefit Tagged: {$validated['benefit_name']}. Ref: {$referenceNumber}",
+                    'type'      => 'Beneficiary',
+                    'status'    => 'Sent',
+                ]);
+
+            } catch (\Throwable $e) {
+                // Email notification failed — log it, but the benefit tag was already saved successfully.
+                // The admin still gets the success message with the reference number.
+                Log::error("BeneficiaryDispatch email failed for Member ID {$member->id} (Ref: {$referenceNumber}): " . $e->getMessage());
+            }
         }
 
         return back()->with('success', 'Member has been tagged for benefit. Reference: ' . $referenceNumber);
