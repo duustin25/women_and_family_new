@@ -51,6 +51,9 @@ class VawcCaseService
                 'perpetrator_present' => $data['perpetrator_present'] ?? false,
                 'warrantless_arrest_made' => $data['warrantless_arrest_made'] ?? false,
                 'weapons_confiscated' => $data['weapons_confiscated'] ?? false,
+                'referral_status' => json_encode($data['referral_status'] ?? []),
+                'action_sought' => json_encode($data['action_sought'] ?? []),
+                'witness_info' => $data['witness_info'] ?? null,
                 'status' => 'Intake',
             ]);
 
@@ -64,20 +67,27 @@ class VawcCaseService
                 'gender' => $data['victim']['gender'] ?? 'Female',
                 'contact_number' => $data['victim']['contact'] ?? null,
                 'address' => $data['victim']['address'] ?? null,
+                'civil_status' => $data['victim']['civil_status'] ?? null,
+                'educational_attainment' => $data['victim']['educational_attainment'] ?? null,
+                'occupation' => $data['victim']['occupation'] ?? null,
                 'is_minor' => ($data['victim']['age'] ?? 0) < 18,
             ]);
 
-            // Respondent (Perpetrator)
-            if (!empty($data['respondent']['name'])) {
+            // Respondent (Perpetrator) - Allow creation if name OR physical description exists
+            if (!empty($data['respondent']['name']) || !empty($data['respondent']['physical_description'])) {
                 VawcInvolvedParty::create([
                     'vawc_case_id' => $vawcCase->id,
                     'role' => 'Respondent',
                     'relationship_to_victim' => $data['respondent']['relationship'] ?? null,
-                    'name' => $data['respondent']['name'],
+                    'name' => $data['respondent']['name'] ?? 'John Doe (Unknown)', // John Doe Fallback
                     'age' => $data['respondent']['age'] ?? null,
                     'gender' => $data['respondent']['gender'] ?? 'Male',
                     'contact_number' => $data['respondent']['contact'] ?? null,
                     'address' => $data['respondent']['address'] ?? null,
+                    'civil_status' => $data['respondent']['civil_status'] ?? null,
+                    'educational_attainment' => $data['respondent']['educational_attainment'] ?? null,
+                    'occupation' => $data['respondent']['occupation'] ?? null,
+                    'physical_description' => $data['respondent']['physical_description'] ?? null,
                 ]);
             }
 

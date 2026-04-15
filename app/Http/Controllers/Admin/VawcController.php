@@ -141,6 +141,19 @@ class VawcController extends Controller
             'requires_medical' => 'boolean',
             'requires_alternative_housing' => 'boolean',
 
+            'victim.civil_status' => 'nullable|string',
+            'victim.educational_attainment' => 'nullable|string',
+            'victim.occupation' => 'nullable|string',
+
+            'respondent.civil_status' => 'nullable|string',
+            'respondent.educational_attainment' => 'nullable|string',
+            'respondent.occupation' => 'nullable|string',
+            'respondent.physical_description' => 'nullable|string',
+
+            'referral_status' => 'nullable|array',
+            'witness_info' => 'nullable|string',
+            'action_sought' => 'nullable|array',
+            
             // Risk assessment is now fully automated via VAWC-RAVE Engine
         ]);
 

@@ -22,6 +22,10 @@ class VawcInvolvedParty extends Model
         'contact_number',
         'address',
         'is_minor',
+        'civil_status',
+        'educational_attainment',
+        'occupation',
+        'physical_description',
     ];
 
     protected $casts = [

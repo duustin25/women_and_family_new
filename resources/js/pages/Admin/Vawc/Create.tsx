@@ -18,9 +18,9 @@ interface Props {
 export default function Create({ abuseTypes, zones }: Props) {
     const { data, setData, post, processing, errors } = useForm({
         intake_type: 'Direct',
-        victim: { name: '', age: '', gender: 'Female', contact: '', address: '' },
+        victim: { name: '', age: '', gender: 'Female', contact: '', address: '', civil_status: '', educational_attainment: '', occupation: '' },
         complainant: { name: '', contact: '' },
-        respondent: { name: '', age: '', gender: 'Male', contact: '', address: '', relationship: '' },
+        respondent: { name: '', age: '', gender: 'Male', contact: '', address: '', relationship: '', civil_status: '', educational_attainment: '', occupation: '', physical_description: '' },
         incident_date: '',
         incident_location: '',
         description: '',
@@ -39,6 +39,9 @@ export default function Create({ abuseTypes, zones }: Props) {
         abuse_severity: 0,
         weapon_access: 0,
         life_threat_level: 0,
+        referral_status: [] as string[],
+        action_sought: [] as string[],
+        witness_info: '',
     });
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -158,6 +161,42 @@ export default function Create({ abuseTypes, zones }: Props) {
                                     <Label htmlFor="v_address">Home Address</Label>
                                     <Textarea id="v_address" value={data.victim.address} onChange={e => setData('victim', { ...data.victim, address: e.target.value })} />
                                 </div>
+                                <div className="grid grid-cols-2 gap-4 border-t border-border/50 pt-4 mt-2">
+                                    <div className="space-y-2">
+                                        <Label>Civil Status</Label>
+                                        <select
+                                            className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                            value={data.victim.civil_status || ''}
+                                            onChange={e => setData('victim', { ...data.victim, civil_status: e.target.value })}
+                                        >
+                                            <option value="">Select...</option>
+                                            <option value="Single">Single</option>
+                                            <option value="Married">Married</option>
+                                            <option value="Widowed">Widowed</option>
+                                            <option value="Separated">Separated</option>
+                                        </select>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label>Ed. Attainment</Label>
+                                        <select
+                                            className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                            value={data.victim.educational_attainment || ''}
+                                            onChange={e => setData('victim', { ...data.victim, educational_attainment: e.target.value })}
+                                        >
+                                            <option value="">Select...</option>
+                                            <option value="Elementary">Elementary Level</option>
+                                            <option value="High School">High School Level</option>
+                                            <option value="College">College Level</option>
+                                            <option value="Post-Graduate">Post-Graduate</option>
+                                            <option value="Vocational">Vocational</option>
+                                            <option value="None">None</option>
+                                        </select>
+                                    </div>
+                                    <div className="space-y-2 col-span-2">
+                                        <Label>Occupation</Label>
+                                        <Input placeholder="Enter occupation or N/A..." value={data.victim.occupation || ''} onChange={e => setData('victim', { ...data.victim, occupation: e.target.value })} />
+                                    </div>
+                                </div>
                             </CardContent>
                         </Card>
                     </div>
@@ -191,6 +230,49 @@ export default function Create({ abuseTypes, zones }: Props) {
                                         <option value="Dating Partner">Dating Partner</option>
                                         <option value="Other Family Member">Other Family Member</option>
                                     </select>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4 border-t border-border/50 pt-4">
+                                    <div className="space-y-2">
+                                        <Label>Civil Status</Label>
+                                        <select
+                                            className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                            value={data.respondent.civil_status || ''}
+                                            onChange={e => setData('respondent', { ...data.respondent, civil_status: e.target.value })}
+                                        >
+                                            <option value="">Select...</option>
+                                            <option value="Single">Single</option>
+                                            <option value="Married">Married</option>
+                                            <option value="Widowed">Widowed</option>
+                                            <option value="Separated">Separated</option>
+                                        </select>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label>Ed. Attainment</Label>
+                                        <select
+                                            className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                            value={data.respondent.educational_attainment || ''}
+                                            onChange={e => setData('respondent', { ...data.respondent, educational_attainment: e.target.value })}
+                                        >
+                                            <option value="">Select...</option>
+                                            <option value="Elementary">Elementary Level</option>
+                                            <option value="High School">High School Level</option>
+                                            <option value="College">College Level</option>
+                                            <option value="Post-Graduate">Post-Graduate</option>
+                                            <option value="Vocational">Vocational</option>
+                                            <option value="None">None</option>
+                                        </select>
+                                    </div>
+                                    <div className="space-y-2 col-span-2">
+                                        <Label>Occupation</Label>
+                                        <Input placeholder="Enter occupation or N/A..." value={data.respondent.occupation || ''} onChange={e => setData('respondent', { ...data.respondent, occupation: e.target.value })} />
+                                    </div>
+                                    <div className="space-y-2 col-span-2">
+                                        <Label className="flex justify-between items-center text-indigo-600 dark:text-indigo-400">
+                                            <span>Physical Description (Unknown Identity)</span>
+                                            <span className="text-[10px] font-bold uppercase py-0.5 px-2 bg-indigo-100 dark:bg-indigo-900/50 rounded-full">Joh Doe Protocol</span>
+                                        </Label>
+                                        <Textarea className="h-16 text-sm border-indigo-200 dark:border-indigo-800 placeholder:text-indigo-400/50" placeholder="Required if name is unknown. Height, build, tattoos, clothing, distinguishing marks..." value={data.respondent.physical_description || ''} onChange={e => setData('respondent', { ...data.respondent, physical_description: e.target.value })} />
+                                    </div>
                                 </div>
 
                                 {/* Modern Checkbox Actions */}
@@ -361,6 +443,60 @@ export default function Create({ abuseTypes, zones }: Props) {
                                             <p className="text-[11px] text-muted-foreground mt-1 leading-relaxed">Is the victim unsafe at home and requiring temporary safehouse placement?</p>
                                         </div>
                                     </label>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </div>
+
+                    {/* FULL WIDTH BOTTOM: LEGAL ACTIONS */}
+                    <div className="col-span-1 md:col-span-2">
+                        <Card className="border-muted shadow-sm hover:shadow-md transition-shadow duration-300">
+                            <CardHeader className="border-b bg-muted/20 pb-4">
+                                <CardTitle className="text-lg">Legal & Referral Actions</CardTitle>
+                                <CardDescription>Inter-agency coordination and intended legal steps.</CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-6 pt-6">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                    <div className="space-y-4">
+                                        <Label className="font-bold text-sm bg-muted/50 p-2 rounded block">Inter-Agency Referrals</Label>
+                                        <p className="text-xs text-muted-foreground mb-2">Check all agencies the victim has been referred to.</p>
+                                        <div className="grid grid-cols-2 gap-3">
+                                            {['PNP (WCPD)', 'DSWD (MSWDO)', 'NBI', 'Hospital (WCPU)', 'Public Attorney (PAO)', 'LGU Safe Shelter'].map((agency) => (
+                                                <label key={agency} className="flex items-center space-x-2 text-sm cursor-pointer p-2 rounded-md hover:bg-muted/50 border border-transparent hover:border-border transition-colors">
+                                                    <Checkbox
+                                                        checked={data.referral_status.includes(agency)}
+                                                        onCheckedChange={(checked) => {
+                                                            const current = data.referral_status;
+                                                            setData('referral_status', checked ? [...current, agency] : current.filter(x => x !== agency));
+                                                        }}
+                                                    />
+                                                    <span className="font-semibold text-slate-700 dark:text-slate-300">{agency}</span>
+                                                </label>
+                                            ))}
+                                        </div>
+                                    </div>
+                                    <div className="space-y-4">
+                                        <Label className="font-bold text-sm bg-muted/50 p-2 rounded block">Client's Desired Action</Label>
+                                        <p className="text-xs text-muted-foreground mb-2">What does the victim-survivor want the barangay to do?</p>
+                                        <div className="flex flex-col gap-3">
+                                             {['Apply for Barangay Protection Order (BPO)', 'Pursue Criminal Investigation', 'Referral to Social Worker', 'Monitoring / Record on Blotter Only'].map((action) => (
+                                                <label key={action} className="flex items-center space-x-2 text-sm cursor-pointer ml-2">
+                                                    <Checkbox
+                                                        checked={data.action_sought.includes(action)}
+                                                        onCheckedChange={(checked) => {
+                                                            const current = data.action_sought;
+                                                            setData('action_sought', checked ? [...current, action] : current.filter(x => x !== action));
+                                                        }}
+                                                    />
+                                                    <span className="text-muted-foreground font-medium">{action}</span>
+                                                </label>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="space-y-2 border-t pt-4">
+                                    <Label>Witness Information (If Applicable)</Label>
+                                    <Textarea placeholder="Names, relationship, and contact details of any persons who witnessed the incident..." className="h-16" value={data.witness_info || ''} onChange={e => setData('witness_info', e.target.value)} />
                                 </div>
                             </CardContent>
                         </Card>

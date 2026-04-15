@@ -467,37 +467,86 @@ export default function Show({ case: vawcCase }: Props) {
                         </CardTitle>
                         <Badge variant="outline" className="font-mono text-[9px]">{vawcCase.case_report.case_number}</Badge>
                     </CardHeader>
-                    <CardContent className="pt-6 grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <CardContent className="pt-6 grid grid-cols-1 lg:grid-cols-4 gap-6">
                         <div>
-                            <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest mb-2 flex items-center gap-1"><ShieldCheck className="w-3 h-3" /> Survivor Details</p>
+                            <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest mb-2 flex items-center gap-1"><ShieldCheck className="w-3 h-3" /> Survivor Profile</p>
                             <div className="space-y-1 text-sm border-l-2 pl-3 border-primary/20">
                                 <p className="font-bold">{victim?.name}</p>
-                                <p className="text-muted-foreground">{victim?.age} Years / {victim?.gender}</p>
+                                <p className="text-muted-foreground text-xs">{victim?.age} Years / {victim?.gender}</p>
+                                {victim?.civil_status && <p className="text-xs text-muted-foreground mt-1">Status: {victim.civil_status}</p>}
+                                {(victim?.educational_attainment || victim?.occupation) && (
+                                     <p className="text-[11px] text-slate-600 dark:text-slate-400 mt-0.5">
+                                        {victim.educational_attainment && <span className="mr-2 border-r pr-2 border-border">Ed: {victim.educational_attainment}</span>}
+                                        {victim.occupation && <span>Job: {victim.occupation}</span>}
+                                     </p>
+                                )}
+                                <p className="text-[10px] text-muted-foreground mt-2 uppercase flex items-center gap-1"><Info className="w-3 h-3" /> Contact: [ENCRYPTED]</p>
+                            </div>
+                        </div>
+                        <div>
+                            <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest mb-2 flex items-center gap-1"><AlertTriangle className="w-3 h-3 text-destructive" /> Respondent Profile</p>
+                            <div className="space-y-1 text-sm border-l-2 pl-3 border-destructive/20 relative">
+                                {respondent?.name === 'John Doe (Unknown)' && (
+                                    <Badge variant="outline" className="text-[8px] bg-indigo-50 text-indigo-700 border-indigo-200 uppercase tracking-tighter mb-1">John Doe Protocol</Badge>
+                                )}
+                                <p className={`font-bold ${respondent?.name === 'John Doe (Unknown)' ? 'text-indigo-600 font-mono italic text-xs' : ''}`}>{respondent?.name || 'Unknown'}</p>
                                 {respondent?.relationship_to_victim && (
-                                    <p className="text-primary font-medium text-[10px] uppercase tracking-wider bg-primary/5 px-2 py-0.5 rounded-full inline-block mt-1">
-                                        Partner Type: {respondent.relationship_to_victim}
+                                    <p className="text-destructive font-medium text-[9px] uppercase tracking-widest bg-destructive/10 px-1.5 py-0.5 rounded inline-block mt-0.5 mb-1">
+                                        Rel: {respondent.relationship_to_victim}
                                     </p>
                                 )}
-                                <p className="text-[10px] text-muted-foreground mt-2 uppercase">Contact: [ENCRYPTED]</p>
+                                {respondent?.age && <p className="text-muted-foreground text-xs mt-1">{respondent.age} Years / {respondent.gender}</p>}
+                                {(respondent?.civil_status || respondent?.occupation) && (
+                                     <p className="text-[11px] text-slate-600 dark:text-slate-400 mt-0.5">
+                                        {respondent.civil_status && <span className="mr-2 border-r pr-2 border-border">{respondent.civil_status}</span>}
+                                        {respondent.occupation && <span>Job: {respondent.occupation}</span>}
+                                     </p>
+                                )}
+                                {respondent?.physical_description && (
+                                    <div className="mt-2 p-2 bg-muted/30 border border-border rounded-md text-xs space-y-1">
+                                        <p className="font-bold text-[9px] uppercase tracking-widest text-muted-foreground">Physical Marks/Description</p>
+                                        <p className="italic text-slate-700 dark:text-slate-300">"{respondent.physical_description}"</p>
+                                    </div>
+                                )}
                             </div>
                         </div>
                         <div>
                             <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest mb-2 flex items-center gap-1"><Search className="w-3 h-3" /> Incident Context</p>
                             <div className="space-y-1 text-sm border-l-2 pl-3 border-amber-200">
                                 <p className="font-bold">{vawcCase.case_report.abuse_type?.name}</p>
-                                <p className="text-muted-foreground flex items-center gap-1"><MapPin className="w-3 h-3" /> {vawcCase.incident_location} (Zone {vawcCase.case_report.zone_id})</p>
+                                <p className="text-muted-foreground flex items-center gap-1 text-xs mt-1"><MapPin className="w-3 h-3" /> {vawcCase.incident_location} (Zone {vawcCase.case_report.zone_id})</p>
                                 {vawcCase.children_count > 0 && (
-                                    <p className="text-destructive font-bold text-[10px] uppercase flex items-center gap-1">
+                                    <p className="text-destructive font-bold text-[10px] uppercase flex items-center gap-1 mt-2">
                                         <Info className="w-3 h-3" /> {vawcCase.children_count} Minor(s) Involved/Present
                                     </p>
                                 )}
-                                <p className="text-muted-foreground flex items-center gap-1 text-[10px] uppercase font-mono mt-1 tracking-tighter">Reported: {new Date(vawcCase.created_at).toLocaleString()}</p>
+                                <p className="text-muted-foreground flex items-center gap-1 text-[10px] uppercase font-mono mt-2 tracking-tighter">Reported: {new Date(vawcCase.created_at).toLocaleString()}</p>
                             </div>
                         </div>
-                        <div>
-                            <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest mb-2 flex items-center gap-1"><ClipboardList className="w-3 h-3" /> Intake Notes</p>
-                            <div className="p-3 bg-card border border-border rounded-lg text-xs italic leading-relaxed line-clamp-4">
-                                "{vawcCase.case_report.description}"
+                        <div className="space-y-4">
+                            <div>
+                                <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest mb-2 flex items-center gap-1"><ClipboardList className="w-3 h-3" /> External Referrals</p>
+                                <div className="p-2 border-l-2 border-blue-200">
+                                    {(() => {
+                                        let referrals = [];
+                                        if (typeof vawcCase.referral_status === 'string') {
+                                            try { referrals = JSON.parse(vawcCase.referral_status); } catch (e) {}
+                                        } else if (Array.isArray(vawcCase.referral_status)) {
+                                            referrals = vawcCase.referral_status;
+                                        }
+                                        return referrals.length > 0 ? (
+                                            <div className="flex flex-col gap-1">
+                                                {referrals.map((r: string) => <span key={r} className="text-xs font-semibold text-slate-700 dark:text-slate-300">• {r}</span>)}
+                                            </div>
+                                        ) : <span className="text-xs italic text-muted-foreground">No agency referrals recorded.</span>;
+                                    })()}
+                                </div>
+                            </div>
+                            <div>
+                                <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest mb-1 flex items-center gap-1">Intake Notes</p>
+                                <div className="text-[11px] italic leading-relaxed text-muted-foreground line-clamp-3">
+                                    "{vawcCase.case_report.description}"
+                                </div>
                             </div>
                         </div>
                     </CardContent>
