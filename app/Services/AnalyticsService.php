@@ -6,6 +6,12 @@ use App\Models\CaseReport;
 use App\Models\VawcCase;
 use App\Models\MembershipApplication;
 use App\Models\Zone;
+use App\Models\BcpcChild;
+use App\Models\Announcement;
+use App\Models\User;
+use App\Models\GadEvent;
+use App\Models\Organization;
+use App\Models\VawcAssessment;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -13,49 +19,46 @@ use Illuminate\Support\Facades\DB;
 class AnalyticsService
 {
     /**
-     * Get statistics for the dashboard ribbon (official analytics view).
+     * Get Simplified Separate KPIs for the official reporting dashboard ribbon.
      */
     public function getRibbonStats(int $year): array
     {
-        $totalVawc = VawcCase::whereYear('created_at', $year)->count();
+        return [
+            'total_vawc'  => VawcCase::whereYear('created_at', $year)->count(),
+            'total_bcpc'  => BcpcChild::count(),
+            'total_gad'   => GadEvent::whereYear('event_date', $year)->count(),
+            'total_orgs'  => Organization::count(),
+            // Maintain shared metrics for internal use
+            'resolution_rate' => $this->calculateResolutionRate($year),
+            'sla_rate'        => $this->calculateSlaRate($year),
+        ];
+    }
 
-        // BPO Stats from vawc_protection_orders
-        $totalBpos = DB::table('vawc_protection_orders')
-            ->where('type', 'BPO')
-            ->whereYear('created_at', $year)
+    /**
+     * Helper for resolution rate calculation.
+     */
+    private function calculateResolutionRate(int $year): float
+    {
+        $total = VawcCase::whereYear('created_at', $year)->count();
+        $resolved = VawcCase::whereYear('created_at', $year)
+            ->whereIn('status', ['Resolved', 'Closed', 'Case Closed'])
             ->count();
+        return $total > 0 ? round(($resolved / $total) * 100, 1) : 0.0;
+    }
 
+    /**
+     * Helper for SLA calculation to keep getRibbonStats clean.
+     */
+    private function calculateSlaRate(int $year): float
+    {
+        $totalBpos = DB::table('vawc_protection_orders')->where('type', 'BPO')->whereYear('created_at', $year)->count();
         $compliantBpos = DB::table('vawc_protection_orders')
             ->where('type', 'BPO')
             ->where('is_sla_breached', false)
             ->whereNotNull('issued_datetime')
             ->whereYear('created_at', $year)
             ->count();
-
-        $slaRate = $totalBpos > 0 ? round(($compliantBpos / $totalBpos) * 100, 1) : 100.0;
-
-        // Resolution Rate (Resolved + Closed / Total)
-        $resolvedCount = VawcCase::whereYear('created_at', $year)
-            ->whereIn('status', ['Resolved', 'Closed', 'Case Closed'])
-            ->count();
-        $resolutionRate = $totalVawc > 0 ? round(($resolvedCount / $totalVawc) * 100, 1) : 0.0;
-
-        // Children Involved (Real-time: Child victims + recorded dependents)
-        $childVictims = CaseReport::whereYear('created_at', $year)
-            ->where('victim_age', '<', 18)
-            ->count();
-
-        $additionalChildren = VawcCase::whereYear('created_at', $year)
-            ->sum('children_count') ?: 0;
-
-        $childrenInvolved = $childVictims + $additionalChildren;
-
-        return [
-            'totalVawc'        => $totalVawc,
-            'resolutionRate'   => $resolutionRate,
-            'childrenInvolved' => (int) $childrenInvolved,
-            'slaRate'          => $slaRate,
-        ];
+        return $totalBpos > 0 ? round(($compliantBpos / $totalBpos) * 100, 1) : 100.0;
     }
 
     /**
@@ -66,49 +69,32 @@ class AnalyticsService
         // 1. Calculations for Admin/Head
         $year = now()->year;
 
-        // Children at Risk (Real-time: Reports < 18 + dependents)
-        $childVictims = CaseReport::whereYear('created_at', $year)->where('victim_age', '<', 18)->count();
-        $vawcCases = VawcCase::whereYear('created_at', $year)->get();
-        $totalChildren = $childVictims + ($vawcCases->sum('children_count') ?: 0);
-
-        // Case Resolution Rate
-        $totalVawc = $vawcCases->count();
-        $resolvedCount = $vawcCases->whereIn('status', ['Resolved', 'Closed'])->count();
-        $resolutionRate = $totalVawc > 0 ? round(($resolvedCount / $totalVawc) * 100, 1) : 0.0;
-
-        // SLA Compliance
-        $totalBpos = DB::table('vawc_protection_orders')->where('type', 'BPO')->whereYear('created_at', $year)->count();
-        $compliantBpos = DB::table('vawc_protection_orders')
-            ->where('type', 'BPO')
-            ->where('is_sla_breached', false)
-            ->whereNotNull('issued_datetime')
-            ->whereYear('created_at', $year)
-            ->count();
-        $slaRate = $totalBpos > 0 ? round(($compliantBpos / $totalBpos) * 100, 1) : 100;
+        // GAD & System Vitality
+        $gadEvents = GadEvent::whereYear('event_date', $year)->get();
+        $recentActivityCount = DB::table('audit_logs')->where('created_at', '>=', now()->subDays(7))->count();
 
         $baseStats = [
-            'totalCases'        => CaseReport::count(),
-            'totalOrgs'         => \App\Models\Organization::count(),
-            'totalUsers'        => \App\Models\User::count(),
-            'pendingApps'       => MembershipApplication::where('status', 'Pending')->count(),
-            'slaRate'           => $slaRate,
-            'childrenInvolved'  => (int) $totalChildren,
-            'resolutionRate'    => $resolutionRate,
+            'totalVawcActive'     => VawcCase::where('status', '!=', 'Closed')->count(),
+            'totalBcpcChildren'   => BcpcChild::count(),
+            'pendingApps'         => MembershipApplication::where('status', 'Pending')->count(),
+            'totalOrgs'           => \App\Models\Organization::count(),
+            'totalGadEvents'      => $gadEvents->count(),
+            'gadApprovedCount'    => $gadEvents->where('status', 'approved')->count(),
+            'totalSystemUsers'    => User::count(),
+            'recentSystemActivity' => $recentActivityCount,
         ];
 
         // 2. RBAC: Presidents see stats only for their organization
         if ($user && $user->isPresident()) {
             return [
-                'totalCases'        => 0, // Org Presidents don't see cases
+                'totalCases'        => 0,
                 'totalOrgs'         => 1,
                 'totalUsers'        => \App\Models\User::where('organization_id', $user->organization_id)->count(),
                 'pendingApps'       => MembershipApplication::where('organization_id', $user->organization_id)
                     ->where('status', 'Pending')->count(),
                 'verifiedMembers'   => \App\Models\User::where('organization_id', $user->organization_id)
                     ->whereNotNull('email_verified_at')->count(),
-                'slaRate'           => null,
-                'childrenInvolved'  => null,
-                'resolutionRate'    => null,
+                'recentActivity'    => DB::table('audit_logs')->where('user_id', $user->id)->where('created_at', '>=', now()->subDays(7))->count(),
             ];
         }
 
@@ -161,6 +147,26 @@ class AnalyticsService
                 'status'       => $app->status,
                 'date'         => $app->created_at->format('M d, Y'),
             ]);
+    }
+
+    /**
+     * Get a strategic community snapshot for the dashboard.
+     */
+    public function getCommunitySnapshot(): array
+    {
+        $year = now()->year;
+        $totalMembers = User::count();
+        $newMembersThisMonth = User::whereMonth('created_at', now()->month)->count();
+
+        return [
+            'gadSummary' => $this->getGadAnalytics($year),
+            'orgSummary' => $this->getOrgSectorAnalysis(),
+            'memberTrend' => [
+                'total' => $totalMembers,
+                'new'   => $newMembersThisMonth,
+                'growth' => $totalMembers > 0 ? round(($newMembersThisMonth / $totalMembers) * 100, 1) : 0,
+            ]
+        ];
     }
 
     /**
@@ -582,8 +588,89 @@ class AnalyticsService
                 ['name' => 'Normal',              'value' => $normal, 'fill' => '#10b981'],
                 ['name' => 'Underweight (MAM)',   'value' => $mam,    'fill' => '#f59e0b'],
                 ['name' => 'Sev. Underweight (SAM)', 'value' => $sam, 'fill' => '#ef4444'],
-                ['name' => 'Stunted',             'value' => $stunted,'fill' => '#a855f7'],
+                ['name' => 'Stunted',             'value' => $stunted, 'fill' => '#a855f7'],
             ],
+        ];
+    }
+
+    /**
+     * GAD Impact: Group events by status and calculate engagement.
+     */
+    public function getGadAnalytics(int $year): array
+    {
+        $events = GadEvent::whereYear('event_date', $year)->get();
+
+        return [
+            'total_events' => $events->count(),
+            'approved'     => $events->where('status', 'approved')->count(),
+            'pending'      => $events->where('status', 'pending')->count(),
+            'rejected'     => $events->where('status', 'rejected')->count(),
+            'distribution' => [
+                ['name' => 'Approved', 'value' => $events->where('status', 'approved')->count(), 'fill' => '#10b981'],
+                ['name' => 'Pending',  'value' => $events->where('status', 'pending')->count(),  'fill' => '#f59e0b'],
+                ['name' => 'Rejected', 'value' => $events->where('status', 'rejected')->count(), 'fill' => '#ef4444'],
+            ]
+        ];
+    }
+
+    /**
+     * Organizational Sector Distribution: Group by keywords.
+     */
+    public function getOrgSectorAnalysis(): array
+    {
+        $orgs = Organization::all();
+        $sectors = [
+            'Youth'     => 0,
+            'Women'     => 0,
+            'Seniors'   => 0,
+            'Health'    => 0,
+            'Community' => 0,
+        ];
+
+        foreach ($orgs as $org) {
+            $name = strtolower($org->name);
+            if (str_contains($name, 'youth') || str_contains($name, 'sk')) $sectors['Youth']++;
+            elseif (str_contains($name, 'woman') || str_contains($name, 'women')) $sectors['Women']++;
+            elseif (str_contains($name, 'senior')) $sectors['Seniors']++;
+            elseif (str_contains($name, 'health') || str_contains($name, 'nutrition')) $sectors['Health']++;
+            else $sectors['Community']++;
+        }
+
+        return collect($sectors)->map(fn($val, $key) => ['name' => $key, 'value' => $val])->values()->toArray();
+    }
+
+    /**
+     * Strategic Threat Patterns: Aggregates risk factors from the VAWC-RAVE algorithm.
+     * Helps identified the 'Nature' of the problems in the barangay.
+     */
+    public function getThreatIndicatorPatterns(int $year): array
+    {
+        $cases = VawcCase::whereYear('created_at', $year)->get();
+
+        if ($cases->isEmpty()) return [];
+
+        return [
+            ['name' => 'Weapons Involved',     'value' => $cases->where('has_weapon_involved', true)->count(), 'color' => '#ef4444'],
+            ['name' => 'Emergency Arrests',    'value' => $cases->where('warrantless_arrest_made', true)->count(), 'color' => '#ce1126'],
+            ['name' => 'Repeat Offense',       'value' => $cases->where('is_repeat_offense', true)->count(), 'color' => '#f97316'],
+            ['name' => 'Active Scene Threat',  'value' => $cases->where('perpetrator_present', true)->count(), 'color' => '#8b5cf6'],
+        ];
+    }
+
+    /**
+     * Administrative Intervention Gaps: Required services identified via algorithmic flags.
+     */
+    public function getInterventionGaps(int $year): array
+    {
+        $assessments = VawcAssessment::whereYear('created_at', $year)->get();
+
+        if ($assessments->isEmpty()) return [];
+
+        return [
+            ['name' => 'Medical Referral',    'count' => $assessments->where('requires_medical', true)->count()],
+            ['name' => 'Alternative Housing', 'count' => $assessments->where('requires_alternative_housing', true)->count()],
+            ['name' => 'DSWD Referral',       'count' => $assessments->where('dswd_referral_made', true)->count()],
+            ['name' => 'Legal Intervention',   'count' => DB::table('vawc_protection_orders')->whereYear('created_at', $year)->count()],
         ];
     }
 
@@ -609,4 +696,3 @@ class AnalyticsService
         return $formattedData;
     }
 }
-

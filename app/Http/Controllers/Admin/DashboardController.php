@@ -57,7 +57,7 @@ class DashboardController extends Controller
         return Inertia::render('dashboard', [
             'systemStats'         => $this->analyticsService->getSystemStats($user),
             'recentCases'         => $this->analyticsService->getRecentCases(7, $user),
-            'recentApplications'  => $this->analyticsService->getRecentApplications(7, $user),
+            'communitySnapshot'   => $user->isPresident() ? null : $this->analyticsService->getCommunitySnapshot(),
             'vawcSignal'          => $vawcSignal,
             'bcpcSignal'          => $bcpcSignal,
         ]);

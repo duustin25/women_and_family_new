@@ -19,8 +19,6 @@ class AnalyticsController extends Controller
 
     /**
      * Official Reporting Dashboard — Master source of truth for all system analytics.
-     * Covers VAWC (RA 9262) trends, demographics, risk intelligence, membership growth,
-     * and BCPC (RA 11037) nutritional status summary.
      */
     public function index(Request $request)
     {
@@ -35,32 +33,32 @@ class AnalyticsController extends Controller
             'stats'               => $this->analyticsService->getRibbonStats($currentYear),
             'currentYear'         => $currentYear,
 
-            // ── VAWC: RA 9262 ────────────────────────────────────
+            // ── VAWC: RA 9262 (Abuse Rates by Month - CLIENT REQUIREMENT) ──
             'vawcData'            => $this->analyticsService->getMonthlyCaseAnalytics('VAWC', $currentYear, $vawcTypes),
             'vawcChartConfig'     => $this->analyticsService->getVawcChartConfig(),
             'vawcStatusBreakdown' => $this->analyticsService->getVawcStatusBreakdown($currentYear),
             'bpoTrends'           => $this->analyticsService->getVawcBpoTrends($currentYear),
 
-            // ── VAWC-RAVE Risk Intelligence ───────────────────────
+            // ── VAWC-RAVE Operational Intelligence ────────────────
+            'threatPatterns'      => $this->analyticsService->getThreatIndicatorPatterns($currentYear),
+            'interventionGaps'    => $this->analyticsService->getInterventionGaps($currentYear),
             'riskDistribution'    => $this->analyticsService->getRiskSeverityDistribution($currentYear),
-            'zoneRiskImpact'      => $this->analyticsService->getZoneRiskImpact($currentYear),
 
-            // ── Demographics ─────────────────────────────────────
+            // ── Demographics & Density ────────────────────────────
             'ageDemographics'     => $this->analyticsService->getAgeDemographics($currentYear),
-            'locationDemographics'=> $this->analyticsService->getLocationDemographics($currentYear),
             'zoneDistribution'    => $this->analyticsService->getZoneDistribution($currentYear),
-
-            // ── Membership ───────────────────────────────────────
-            'membershipStats'     => $this->analyticsService->getMembershipTrends($currentYear),
-            'caseResolutionStats' => $this->analyticsService->getCaseResolutionStats($currentYear),
 
             // ── BCPC: RA 11037 ───────────────────────────────────
             'bcpcSummary'         => $this->analyticsService->getBcpcNutritionSummary(),
+
+            // ── GAD & Community Impact ────────────────────────────
+            'gadAnalytics'        => $this->analyticsService->getGadAnalytics($currentYear),
+            'orgSectorAnalysis'   => $this->analyticsService->getOrgSectorAnalysis(),
         ]);
     }
 
     /**
-     * Official Printable Report — All charts rendered for PDF/print output.
+     * Official Printable Report — Master layout for official submissions.
      */
     public function print(Request $request)
     {
@@ -84,8 +82,13 @@ class AnalyticsController extends Controller
             'bpoTrends'        => $this->analyticsService->getVawcBpoTrends($year),
             'vawcStatusBreakdown' => $this->analyticsService->getVawcStatusBreakdown($year),
             'riskDistribution' => $this->analyticsService->getRiskSeverityDistribution($year),
+            'threatPatterns'   => $this->analyticsService->getThreatIndicatorPatterns($year),
+            'interventionGaps' => $this->analyticsService->getInterventionGaps($year),
             'bcpcSummary'      => $this->analyticsService->getBcpcNutritionSummary(),
-            'membershipStats'  => $this->analyticsService->getMembershipTrends($year),
+            'gadAnalytics'     => $this->analyticsService->getGadAnalytics($year),
+            'orgSectorAnalysis' => $this->analyticsService->getOrgSectorAnalysis(),
+            'ageDemographics'  => $this->analyticsService->getAgeDemographics($year),
+            'zoneDistribution' => $this->analyticsService->getZoneDistribution($year),
         ]);
     }
 }
