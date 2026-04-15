@@ -57,10 +57,10 @@ export default function PublicLayout({ children, bgColor = "bg-white" }: PublicL
         { name: 'Home', href: '/' },
         { name: 'Announcements', href: '/announcements' },
         { name: 'Laws', href: '/laws' },
-        { name: 'VAWC Services', href: '/vawc' },
-        { name: 'BCPC Services', href: '/bcpc' },
-        { name: 'GAD Initiatives', href: '/gad' },
-        { name: 'Organizations', href: '/organizations' },
+        { name: 'VAWC Protection', href: '/vawc' },
+        { name: 'BCPC Welfare', href: '/bcpc' },
+        { name: 'GAD Calendar', href: '/gad' },
+        { name: 'Accredited Orgs', href: '/organizations' },
         { name: 'Officials', href: '/officials' },
     ];
 

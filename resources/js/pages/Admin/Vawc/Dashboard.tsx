@@ -1,285 +1,280 @@
 import AppLayout from '@/layouts/app-layout';
 import { Head, Link } from '@inertiajs/react';
-import React from 'react';
 import { route } from 'ziggy-js';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
-    PieChart, Pie, Cell, Tooltip, ResponsiveContainer,
-    AreaChart, Area, XAxis, YAxis, CartesianGrid,
-    BarChart, Bar, Legend
-} from 'recharts';
-import { Activity, ShieldCheck, AlertTriangle, MapPin, TrendingUp, Search, Gavel } from 'lucide-react';
-import AnalyticsChart from '@/components/Admin/AnalyticsChart';
+    ShieldAlert, AlertTriangle, Siren, Eye, TrendingUp,
+    Clock, Users, RotateCcw, HelpCircle, CheckCircle2, ChartLine
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { router } from '@inertiajs/react';
 
-interface Props {
-    stats: {
-        total_cases: number;
-        total_children: number;
-        repeat_cases: number;
-        status_distribution: any[];
-        intake_distribution: any[];
-        abuse_distribution: any[];
-        zone_distribution: any[];
-        monthly_trends: any[];
-        analyticsData: any[];
-        bpoTrends: any[];
-        currentYear: number;
-        chartConfig: any[];
-        sla_compliance: {
-            total: number;
-            compliant: number;
-            rate: number;
-        };
-    };
+interface CaseQueueItem {
+    id: number;
+    case_number: string;
+    victim_name: string;
+    status: string;
+    risk_level: string;
+    risk_score: number | null;
+    abuse_type: string;
+    intake_date: string;
+    is_repeat: boolean;
 }
 
-const STATUS_COLORS: Record<string, string> = {
-    'Intake': '#3b82f6',
-    'Assessment': '#eab308',
-    'BPO Processing': '#a855f7',
-    'Escalated': '#ef4444',
-    'Closed': '#22c55e',
-    'Monitoring': '#06b6d4',
+interface Kpis {
+    total_cases: number;
+    total_children: number;
+    repeat_cases: number;
+    sla_compliance: { total: number; compliant: number; rate: number };
+}
+
+interface Props {
+    criticalQueue: CaseQueueItem[];
+    moderateQueue: CaseQueueItem[];
+    unassessedQueue: CaseQueueItem[];
+    kpis: Kpis;
+    currentYear: number;
+}
+
+const RISK_STYLES: Record<string, { badge: string; bar: string; label: string }> = {
+    CRITICAL: { badge: 'bg-red-600 text-white', bar: 'bg-red-600', label: 'CRITICAL' },
+    HIGH:     { badge: 'bg-orange-500 text-white', bar: 'bg-orange-500', label: 'HIGH' },
+    MODERATE: { badge: 'bg-yellow-500 text-black', bar: 'bg-yellow-500', label: 'MODERATE' },
+    LOW:      { badge: 'bg-blue-500 text-white', bar: 'bg-blue-500', label: 'LOW' },
+    PENDING:  { badge: 'bg-slate-400 text-white', bar: 'bg-slate-400', label: 'PENDING TRIAGE' },
+    UNKNOWN:  { badge: 'bg-slate-300 text-slate-700', bar: 'bg-slate-300', label: 'UNKNOWN' },
 };
 
-const CHART_COLORS = ['#ce1126', '#0038a8', '#fcd116', '#006400', '#8b4513', '#4b0082'];
-
-export default function Dashboard({ stats }: Props) {
-    // Safety check for missing stats prop
-    if (!stats) {
-        return (
-            <AppLayout>
-                <div className="p-10 text-center">
-                    <h2 className="text-xl font-bold">Loading Dashboard Data...</h2>
-                    <p className="text-muted-foreground">If this persists, please contact the administrator.</p>
-                </div>
-            </AppLayout>
-        );
-    }
-
-    const pieData = (stats.status_distribution || []).map(item => ({
-        name: item.status,
-        value: item.count,
-        fill: STATUS_COLORS[item.status] || '#94a3b8'
-    }));
+function CaseQueueRow({ item }: { item: CaseQueueItem }) {
+    const style = RISK_STYLES[item.risk_level] ?? RISK_STYLES.UNKNOWN;
+    const scoreMax = 12;
+    const scorePercent = item.risk_score !== null ? Math.min((item.risk_score / scoreMax) * 100, 100) : 0;
 
     return (
-        <AppLayout>
-            <Head title="VAWC Management Dashboard" />
+        <div
+            className="flex items-center gap-4 px-4 py-3 border-b last:border-0 hover:bg-muted/40 transition-colors cursor-pointer"
+            onClick={() => router.visit(`/admin/vawc/cases/${item.id}`)}
+        >
+            {/* Risk Score Bar */}
+            <div className="flex flex-col items-center gap-1 shrink-0 w-12">
+                <span className="text-[9px] font-black uppercase tracking-wider text-slate-400">Score</span>
+                <span className="text-lg font-black leading-none text-slate-900 dark:text-white">
+                    {item.risk_score !== null ? item.risk_score : '—'}
+                </span>
+                <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-1.5">
+                    <div
+                        className={cn("h-1.5 rounded-full transition-all", style.bar)}
+                        style={{ width: `${scorePercent}%` }}
+                    />
+                </div>
+            </div>
+
+            {/* Case Info */}
+            <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-xs font-black uppercase tracking-tight text-slate-900 dark:text-white truncate">
+                        {item.victim_name}
+                    </span>
+                    {item.is_repeat && (
+                        <span className="flex items-center gap-1 text-[8px] font-black uppercase tracking-widest text-red-600 bg-red-50 dark:bg-red-900/30 px-1.5 py-0.5 rounded">
+                            <RotateCcw className="w-2.5 h-2.5" />
+                            Repeat
+                        </span>
+                    )}
+                </div>
+                <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400 mt-0.5">
+                    {item.case_number} · {item.abuse_type}
+                </p>
+            </div>
+
+            {/* Status + Risk */}
+            <div className="flex flex-col items-end gap-1.5 shrink-0">
+                <span className={cn("text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded", style.badge)}>
+                    {style.label}
+                </span>
+                <span className="text-[8px] font-bold uppercase tracking-widest text-slate-400">
+                    {item.status} · {item.intake_date}
+                </span>
+            </div>
+
+            <Eye className="w-4 h-4 text-slate-300 shrink-0" />
+        </div>
+    );
+}
+
+export default function VawcDashboard({ criticalQueue, moderateQueue, unassessedQueue, kpis, currentYear }: Props) {
+    return (
+        <AppLayout breadcrumbs={[
+            { title: 'Dashboard', href: '/dashboard' },
+            { title: 'Violence Against Women & Children', href: '/admin/vawc/cases' },
+            { title: 'Operational Radar', href: '#' }
+        ]}>
+            <Head title="VAWC Operational Radar" />
 
             <div className="flex h-full flex-1 flex-col gap-6 p-6">
+
+                {/* ── HEADER ── */}
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <div>
-                        <h1 className="text-3xl font-black uppercase tracking-tighter text-neutral-900 dark:text-white flex items-center gap-2">
-                            VAWC ANALYTICS
+                        <h1 className="text-2xl font-black uppercase tracking-tight text-neutral-900 dark:text-white flex items-center gap-2">
+                            <Siren className="w-6 h-6 text-[#ce1126]" />
+                            VAWC Operational Radar
                         </h1>
-                        <p className="text-muted-foreground text-xs font-black uppercase tracking-widest flex items-center gap-2">
-                            [RA 9262] System-wide Compliance & Monitoring
+                        <p className="text-muted-foreground text-[10px] font-black uppercase tracking-widest mt-1">
+                            [RA 9262] Vulnerability & Risk Intelligent Assessment (VAWC-RAVE) — Case Triage Command
                         </p>
                     </div>
                     <div className="flex gap-2">
-                        <Button asChild variant="outline" className="font-bold uppercase text-[10px] tracking-widest border-2">
-                            <Link href={route('admin.vawc.index')}>View Registry</Link>
+                        <Button asChild variant="outline" size="sm" className="font-bold uppercase text-[10px] tracking-widest border-2">
+                            <Link href={route('admin.vawc.index')}>View Full Registry</Link>
                         </Button>
-                        {/* <Button className="font-bold uppercase text-[10px] tracking-widest">
-                            Export Report
-                        </Button> */}
+                        <Button asChild size="sm" className="font-bold uppercase text-[10px] tracking-widest bg-[#ce1126] hover:bg-red-700">
+                            <a href={`/admin/analytics?year=${currentYear}`}>
+                                <ChartLine className="w-3 h-3 mr-1" />
+                                Strategic Analytics
+                            </a>
+                        </Button>
                     </div>
                 </div>
 
-                {/* KPI Tiles */}
+                {/* ── KPI TILES ── */}
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                    <Card className="border shadow-sm hover:shadow-md transition-shadow">
-                        <CardHeader>
-                            <CardTitle className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Aggregate Cases</CardTitle>
+                    <Card className="border shadow-sm">
+                        <CardHeader className="pb-2">
+                            <CardTitle className="text-[10px] font-black text-muted-foreground uppercase tracking-widest flex items-center gap-1">
+                                <ShieldAlert className="w-3 h-3" /> Aggregate Cases
+                            </CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <div className="text-4xl font-black tracking-tighter">{stats.total_cases || 0}</div>
-                            <div className="flex items-center gap-1 text-[9px] mt-1 uppercase font-black">
-                                System Lifetime Registry
-                            </div>
+                            <div className="text-4xl font-black tracking-tighter">{kpis.total_cases ?? 0}</div>
+                            <div className="text-[9px] mt-1 uppercase font-black text-slate-400">System Lifetime Registry</div>
                         </CardContent>
                     </Card>
 
-                    <Card className="border shadow-sm hover:shadow-md transition-shadow">
-                        <CardHeader>
-                            <CardTitle className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">BPO Issuance Efficiency</CardTitle>
+                    <Card className="border shadow-sm">
+                        <CardHeader className="pb-2">
+                            <CardTitle className="text-[10px] font-black text-muted-foreground uppercase tracking-widest flex items-center gap-1">
+                                <Clock className="w-3 h-3" /> BPO SLA Efficiency
+                            </CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <div className="text-4xl font-black tracking-tighter">{stats.sla_compliance?.rate || 0}%</div>
-                            <div className="flex items-center gap-1 text-[9px] mt-1 uppercase font-black">
-                                {stats.sla_compliance?.compliant || 0} Same-Day Success
-                            </div>
+                            <div className="text-4xl font-black tracking-tighter">{kpis.sla_compliance?.rate ?? 0}%</div>
+                            <div className="text-[9px] mt-1 uppercase font-black text-slate-400">{kpis.sla_compliance?.compliant ?? 0} Same-Day Issuances</div>
                         </CardContent>
                     </Card>
 
-                    <Card className="border shadow-sm hover:shadow-md transition-shadow">
-                        <CardHeader>
-                            <CardTitle className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Repeat Offense Alert</CardTitle>
+                    <Card className="border shadow-sm">
+                        <CardHeader className="pb-2">
+                            <CardTitle className="text-[10px] font-black text-muted-foreground uppercase tracking-widest flex items-center gap-1">
+                                <RotateCcw className="w-3 h-3" /> Repeat Offense Alert
+                            </CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <div className="text-4xl font-black tracking-tighter">
-                                {stats.repeat_cases || 0}
-                            </div>
-                            <div className="flex items-center gap-1 text-[9px] mt-1 uppercase font-black">
-                                High Risk Recurrence
-                            </div>
+                            <div className="text-4xl font-black tracking-tighter text-red-600">{kpis.repeat_cases ?? 0}</div>
+                            <div className="text-[9px] mt-1 uppercase font-black text-red-400">High Recurrence Risk</div>
                         </CardContent>
                     </Card>
 
-                    <Card className="border shadow-sm hover:shadow-md transition-shadow">
-                        <CardHeader>
-                            <CardTitle className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Children At Risk</CardTitle>
+                    <Card className="border shadow-sm">
+                        <CardHeader className="pb-2">
+                            <CardTitle className="text-[10px] font-black text-muted-foreground uppercase tracking-widest flex items-center gap-1">
+                                <Users className="w-3 h-3" /> Children at Risk
+                            </CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <div className="text-4xl font-black tracking-tighter">
-                                {stats.total_children || 0}
-                            </div>
-                            <div className="flex items-center gap-1 text-[9px] mt-1 uppercase font-black">
-                                Total Impacted Minors
-                            </div>
+                            <div className="text-4xl font-black tracking-tighter">{kpis.total_children ?? 0}</div>
+                            <div className="text-[9px] mt-1 uppercase font-black text-slate-400">Total Impacted Minors</div>
                         </CardContent>
                     </Card>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* ── PRIORITY QUEUES ── */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-                    {/* VAWC Case Status Donut */}
-                    <Card className="shadow-sm border overflow-hidden flex flex-col">
-                        <CardHeader>
-                            <CardTitle className="uppercase tracking-widest text-sm font-black text-violet-600">VAWC Case Status</CardTitle>
-                            <CardDescription className="text-xs font-bold uppercase tracking-wider text-slate-400 mt-1">
-                                Lifecycle Stage Distribution
+                    {/* CRITICAL / HIGH Queue */}
+                    <Card className="border-l-4 border-l-red-600 border-red-200 dark:border-red-900 shadow-sm lg:col-span-1">
+                        <CardHeader className="pb-3 border-b bg-red-50/40 dark:bg-red-950/10">
+                            <CardTitle className="text-xs font-black uppercase tracking-widest flex items-center text-red-600">
+                                <AlertTriangle className="h-4 w-4 mr-2" />
+                                Critical / High Risk Queue
+                            </CardTitle>
+                            <CardDescription className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mt-1">
+                                {criticalQueue.length} case(s) · VAWC-RAVE Score ≥ 7
                             </CardDescription>
                         </CardHeader>
-                        <CardContent className="p-6 flex-1 flex flex-col justify-center">
-                            {pieData.length > 0 ? (
-                                <>
-                                    <div className="h-[220px] w-full">
-                                        <ResponsiveContainer width="100%" height="100%">
-                                            <PieChart>
-                                                <Pie
-                                                    data={pieData}
-                                                    cx="50%"
-                                                    cy="50%"
-                                                    innerRadius={55}
-                                                    outerRadius={90}
-                                                    paddingAngle={3}
-                                                    dataKey="value"
-                                                    label={({ name, percent }: any) => percent > 0.05 ? `${(percent * 100).toFixed(0)}%` : ''}
-                                                    labelLine={false}
-                                                >
-                                                    {pieData.map((entry: any, index: number) => (
-                                                        <Cell key={`cell-${index}`} fill={entry.fill} />
-                                                    ))}
-                                                </Pie>
-                                                <Tooltip
-                                                    formatter={(value) => [`${value} Cases`, 'Total']}
-                                                    contentStyle={{ borderRadius: '8px', border: '1px solid #e2e8f0', padding: '8px 12px', fontSize: '12px', fontWeight: 'bold' }}
-                                                />
-                                            </PieChart>
-                                        </ResponsiveContainer>
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-y-2 gap-x-2 mt-3">
-                                        {pieData.map((stat: any, i: number) => (
-                                            <div key={i} className="flex items-center gap-2">
-                                                <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: stat.fill }}></div>
-                                                <span className="text-[10px] uppercase font-black text-slate-700 dark:text-slate-300 truncate tracking-widest">
-                                                    {stat.name} <span className="text-slate-400 font-bold ml-1">({stat.value})</span>
-                                                </span>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </>
-                            ) : (
-                                <div className="flex flex-col items-center justify-center h-full text-slate-400 py-8">
-                                    <Activity className="w-8 h-8 mb-2 opacity-20" />
-                                    <p className="text-xs font-bold uppercase tracking-widest">No cases recorded</p>
+                        <CardContent className="p-0">
+                            {criticalQueue.length === 0 ? (
+                                <div className="p-6 flex flex-col items-center justify-center text-center text-slate-400 gap-2">
+                                    <CheckCircle2 className="w-8 h-8 text-emerald-400" />
+                                    <p className="text-[10px] font-black uppercase tracking-widest">No critical or high-risk cases</p>
                                 </div>
+                            ) : (
+                                <div>{criticalQueue.map(item => <CaseQueueRow key={item.id} item={item} />)}</div>
                             )}
                         </CardContent>
                     </Card>
 
-                    {/* Zone Distribution */}
-                    <Card className="shadow-sm border">
-                        <CardHeader>
-                            <CardTitle className="uppercase tracking-widest text-xs font-black text-orange-500">Cases by Zone</CardTitle>
-                            <CardDescription className="text-xs">Reported incident distribution across zones</CardDescription>
+                    {/* MODERATE Queue */}
+                    <Card className="border-l-4 border-l-yellow-500 border-yellow-200 dark:border-yellow-900 shadow-sm lg:col-span-1">
+                        <CardHeader className="pb-3 border-b bg-yellow-50/40 dark:bg-yellow-950/10">
+                            <CardTitle className="text-xs font-black uppercase tracking-widest flex items-center text-yellow-600">
+                                <TrendingUp className="h-4 w-4 mr-2" />
+                                Moderate Risk Queue
+                            </CardTitle>
+                            <CardDescription className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mt-1">
+                                {moderateQueue.length} case(s) · VAWC-RAVE Score 4–6
+                            </CardDescription>
                         </CardHeader>
-                        <CardContent className="h-[280px] pl-0 pb-4 pr-6 pt-0">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <BarChart data={stats.zone_distribution} layout="vertical" margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-                                    <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#f8fafc" />
-                                    <XAxis type="number" hide />
-                                    <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#64748b', fontWeight: 'bold' }} width={100} />
-                                    <Tooltip
-                                        formatter={(value) => [`${value} Reports`, 'Cases']}
-                                        contentStyle={{ borderRadius: '8px', border: '1px solid #e2e8f0', fontSize: '12px', fontWeight: 'bold' }}
-                                    />
-                                    <Bar dataKey="count" fill="#f97316" radius={[0, 4, 4, 0]} />
-                                </BarChart>
-                            </ResponsiveContainer>
+                        <CardContent className="p-0">
+                            {moderateQueue.length === 0 ? (
+                                <div className="p-6 flex flex-col items-center justify-center text-center text-slate-400 gap-2">
+                                    <CheckCircle2 className="w-8 h-8 text-emerald-400" />
+                                    <p className="text-[10px] font-black uppercase tracking-widest">No moderate-risk cases</p>
+                                </div>
+                            ) : (
+                                <div>{moderateQueue.map(item => <CaseQueueRow key={item.id} item={item} />)}</div>
+                            )}
                         </CardContent>
                     </Card>
 
-                    {/* Priority Demographic Monitoring (Rule-Based Analytics) */}
-                    <Card className="lg:col-span-2 border-2">
-                        <CardHeader>
-                            <CardTitle className="uppercase tracking-widest text-xs font-black text-red-500">RA 9262 Incident Distribution (Monthly)</CardTitle>
-                            <CardDescription className="text-xs">Incidence metrics categorized by official abuse classification</CardDescription>
+                    {/* UNASSESSED / PENDING TRIAGE Queue */}
+                    <Card className="border-l-4 border-l-slate-400 shadow-sm lg:col-span-1">
+                        <CardHeader className="pb-3 border-b bg-slate-50/40 dark:bg-slate-900/20">
+                            <CardTitle className="text-xs font-black uppercase tracking-widest flex items-center text-slate-600">
+                                <HelpCircle className="h-4 w-4 mr-2" />
+                                Pending Triage Queue
+                            </CardTitle>
+                            <CardDescription className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mt-1">
+                                {unassessedQueue.length} case(s) · Awaiting RAVE Assessment
+                            </CardDescription>
                         </CardHeader>
-                        <CardContent className="p-6">
-                            <AnalyticsChart
-                                data={stats.analyticsData}
-                                config={stats.chartConfig}
-                            />
-                        </CardContent>
-                    </Card>
-
-
-                    {/* ── BPO ACTIVITY TREND ─────────────────────────── */}
-                    <Card className="shadow-sm border overflow-hidden lg:col-span-2 border-2">
-                        <CardHeader className="flex flex-row items-center justify-between">
-                            <div>
-                                <CardTitle className="uppercase tracking-widest text-sm font-black text-violet-600 flex items-center gap-2">
-                                    <Gavel className="w-4 h-4" /> BPO Issuance Activity
-                                </CardTitle>
-                                <CardDescription className="text-xs font-bold uppercase tracking-wider text-slate-400 mt-1">
-                                    Monthly BPO applications filed vs. orders successfully issued — {stats.currentYear}
-                                </CardDescription>
-                            </div>
-                        </CardHeader>
-                        <CardContent className="p-6">
-                            <div className="h-[220px]">
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <AreaChart data={stats.bpoTrends} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
-                                        <defs>
-                                            <linearGradient id="colorApplied" x1="0" y1="0" x2="0" y2="1">
-                                                <stop offset="5%" stopColor="#a855f7" stopOpacity={0.2} />
-                                                <stop offset="95%" stopColor="#a855f7" stopOpacity={0} />
-                                            </linearGradient>
-                                            <linearGradient id="colorIssued" x1="0" y1="0" x2="0" y2="1">
-                                                <stop offset="5%" stopColor="#10b981" stopOpacity={0.2} />
-                                                <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
-                                            </linearGradient>
-                                        </defs>
-                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                                        <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 'bold', fill: '#94a3b8' }} />
-                                        <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 'bold', fill: '#94a3b8' }} allowDecimals={false} />
-                                        <Tooltip contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0', fontSize: '12px', fontWeight: 'bold' }} />
-                                        <Legend wrapperStyle={{ fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.05em' }} />
-                                        <Area type="monotone" dataKey="applied" name="Filed / Applied" stroke="#a855f7" strokeWidth={2.5} fill="url(#colorApplied)" dot={{ r: 4, fill: '#a855f7', stroke: '#fff', strokeWidth: 2 }} activeDot={{ r: 6 }} />
-                                        <Area type="monotone" dataKey="issued" name="Successfully Issued" stroke="#10b981" strokeWidth={2.5} fill="url(#colorIssued)" dot={{ r: 4, fill: '#10b981', stroke: '#fff', strokeWidth: 2 }} activeDot={{ r: 6 }} />
-                                    </AreaChart>
-                                </ResponsiveContainer>
-                            </div>
+                        <CardContent className="p-0">
+                            {unassessedQueue.length === 0 ? (
+                                <div className="p-6 flex flex-col items-center justify-center text-center text-slate-400 gap-2">
+                                    <CheckCircle2 className="w-8 h-8 text-emerald-400" />
+                                    <p className="text-[10px] font-black uppercase tracking-widest">All cases have been assessed</p>
+                                </div>
+                            ) : (
+                                <div>{unassessedQueue.map(item => <CaseQueueRow key={item.id} item={item} />)}</div>
+                            )}
                         </CardContent>
                     </Card>
 
                 </div>
+
+                {/* Footer note */}
+                <div className="pb-6 text-center">
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                        For longitudinal trends, BPO activity, zone hotspots, and demographic reports →{' '}
+                        <a href={`/admin/analytics?year=${currentYear}`} className="text-[#ce1126] hover:underline">
+                            View Official Strategic Analytics & Reports
+                        </a>
+                    </p>
+                </div>
+
             </div>
-        </AppLayout >
+        </AppLayout>
     );
 }

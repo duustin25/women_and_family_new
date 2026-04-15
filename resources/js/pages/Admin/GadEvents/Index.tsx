@@ -122,8 +122,8 @@ export default function Index({ events, filters }: PageProps) {
                 {/* Header */}
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <div>
-                        <h1 className="text-2xl font-bold tracking-tight">GAD Events</h1>
-                        <p className="text-muted-foreground text-sm">Manage events and approve organization proposals.</p>
+                        <h1 className="text-2xl font-bold tracking-tight uppercase">Gender and Development (GAD) Initiatives</h1>
+                        <p className="text-muted-foreground text-[10px] font-black uppercase tracking-widest mt-1">Strategic Community Advocacy & Program Management Command</p>
                     </div>
                     <Button size="sm" onClick={openCreate} className="flex items-center gap-2">
                         <Plus className="w-4 h-4" />

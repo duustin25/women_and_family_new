@@ -111,7 +111,7 @@ export default function Welcome({ announcements, organizations }: WelcomeProps) 
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                         {/* Service 1 */}
                         <div className="border bg-white dark:bg-neutral-950 border-neutral-200 dark:border-neutral-800 rounded-lg p-6 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1 h-full flex flex-col items-start gap-4">
                             <div className="flex items-center gap-3">
@@ -123,14 +123,25 @@ export default function Welcome({ announcements, organizations }: WelcomeProps) 
                             </p>
                         </div>
 
+                        {/* Service BCPC */}
+                        <div className="border bg-white dark:bg-neutral-950 border-neutral-200 dark:border-neutral-800 rounded-lg p-6 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1 h-full flex flex-col items-start gap-4">
+                            <div className="flex items-center gap-3">
+                                <Baby size={24} className="text-neutral-900 dark:text-white shrink-0" />
+                                <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">BCPC Health and Nutrition</h1>
+                            </div>
+                            <p className="text-md leading-relaxed text-neutral-700 dark:text-neutral-300">
+                                Dedicated monitoring for minors, utilizing our intake system for height, weight, and nutritional status tracking to ensure holistic child health and protection.
+                            </p>
+                        </div>
+
                         {/* Service 2 */}
                         <div className="border bg-white dark:bg-neutral-950 border-neutral-200 dark:border-neutral-800 rounded-lg p-6 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1 h-full flex flex-col items-start gap-4">
                             <div className="flex items-center gap-3">
                                 <Scale size={24} className="text-neutral-900 dark:text-white shrink-0" />
-                                <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">GAD Event Registration</h1>
+                                <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">GAD Advocacy & Updates</h1>
                             </div>
                             <p className="text-md leading-relaxed text-neutral-700 dark:text-neutral-300">
-                                Browse upcoming Gender and Development (GAD) seminars and community programs. Citizens can effortlessly register for events directly through the portal.
+                                Browse upcoming Gender and Development (GAD) seminars and community programs. Stay informed about the latest community.
                             </p>
                         </div>
 

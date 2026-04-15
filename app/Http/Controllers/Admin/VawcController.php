@@ -67,7 +67,7 @@ class VawcController extends Controller
             $cases = $query->orderByDesc('created_at')->get();
         } else {
             $query->where('status', '!=', 'Closed'); // Only show Active Worklist
-            
+
             // PRIORITY TRIAGE QUEUE: Sort by Risk Score first, then date
             $cases = $query->get()->sortByDesc(function ($case) {
                 return $case->assessment ? $case->assessment->risk_score : 0;
@@ -153,7 +153,7 @@ class VawcController extends Controller
             'referral_status' => 'nullable|array',
             'witness_info' => 'nullable|string',
             'action_sought' => 'nullable|array',
-            
+
             // Risk assessment is now fully automated via VAWC-RAVE Engine
         ]);
 
@@ -346,26 +346,83 @@ class VawcController extends Controller
 
 
     /**
-     * Display the VAWC Management Dashboard with Analytics.
+     * Display the VAWC Operational Radar — Priority Queue by RAVE Risk Score.
+     * Heavy trend charts have been moved to the Official Analytics page.
      */
     public function dashboard()
     {
         $currentYear = now()->year;
 
+        // 1. CRITICAL / HIGH Risk Queue — sorted by risk_score DESC
+        $criticalQueue = VawcCase::with(['caseReport.abuseType', 'involvedParties', 'assessment'])
+            ->whereHas('assessment', function ($q) {
+                $q->whereIn('risk_level', ['CRITICAL', 'HIGH']);
+            })
+            ->where('status', '!=', 'Closed')
+            ->get()
+            ->sortByDesc(fn($c) => $c->assessment?->risk_score ?? 0)
+            ->values()
+            ->map(fn($c) => [
+                'id'            => $c->id,
+                'case_number'   => $c->caseReport?->case_number ?? 'N/A',
+                'victim_name'   => $c->caseReport?->victim_name ?? 'Unknown',
+                'status'        => $c->status,
+                'risk_level'    => $c->assessment?->risk_level ?? 'UNKNOWN',
+                'risk_score'    => $c->assessment?->risk_score ?? 0,
+                'abuse_type'    => $c->caseReport?->abuseType?->name ?? 'Unclassified',
+                'intake_date'   => $c->created_at->format('M d, Y'),
+                'is_repeat'     => $c->is_repeat_offense ?? false,
+            ]);
+
+        // 2. Moderate Risk Queue
+        $moderateQueue = VawcCase::with(['caseReport.abuseType', 'assessment'])
+            ->whereHas('assessment', function ($q) {
+                $q->whereIn('risk_level', ['MODERATE']);
+            })
+            ->where('status', '!=', 'Closed')
+            ->get()
+            ->sortByDesc(fn($c) => $c->assessment?->risk_score ?? 0)
+            ->values()
+            ->map(fn($c) => [
+                'id'            => $c->id,
+                'case_number'   => $c->caseReport?->case_number ?? 'N/A',
+                'victim_name'   => $c->caseReport?->victim_name ?? 'Unknown',
+                'status'        => $c->status,
+                'risk_level'    => $c->assessment?->risk_level ?? 'UNKNOWN',
+                'risk_score'    => $c->assessment?->risk_score ?? 0,
+                'abuse_type'    => $c->caseReport?->abuseType?->name ?? 'Unclassified',
+                'intake_date'   => $c->created_at->format('M d, Y'),
+                'is_repeat'     => $c->is_repeat_offense ?? false,
+            ]);
+
+        // 3. Active cases with no assessment yet (needs triage)
+        $unassessedQueue = VawcCase::with(['caseReport.abuseType'])
+            ->doesntHave('assessment')
+            ->where('status', '!=', 'Closed')
+            ->latest()
+            ->take(10)
+            ->get()
+            ->map(fn($c) => [
+                'id'            => $c->id,
+                'case_number'   => $c->caseReport?->case_number ?? 'N/A',
+                'victim_name'   => $c->caseReport?->victim_name ?? 'Unknown',
+                'status'        => $c->status,
+                'risk_level'    => 'PENDING',
+                'risk_score'    => null,
+                'abuse_type'    => $c->caseReport?->abuseType?->name ?? 'Unclassified',
+                'intake_date'   => $c->created_at->format('M d, Y'),
+                'is_repeat'     => $c->is_repeat_offense ?? false,
+            ]);
+
+        // 4. KPI Metrics (lightweight)
+        $kpis = $this->analyticsService->getVawcSpecificStats($currentYear);
+
         return Inertia::render('Admin/Vawc/Dashboard', [
-            'stats' => array_merge(
-                $this->analyticsService->getVawcSpecificStats($currentYear),
-                [
-                    'monthly_trends' => $this->analyticsService->getVawcMonthlyTrend($currentYear),
-                    'bpoTrends'      => $this->analyticsService->getVawcBpoTrends($currentYear),
-                    'analyticsData'  => $this->analyticsService->getMonthlyCaseAnalytics(
-                        'VAWC',
-                        $currentYear,
-                        \App\Models\CaseAbuseType::where('is_active', true)->whereIn('category', ['VAWC', 'Both'])->get()
-                    ),
-                    'chartConfig'    => $this->analyticsService->getVawcChartConfig(),
-                ]
-            )
+            'criticalQueue'  => $criticalQueue,
+            'moderateQueue'  => $moderateQueue,
+            'unassessedQueue' => $unassessedQueue,
+            'kpis'           => $kpis,
+            'currentYear'    => $currentYear,
         ]);
     }
 }

@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\MembershipApplication;
+use App\Models\VawcCase;
+use App\Models\BcpcChild;
 use Inertia\Inertia;
 
 class DashboardController extends Controller
@@ -19,22 +21,45 @@ class DashboardController extends Controller
     public function index(Request $request)
     {
         $user = $request->user();
-        $currentYear = \Carbon\Carbon::now()->year;
 
-        // Fetch Abuse Types for the chart config
-        $vawcTypes = \App\Models\CaseAbuseType::where('is_active', true)
-            ->whereIn('category', ['VAWC', 'Both'])
-            ->get();
+        // --- Module-Level Health Signals for Command Cards ---
+        // These are lightweight counts, NOT heavy chart datasets.
+        $vawcSignal = null;
+        $bcpcSignal = null;
+
+        if (!$user->isPresident()) {
+            // VAWC: Count cases with highest risk levels
+            $criticalVawc = VawcCase::whereHas('assessment', function ($q) {
+                $q->whereIn('risk_level', ['CRITICAL', 'HIGH']);
+            })->where('status', '!=', 'Closed')->count();
+
+            $activeVawc = VawcCase::where('status', '!=', 'Closed')->count();
+
+            $vawcSignal = [
+                'total_active' => $activeVawc,
+                'critical_high' => $criticalVawc,
+                'needs_attention' => $criticalVawc > 0,
+            ];
+
+            // BCPC: Count children with malnutrition
+            $samCount = BcpcChild::where('wfa_status', 'Severely Underweight')->count();
+            $mamCount = BcpcChild::where('wfa_status', 'Underweight')->count();
+            $totalMonitored = BcpcChild::count();
+
+            $bcpcSignal = [
+                'total_monitored' => $totalMonitored,
+                'sam_count' => $samCount,
+                'mam_count' => $mamCount,
+                'needs_attention' => $samCount > 0,
+            ];
+        }
 
         return Inertia::render('dashboard', [
-            'analyticsData'       => $user->isPresident() ? [] : $this->analyticsService->getMonthlyCaseAnalytics('VAWC', $currentYear, $vawcTypes),
-            'chartConfig'         => $user->isPresident() ? [] : $this->analyticsService->getVawcChartConfig(),
             'systemStats'         => $this->analyticsService->getSystemStats($user),
-            'recentCases'         => $this->analyticsService->getRecentCases(5, $user),
-            'recentApplications'  => $this->analyticsService->getRecentApplications(5, $user),
-            'membershipStats'     => $this->analyticsService->getMembershipTrends($currentYear, $user),
-            'caseResolutionStats' => $this->analyticsService->getCaseResolutionStats($currentYear, $user)
+            'recentCases'         => $this->analyticsService->getRecentCases(7, $user),
+            'recentApplications'  => $this->analyticsService->getRecentApplications(7, $user),
+            'vawcSignal'          => $vawcSignal,
+            'bcpcSignal'          => $bcpcSignal,
         ]);
     }
 }
-

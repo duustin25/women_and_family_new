@@ -143,8 +143,8 @@ export default function MembersIndex({ members, organizations, filters }: IndexP
                 {/* ── Header ── */}
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <div>
-                        <h1 className="text-2xl font-bold tracking-tight">Master Ledger</h1>
-                        <p className="text-muted-foreground text-sm">Centralized database for approved citizen members.</p>
+                        <h1 className="text-2xl font-bold tracking-tight uppercase">Citizen Master Ledger & Distribution Console</h1>
+                        <p className="text-muted-foreground text-[10px] font-black uppercase tracking-widest mt-1">Centralized Registry for Approved Resident Profiles</p>
                     </div>
                     <Button onClick={() => setBulkModalOpen(true)} className="flex items-center gap-2">
                         <Mail className="w-4 h-4" /> Bulk Broadcast

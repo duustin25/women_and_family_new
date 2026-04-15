@@ -47,9 +47,9 @@ export default function Index({ monitoredChildren, filters, metrics }: Props) {
                 {/* Header */}
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <div>
-                        <h1 className="text-3xl font-black uppercase tracking-tighter bg-clip-text text-foreground leading-none">BCPC Health Registry</h1>
-                        <p className="text-muted-foreground text-xs font-black uppercase tracking-widest flex items-center gap-2 mt-1">
-                            [RA 11037] Nutrition & Malnutrition Monitoring Command
+                        <h1 className="text-3xl font-black uppercase tracking-tighter bg-clip-text text-foreground leading-none">Child Health and Nutritional Status Monitoring (BCPC)</h1>
+                        <p className="text-muted-foreground text-[10px] font-black uppercase tracking-widest flex items-center gap-2 mt-2">
+                            [RA 11037] Health & Malnutrition Monitoring Command
                         </p>
                     </div>
                     <div className="flex gap-2">

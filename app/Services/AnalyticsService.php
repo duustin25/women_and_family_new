@@ -557,6 +557,37 @@ class AnalyticsService
     }
 
     /**
+     * Get BCPC nutrition status summary for the Strategic Analytics dashboard.
+     */
+    public function getBcpcNutritionSummary(): array
+    {
+        $total        = \App\Models\BcpcChild::count();
+        $normal       = \App\Models\BcpcChild::where('wfa_status', 'Normal')->count();
+        $sam          = \App\Models\BcpcChild::where('wfa_status', 'Severely Underweight')->count();
+        $mam          = \App\Models\BcpcChild::where('wfa_status', 'Underweight')->count();
+        $stunted      = \App\Models\BcpcChild::where('hfa_status', 'Stunted')->count();
+        $sevStunted   = \App\Models\BcpcChild::where('hfa_status', 'Severely Stunted')->count();
+
+        $malnutritionRate = $total > 0 ? round((($sam + $mam) / $total) * 100, 1) : 0.0;
+
+        return [
+            'total'              => $total,
+            'normal'             => $normal,
+            'sam'                => $sam,
+            'mam'                => $mam,
+            'stunted'            => $stunted,
+            'severely_stunted'   => $sevStunted,
+            'malnutrition_rate'  => $malnutritionRate,
+            'distribution'       => [
+                ['name' => 'Normal',              'value' => $normal, 'fill' => '#10b981'],
+                ['name' => 'Underweight (MAM)',   'value' => $mam,    'fill' => '#f59e0b'],
+                ['name' => 'Sev. Underweight (SAM)', 'value' => $sam, 'fill' => '#ef4444'],
+                ['name' => 'Stunted',             'value' => $stunted,'fill' => '#a855f7'],
+            ],
+        ];
+    }
+
+    /**
      * Format raw month/count data into the structure expected by the frontend charts.
      */
     private function formatMonthlyData(Collection $groupedReports, Collection $abuseTypes): array
@@ -578,3 +609,4 @@ class AnalyticsService
         return $formattedData;
     }
 }
+

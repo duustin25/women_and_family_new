@@ -45,22 +45,22 @@ const mainNavItems: NavItem[] = [
     },
     // --- CORE SERVICES (Capstone Focus) ---
     {
-        title: 'VAWC Registry',
+        title: 'Violence Against Women and Children Case Protection Registry',
         href: '/admin/vawc/cases',
         icon: ShieldAlert,
     },
     {
-        title: 'BCPC Monitoring',
+        title: 'Child Health and Nutritional Status Monitoring (BCPC)',
         href: '/admin/bcpc/cases',
         icon: Activity,
     },
     {
-        title: 'GAD Programs',
+        title: 'Gender and Development (GAD) Advocacy & Programs',
         href: '/admin/gad/events',
         icon: CalendarRange,
     },
     {
-        title: 'Data Analytics',
+        title: 'Intelligent System Analytics & Official Reports',
         href: '/admin/analytics',
         icon: ChartLine,
     },
@@ -132,13 +132,13 @@ export function AppSidebar() {
 
         if (role === 'president') {
             const hiddenFromPresident = [
-                'VAWC Registry',
-                'BCPC Monitoring',
+                'Violence Against Women and Children Case Protection Registry',
+                'Child Health and Nutritional Status Monitoring (BCPC)',
                 'System Users',
                 'Officials',
-                'Data Analytics',
+                'Intelligent System Analytics & Official Reports',
                 'Settings',
-                'GAD Programs',
+                'Gender and Development (GAD) Advocacy & Programs',
             ];
             if (hiddenFromPresident.includes(item.title)) return false;
         }

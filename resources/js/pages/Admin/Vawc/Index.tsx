@@ -58,8 +58,8 @@ export default function Index({ cases, filters }: Props) {
                 {/* Header */}
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <div>
-                        <h1 className="text-2xl font-bold tracking-tight bg-clip-text text-foreground">VAWC Registry</h1>
-                        <p className="text-muted-foreground text-sm">[Republic Act 9262] Violence Against Women and Children Case Management</p>
+                        <h1 className="text-2xl font-bold tracking-tight bg-clip-text text-foreground uppercase">Violence Against Women and Children Case Registry</h1>
+                        <p className="text-muted-foreground text-xs font-black uppercase tracking-widest flex items-center gap-2 mt-1">[Republic Act 9262] Protection & Case Management Command</p>
                     </div>
                     <div className="flex gap-2">
                         <Button asChild variant="outline" size="sm" className="flex items-center gap-2">
