@@ -4,10 +4,15 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\BcpcChild;
+use App\Models\BcpcAssessment;
+use App\Models\Member;
+use App\Models\Zone;
 use App\Services\NutritionCalculatorService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 
 class BcpcMonitoringController extends Controller
 {
@@ -23,36 +28,44 @@ class BcpcMonitoringController extends Controller
      */
     public function index(Request $request)
     {
-        $query = BcpcChild::query();
+        $query = BcpcChild::with(['latestAssessment', 'zone', 'member']);
 
         // 1. Apply Search Filter (Child or Guardian Name)
         if ($request->has('search')) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('child_first_name', 'like', "%{$search}%")
-                  ->orWhere('child_last_name', 'like', "%{$search}%")
-                  ->orWhere('guardian_name', 'like', "%{$search}%");
+                    ->orWhere('child_last_name', 'like', "%{$search}%")
+                    ->orWhere('guardian_name', 'like', "%{$search}%");
             });
         }
 
-        // 2. Apply Status Filter
+        // 2. Apply Status Filter (Targeting the Latest Assessment)
         if ($request->has('status') && $request->status !== 'all') {
-            $query->where('wfa_status', $request->status);
+            $query->whereHas('latestAssessment', function ($q) use ($request) {
+                $q->where('wfa_status', $request->status);
+            });
         }
 
-        $children = $query->orderBy('date_of_weighing', 'desc')->get();
+        $children = $query->get()->sortByDesc(function ($child) {
+            return $child->latestAssessment ? $child->latestAssessment->date_of_weighing : $child->created_at;
+        })->values();
 
-        // Check if user wants the Dashboard View or Registry View
-        // For now, we'll keep redirecting admin.bcpc.index to the Registry, 
-        // and we'll add a separate route for Dashboard Analytics.
-        
         return Inertia::render('Admin/Bcpc/Index', [
             'monitoredChildren' => $children,
             'filters' => $request->only(['search', 'status']),
             'metrics' => [
                 'total_monitored' => BcpcChild::count(),
-                'severely_underweight' => BcpcChild::where('wfa_status', 'Severely Underweight')->count(),
-                'underweight' => BcpcChild::where('wfa_status', 'Underweight')->count(),
+                'severely_underweight' => BcpcAssessment::whereIn('id', function ($query) {
+                    $query->select(DB::raw('max(id)'))
+                        ->from('bcpc_assessments')
+                        ->groupBy('bcpc_child_id');
+                })->where('wfa_status', 'Severely Underweight')->count(),
+                'underweight' => BcpcAssessment::whereIn('id', function ($query) {
+                    $query->select(DB::raw('max(id)'))
+                        ->from('bcpc_assessments')
+                        ->groupBy('bcpc_child_id');
+                })->where('wfa_status', 'Underweight')->count(),
             ]
         ]);
     }
@@ -62,28 +75,35 @@ class BcpcMonitoringController extends Controller
      */
     public function dashboard()
     {
-        $children = BcpcChild::where('status', 'Active')->orderBy('date_of_weighing', 'desc')->get();
+        $children = BcpcChild::with(['latestAssessment', 'zone'])
+            ->where('status', 'Active')
+            ->get();
 
         // 1. Triage Top Priority (SAM)
         $topPriority = $children->filter(function ($child) {
-            return in_array($child->wfa_status, ['Severely Underweight']) || in_array($child->hfa_status, ['Severely Stunted']);
+            $latest = $child->latestAssessment;
+            if (!$latest) return false;
+            return in_array($latest->wfa_status, ['Severely Underweight']) || in_array($latest->hfa_status, ['Severely Stunted']);
         })->values();
 
         // 2. Second Priority (120-Day Feeding targeting)
         $secondPriority = $children->filter(function ($child) {
-            return in_array($child->wfa_status, ['Underweight']) && !in_array($child->wfa_status, ['Severely Underweight']);
+            $latest = $child->latestAssessment;
+            if (!$latest) return false;
+            return in_array($latest->wfa_status, ['Underweight']) && !in_array($latest->wfa_status, ['Severely Underweight']);
         })->values();
 
         // 3. Third Priority (Stunted/Education targeting)
         $thirdPriority = $children->filter(function ($child) {
-            return in_array($child->hfa_status, ['Stunted']) && !in_array($child->hfa_status, ['Severely Stunted']);
+            $latest = $child->latestAssessment;
+            if (!$latest) return false;
+            return in_array($latest->hfa_status, ['Stunted']) && !in_array($latest->hfa_status, ['Severely Stunted']);
         })->values();
 
         // 4. Upcoming Birthdays (Next 30 Days)
         $today = Carbon::now();
         $upcomingBirthdays = $children->filter(function ($child) use ($today) {
             if (!$child->date_of_birth) return false;
-            // Set birthday to current year to check diff
             $birthdayThisYear = $child->date_of_birth->copy()->year($today->year);
             if ($birthdayThisYear->isPast()) {
                 $birthdayThisYear->addYear();
@@ -117,7 +137,10 @@ class BcpcMonitoringController extends Controller
      */
     public function create()
     {
-        return Inertia::render('Admin/Bcpc/Create');
+        return Inertia::render('Admin/Bcpc/Create', [
+            'members' => Member::select('id', 'fullname')->where('status', 'Active')->get(),
+            'zones' => Zone::all(),
+        ]);
     }
 
     /**
@@ -126,6 +149,8 @@ class BcpcMonitoringController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
+            'member_id' => 'nullable|exists:members,id',
+            'zone_id' => 'nullable|exists:zones,id',
             'guardian_name' => 'required|string|max:255',
             'address' => 'required|string|max:255',
             'contact_number' => 'nullable|string|max:50',
@@ -138,18 +163,44 @@ class BcpcMonitoringController extends Controller
             'weight_kg' => 'required|numeric',
             'height_cm' => 'required|numeric',
             'intervention_logs' => 'nullable|array',
+            'remarks' => 'nullable|string',
         ]);
 
-        // Evaluate logic
-        $ageInMonths = $this->nutritionService->calculateAgeInMonths($validated['date_of_birth'], $validated['date_of_weighing']);
+        return DB::transaction(function () use ($validated) {
+            // 1. Create Child Profile
+            $child = BcpcChild::create([
+                'member_id' => $validated['member_id'] ?? null,
+                'zone_id' => $validated['zone_id'] ?? null,
+                'guardian_name' => $validated['guardian_name'],
+                'address' => $validated['address'],
+                'contact_number' => $validated['contact_number'],
+                'child_first_name' => $validated['child_first_name'],
+                'child_last_name' => $validated['child_last_name'],
+                'child_middle_name' => $validated['child_middle_name'],
+                'date_of_birth' => $validated['date_of_birth'],
+                'sex' => $validated['sex'],
+                'status' => 'Active',
+            ]);
 
-        $validated['wfa_status'] = $this->nutritionService->evaluateWeightForAge($ageInMonths, $validated['sex'], $validated['weight_kg']);
-        $validated['hfa_status'] = $this->nutritionService->evaluateHeightForAge($ageInMonths, $validated['sex'], $validated['height_cm']);
-        $validated['status'] = 'Active';
+            // 2. Evaluate logic
+            $ageInMonths = $this->nutritionService->calculateAgeInMonths($validated['date_of_birth'], $validated['date_of_weighing']);
+            $wfa = $this->nutritionService->evaluateWeightForAge($ageInMonths, $validated['sex'], $validated['weight_kg']);
+            $hfa = $this->nutritionService->evaluateHeightForAge($ageInMonths, $validated['sex'], $validated['height_cm']);
 
-        BcpcChild::create($validated);
+            // 3. Create First Assessment
+            $child->assessments()->create([
+                'user_id' => Auth::id(),
+                'date_of_weighing' => $validated['date_of_weighing'],
+                'weight_kg' => $validated['weight_kg'],
+                'height_cm' => $validated['height_cm'],
+                'wfa_status' => $wfa,
+                'hfa_status' => $hfa,
+                'intervention_logs' => $validated['intervention_logs'] ?? [],
+                'remarks' => $validated['remarks'] ?? null,
+            ]);
 
-        return redirect()->route('admin.bcpc.index')->with('success', 'Child registered and evaluated successfully.');
+            return redirect()->route('admin.bcpc.index')->with('success', 'Child registered and evaluated successfully.');
+        });
     }
 
     /**
@@ -157,7 +208,9 @@ class BcpcMonitoringController extends Controller
      */
     public function show($id)
     {
-        $child = BcpcChild::findOrFail($id);
+        $child = BcpcChild::with(['assessments' => function ($q) {
+            $q->orderBy('date_of_weighing', 'desc')->orderBy('id', 'desc');
+        }, 'zone', 'member'])->findOrFail($id);
 
         $ageInMonths = $this->nutritionService->calculateAgeInMonths($child->date_of_birth->format('Y-m-d'), Carbon::now()->format('Y-m-d'));
         $years = floor($ageInMonths / 12);
@@ -181,15 +234,25 @@ class BcpcMonitoringController extends Controller
             'weight_kg' => 'required|numeric',
             'height_cm' => 'required|numeric',
             'intervention_logs' => 'nullable|array',
+            'remarks' => 'nullable|string',
         ]);
 
         $ageInMonths = $this->nutritionService->calculateAgeInMonths($child->date_of_birth->format('Y-m-d'), $validated['date_of_weighing']);
 
-        $validated['wfa_status'] = $this->nutritionService->evaluateWeightForAge($ageInMonths, $child->sex, $validated['weight_kg']);
-        $validated['hfa_status'] = $this->nutritionService->evaluateHeightForAge($ageInMonths, $child->sex, $validated['height_cm']);
+        $wfa = $this->nutritionService->evaluateWeightForAge($ageInMonths, $child->sex, $validated['weight_kg']);
+        $hfa = $this->nutritionService->evaluateHeightForAge($ageInMonths, $child->sex, $validated['height_cm']);
 
-        $child->update($validated);
+        $child->assessments()->create([
+            'user_id' => Auth::id(),
+            'date_of_weighing' => $validated['date_of_weighing'],
+            'weight_kg' => $validated['weight_kg'],
+            'height_cm' => $validated['height_cm'],
+            'wfa_status' => $wfa,
+            'hfa_status' => $hfa,
+            'intervention_logs' => $validated['intervention_logs'] ?? [],
+            'remarks' => $validated['remarks'] ?? null,
+        ]);
 
-        return back()->with('success', 'Profile and nutrition metrics updated.');
+        return back()->with('success', 'New nutrition measurement recorded successfully.');
     }
 }

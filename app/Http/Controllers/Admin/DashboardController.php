@@ -41,9 +41,18 @@ class DashboardController extends Controller
                 'needs_attention' => $criticalVawc > 0,
             ];
 
-            // BCPC: Count children with malnutrition
-            $samCount = BcpcChild::where('wfa_status', 'Severely Underweight')->count();
-            $mamCount = BcpcChild::where('wfa_status', 'Underweight')->count();
+            // BCPC: Count children with malnutrition from their latest assessment
+            $latestAssessmentIds = \App\Models\BcpcAssessment::select(\Illuminate\Support\Facades\DB::raw('MAX(id)'))
+                ->groupBy('bcpc_child_id');
+
+            $samCount = \App\Models\BcpcAssessment::whereIn('id', $latestAssessmentIds)
+                ->where('wfa_status', 'Severely Underweight')
+                ->count();
+
+            $mamCount = \App\Models\BcpcAssessment::whereIn('id', $latestAssessmentIds)
+                ->where('wfa_status', 'Underweight')
+                ->count();
+
             $totalMonitored = BcpcChild::count();
 
             $bcpcSignal = [

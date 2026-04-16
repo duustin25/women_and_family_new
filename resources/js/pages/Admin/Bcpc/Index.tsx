@@ -18,12 +18,10 @@ interface Props {
     };
     metrics: {
         total_monitored: number;
-        severely_underweight: number;
-        underweight: number;
     };
 }
 
-export default function Index({ monitoredChildren, filters, metrics }: Props) {
+export default function Index({ monitoredChildren, filters }: Props) {
     const [search, setSearch] = useState(filters?.search || '');
     const [status, setStatus] = useState(filters?.status || 'all');
     const debouncedSearch = useDebounce(search, 300);
@@ -47,41 +45,25 @@ export default function Index({ monitoredChildren, filters, metrics }: Props) {
                 {/* Header */}
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <div>
-                        <h1 className="text-3xl font-black uppercase tracking-tighter bg-clip-text text-foreground leading-none">Child Health and Nutritional Status Monitoring (BCPC)</h1>
-                        <p className="text-muted-foreground text-[10px] font-black uppercase tracking-widest flex items-center gap-2 mt-2">
-                            [RA 11037] Health & Malnutrition Monitoring Command
+                        <h1 className="text-2xl font-bold tracking-tight bg-clip-text text-foreground uppercase">Child Health and Nutritional Status Registry</h1>
+                        <p className="text-muted-foreground text-xs font-black uppercase tracking-widest flex items-center gap-2 mt-1">
+                            Health and Nutrition Monitoring
                         </p>
                     </div>
                     <div className="flex gap-2">
-                        <Button asChild variant="outline" size="sm" className="rounded-xl font-black uppercase text-[10px] tracking-widest border-2">
+                        <Button asChild variant="outline" size="sm" className="flex items-center gap-2 font-bold uppercase text-[10px] tracking-widest">
                             <Link href="/admin/bcpc/dashboard">
-                                <BarChart3 className="w-4 h-4 mr-2" />
+                                <BarChart3 className="w-4 h-4" />
                                 Analytics Dashboard
                             </Link>
                         </Button>
-                        <Button asChild size="sm" className="rounded-xl font-black uppercase text-[10px] tracking-widest shadow-md">
+                        <Button asChild size="sm" className="flex items-center gap-2 font-bold uppercase text-[10px] tracking-widest">
                             <Link href="/admin/bcpc/cases/create">
-                                <Plus className="w-4 h-4 mr-2" />
+                                <Plus className="w-4 h-4" />
                                 Register Child
                             </Link>
                         </Button>
                     </div>
-                </div>
-
-                {/* KPI Overview (Mini) */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                     <div className="bg-card border-l-4 border-l-primary p-4 rounded-xl shadow-sm">
-                        <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1">Total Monitored</p>
-                        <p className="text-2xl font-black tracking-tighter">{metrics.total_monitored}</p>
-                     </div>
-                     <div className="bg-card border-l-4 border-l-destructive p-4 rounded-xl shadow-sm">
-                        <p className="text-[10px] font-black uppercase tracking-widest text-destructive mb-1">Severe Acute Malnutrition (SAM)</p>
-                        <p className="text-2xl font-black tracking-tighter text-destructive">{metrics.severely_underweight}</p>
-                     </div>
-                     <div className="bg-card border-l-4 border-l-amber-500 p-4 rounded-xl shadow-sm">
-                        <p className="text-[10px] font-black uppercase tracking-widest text-amber-600 mb-1">Moderate Acute Malnutrition (MAM)</p>
-                        <p className="text-2xl font-black tracking-tighter text-amber-600">{metrics.underweight}</p>
-                     </div>
                 </div>
 
                 {/* FILTERS & SEARCH */}
@@ -89,32 +71,31 @@ export default function Index({ monitoredChildren, filters, metrics }: Props) {
                     <CardHeader className="pb-3 border-b bg-muted/5">
                         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                             <CardTitle className="text-sm font-black flex items-center gap-2 whitespace-nowrap uppercase tracking-widest">
-                                <Activity className="h-4 w-4 text-primary" />
-                                Electronic Operation Timbang (e-OPT) Registry
+                                Health Priority Triage Queue
                                 <Badge variant="secondary" className="ml-2 h-5 text-[10px] font-black">{monitoredChildren.length} Results</Badge>
                             </CardTitle>
 
                             <div className="flex flex-1 flex-col sm:flex-row items-center justify-end gap-2 w-full">
                                 <Select value={status} onValueChange={setStatus}>
-                                    <SelectTrigger className="h-9 w-full sm:w-[220px] rounded-xl font-black uppercase text-[9px] tracking-widest order-2">
+                                    <SelectTrigger className="h-9 w-full sm:w-[220px] rounded-lg">
                                         <div className="flex items-center gap-2">
                                             <Filter className="w-4 h-4 text-muted-foreground" />
                                             <SelectValue placeholder="All Nutrition Status" />
                                         </div>
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="all">Global Registry</SelectItem>
-                                        <SelectItem value="Normal">Normal Status</SelectItem>
-                                        <SelectItem value="Underweight">Moderate Acute Malnutrition (MAM)</SelectItem>
-                                        <SelectItem value="Severely Underweight">Severe Acute Malnutrition (SAM)</SelectItem>
+                                        <SelectItem value="all">Global Health Registry</SelectItem>
+                                        <SelectItem value="Normal">Normal Growth</SelectItem>
+                                        <SelectItem value="Underweight">MAM Status</SelectItem>
+                                        <SelectItem value="Severely Underweight">SAM Status</SelectItem>
                                     </SelectContent>
                                 </Select>
 
-                                <div className="relative w-full sm:w-64 order-1 sm:order-2">
+                                <div className="relative w-full sm:w-64">
                                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                                     <Input
                                         placeholder="Search Child / Guardian..."
-                                        className="pl-9 h-9 w-full rounded-xl font-medium text-xs"
+                                        className="pl-9 h-9 w-full"
                                         value={search}
                                         onChange={(e) => setSearch(e.target.value)}
                                     />
@@ -126,12 +107,12 @@ export default function Index({ monitoredChildren, filters, metrics }: Props) {
                         <Table>
                             <TableHeader className="bg-muted/10">
                                 <TableRow>
-                                    <TableHead className="font-black uppercase text-[10px] tracking-widest py-4 pl-6">Primary Recipient</TableHead>
-                                    <TableHead className="font-black uppercase text-[10px] tracking-widest">Demographics</TableHead>
-                                    <TableHead className="font-black uppercase text-[10px] tracking-widest text-center">Nutrition Triage (WFA)</TableHead>
-                                    <TableHead className="font-black uppercase text-[10px] tracking-widest text-center">Stunting Risk (HFA)</TableHead>
-                                    <TableHead className="font-black uppercase text-[10px] tracking-widest">Latest Record</TableHead>
-                                    <TableHead className="text-right font-black uppercase text-[10px] tracking-widest pr-6">Management</TableHead>
+                                    <TableHead className="font-bold py-4 pl-6 uppercase text-[10px] tracking-widest text-slate-500">Primary Recipient</TableHead>
+                                    <TableHead className="font-bold uppercase text-[10px] tracking-widest text-slate-500">Demographics</TableHead>
+                                    <TableHead className="font-bold uppercase text-[10px] tracking-widest text-slate-500 text-center">Nutrition Triage (WFA)</TableHead>
+                                    <TableHead className="font-bold uppercase text-[10px] tracking-widest text-slate-500 text-center">Stunting Risk (HFA)</TableHead>
+                                    <TableHead className="font-bold uppercase text-[10px] tracking-widest text-slate-500">Latest Record</TableHead>
+                                    <TableHead className="text-right font-bold uppercase text-[10px] tracking-widest text-slate-500 pr-6">Management</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -143,51 +124,69 @@ export default function Index({ monitoredChildren, filters, metrics }: Props) {
                                     </TableRow>
                                 )}
                                 {monitoredChildren.map((child: any) => {
-                                    const isSAM = child.wfa_status === 'Severely Underweight';
-                                    const isMAM = child.wfa_status === 'Underweight';
+                                    const latest = child.latest_assessment;
+                                    const isSAM = latest?.wfa_status === 'Severely Underweight';
+                                    const isMAM = latest?.wfa_status === 'Underweight';
+                                    const isRecent = Math.abs(new Date().getTime() - new Date(child.created_at).getTime()) < 600000;
 
                                     return (
-                                        <TableRow key={child.id} className="transition-all group hover:bg-muted/5">
+                                        <TableRow key={child.id} className={`transition-all group ${isSAM ? 'bg-destructive/5 hover:bg-destructive/10 dark:bg-red-950/20' : 'hover:bg-muted/5'}`}>
                                             <TableCell className="pl-6">
                                                 <div className="flex flex-col">
-                                                    <span className="font-black text-sm uppercase tracking-tight text-primary">
-                                                        {child.child_first_name} {child.child_last_name}
-                                                    </span>
+                                                    <div className="flex items-center gap-2">
+                                                        {isSAM && <div className="h-2 w-2 rounded-full bg-red-600 animate-pulse shrink-0" />}
+                                                        <span className="font-bold text-sm text-foreground">
+                                                            {child.child_first_name} {child.child_last_name}
+                                                        </span>
+                                                    </div>
                                                     <span className="text-[10px] text-muted-foreground font-black uppercase tracking-widest mt-0.5">
                                                         Guardian: {child.guardian_name}
                                                     </span>
                                                 </div>
                                             </TableCell>
                                             <TableCell>
-                                                <div className="flex items-center gap-2">
-                                                    <Badge variant="outline" className="text-[9px] font-black uppercase tracking-tighter">
-                                                        {child.sex}
-                                                    </Badge>
-                                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                                                        {new Date(child.date_of_birth).toLocaleDateString()}
-                                                    </span>
+                                                <div className="flex flex-col gap-1">
+                                                    <div className="flex items-center gap-2 text-[10px] font-black uppercase text-slate-400">
+                                                        <span>{child.sex}</span>
+                                                        <span>•</span>
+                                                        <span>{new Date(child.date_of_birth).toLocaleDateString()}</span>
+                                                    </div>
+                                                    {child.zone && (
+                                                        <Badge variant="outline" className="text-[8px] font-black border-primary/20 bg-primary/5 text-primary w-fit uppercase">
+                                                            {child.zone.name}
+                                                        </Badge>
+                                                    )}
                                                 </div>
                                             </TableCell>
                                             <TableCell className="text-center">
                                                 <Badge
-                                                    variant={child.wfa_status === 'Normal' ? 'outline' : isSAM ? 'destructive' : 'secondary'}
-                                                    className={`text-[9px] uppercase font-black tracking-widest px-2 py-0.5 ${child.wfa_status === 'Normal' ? 'text-emerald-600 border-emerald-200' : isMAM ? 'bg-amber-500 text-white shadow-sm' : ''}`}
+                                                    variant={!latest || latest.wfa_status === 'Normal' ? 'outline' : isSAM ? 'destructive' : 'secondary'}
+                                                    className={`text-[9px] uppercase font-black tracking-widest px-2 py-0.5 ${latest?.wfa_status === 'Normal' ? 'text-emerald-600 border-emerald-200 bg-emerald-50 dark:bg-emerald-950/20' : isMAM ? 'bg-amber-500 text-white shadow-sm' : ''}`}
                                                 >
-                                                    {child.wfa_status}
+                                                    {latest?.wfa_status || 'Unassessed'}
                                                 </Badge>
                                             </TableCell>
                                             <TableCell className="text-center">
-                                                <Badge variant="secondary" className="text-[9px] uppercase font-black opacity-60 tracking-widest">
-                                                    {child.hfa_status}
+                                                <Badge variant="secondary" className="text-[9px] uppercase font-black opacity-60 tracking-widest h-5">
+                                                    {latest?.hfa_status || 'N/A'}
                                                 </Badge>
                                             </TableCell>
-                                            <TableCell className="text-muted-foreground text-[11px] font-black uppercase tracking-widest text-xs">
-                                                {new Date(child.date_of_weighing).toLocaleDateString(undefined, {
-                                                    year: 'numeric', month: 'short', day: 'numeric'
-                                                })}
+                                            <TableCell className="text-muted-foreground text-[12px] font-medium leading-tight">
+                                                <div className="flex flex-col">
+                                                    <span>
+                                                        {child.latest_assessment ? new Date(child.latest_assessment.date_of_weighing).toLocaleDateString(undefined, {
+                                                            year: 'numeric', month: 'short', day: 'numeric'
+                                                        }) : 'N/A'}
+                                                    </span>
+                                                    {isRecent && (
+                                                        <Badge className="w-fit mt-1 bg-emerald-500 hover:bg-emerald-600 text-[8px] h-4 px-1 font-black uppercase tracking-tighter">
+                                                            JUST ADDED
+                                                        </Badge>
+                                                    )}
+                                                </div>
                                             </TableCell>
                                             <TableCell className="text-right pr-6">
-                                                <Button variant="ghost" size="sm" asChild className="opacity-70 group-hover:opacity-100 group-hover:bg-primary/10 transition-all font-black uppercase text-[10px] tracking-widest hover:text-primary rounded-xl">
+                                                <Button variant="ghost" size="sm" asChild className="opacity-70 group-hover:opacity-100 group-hover:bg-primary/10 transition-all font-bold text-xs ring-offset-background hover:text-primary">
                                                     <Link href={`/admin/bcpc/cases/${child.id}`}>
                                                         Profile <ChevronRight className="w-3 h-3 ml-1" />
                                                     </Link>

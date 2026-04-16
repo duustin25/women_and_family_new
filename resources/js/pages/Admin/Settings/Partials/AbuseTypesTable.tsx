@@ -96,7 +96,7 @@ export default function AbuseTypesTable({ caseAbuseTypes }: { caseAbuseTypes: Ca
                         Case Classifications
                     </CardTitle>
                     <CardDescription>
-                        Define types of abuses or concerns for VAWC and BCPC cases.
+                        Define types of abuses or concerns for VAWC cases.
                     </CardDescription>
                 </div>
                 <Dialog open={isAbuseModalOpen} onOpenChange={setIsAbuseModalOpen}>
@@ -129,8 +129,6 @@ export default function AbuseTypesTable({ caseAbuseTypes }: { caseAbuseTypes: Ca
                                     <SelectTrigger><SelectValue /></SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="VAWC">VAWC (Women & Children)</SelectItem>
-                                        <SelectItem value="BCPC">BCPC (Minors / CICL)</SelectItem>
-                                        <SelectItem value="Both">Both</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>
@@ -175,7 +173,7 @@ export default function AbuseTypesTable({ caseAbuseTypes }: { caseAbuseTypes: Ca
                             <TableRow key={item.id}>
                                 <TableCell className="font-medium">{item.name}</TableCell>
                                 <TableCell>
-                                    <Badge variant="outline" className={item.category === 'VAWC' ? 'text-red-600' : item.category === 'BCPC' ? 'text-blue-600' : ''}>
+                                    <Badge variant="outline" className={item.category === 'VAWC' ? 'text-red-600' : 'text-slate-500'}>
                                         {item.category}
                                     </Badge>
                                 </TableCell>

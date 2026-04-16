@@ -280,7 +280,7 @@ class AnalyticsService
     public function getVawcChartConfig(): Collection
     {
         return \App\Models\CaseAbuseType::where('is_active', true)
-            ->whereIn('category', ['VAWC', 'Both'])
+            ->where('category', 'VAWC')
             ->get()
             ->map(fn($t) => [
                 'key'   => strtolower($t->name),
@@ -567,12 +567,20 @@ class AnalyticsService
      */
     public function getBcpcNutritionSummary(): array
     {
-        $total        = \App\Models\BcpcChild::count();
-        $normal       = \App\Models\BcpcChild::where('wfa_status', 'Normal')->count();
-        $sam          = \App\Models\BcpcChild::where('wfa_status', 'Severely Underweight')->count();
-        $mam          = \App\Models\BcpcChild::where('wfa_status', 'Underweight')->count();
-        $stunted      = \App\Models\BcpcChild::where('hfa_status', 'Stunted')->count();
-        $sevStunted   = \App\Models\BcpcChild::where('hfa_status', 'Severely Stunted')->count();
+        $total = \App\Models\BcpcChild::count();
+
+        // Get the latest assessment for each child
+        $latestAssessments = \App\Models\BcpcAssessment::whereIn('id', function ($query) {
+            $query->select(DB::raw('MAX(id)'))
+                ->from('bcpc_assessments')
+                ->groupBy('bcpc_child_id');
+        })->get();
+
+        $normal     = $latestAssessments->where('wfa_status', 'Normal')->count();
+        $sam        = $latestAssessments->where('wfa_status', 'Severely Underweight')->count();
+        $mam        = $latestAssessments->where('wfa_status', 'Underweight')->count();
+        $stunted    = $latestAssessments->where('hfa_status', 'Stunted')->count();
+        $sevStunted = $latestAssessments->where('hfa_status', 'Severely Stunted')->count();
 
         $malnutritionRate = $total > 0 ? round((($sam + $mam) / $total) * 100, 1) : 0.0;
 

@@ -12,9 +12,10 @@ export interface OrganizationSettingsProps {
     setData: (key: string, value: any) => void;
     record: any;
     users?: any[];
+    errors?: Record<string, string>;
 }
 
-export default function OrganizationSettings({ data, setData, record, users = [] }: OrganizationSettingsProps) {
+export default function OrganizationSettings({ data, setData, record, users = [], errors = {} }: OrganizationSettingsProps) {
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
     // Synchronize preview URL for new uploads
@@ -59,13 +60,14 @@ export default function OrganizationSettings({ data, setData, record, users = []
                         <div className={`w-3 h-3 rounded-full ${data.color_theme}`}></div>
                         <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Organization Profile</span>
                     </div>
-                    <CardTitle>
+                    <CardTitle className="relative">
                         <Input
                             value={data.name}
                             onChange={e => setData('name', e.target.value)}
-                            className="text-2xl font-bold border-none bg-transparent p-0 focus-visible:ring-0 h-auto shadow-none placeholder:opacity-50"
+                            className={`text-2xl font-bold border-none bg-transparent p-0 focus-visible:ring-0 h-auto shadow-none placeholder:opacity-50 ${errors.name ? 'text-destructive' : ''}`}
                             placeholder="Enter Organization Name..."
                         />
+                        {errors.name && <p className="text-[10px] font-bold text-destructive uppercase tracking-widest mt-1">{errors.name}</p>}
                     </CardTitle>
                     <CardDescription>
                         Basic identity and leadership settings.
@@ -75,14 +77,17 @@ export default function OrganizationSettings({ data, setData, record, users = []
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {/* President Selection */}
                         <div className="space-y-2">
-                            <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Current President</Label>
+                            <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex justify-between">
+                                <span>Current President</span>
+                                {errors.president_name && <span className="text-[10px] text-destructive lowercase italic">{errors.president_name}</span>}
+                            </Label>
                             <Select
                                 value={data.president_name || "none"}
                                 onValueChange={(val) => setData('president_name', val === "none" ? "" : val)}
                             >
-                                <SelectTrigger className="w-full bg-background border-muted h-11">
+                                <SelectTrigger className={`w-full bg-background h-11 ${errors.president_name ? 'border-destructive ring-1 ring-destructive/20' : 'border-muted'}`}>
                                     <div className="flex items-center gap-2">
-                                        <Users className="w-4 h-4 text-blue-500" />
+                                        <Users className={`w-4 h-4 ${errors.president_name ? 'text-destructive' : 'text-blue-500'}`} />
                                         <SelectValue placeholder="Assign President (Optional)" />
                                     </div>
                                 </SelectTrigger>
@@ -104,14 +109,17 @@ export default function OrganizationSettings({ data, setData, record, users = []
 
                         {/* Branding Color */}
                         <div className="space-y-2">
-                            <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Primary Theme Color</Label>
+                            <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex justify-between">
+                                <span>Primary Theme Color</span>
+                                {errors.color_theme && <span className="text-[10px] text-destructive lowercase italic">{errors.color_theme}</span>}
+                            </Label>
                             <div className="flex flex-wrap gap-2 pt-1">
                                 {colorOptions.map((color) => (
                                     <button
                                         key={color.class}
                                         type="button"
                                         onClick={() => setData('color_theme', color.class)}
-                                        className={`w-8 h-8 rounded-lg ${color.class} transition-all ${data.color_theme === color.class ? 'ring-2 ring-offset-2 ring-foreground scale-105' : 'opacity-40 hover:opacity-100'}`}
+                                        className={`w-8 h-8 rounded-lg ${color.class} transition-all ${data.color_theme === color.class ? 'ring-2 ring-offset-2 ring-foreground scale-105' : 'opacity-40 hover:opacity-100'} ${errors.color_theme ? 'ring-1 ring-destructive' : ''}`}
                                         title={color.name}
                                     />
                                 ))}
@@ -120,10 +128,13 @@ export default function OrganizationSettings({ data, setData, record, users = []
                     </div>
 
                     <div className="space-y-2 pt-2">
-                        <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
-                            <Info size={14} className="text-blue-500" /> Mission Statement & Vision
+                        <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <Info size={14} className={errors.description ? "text-destructive" : "text-blue-500"} /> Mission Statement & Vision
+                            </div>
+                            {errors.description && <span className="text-[10px] text-destructive lowercase italic font-medium">{errors.description}</span>}
                         </Label>
-                        <div className="rounded-lg border border-muted bg-muted/5 overflow-hidden">
+                        <div className={`rounded-lg border overflow-hidden ${errors.description ? 'border-destructive bg-destructive/5' : 'border-muted bg-muted/5'}`}>
                             <RichTextEditor
                                 value={data.description}
                                 onChange={(val: string) => setData('description', val)}
@@ -143,7 +154,7 @@ export default function OrganizationSettings({ data, setData, record, users = []
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="aspect-video w-full overflow-hidden rounded-lg border border-muted relative bg-muted/20 group shadow-inner">
+                        <div className={`aspect-video w-full overflow-hidden rounded-lg border relative bg-muted/20 group shadow-inner ${errors.image ? 'border-destructive' : 'border-muted'}`}>
                             {previewUrl ? (
                                 <img src={previewUrl} className="w-full h-full object-cover" />
                             ) : record.image ? (
@@ -161,6 +172,7 @@ export default function OrganizationSettings({ data, setData, record, users = []
                                 </label>
                             </div>
                         </div>
+                        {errors.image && <p className="text-[10px] font-bold text-destructive uppercase tracking-widest mt-2">{errors.image}</p>}
                     </CardContent>
                 </Card>
 

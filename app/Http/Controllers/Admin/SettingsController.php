@@ -12,7 +12,9 @@ class SettingsController extends Controller
 {
     public function index()
     {
-        $abuseTypes = CaseAbuseType::orderBy('category')->orderBy('name')->get();
+        $abuseTypes = CaseAbuseType::where('category', 'VAWC')
+            ->orderBy('name')
+            ->get();
         $zones = \App\Models\Zone::orderBy('name')->get();
 
         return Inertia::render('Admin/Settings/Index', [
@@ -27,7 +29,7 @@ class SettingsController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|unique:case_types,name',
-            'category' => 'required|string|in:VAWC,BCPC,Both',
+            'category' => 'required|string|in:VAWC',
             'color' => 'nullable|string',
             'description' => 'nullable|string',
         ]);
@@ -43,7 +45,7 @@ class SettingsController extends Controller
 
         $validated = $request->validate([
             'name' => 'sometimes|required|string|unique:case_types,name,' . $id,
-            'category' => 'sometimes|required|string|in:VAWC,BCPC,Both',
+            'category' => 'sometimes|required|string|in:VAWC',
             'color' => 'nullable|string',
             'description' => 'nullable|string',
             'is_active' => 'boolean'

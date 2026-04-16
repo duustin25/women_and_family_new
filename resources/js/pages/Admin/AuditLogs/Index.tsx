@@ -45,6 +45,29 @@ export default function AuditLogs({ logs, filters }: AuditLogProps) {
         return fullyQualifiedName.split('\\').pop() || 'Unknown Record';
     };
 
+    const getRecordIdentifier = (log: any) => {
+        try {
+            // First, try if the actual record is still attached (via relation)
+            if (log.auditable) {
+                const a = log.auditable;
+                const name = a.name || a.title || (a.first_name ? `${a.first_name} ${a.last_name || ''}`.trim() : null);
+                if (name) return name;
+            }
+
+            // If the record relation is null (likely deleted), try to salvage from the snapshot values
+            const data = log.new_values || log.old_values || {};
+            const snapshotName = data.name || data.title || (data.first_name ? `${data.first_name} ${data.last_name || ''}`.trim() : null);
+            
+            if (snapshotName) {
+                return `${snapshotName} (Deleted/Snapshot)`;
+            }
+
+            return `Specific identifier unavailable`;
+        } catch (error) {
+            return `Data parsing error`;
+        }
+    };
+
     return (
         <AppLayout breadcrumbs={[{ title: 'Dashboard', href: '/admin/dashboard' }, { title: 'Audit Logs', href: '#' }]}>
             <Head title="Audit Trails" />
@@ -136,12 +159,17 @@ export default function AuditLogs({ logs, filters }: AuditLogProps) {
                                                     <div className="flex items-center gap-2">
                                                         <FileText className="h-4 w-4 text-muted-foreground" />
                                                         <div className="flex flex-col">
-                                                            <span className="text-xs font-bold uppercase tracking-tight">
-                                                                {getModelName(log.auditable_type)}
+                                                            <span className="text-xs font-bold uppercase tracking-tight truncate max-w-[200px]" title={getRecordIdentifier(log)}>
+                                                                {getRecordIdentifier(log)}
                                                             </span>
-                                                            <span className="text-[10px] text-muted-foreground font-medium">
-                                                                ID: {log.auditable_id}
-                                                            </span>
+                                                            <div className="flex items-center gap-1">
+                                                                <span className="text-[10px] text-muted-foreground font-medium">
+                                                                    {getModelName(log.auditable_type)}
+                                                                </span>
+                                                                <span className="text-[10px] text-muted-foreground/70">
+                                                                    (ID: {log.auditable_id})
+                                                                </span>
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </TableCell>

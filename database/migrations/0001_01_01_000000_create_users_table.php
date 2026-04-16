@@ -15,7 +15,7 @@ return new class extends Migration {
             $table->string('name');
             $table->string('email')->unique();
             $table->string('role')->default('resident');
-            $table->unsignedBigInteger('organization_id')->nullable();
+            $table->foreignId('organization_id')->nullable()->constrained('organizations')->nullOnDelete();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
             $table->text('two_factor_secret')->nullable();

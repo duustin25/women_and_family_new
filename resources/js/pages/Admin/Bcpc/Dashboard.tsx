@@ -119,7 +119,7 @@ export default function BcpcDashboard({ monitoredChildren, topPriority, secondPr
                                                     </div>
                                                 </div>
                                                 <div className="flex items-center gap-4">
-                                                    <Badge variant="destructive" className="bg-red-600 shadow-sm font-black uppercase text-[9px] tracking-widest px-2 py-0.5">{child.wfa_status}</Badge>
+                                                    <Badge variant="destructive" className="bg-red-600 shadow-sm font-black uppercase text-[9px] tracking-widest px-2 py-0.5">{child.latest_assessment?.wfa_status || 'SAM Flagged'}</Badge>
                                                     <Link href={`/admin/bcpc/cases/${child.id}`}>
                                                         <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
                                                             <ChevronRight className="h-4 w-4" />
@@ -156,14 +156,14 @@ export default function BcpcDashboard({ monitoredChildren, topPriority, secondPr
                                                     <div>
                                                         <p className="font-black text-sm uppercase tracking-tight">{child.child_first_name} {child.child_last_name}</p>
                                                         <div className="flex items-center gap-2 mt-0.5">
-                                                            <span className="text-[10px] font-bold uppercase text-muted-foreground tracking-widest">{child.weight_kg} kg</span>
+                                                            <span className="text-[10px] font-bold uppercase text-muted-foreground tracking-widest">{child.latest_assessment?.weight_kg || '0'} kg</span>
                                                             <span className="text-xs text-muted-foreground">&bull;</span>
-                                                            <span className="text-[10px] font-bold uppercase text-muted-foreground tracking-widest">{child.height_cm} cm</span>
+                                                            <span className="text-[10px] font-bold uppercase text-muted-foreground tracking-widest">{child.latest_assessment?.height_cm || '0'} cm</span>
                                                         </div>
                                                     </div>
                                                 </div>
                                                 <div className="flex items-center gap-4">
-                                                    <Badge className="bg-amber-500 hover:bg-amber-600 font-black uppercase text-[9px] tracking-widest px-2 py-0.5">{child.wfa_status}</Badge>
+                                                    <Badge className="bg-amber-500 hover:bg-amber-600 font-black uppercase text-[9px] tracking-widest px-2 py-0.5">{child.latest_assessment?.wfa_status || 'MAM Flagged'}</Badge>
                                                     <Link href={`/admin/bcpc/cases/${child.id}`}>
                                                         <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
                                                             <ChevronRight className="h-4 w-4" />
@@ -193,13 +193,13 @@ export default function BcpcDashboard({ monitoredChildren, topPriority, secondPr
                                             <div key={child.id} className="p-4 flex items-center justify-between hover:bg-muted/50 transition-colors">
                                                 <div className="flex flex-col">
                                                     <p className="font-black text-sm uppercase tracking-tight">{child.child_first_name} {child.child_last_name}</p>
-                                                    <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Measured: {new Date(child.date_of_weighing).toLocaleDateString()}</p>
+                                                    <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Measured: {child.latest_assessment ? new Date(child.latest_assessment.date_of_weighing).toLocaleDateString() : 'Unassessed'}</p>
                                                 </div>
                                                 <div className="flex items-center gap-2">
-                                                    {child.wfa_status === 'Normal' ? (
+                                                    {!child.latest_assessment || child.latest_assessment.wfa_status === 'Normal' ? (
                                                         <Badge variant="outline" className="text-emerald-600 border-emerald-200 font-black uppercase text-[9px] tracking-widest px-2 py-0.5">Normal</Badge>
                                                     ) : (
-                                                        <Badge variant="secondary" className="font-black uppercase text-[9px] tracking-widest px-2 py-0.5">{child.wfa_status}</Badge>
+                                                        <Badge variant="secondary" className="font-black uppercase text-[9px] tracking-widest px-2 py-0.5">{child.latest_assessment.wfa_status}</Badge>
                                                     )}
                                                     <Link href={`/admin/bcpc/cases/${child.id}`}>
                                                         <Button variant="outline" size="sm" className="ml-2 font-bold uppercase text-[9px] tracking-widest border-2">View</Button>

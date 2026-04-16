@@ -24,10 +24,6 @@ return new class extends Migration {
             $table->json('print_settings')->nullable(); // Print layout configuration
             $table->timestamps();
         });
-
-        Schema::table('users', function (Blueprint $table) {
-            $table->foreign('organization_id')->references('id')->on('organizations')->nullOnDelete();
-        });
     }
 
     /**
@@ -35,10 +31,6 @@ return new class extends Migration {
      */
     public function down(): void
     {
-        Schema::table('users', function (Blueprint $table) {
-            $table->dropForeign(['organization_id']);
-        });
-
         Schema::dropIfExists('organizations');
     }
 };

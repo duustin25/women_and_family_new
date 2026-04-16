@@ -98,7 +98,7 @@ export default function Create({ users }: { users: any[] }) {
 
                             <div className="min-h-[600px]">
                                 <TabsContent value="settings" className="m-0 focus-visible:outline-none">
-                                    <OrganizationSettings data={data} setData={setData} record={{}} users={users} />
+                                    <OrganizationSettings data={data} setData={setData} record={{}} users={users} errors={errors} />
                                 </TabsContent>
                                 <TabsContent value="builder" className="m-0 focus-visible:outline-none">
                                     <FormBuilder schema={data.form_schema} onSchemaChange={(newSchema) => setData('form_schema', newSchema)} />

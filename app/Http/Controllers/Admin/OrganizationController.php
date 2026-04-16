@@ -69,9 +69,12 @@ class OrganizationController extends Controller
             'print_settings' => 'nullable|array',
             'form_schema' => 'nullable|array',
         ], [
-            // Custom student-friendly messages for the prof to see
             'name.required' => 'The organization must have a formal name.',
-            'description.required' => 'A brief mission description is mandatory for transparency.',
+            'name.unique' => 'An organization with this name already exists in the registry.',
+            'description.required' => 'A brief mission description (Mission & Vision) is mandatory.',
+            'color_theme.required' => 'Please select a primary branding color for the organization.',
+            'image.image' => 'The cover photo must be a valid image file.',
+            'image.max' => 'The cover photo must not exceed 2MB.',
         ]);
 
         if ($request->hasFile('image')) {
@@ -132,18 +135,14 @@ class OrganizationController extends Controller
             $request->merge(['requirements' => []]);
         }
 
-        $validated = $request->validate([
-            'name' => 'required|string|unique:organizations,name,' . $organization->id,
-            'description' => 'required|string',
-            'president_name' => 'nullable|string',
-            'color_theme' => 'required|string',
-            'image' => 'nullable|image|max:2048',
-            'left_logo' => 'nullable|image|max:2048',
-            'right_logo' => 'nullable|image|max:2048',
-            'requirements' => 'nullable|array',
-            'form_schema' => 'nullable|array',
-            'print_settings' => 'nullable|array',
-        ]);
+        [
+            'name.required' => 'The organization must have a formal name.',
+            'name.unique' => 'An organization with this name already exists in the registry.',
+            'description.required' => 'A brief mission description (Mission & Vision) is mandatory.',
+            'color_theme.required' => 'Please select a primary branding color for the organization.',
+            'image.image' => 'The cover photo must be a valid image file.',
+            'image.max' => 'The cover photo must not exceed 2MB.',
+        ];
 
         if ($request->hasFile('image')) {
             if ($organization->image_path) {

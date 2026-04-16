@@ -19,6 +19,8 @@ class BcpcChild extends Model
     protected $table = 'bcpc_children';
 
     protected $fillable = [
+        'member_id',
+        'zone_id',
         'guardian_name',
         'address',
         'contact_number',
@@ -27,21 +29,11 @@ class BcpcChild extends Model
         'child_middle_name',
         'date_of_birth',
         'sex',
-        'date_of_weighing',
-        'weight_kg',
-        'height_cm',
-        'wfa_status',
-        'hfa_status',
-        'intervention_logs',
         'status',
     ];
 
     protected $casts = [
         'date_of_birth' => 'date',
-        'date_of_weighing' => 'date',
-        'weight_kg' => 'float',
-        'height_cm' => 'float',
-        'intervention_logs' => 'array',
     ];
 
     /**
@@ -50,5 +42,37 @@ class BcpcChild extends Model
     public function getFullNameAttribute()
     {
         return trim("{$this->child_first_name} {$this->child_middle_name} {$this->child_last_name}");
+    }
+
+    /**
+     * Relationship to the Resident record.
+     */
+    public function member()
+    {
+        return $this->belongsTo(Member::class);
+    }
+
+    /**
+     * Relationship to the Zone.
+     */
+    public function zone()
+    {
+        return $this->belongsTo(Zone::class);
+    }
+
+    /**
+     * Relationship to Nutritional Assessments.
+     */
+    public function assessments()
+    {
+        return $this->hasMany(BcpcAssessment::class, 'bcpc_child_id');
+    }
+
+    /**
+     * Helper for latest assessment.
+     */
+    public function latestAssessment()
+    {
+        return $this->hasOne(BcpcAssessment::class, 'bcpc_child_id')->latestOfMany();
     }
 }
