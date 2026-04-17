@@ -45,7 +45,7 @@ const mainNavItems: NavItem[] = [
     },
     // --- CORE SERVICES (Capstone Focus) ---
     {
-        title: 'Violence Against Women and Children Case Protection Registry',
+        title: 'VAWC Case Protection Registry',
         href: '/admin/vawc/cases',
         icon: ShieldAlert,
     },
@@ -60,13 +60,13 @@ const mainNavItems: NavItem[] = [
         icon: CalendarRange,
     },
     {
-        title: 'Intelligent System Analytics & Official Reports',
+        title: 'Data Analytics & Official Reports',
         href: '/admin/analytics',
         icon: ChartLine,
     },
     // --- COMMUNITY & ORGS ---
     {
-        title: 'Partner Orgs',
+        title: 'Organizations',
         href: '/admin/organizations',
         icon: Building2,
     },

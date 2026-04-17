@@ -75,24 +75,46 @@ class AnnouncementController extends Controller
             $memberQuery->where('organization_id', $announcement->organization_id);
         }
 
+        // Prevent timeout during bulk email dispatch
+        set_time_limit(120); // 2 minutes execution limit
+
         $members = $memberQuery->get();
+        $dispatchedCount = 0;
 
+        // TRY AND CATCH CODE, to prevent sending email timeout
         foreach ($members as $member) {
-            // Dispatching email notification
-            Mail::to($member->email)->send(new AnnouncementBroadcast($announcement));
+            try {
+                // Dispatching email notification
+                Mail::to($member->email)->send(new AnnouncementBroadcast($announcement));
 
-            // Audit Trail: Log every communication in the hub
-            \App\Models\MemberCommunication::create([
-                'member_id' => $member->id,
-                'sent_by' => Auth::id(),
-                'subject' => ($announcement->organization_id ? 'Organization Update: ' : 'Brgy. 183 Official Announcement: ') . $announcement->title,
-                'body' => $announcement->excerpt,
-                'type' => 'Bulk',
-                'status' => 'Sent'
-            ]);
+                // Audit Trail: Log every communication in the hub
+                \App\Models\MemberCommunication::create([
+                    'member_id' => $member->id,
+                    'sent_by' => Auth::id(),
+                    'subject' => ($announcement->organization_id ? 'Organization Update: ' : 'Brgy. 183 Official Announcement: ') . $announcement->title,
+                    'body' => $announcement->excerpt,
+                    'type' => 'Bulk',
+                    'status' => 'Sent'
+                ]);
+
+                $dispatchedCount++;
+            } catch (\Exception $e) {
+                // Log the failure to prevent crashing the entire broadcast process
+                \Illuminate\Support\Facades\Log::error("Failed to broadcast announcement to member {$member->id}: " . $e->getMessage());
+
+                // Log as 'Failed' in the audit trail
+                \App\Models\MemberCommunication::create([
+                    'member_id' => $member->id,
+                    'sent_by' => Auth::id(),
+                    'subject' => ($announcement->organization_id ? 'Organization Update: ' : 'Brgy. 183 Official Announcement: ') . $announcement->title,
+                    'body' => $announcement->excerpt,
+                    'type' => 'Bulk',
+                    'status' => 'Failed'
+                ]);
+            }
         }
 
-        return redirect()->route('admin.announcements.index')->with('message', 'Announcement Published & Dispatched to ' . $members->count() . ' members via Secure Messaging Hub.');
+        return redirect()->route('admin.announcements.index')->with('message', 'Announcement Published. Dispatched successfully to ' . $dispatchedCount . ' out of ' . $members->count() . ' members via Secure Messaging Hub.');
     }
 
     public function edit(Announcement $announcement)

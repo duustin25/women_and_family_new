@@ -94,7 +94,7 @@ export default function BcpcDashboard({ monitoredChildren, topPriority, secondPr
                     <div className="lg:col-span-2 flex flex-col gap-6">
 
                         {/* Top Priority */}
-                        <Card className="border-red-200 dark:border-red-900 border-l-4 border-l-red-600 shadow-sm">
+                        <Card className="">
                             <CardHeader className="pb-3 border-b border-border/50 bg-red-50/30 dark:bg-red-950/10">
                                 <CardTitle className="text-xs font-black uppercase tracking-widest flex items-center text-red-600 dark:text-red-400">
                                     <AlertCircle className="h-4 w-4 mr-2" />
@@ -134,7 +134,7 @@ export default function BcpcDashboard({ monitoredChildren, topPriority, secondPr
                         </Card>
 
                         {/* Second Priority */}
-                        <Card className="border-amber-200 dark:border-amber-900 border-l-4 border-l-amber-500 shadow-sm">
+                        <Card className="">
                             <CardHeader className="pb-3 border-b border-border/50 bg-amber-50/30 dark:bg-amber-950/10">
                                 <CardTitle className="text-xs font-black uppercase tracking-widest flex items-center text-amber-600 dark:text-amber-400">
                                     <Scale className="h-4 w-4 mr-2" />
@@ -216,12 +216,12 @@ export default function BcpcDashboard({ monitoredChildren, topPriority, secondPr
                     {/* Right Col: Birthdays & Alerts */}
                     <div className="flex flex-col gap-6">
                         <Card className="border shadow-sm overflow-hidden flex flex-col">
-                            <CardHeader className="bg-indigo-600 text-white pb-4">
+                            <CardHeader className="">
                                 <CardTitle className="text-xs font-black uppercase tracking-widest flex items-center">
                                     <Cake className="h-4 w-4 mr-2" />
                                     Upcoming Birthdays
                                 </CardTitle>
-                                <CardDescription className="text-indigo-100 text-[10px] font-bold uppercase tracking-wider mt-1">Next 30 Days Celebrations</CardDescription>
+                                <CardDescription className="text-[10px] font-bold uppercase tracking-wider mt-1">Next 30 Days Celebrations</CardDescription>
                             </CardHeader>
                             <CardContent className="p-0">
                                 {upcomingBirthdays.length === 0 ? (

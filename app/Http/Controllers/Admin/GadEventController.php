@@ -20,7 +20,7 @@ class GadEventController extends Controller
         if ($search = $request->input('search')) {
             $query->where(function ($q) use ($search) {
                 $q->where('title', 'like', "%{$search}%")
-                  ->orWhere('description', 'like', "%{$search}%");
+                    ->orWhere('description', 'like', "%{$search}%");
             });
         }
 
@@ -43,7 +43,7 @@ class GadEventController extends Controller
     {
         $validated = $request->validate([
             'title'      => 'required|string|max:255',
-            'description'=> 'required|string',
+            'description' => 'required|string',
             'event_date' => 'required|date',
             'event_time' => 'required',
             'location'   => 'required|string|max:255',
@@ -72,7 +72,7 @@ class GadEventController extends Controller
 
         $validated = $request->validate([
             'title'      => 'required|string|max:255',
-            'description'=> 'required|string',
+            'description' => 'required|string',
             'event_date' => 'required|date',
             'event_time' => 'required',
             'location'   => 'required|string|max:255',
@@ -134,6 +134,9 @@ class GadEventController extends Controller
         // BROADCAST ENGINE: Automated Organizational Messaging Hub
         // If approved, notify the organization members
         if ($validated['status'] === 'approved') {
+            // Prevent timeout during bulk email dispatch
+            set_time_limit(120);
+
             $memberQuery = \App\Models\Member::where('status', 'Active')->whereNotNull('email');
 
             // If it's an organization-specific event, target their members
@@ -142,22 +145,39 @@ class GadEventController extends Controller
             }
 
             $members = $memberQuery->get();
+            $dispatchedCount = 0;
 
+            // "TRY AND CATCH CODE" block to prevent timeout during bulk email dispatch
             foreach ($members as $member) {
-                \Illuminate\Support\Facades\Mail::to($member->email)->send(new \App\Mail\EventInvitation($event));
+                try {
+                    \Illuminate\Support\Facades\Mail::to($member->email)->send(new \App\Mail\EventInvitation($event));
 
-                // Audit Trail
-                \App\Models\MemberCommunication::create([
-                    'member_id' => $member->id,
-                    'sent_by' => \Illuminate\Support\Facades\Auth::id(),
-                    'subject' => 'Official Event Invitation: ' . $event->title,
-                    'body' => $event->description,
-                    'type' => 'Bulk',
-                    'status' => 'Sent'
-                ]);
+                    // Audit Trail
+                    \App\Models\MemberCommunication::create([
+                        'member_id' => $member->id,
+                        'sent_by' => \Illuminate\Support\Facades\Auth::id(),
+                        'subject' => 'Official Event Invitation: ' . $event->title,
+                        'body' => $event->description,
+                        'type' => 'Bulk',
+                        'status' => 'Sent'
+                    ]);
+
+                    $dispatchedCount++;
+                } catch (\Exception $e) {
+                    \Illuminate\Support\Facades\Log::error("Failed to broadcast GAD Event to member {$member->id}: " . $e->getMessage());
+
+                    \App\Models\MemberCommunication::create([
+                        'member_id' => $member->id,
+                        'sent_by' => \Illuminate\Support\Facades\Auth::id(),
+                        'subject' => 'Official Event Invitation: ' . $event->title,
+                        'body' => $event->description,
+                        'type' => 'Bulk',
+                        'status' => 'Failed'
+                    ]);
+                }
             }
 
-            $message = 'Event approved and dispatched to ' . $members->count() . ' members via Messaging Hub.';
+            $message = 'Event approved and dispatched to ' . $dispatchedCount . ' out of ' . $members->count() . ' members via Messaging Hub.';
         }
 
         return redirect()->back()->with('success', $message);

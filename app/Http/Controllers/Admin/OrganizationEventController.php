@@ -22,7 +22,7 @@ class OrganizationEventController extends Controller
 
         if ($search = $request->input('search')) {
             $query->where('title', 'like', "%{$search}%")
-                  ->orWhere('description', 'like', "%{$search}%");
+                ->orWhere('description', 'like', "%{$search}%");
         }
 
         if ($status = $request->input('status')) {
@@ -74,7 +74,7 @@ class OrganizationEventController extends Controller
     public function update(Request $request, string $id)
     {
         $event = GadEvent::where('organization_id', Auth::user()->organization_id)
-                         ->findOrFail($id);
+            ->findOrFail($id);
 
         $validated = $request->validate([
             'title'       => 'required|string|max:255',
@@ -110,7 +110,7 @@ class OrganizationEventController extends Controller
     public function destroy(string $id)
     {
         $event = GadEvent::where('organization_id', Auth::user()->organization_id)
-                         ->findOrFail($id);
+            ->findOrFail($id);
 
         if ($event->image_path) {
             Storage::disk('public')->delete($event->image_path);
