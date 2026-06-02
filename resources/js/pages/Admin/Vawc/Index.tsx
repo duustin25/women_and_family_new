@@ -12,7 +12,7 @@ import { Plus, BarChart3, ChevronRight, Search, Filter } from 'lucide-react';
 import { useDebounce } from '@/hooks/use-debounce';
 
 interface Props {
-    cases: any[];
+    cases: any;
     filters: {
         search?: string;
         status?: string;
@@ -99,7 +99,7 @@ export default function Index({ cases, filters }: Props) {
                         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                             <CardTitle className={`text-sm font-black flex items-center gap-2 whitespace-nowrap uppercase tracking-widest ${archived === '1'}`}>
                                 {archived === '1' ? 'Closed & Archived Records' : 'Priority Triage Queue [Republic Act 9262]'}
-                                <Badge variant="secondary" className="ml-2 h-5 text-[10px]">{cases.length} Total</Badge>
+                                <Badge variant="secondary" className="ml-2 h-5 text-[10px]">{cases.total || cases.data?.length || cases.length || 0} Total</Badge>
                             </CardTitle>
 
                             <div className="flex flex-1 flex-col sm:flex-row items-center justify-end gap-2 w-full">
@@ -145,14 +145,14 @@ export default function Index({ cases, filters }: Props) {
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {cases.length === 0 && (
+                                {(!cases.data ? cases : cases.data).length === 0 && (
                                     <TableRow>
                                         <TableCell colSpan={6} className="h-32 text-center text-muted-foreground italic">
                                             No cases found for the selected filters.
                                         </TableCell>
                                     </TableRow>
                                 )}
-                                {cases.map((vawc: any) => {
+                                {(!cases.data ? cases : cases.data).map((vawc: any) => {
                                     const isCritical = vawc.assessment?.risk_level === 'CRITICAL' && vawc.status !== 'Closed';
 
                                     // CENTRALIZED RISK THEMES FOR INDEX (No blinking, just professional colors)
@@ -252,6 +252,23 @@ export default function Index({ cases, filters }: Props) {
                         </Table>
                     </CardContent>
                 </Card>
+
+                {/* Pagination */}
+                {cases.links && (
+                    <div className="flex justify-center items-center gap-1 py-4">
+                        {cases.links.map((link: any, i: number) => (
+                            <Link
+                                key={i}
+                                href={link.url || '#'}
+                                dangerouslySetInnerHTML={{ __html: link.label }}
+                                className={`px-3 py-1 text-xs font-semibold rounded-md border transition-all ${link.active
+                                    ? 'bg-primary text-primary-foreground border-primary'
+                                    : 'bg-background hover:bg-muted text-muted-foreground'
+                                    } ${!link.url && 'opacity-40 cursor-not-allowed pointer-events-none'}`}
+                            />
+                        ))}
+                    </div>
+                )}
             </div>
         </AppLayout>
     );

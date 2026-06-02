@@ -19,6 +19,7 @@ interface Official {
     id: number;
     user_id?: number;
     user?: User;
+    name?: string;
 
     position: string;
     committee?: string;
@@ -31,7 +32,7 @@ export default function Index({ officials, users }: { officials: Official[], use
     const [searchQuery, setSearchQuery] = useState('');
 
     const filteredOfficials = officials.filter(off => {
-        const displayName = off.user ? off.user.name : 'Vacant Position';
+        const displayName = off.user ? off.user.name : (off.name || 'Vacant Position');
         return displayName.toLowerCase().includes(searchQuery.toLowerCase()) ||
             off.position.toLowerCase().includes(searchQuery.toLowerCase());
     });
@@ -116,7 +117,7 @@ export default function Index({ officials, users }: { officials: Official[], use
                                                     </div>
                                                     <div className="flex flex-col overflow-hidden">
                                                         <span className="font-bold text-sm tracking-tight truncate">
-                                                            {official.user ? official.user.name : 'Vacant Position'}
+                                                            {official.user ? official.user.name : (official.name || 'Vacant Position')}
                                                         </span>
                                                         <div className="mt-0.5">
                                                             <Badge variant="outline" className={`h-5 text-[9px] uppercase tracking-wider ${official.level === 'head' ? 'bg-purple-100/50 text-purple-700 border-purple-200' :

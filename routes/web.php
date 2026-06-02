@@ -22,8 +22,6 @@ use App\Http\Controllers\Public\PublicAnnouncementController;
 use App\Http\Controllers\Public\PublicServicesController;
 use App\Http\Controllers\Public\PublicOrganizationController;
 use App\Http\Controllers\Public\MembershipController;
-use App\Http\Controllers\Public\MemberPortalController;
-use App\Http\Controllers\Public\MemberVerificationController;
 use App\Http\Controllers\Public\ChatbotController;
 
 Route::post('/chatbot/query', [ChatbotController::class, 'query'])->middleware('throttle:10,1');

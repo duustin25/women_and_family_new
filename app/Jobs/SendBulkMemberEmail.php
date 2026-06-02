@@ -51,6 +51,8 @@ class SendBulkMemberEmail implements ShouldQueue
 
         $members = $query->get();
 
+        set_time_limit(120); // Prevent PHP timeout in sync queue
+
         foreach ($members as $member) {
             try {
                 Mail::to($member->email)->send(new GeneralMessage($this->subject, $this->body));
@@ -65,6 +67,16 @@ class SendBulkMemberEmail implements ShouldQueue
                 ]);
             } catch (\Throwable $e) {
                 Log::error("BulkEmail failed for member ID {$member->id}: " . $e->getMessage());
+
+                // KI Pattern: Log failure to Audit Trail
+                MemberCommunication::create([
+                    'member_id' => $member->id,
+                    'sent_by'   => $this->sentById,
+                    'subject'   => $this->subject,
+                    'body'      => $this->body,
+                    'type'      => 'Bulk',
+                    'status'    => 'Failed',
+                ]);
             }
         }
 

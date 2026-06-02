@@ -63,15 +63,17 @@ class VawcController extends Controller
 
         // The "Archived vs Active" Strategy Pattern Separation
         if ($request->input('archived') === '1') {
-            $query->where('status', 'Closed'); // Only show the Historical records
-            $cases = $query->orderByDesc('created_at')->get();
+            $query->where('vawc_cases.status', 'Closed'); // Only show the Historical records
+            $cases = $query->orderByDesc('vawc_cases.created_at')->paginate(15)->withQueryString();
         } else {
-            $query->where('status', '!=', 'Closed'); // Only show Active Worklist
+            $query->where('vawc_cases.status', '!=', 'Closed'); // Only show Active Worklist
 
             // PRIORITY TRIAGE QUEUE: Sort by Risk Score first, then date
-            $cases = $query->get()->sortByDesc(function ($case) {
-                return $case->assessment ? $case->assessment->risk_score : 0;
-            })->values();
+            $cases = $query->leftJoin('vawc_assessments', 'vawc_assessments.vawc_case_id', '=', 'vawc_cases.id')
+                ->select('vawc_cases.*')
+                ->orderByDesc('vawc_assessments.risk_score')
+                ->orderByDesc('vawc_cases.created_at')
+                ->paginate(15)->withQueryString();
         }
 
         return Inertia::render('Admin/Vawc/Index', [
@@ -354,14 +356,15 @@ class VawcController extends Controller
         $currentYear = now()->year;
 
         // 1. CRITICAL / HIGH Risk Queue — sorted by risk_score DESC
-        $criticalQueue = VawcCase::with(['caseReport.abuseType', 'involvedParties', 'assessment'])
-            ->whereHas('assessment', function ($q) {
-                $q->whereIn('risk_level', ['CRITICAL', 'HIGH']);
-            })
-            ->where('status', '!=', 'Closed')
+        $criticalQueue = VawcCase::select('vawc_cases.*')
+            ->with(['caseReport.abuseType', 'involvedParties', 'assessment'])
+            ->join('vawc_assessments', 'vawc_assessments.vawc_case_id', '=', 'vawc_cases.id')
+            ->whereIn('vawc_assessments.risk_level', ['CRITICAL', 'HIGH'])
+            ->where('vawc_cases.status', '!=', 'Closed')
+            ->orderByDesc('vawc_assessments.risk_score')
+            ->orderByDesc('vawc_cases.created_at')
+            ->take(20)
             ->get()
-            ->sortByDesc(fn($c) => $c->assessment?->risk_score ?? 0)
-            ->values()
             ->map(fn($c) => [
                 'id'            => $c->id,
                 'case_number'   => $c->caseReport?->case_number ?? 'N/A',
@@ -375,14 +378,15 @@ class VawcController extends Controller
             ]);
 
         // 2. Moderate Risk Queue
-        $moderateQueue = VawcCase::with(['caseReport.abuseType', 'assessment'])
-            ->whereHas('assessment', function ($q) {
-                $q->whereIn('risk_level', ['MODERATE']);
-            })
-            ->where('status', '!=', 'Closed')
+        $moderateQueue = VawcCase::select('vawc_cases.*')
+            ->with(['caseReport.abuseType', 'assessment'])
+            ->join('vawc_assessments', 'vawc_assessments.vawc_case_id', '=', 'vawc_cases.id')
+            ->whereIn('vawc_assessments.risk_level', ['MODERATE'])
+            ->where('vawc_cases.status', '!=', 'Closed')
+            ->orderByDesc('vawc_assessments.risk_score')
+            ->orderByDesc('vawc_cases.created_at')
+            ->take(20)
             ->get()
-            ->sortByDesc(fn($c) => $c->assessment?->risk_score ?? 0)
-            ->values()
             ->map(fn($c) => [
                 'id'            => $c->id,
                 'case_number'   => $c->caseReport?->case_number ?? 'N/A',

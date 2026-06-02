@@ -17,6 +17,7 @@ interface User {
 export default function Create({ users }: { users: User[] }) {
     const form = useForm({
         user_id: 'none' as string | number,
+        name: '',
         position: '',
         committee: '',
         level: 'staff',
@@ -93,6 +94,26 @@ export default function Create({ users }: { users: User[] }) {
                                         <p className="text-red-500 text-xs mt-1 font-bold">{form.errors.user_id}</p>
                                     )}
                                 </div>
+
+                                {/* DYNAMIC NAME INPUT FOR NO ACCOUNT */}
+                                {form.data.user_id === 'none' && (
+                                    <div className="space-y-3 p-4 bg-orange-50/50 dark:bg-orange-900/10 rounded-xl border border-orange-100 dark:border-orange-900/30">
+                                        <Label className="text-[10px] uppercase tracking-widest font-black text-orange-600 dark:text-orange-400">
+                                            Official Full Name
+                                        </Label>
+                                        <Input
+                                            value={form.data.name}
+                                            onChange={e => form.setData('name', e.target.value)}
+                                            placeholder="Enter Official's Full Name (e.g. JUAN DELA CRUZ)"
+                                            className="bg-white dark:bg-black h-12 font-medium"
+                                            required
+                                        />
+                                        <p className="text-[10px] text-neutral-500 font-medium">Since this official does not have a linked account, specify their display name manually.</p>
+                                        {form.errors.name && (
+                                            <p className="text-red-500 text-xs mt-1 font-bold">{form.errors.name}</p>
+                                        )}
+                                    </div>
+                                )}
 
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

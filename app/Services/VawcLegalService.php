@@ -13,40 +13,44 @@ class VawcLegalService
      */
     public function escalateCase(VawcCase $case, array $data): VawcLegalEscalation
     {
-        $case->update(['status' => 'Escalated']);
+        return \Illuminate\Support\Facades\DB::transaction(function () use ($case, $data) {
+            $case->update(['status' => 'Escalated']);
 
-        return VawcLegalEscalation::create([
-            'vawc_case_id' => $case->id,
-            'violation_datetime' => $data['violation_datetime'] ?? now(),
-            'referral_target' => $data['referral_target'],
-            'escorted_by_pb' => filter_var($data['escorted_by_pb'] ?? false, FILTER_VALIDATE_BOOLEAN),
-            'status' => 'Case Prepared',
-            'violation_description' => $data['violation_description'] ?? null,
-        ]);
+            return VawcLegalEscalation::create([
+                'vawc_case_id' => $case->id,
+                'violation_datetime' => $data['violation_datetime'] ?? now(),
+                'referral_target' => $data['referral_target'],
+                'escorted_by_pb' => filter_var($data['escorted_by_pb'] ?? false, FILTER_VALIDATE_BOOLEAN),
+                'status' => 'Case Prepared',
+                'violation_description' => $data['violation_description'] ?? null,
+            ]);
+        });
     }
     public function closeCase(VawcCase $case, array $data): VawcCase
     {
-        $case->update([
-            'status' => 'Closed',
-            'closure_reason' => $data['closure_reason'],
-            'closure_remarks' => $data['closure_remarks'] ?? null,
-            'closed_at' => now(),
-        ]);
+        return \Illuminate\Support\Facades\DB::transaction(function () use ($case, $data) {
+            $case->update([
+                'status' => 'Closed',
+                'closure_reason' => $data['closure_reason'],
+                'closure_remarks' => $data['closure_remarks'] ?? null,
+                'closed_at' => now(),
+            ]);
 
-        // If the VAWC case is closed, update the parent CaseReport status.
-        // Cases safely closed from Phase 5 (Monitoring) usually count as Resolved (Success).
-        // Cases closed from Phase 6 (Court Escalation) count as Closed (Final Judicial Verdict).
-        if ($case->caseReport) {
-            $parentStatus = 'Closed';
-            if (str_contains($data['closure_reason'], 'Elapsed Safely') || str_contains($data['closure_reason'], 'Resolved')) {
-                $parentStatus = 'Resolved';
+            // If the VAWC case is closed, update the parent CaseReport status.
+            // Cases safely closed from Phase 5 (Monitoring) usually count as Resolved (Success).
+            // Cases closed from Phase 6 (Court Escalation) count as Closed (Final Judicial Verdict).
+            if ($case->caseReport) {
+                $parentStatus = 'Closed';
+                if (str_contains($data['closure_reason'], 'Elapsed Safely') || str_contains($data['closure_reason'], 'Resolved')) {
+                    $parentStatus = 'Resolved';
+                }
+
+                $case->caseReport->update([
+                    'lifecycle_status' => $parentStatus
+                ]);
             }
 
-            $case->caseReport->update([
-                'lifecycle_status' => $parentStatus
-            ]);
-        }
-
-        return $case;
+            return $case;
+        });
     }
 }

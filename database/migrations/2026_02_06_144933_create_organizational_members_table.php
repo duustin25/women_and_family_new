@@ -13,8 +13,10 @@ return new class extends Migration
     {
         Schema::create('organizational_members', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->foreignId('user_id')->nullable()->constrained()->onDelete('cascade');
+            $table->string('name')->nullable();
             $table->string('position');
+            $table->string('image_path')->nullable();
             $table->string('committee')->nullable();
             $table->string('level')->default('staff'); // head, staff
             $table->integer('display_order')->default(0);

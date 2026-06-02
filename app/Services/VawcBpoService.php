@@ -30,32 +30,34 @@ class VawcBpoService
      */
     public function issueOrder(VawcProtectionOrder $order, array $data): VawcProtectionOrder
     {
-        $issuedAt = now();
-        $isBreached = false;
+        return \Illuminate\Support\Facades\DB::transaction(function () use ($order, $data) {
+            $issuedAt = now();
+            $isBreached = false;
 
-        // RA 9262: Same-Day Issuance Requirement
-        if ($order->application_datetime) {
-            $appDate = Carbon::parse($order->application_datetime)->toDateString();
-            $issueDate = $issuedAt->toDateString();
-            
-            if ($appDate !== $issueDate) {
-                $isBreached = true;
+            // RA 9262: Same-Day Issuance Requirement
+            if ($order->application_datetime) {
+                $appDate = Carbon::parse($order->application_datetime)->toDateString();
+                $issueDate = $issuedAt->toDateString();
+                
+                if ($appDate !== $issueDate) {
+                    $isBreached = true;
+                }
             }
-        }
 
-        $order->update([
-            'status' => 'Issued',
-            'issued_datetime' => $issuedAt,
-            'is_sla_breached' => $isBreached,
-            // BPO is valid for 15 days if not extended by court (Step 9 monitoring context)
-            'expiration_date' => $issuedAt->copy()->addDays(15), 
-            'issued_by_id' => Auth::id(),
-        ]);
+            $order->update([
+                'status' => 'Issued',
+                'issued_datetime' => $issuedAt,
+                'is_sla_breached' => $isBreached,
+                // BPO is valid for 15 days if not extended by court (Step 9 monitoring context)
+                'expiration_date' => $issuedAt->copy()->addDays(15), 
+                'issued_by_id' => Auth::id(),
+            ]);
 
-        // Update the parent case status
-        $order->vawcCase->update(['status' => 'BPO Processing']);
+            // Update the parent case status
+            $order->vawcCase->update(['status' => 'BPO Processing']);
 
-        return $order;
+            return $order;
+        });
     }
 
     /**
@@ -63,20 +65,22 @@ class VawcBpoService
      */
     public function recordService(VawcProtectionOrder $order, array $data): VawcBpoServiceRecord
     {
-        $record = VawcBpoServiceRecord::create([
-            'protection_order_id' => $order->id,
-            'service_method' => $data['service_method'] ?? 'Personally Received',
-            'served_datetime' => $data['served_datetime'] ?? now(),
-            'served_by_id' => Auth::id(),
-            'receiver_name' => $data['receiver_name'] ?? null,
-        ]);
+        return \Illuminate\Support\Facades\DB::transaction(function () use ($order, $data) {
+            $record = VawcBpoServiceRecord::create([
+                'protection_order_id' => $order->id,
+                'service_method' => $data['service_method'] ?? 'Personally Received',
+                'served_datetime' => $data['served_datetime'] ?? now(),
+                'served_by_id' => Auth::id(),
+                'receiver_name' => $data['receiver_name'] ?? null,
+            ]);
 
-        $order->update(['status' => 'Served']);
-        
-        // Advance parent case to Monitoring Phase
-        $order->vawcCase->update(['status' => 'Monitoring']);
+            $order->update(['status' => 'Served']);
+            
+            // Advance parent case to Monitoring Phase
+            $order->vawcCase->update(['status' => 'Monitoring']);
 
-        return $record;
+            return $record;
+        });
     }
 
     /**

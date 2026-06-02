@@ -191,13 +191,13 @@ export default function PublicLayout({ children, bgColor = "bg-white" }: PublicL
             </header>
 
             {/* 2. MAIN CONTENT AREA */}
-            <main className="min-h-[75vh]">
+            <main className="min-h-[80vh]">
                 {children}
             </main>
 
             {/* 3. REVISED INTERACTABLE FOOTER */}
-            <footer className="bg-[#1a0a25] dark:bg-black text-white border-t-[5px] border-purple-600">
-                <div className="container mx-auto px-6 lg:px-12 pt-20 pb-12">
+            <footer className="bg-[#1a0a25] dark:bg-black text-white border-t-[3px] border-purple-600">
+                <div className="container mx-auto px-6 lg:px-10 pt-12 pb-8">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
 
                         {/* Identity Column */}
@@ -216,15 +216,12 @@ export default function PublicLayout({ children, bgColor = "bg-white" }: PublicL
                                 <a href={offcialFb} target="_blank" className="w-10 h-10 rounded bg-purple-900/30 flex items-center justify-center hover:bg-purple-600 transition-all border border-purple-500/20 group">
                                     <Facebook size={18} className="text-purple-300 group-hover:text-white" />
                                 </a>
-                                <a href={`mailto:support@${cityName.toLowerCase().replace(' ', '')}.gov.ph`} target="_blank" className="w-10 h-10 rounded bg-purple-900/30 flex items-center justify-center hover:bg-purple-600 transition-all border border-purple-500/20 group">
-                                    <Instagram size={18} className="text-purple-300 group-hover:text-white" />
-                                </a>
                             </div>
                         </div>
 
                         {/* Quick Links */}
                         <div>
-                            <h4 className="font-black uppercase tracking-widest mb-8 text-purple-400 border-l-4 border-purple-600 pl-3 italic text-xs">
+                            <h4 className="font-black uppercase tracking-widest mb-8 text-purple-400 italic text-xs">
                                 Information Hub
                             </h4>
                             <ul className="space-y-4 text-xs font-black uppercase tracking-widest text-slate-400">
@@ -245,7 +242,7 @@ export default function PublicLayout({ children, bgColor = "bg-white" }: PublicL
 
                         {/* Interactable Hotlines */}
                         <div>
-                            <h4 className="font-black uppercase tracking-widest mb-8 text-purple-400 border-l-4 border-purple-600 pl-3 italic text-xs">
+                            <h4 className="font-black uppercase tracking-widest mb-8 text-purple-400 italic text-xs">
                                 24/7 Response
                             </h4>
                             <div className="space-y-4">
@@ -266,7 +263,7 @@ export default function PublicLayout({ children, bgColor = "bg-white" }: PublicL
 
                         {/* Security & Compliance */}
                         <div>
-                            <h4 className="font-black uppercase tracking-widest mb-8 text-purple-400 border-l-4 border-purple-600 pl-3 italic text-xs">
+                            <h4 className="font-black uppercase tracking-widest mb-8 text-purple-400 italic text-xs">
                                 Compliance
                             </h4>
                             <ul className="text-xs font-black tracking-widest text-slate-400 space-y-4">

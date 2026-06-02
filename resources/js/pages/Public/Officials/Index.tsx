@@ -14,6 +14,7 @@ interface Official {
     id: number;
     user_id?: number;
     user?: User; // Dynamically resolved Name
+    name?: string;
     position: string;
     committee?: string;
     image_path?: string;
@@ -39,7 +40,7 @@ export default function Index({ head, secretary, staff }: Props) {
         isSecretary?: boolean
     }) => {
         // Resolve dynamic naming structure based on prior refactoring
-        const displayName = member.user ? member.user.name : 'Vacant Position';
+        const displayName = member.user ? member.user.name : (member.name || 'Vacant Position');
         const imgSrc = member.image_path || defaultImage + encodeURIComponent(displayName);
 
         // Styling based on level

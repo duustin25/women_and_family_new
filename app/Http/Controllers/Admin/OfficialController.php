@@ -33,12 +33,13 @@ class OfficialController extends Controller
 
     public function store(Request $request)
     {
-        if ($request->user_id === '0' || $request->user_id === 'none') {
+        if ($request->user_id === '0' || $request->user_id === 'none' || empty($request->user_id)) {
             $request->merge(['user_id' => null]);
         }
 
         $rules = [
-            'user_id' => 'required|exists:users,id|unique:organizational_members,user_id',
+            'user_id' => 'nullable|exists:users,id|unique:organizational_members,user_id',
+            'name' => 'required_without:user_id|nullable|string|max:255',
             'position' => 'required|string|max:255',
             'committee' => 'nullable|string|max:255',
             'level' => 'required|in:head,secretary,staff',
@@ -46,6 +47,11 @@ class OfficialController extends Controller
         ];
 
         $validated = $request->validate($rules);
+
+        // Clear name if linking an account to keep it normalized
+        if (!empty($validated['user_id'])) {
+            $validated['name'] = null;
+        }
 
         if (in_array($request->level, ['head', 'secretary'])) {
             if (OrganizationalMember::where('level', $request->level)->exists()) {
@@ -75,7 +81,7 @@ class OfficialController extends Controller
 
     public function update(Request $request, $id)
     {
-        if ($request->user_id === '0' || $request->user_id === 'none') {
+        if ($request->user_id === '0' || $request->user_id === 'none' || empty($request->user_id)) {
             $request->merge(['user_id' => null]);
         }
 
@@ -83,10 +89,11 @@ class OfficialController extends Controller
 
         $rules = [
             'user_id' => [
-                'required',
+                'nullable',
                 'exists:users,id',
                 Rule::unique('organizational_members', 'user_id')->ignore($id)
             ],
+            'name' => 'required_without:user_id|nullable|string|max:255',
             'position' => 'required|string|max:255',
             'committee' => 'nullable|string|max:255',
             'level' => 'required|in:head,secretary,staff',
@@ -95,6 +102,11 @@ class OfficialController extends Controller
         ];
 
         $validated = $request->validate($rules);
+
+        // Clear name if linking an account to keep it normalized
+        if (!empty($validated['user_id'])) {
+            $validated['name'] = null;
+        }
 
         // ENFORCE RULE: Only 1 Head, Only 1 Secretary (Excluding self)
         if (in_array($request->level, ['head', 'secretary'])) {
