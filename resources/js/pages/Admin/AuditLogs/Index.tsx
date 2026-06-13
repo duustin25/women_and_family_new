@@ -41,7 +41,8 @@ export default function AuditLogs({ logs, filters }: AuditLogProps) {
         return 'info';
     };
 
-    const getModelName = (fullyQualifiedName: string) => {
+    const getModelName = (fullyQualifiedName: string | null | undefined) => {
+        if (!fullyQualifiedName) return 'System';
         return fullyQualifiedName.split('\\').pop() || 'Unknown Record';
     };
 
@@ -56,6 +57,12 @@ export default function AuditLogs({ logs, filters }: AuditLogProps) {
 
             // If the record relation is null (likely deleted), try to salvage from the snapshot values
             const data = log.new_values || log.old_values || {};
+            
+            // Handle Route/unauthorized access logs specially
+            if (data.path) {
+                return `${data.method || 'GET'} /${data.path.replace(/^\//, '')}`;
+            }
+
             const snapshotName = data.name || data.title || (data.first_name ? `${data.first_name} ${data.last_name || ''}`.trim() : null);
             
             if (snapshotName) {

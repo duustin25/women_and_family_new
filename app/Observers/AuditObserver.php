@@ -21,15 +21,27 @@ class AuditObserver
      */
     public function updated(Model $model): void
     {
-        // Only log if something actually changed
-        if ($model->isDirty()) {
+        $dirty = $model->getDirty();
+
+        // Ignore transient session fields that update automatically
+        unset($dirty['remember_token']);
+        unset($dirty['updated_at']);
+
+        // Only log if meaningful columns changed
+        if (!empty($dirty)) {
             $oldValues = [];
             $newValues = [];
 
             // Get the specific fields that were modified
-            foreach ($model->getDirty() as $key => $value) {
-                $oldValues[$key] = $model->getOriginal($key);
-                $newValues[$key] = $value;
+            foreach ($dirty as $key => $value) {
+                // Redact sensitive fields (like passwords)
+                if (in_array(strtolower($key), ['password', 'two_factor_secret', 'two_factor_recovery_codes'])) {
+                    $oldValues[$key] = '[REDACTED]';
+                    $newValues[$key] = '[REDACTED]';
+                } else {
+                    $oldValues[$key] = $model->getOriginal($key);
+                    $newValues[$key] = $value;
+                }
             }
 
             $this->logAction($model, 'Updated', $oldValues, $newValues);
