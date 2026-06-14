@@ -4,7 +4,8 @@ namespace App\Jobs;
 
 use App\Models\Member;
 use App\Models\MemberCommunication;
-use App\Mail\GeneralMessage;
+use App\Models\GadEvent;
+use App\Mail\EventInvitation;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -13,7 +14,7 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
 
-class SendBulkMemberEmail implements ShouldQueue
+class SendBulkGadEventEmail implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
@@ -31,22 +32,20 @@ class SendBulkMemberEmail implements ShouldQueue
      * Create a new job instance.
      */
     public function __construct(
-        public readonly string $subject,
-        public readonly string $body,
-        public readonly int $sentById,
-        public readonly ?int $organizationId = null
+        public readonly GadEvent $event,
+        public readonly int $sentById
     ) {}
 
     /**
-     * Execute the job: Send the email to all eligible members.
+     * Execute the job: Send the GAD event invitation email to all active members.
      */
     public function handle(): void
     {
-        $query = Member::query()->whereNotNull('email');
+        $query = Member::where('status', 'Active')->whereNotNull('email');
 
-        // Scope to a specific organization if provided (President RBAC)
-        if ($this->organizationId) {
-            $query->where('organization_id', $this->organizationId);
+        // Target organization members if organization_id exists, otherwise global broadcast
+        if ($this->event->organization_id) {
+            $query->where('organization_id', $this->event->organization_id);
         }
 
         $members = $query->get();
@@ -55,25 +54,24 @@ class SendBulkMemberEmail implements ShouldQueue
 
         foreach ($members as $member) {
             $status = 'Sent';
-
             try {
-                Mail::to($member->email)->send(new GeneralMessage($this->subject, $this->body));
+                Mail::to($member->email)->send(new EventInvitation($this->event));
             } catch (\Throwable $e) {
                 $status = 'Failed';
-                Log::error("BulkEmail failed for member ID {$member->id}", ['exception' => $e]);
+                Log::error("Failed to broadcast GAD Event to member {$member->id}", ['exception' => $e]);
             }
 
-            // Single point of entry for database recording
+            // Audit Trail
             MemberCommunication::create([
                 'member_id' => $member->id,
                 'sent_by'   => $this->sentById,
-                'subject'   => $this->subject,
-                'body'      => $this->body,
+                'subject'   => 'Official Event Invitation: ' . $this->event->title,
+                'body'      => $this->event->description,
                 'type'      => 'Bulk',
                 'status'    => $status,
             ]);
         }
 
-        Log::info("Bulk email dispatched to {$members->count()} members.");
+        Log::info("Bulk GAD event email dispatched to {$members->count()} members.");
     }
 }

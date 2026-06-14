@@ -4,7 +4,8 @@ namespace App\Jobs;
 
 use App\Models\Member;
 use App\Models\MemberCommunication;
-use App\Mail\GeneralMessage;
+use App\Models\Announcement;
+use App\Mail\AnnouncementBroadcast;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -13,7 +14,7 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
 
-class SendBulkMemberEmail implements ShouldQueue
+class SendBulkAnnouncementEmail implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
@@ -31,22 +32,20 @@ class SendBulkMemberEmail implements ShouldQueue
      * Create a new job instance.
      */
     public function __construct(
-        public readonly string $subject,
-        public readonly string $body,
-        public readonly int $sentById,
-        public readonly ?int $organizationId = null
+        public readonly Announcement $announcement,
+        public readonly int $sentById
     ) {}
 
     /**
-     * Execute the job: Send the email to all eligible members.
+     * Execute the job: Send the announcement email to all active members.
      */
     public function handle(): void
     {
-        $query = Member::query()->whereNotNull('email');
+        $query = Member::where('status', 'Active')->whereNotNull('email');
 
-        // Scope to a specific organization if provided (President RBAC)
-        if ($this->organizationId) {
-            $query->where('organization_id', $this->organizationId);
+        // Target organization members if organization_id exists, otherwise global broadcast
+        if ($this->announcement->organization_id) {
+            $query->where('organization_id', $this->announcement->organization_id);
         }
 
         $members = $query->get();
@@ -55,25 +54,24 @@ class SendBulkMemberEmail implements ShouldQueue
 
         foreach ($members as $member) {
             $status = 'Sent';
-
             try {
-                Mail::to($member->email)->send(new GeneralMessage($this->subject, $this->body));
+                Mail::to($member->email)->send(new AnnouncementBroadcast($this->announcement));
             } catch (\Throwable $e) {
                 $status = 'Failed';
-                Log::error("BulkEmail failed for member ID {$member->id}", ['exception' => $e]);
+                Log::error("Failed to broadcast announcement to member {$member->id}", ['exception' => $e]);
             }
 
-            // Single point of entry for database recording
+            // Audit Trail: Log every communication in the hub
             MemberCommunication::create([
                 'member_id' => $member->id,
                 'sent_by'   => $this->sentById,
-                'subject'   => $this->subject,
-                'body'      => $this->body,
+                'subject'   => ($this->announcement->organization_id ? 'Organization Update: ' : 'Brgy. 183 Official Announcement: ') . $this->announcement->title,
+                'body'      => $this->announcement->excerpt,
                 'type'      => 'Bulk',
                 'status'    => $status,
             ]);
         }
 
-        Log::info("Bulk email dispatched to {$members->count()} members.");
+        Log::info("Bulk announcement email dispatched to {$members->count()} members.");
     }
 }

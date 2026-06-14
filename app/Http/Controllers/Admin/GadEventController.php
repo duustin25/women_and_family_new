@@ -7,6 +7,8 @@ use App\Models\GadEvent;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Auth;
+use App\Jobs\SendBulkGadEventEmail;
 
 class GadEventController extends Controller
 {
@@ -131,53 +133,10 @@ class GadEventController extends Controller
             default                 => 'Event rejected.',
         };
 
-        // BROADCAST ENGINE: Automated Organizational Messaging Hub
-        // If approved, notify the organization members
+        // BROADCAST ENGINE: Dispatch background job to notify members of GAD event
         if ($validated['status'] === 'approved') {
-            // Prevent timeout during bulk email dispatch
-            set_time_limit(120);
-
-            $memberQuery = \App\Models\Member::where('status', 'Active')->whereNotNull('email');
-
-            // If it's an organization-specific event, target their members
-            if ($event->organization_id) {
-                $memberQuery->where('organization_id', $event->organization_id);
-            }
-
-            $members = $memberQuery->get();
-            $dispatchedCount = 0;
-
-            // "TRY AND CATCH CODE" block to prevent timeout during bulk email dispatch
-            foreach ($members as $member) {
-                try {
-                    \Illuminate\Support\Facades\Mail::to($member->email)->send(new \App\Mail\EventInvitation($event));
-
-                    // Audit Trail
-                    \App\Models\MemberCommunication::create([
-                        'member_id' => $member->id,
-                        'sent_by' => \Illuminate\Support\Facades\Auth::id(),
-                        'subject' => 'Official Event Invitation: ' . $event->title,
-                        'body' => $event->description,
-                        'type' => 'Bulk',
-                        'status' => 'Sent'
-                    ]);
-
-                    $dispatchedCount++;
-                } catch (\Exception $e) {
-                    \Illuminate\Support\Facades\Log::error("Failed to broadcast GAD Event to member {$member->id}: " . $e->getMessage());
-
-                    \App\Models\MemberCommunication::create([
-                        'member_id' => $member->id,
-                        'sent_by' => \Illuminate\Support\Facades\Auth::id(),
-                        'subject' => 'Official Event Invitation: ' . $event->title,
-                        'body' => $event->description,
-                        'type' => 'Bulk',
-                        'status' => 'Failed'
-                    ]);
-                }
-            }
-
-            $message = 'Event approved and dispatched to ' . $dispatchedCount . ' out of ' . $members->count() . ' members via Messaging Hub.';
+            SendBulkGadEventEmail::dispatch($event, Auth::id());
+            $message = 'Event approved. Invitation dispatch has been queued in the background.';
         }
 
         return redirect()->back()->with('success', $message);
