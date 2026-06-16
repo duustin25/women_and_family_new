@@ -147,12 +147,12 @@ export default function Index({
                 </div>
 
                 {/* ══════════════════════════════════════════════════════ */}
-                {/* SECTION 1: VAWC OPERATIONAL RADAR                      */}
+                {/* SECTION 1: VAWC CASE TRIAGE & ACTION ANALYSIS          */}
                 {/* ══════════════════════════════════════════════════════ */}
                 <div className="space-y-6">
                     <h2 className="text-base font-black tracking-tight flex items-center gap-2 py-3 mb-2 border-b uppercase text-[#ce1126] dark:text-red-400">
                         <ShieldAlert className="w-4 h-4" />
-                        VAWC Operational Problem Analysis (RA 9262)
+                        VAWC Triage & Action Analysis (RA 9262)
                     </h2>
 
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -198,7 +198,7 @@ export default function Index({
                     </div>
 
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        
+
                         {/* Algorithmic Insights: Threat Patterns */}
                         <Card className="border-red-100 bg-red-50/10">
                             <CardHeader>

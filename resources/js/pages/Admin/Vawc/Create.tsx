@@ -168,8 +168,8 @@ export default function Create({ abuseTypes, zones }: Props) {
                                 <div className="flex items-center gap-2">
                                     <ShieldAlert className="w-5 h-5 text-sky-600" />
                                     <div>
-                                        <CardTitle className="text-lg">Immediate Triage</CardTitle>
-                                        <CardDescription>Step 4: Immediate Phase 1 Response Actions.</CardDescription>
+                                        <CardTitle className="text-lg">Reporting Protocol</CardTitle>
+                                        <CardDescription>Intake Source Selection</CardDescription>
                                     </div>
                                 </div>
                             </CardHeader>
@@ -185,47 +185,6 @@ export default function Create({ abuseTypes, zones }: Props) {
                                         <option value="Third-Party">Third-Party (Reported by neighbor/Kagawad)</option>
                                     </select>
                                     {errors.intake_type && <p className="text-xs text-destructive">{errors.intake_type}</p>}
-                                </div>
-
-                                <div className="grid grid-cols-1 gap-3">
-                                    <label htmlFor="medical" className="flex items-start space-x-3 p-3 rounded-lg border border-destructive/20 bg-destructive/5 hover:bg-destructive/10 transition-all cursor-pointer group">
-                                        <Checkbox
-                                            id="medical"
-                                            checked={data.requires_medical}
-                                            onCheckedChange={(checked) => setData('requires_medical', !!checked)}
-                                            className="mt-0.5 data-[state=checked]:bg-destructive data-[state=checked]:border-destructive"
-                                        />
-                                        <div>
-                                            <p className="text-sm font-bold leading-none text-foreground">Medical Attention Required?</p>
-                                            <p className="text-[11px] text-muted-foreground mt-1">Visible injuries needing clinic/hospital transfer.</p>
-                                        </div>
-                                    </label>
-
-                                    <label htmlFor="housing" className="flex items-start space-x-3 p-3 rounded-lg border border-blue-500/20 bg-blue-500/5 hover:bg-blue-500/10 transition-all cursor-pointer group">
-                                        <Checkbox
-                                            id="housing"
-                                            checked={data.requires_alternative_housing}
-                                            onCheckedChange={(checked) => setData('requires_alternative_housing', !!checked)}
-                                            className="mt-0.5 data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
-                                        />
-                                        <div>
-                                            <p className="text-sm font-bold leading-none text-foreground">Alternative Housing / Shelter Needed?</p>
-                                            <p className="text-[11px] text-muted-foreground mt-1">Unsafe at home; requires temporary placement.</p>
-                                        </div>
-                                    </label>
-
-                                    <label htmlFor="incident_veracity" className="flex items-start space-x-3 p-3 rounded-lg border border-emerald-500/20 bg-emerald-500/5 hover:bg-emerald-500/10 transition-all cursor-pointer group">
-                                        <Checkbox
-                                            id="incident_veracity"
-                                            checked={data.incident_veracity}
-                                            onCheckedChange={(checked) => setData('incident_veracity', !!checked)}
-                                            className="mt-0.5 data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600"
-                                        />
-                                        <div>
-                                            <p className="text-sm font-bold leading-none text-foreground">Incident Verified</p>
-                                            <p className="text-[11px] text-muted-foreground mt-1">Has an official physically verified the incident?</p>
-                                        </div>
-                                    </label>
                                 </div>
                             </CardContent>
                         </Card>
@@ -397,21 +356,6 @@ export default function Create({ abuseTypes, zones }: Props) {
                                     value={data.respondent.physical_description || ''} 
                                     onChange={e => setData('respondent', { ...data.respondent, physical_description: e.target.value })} 
                                 />
-                            </div>
-
-                            <div className="space-y-3 pt-2 border-t mt-4">
-                                <label className="flex items-center space-x-3 cursor-pointer p-2 hover:bg-muted rounded-lg transition-colors">
-                                    <Checkbox checked={data.is_repeat_offense} onCheckedChange={(checked) => setData('is_repeat_offense', !!checked)} className="border-destructive data-[state=checked]:bg-destructive" />
-                                    <span className="text-xs font-bold text-destructive">Repeat Offense / History of Abuse</span>
-                                </label>
-                                <label className="flex items-center space-x-3 cursor-pointer p-2 hover:bg-muted rounded-lg transition-colors">
-                                    <Checkbox checked={data.warrantless_arrest_made} onCheckedChange={(checked) => setData('warrantless_arrest_made', !!checked)} />
-                                    <span className="text-xs font-semibold">Warrantless Arrest Made?</span>
-                                </label>
-                                <label className="flex items-center space-x-3 cursor-pointer p-2 hover:bg-muted rounded-lg transition-colors">
-                                    <Checkbox checked={data.weapons_confiscated} onCheckedChange={(checked) => setData('weapons_confiscated', !!checked)} />
-                                    <span className="text-xs font-semibold">Weapons/Arms Confiscated?</span>
-                                </label>
                             </div>
                         </CardContent>
                     </Card>

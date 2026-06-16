@@ -161,7 +161,7 @@ class VawcController extends Controller
 
         $this->vawcService->createVawcCase($validated);
 
-        return redirect()->route('admin.vawc.index')->with('success', 'VAWC Case recorded successfully.');
+        return redirect()->route('admin.vawc.dashboard')->with('success', 'VAWC Case recorded successfully.');
     }
 
     /**
@@ -175,6 +175,51 @@ class VawcController extends Controller
         return Inertia::render('Admin/Vawc/Show', [
             'case' => $case
         ]);
+    }
+
+    /**
+     * Submit late triage assessment for a pending case.
+     */
+    public function assessCase(Request $request, $id)
+    {
+        $case = VawcCase::findOrFail($id);
+
+        if ($case->assessment()->exists()) {
+            return redirect()->back()->with('error', 'Case has already been triaged.');
+        }
+
+        $request->validate([
+            'requires_medical' => 'boolean',
+            'requires_alternative_housing' => 'boolean',
+            'is_repeat_offense' => 'boolean',
+            'has_weapon_involved' => 'boolean',
+            'weapons_confiscated' => 'boolean',
+            'perpetrator_present' => 'boolean',
+            'incident_veracity' => 'boolean',
+            'warrantless_arrest_made' => 'boolean',
+        ]);
+
+        DB::transaction(function () use ($case, $request) {
+            $case->update([
+                'is_repeat_offense' => $request->boolean('is_repeat_offense'),
+                'has_weapon_involved' => $request->boolean('has_weapon_involved'),
+                'weapons_confiscated' => $request->boolean('weapons_confiscated'),
+                'perpetrator_present' => $request->boolean('perpetrator_present'),
+                'incident_veracity' => $request->boolean('incident_veracity'),
+                'warrantless_arrest_made' => $request->boolean('warrantless_arrest_made'),
+            ]);
+
+            $case->assessment()->create([
+                'requires_medical' => $request->boolean('requires_medical'),
+                'requires_alternative_housing' => $request->boolean('requires_alternative_housing'),
+                'abuse_frequency' => 0,
+                'abuse_severity' => 0,
+                'weapon_access' => 0,
+                'life_threat_level' => 0,
+            ]);
+        });
+
+        return redirect()->back()->with('success', 'Triage assessment recorded successfully.');
     }
 
     /**
@@ -348,7 +393,7 @@ class VawcController extends Controller
 
 
     /**
-     * Display the VAWC Operational Radar — Priority Queue by RAVE Risk Score.
+     * Display the Barangay VAWC Desk Triage & Action Center — Priority Queue by Triage Priority Index.
      * Heavy trend charts have been moved to the Official Analytics page.
      */
     public function dashboard()
@@ -399,6 +444,28 @@ class VawcController extends Controller
                 'is_repeat'     => $c->is_repeat_offense ?? false,
             ]);
 
+        // 2.5. Low Risk Queue
+        $lowQueue = VawcCase::select('vawc_cases.*')
+            ->with(['caseReport.abuseType', 'assessment'])
+            ->join('vawc_assessments', 'vawc_assessments.vawc_case_id', '=', 'vawc_cases.id')
+            ->whereIn('vawc_assessments.risk_level', ['LOW'])
+            ->where('vawc_cases.status', '!=', 'Closed')
+            ->orderByDesc('vawc_assessments.risk_score')
+            ->orderByDesc('vawc_cases.created_at')
+            ->take(20)
+            ->get()
+            ->map(fn($c) => [
+                'id'            => $c->id,
+                'case_number'   => $c->caseReport?->case_number ?? 'N/A',
+                'victim_name'   => $c->caseReport?->victim_name ?? 'Unknown',
+                'status'        => $c->status,
+                'risk_level'    => $c->assessment?->risk_level ?? 'UNKNOWN',
+                'risk_score'    => $c->assessment?->risk_score ?? 0,
+                'abuse_type'    => $c->caseReport?->abuseType?->name ?? 'Unclassified',
+                'intake_date'   => $c->created_at->format('M d, Y'),
+                'is_repeat'     => $c->is_repeat_offense ?? false,
+            ]);
+
         // 3. Active cases with no assessment yet (needs triage)
         $unassessedQueue = VawcCase::with(['caseReport.abuseType'])
             ->doesntHave('assessment')
@@ -422,11 +489,12 @@ class VawcController extends Controller
         $kpis = $this->analyticsService->getVawcSpecificStats($currentYear);
 
         return Inertia::render('Admin/Vawc/Dashboard', [
-            'criticalQueue'  => $criticalQueue,
-            'moderateQueue'  => $moderateQueue,
+            'criticalQueue'   => $criticalQueue,
+            'moderateQueue'   => $moderateQueue,
+            'lowQueue'        => $lowQueue,
             'unassessedQueue' => $unassessedQueue,
-            'kpis'           => $kpis,
-            'currentYear'    => $currentYear,
+            'kpis'            => $kpis,
+            'currentYear'     => $currentYear,
         ]);
     }
 }

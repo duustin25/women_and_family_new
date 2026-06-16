@@ -65,7 +65,7 @@ export default function Index({ cases, filters }: Props) {
                         <Button asChild variant="outline" size="sm" className="flex items-center gap-2">
                             <Link href={route('admin.vawc.dashboard')}>
                                 <BarChart3 className="w-4 h-4" />
-                                Analytics Dashboard
+                                Triage & Action Center
                             </Link>
                         </Button>
                         <Button asChild size="sm" className="flex items-center gap-2">

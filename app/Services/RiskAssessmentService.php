@@ -31,9 +31,14 @@ class RiskAssessmentService
         $threat = $assessment->life_threat_level;
 
         /**
-         * ALGORITHM V2: Direct Additive Model
-         * The user suggested a strict additive scoring guide where all 4 factors
-         * are summed. Max score per factor is 3, total max score is 12.
+         * ALGORITHM V2: Direct Additive Model / Triage Priority Index
+         * This score functions as a Structured Triage Priority Index (1-12 scale),
+         * aggregating 4 severity indicators defined by DILG/PCW Guidelines:
+         * 1. Frequency (abuse_frequency)
+         * 2. Severity (abuse_severity)
+         * 3. Weapons Access (weapon_access)
+         * 4. Lethality Level (life_threat_level)
+         * Max score per factor is 3, total max score is 12.
          */
         $rawScore = $freq + $sev + $weapon + $threat;
 

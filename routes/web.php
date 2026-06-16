@@ -140,6 +140,7 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.', 'middleware' => ['auth', 'v
     Route::get('vawc/cases', [\App\Http\Controllers\Admin\VawcController::class, 'index'])->name('vawc.index');
     Route::get('vawc/dashboard', [\App\Http\Controllers\Admin\VawcController::class, 'dashboard'])->name('vawc.dashboard');
     Route::get('vawc/cases/{id}', [\App\Http\Controllers\Admin\VawcController::class, 'show'])->name('vawc.show');
+    Route::post('vawc/cases/{id}/assess', [\App\Http\Controllers\Admin\VawcController::class, 'assessCase'])->name('vawc.assess');
 
     // BPO Lifecycle Routes
     Route::post('vawc/cases/{id}/apply-bpo', [\App\Http\Controllers\Admin\VawcController::class, 'applyBpo'])->name('vawc.apply-bpo');

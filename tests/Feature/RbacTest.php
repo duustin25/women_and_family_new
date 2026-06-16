@@ -23,7 +23,7 @@ class RbacTest extends TestCase
     {
         $admin = User::factory()->create(['role' => 'admin']);
 
-        $response = $this->actingAs($admin)->get('/admin/cases');
+        $response = $this->actingAs($admin)->get('/admin/vawc/cases');
         $response->assertStatus(200);
 
         $response = $this->actingAs($admin)->get('/admin/system-users');
@@ -44,15 +44,15 @@ class RbacTest extends TestCase
             'organization_id' => $org->id
         ]);
 
-        $response = $this->actingAs($president)->get('/admin/cases');
-        $response->assertStatus(200);
+        $response = $this->actingAs($president)->get('/admin/vawc/cases');
+        $response->assertStatus(403);
     }
 
     public function test_head_can_access_cases_but_not_user_management()
     {
         $head = User::factory()->create(['role' => 'head']);
 
-        $response = $this->actingAs($head)->get('/admin/cases');
+        $response = $this->actingAs($head)->get('/admin/vawc/cases');
         $response->assertStatus(200);
 
         // System Users is Admin Only

@@ -6,7 +6,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
     ShieldAlert, AlertTriangle, Siren, Eye, TrendingUp,
-    Clock, Users, RotateCcw, HelpCircle, CheckCircle2, ChartLine
+    Clock, Users, RotateCcw, HelpCircle, CheckCircle2, ChartLine, Info,
+    Plus
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { router } from '@inertiajs/react';
@@ -33,6 +34,7 @@ interface Kpis {
 interface Props {
     criticalQueue: CaseQueueItem[];
     moderateQueue: CaseQueueItem[];
+    lowQueue: CaseQueueItem[];
     unassessedQueue: CaseQueueItem[];
     kpis: Kpis;
     currentYear: number;
@@ -40,11 +42,11 @@ interface Props {
 
 const RISK_STYLES: Record<string, { badge: string; bar: string; label: string }> = {
     CRITICAL: { badge: 'bg-red-600 text-white', bar: 'bg-red-600', label: 'CRITICAL' },
-    HIGH:     { badge: 'bg-orange-500 text-white', bar: 'bg-orange-500', label: 'HIGH' },
+    HIGH: { badge: 'bg-orange-500 text-white', bar: 'bg-orange-500', label: 'HIGH' },
     MODERATE: { badge: 'bg-yellow-500 text-black', bar: 'bg-yellow-500', label: 'MODERATE' },
-    LOW:      { badge: 'bg-blue-500 text-white', bar: 'bg-blue-500', label: 'LOW' },
-    PENDING:  { badge: 'bg-slate-400 text-white', bar: 'bg-slate-400', label: 'PENDING TRIAGE' },
-    UNKNOWN:  { badge: 'bg-slate-300 text-slate-700', bar: 'bg-slate-300', label: 'UNKNOWN' },
+    LOW: { badge: 'bg-blue-500 text-white', bar: 'bg-blue-500', label: 'LOW' },
+    PENDING: { badge: 'bg-slate-400 text-white', bar: 'bg-slate-400', label: 'PENDING TRIAGE' },
+    UNKNOWN: { badge: 'bg-slate-300 text-slate-700', bar: 'bg-slate-300', label: 'UNKNOWN' },
 };
 
 function CaseQueueRow({ item }: { item: CaseQueueItem }) {
@@ -104,14 +106,14 @@ function CaseQueueRow({ item }: { item: CaseQueueItem }) {
     );
 }
 
-export default function VawcDashboard({ criticalQueue, moderateQueue, unassessedQueue, kpis, currentYear }: Props) {
+export default function VawcDashboard({ criticalQueue, moderateQueue, lowQueue, unassessedQueue, kpis, currentYear }: Props) {
     return (
         <AppLayout breadcrumbs={[
             { title: 'Dashboard', href: '/dashboard' },
             { title: 'Violence Against Women & Children', href: '/admin/vawc/cases' },
-            { title: 'Operational Radar', href: '#' }
+            { title: 'Triage & Action Center', href: '#' }
         ]}>
-            <Head title="VAWC Operational Radar" />
+            <Head title="Barangay VAWC Desk Triage & Action Center" />
 
             <div className="flex h-full flex-1 flex-col gap-6 p-6">
 
@@ -120,21 +122,27 @@ export default function VawcDashboard({ criticalQueue, moderateQueue, unassessed
                     <div>
                         <h1 className="text-2xl font-black uppercase tracking-tight text-neutral-900 dark:text-white flex items-center gap-2">
                             <Siren className="w-6 h-6 text-[#ce1126]" />
-                            VAWC Operational Radar
+                            VAWC Desk Triage & Action Center
                         </h1>
                         <p className="text-muted-foreground text-[10px] font-black uppercase tracking-widest mt-1">
-                            [RA 9262] Vulnerability & Risk Intelligent Assessment (VAWC-RAVE) — Case Triage Command
+                            [RA 9262] Case Triage & Incident Action Hub — Structured Triage Priority Index (1-12)
                         </p>
                     </div>
                     <div className="flex gap-2">
-                        <Button asChild variant="outline" size="sm" className="font-bold uppercase text-[10px] tracking-widest border-2">
-                            <Link href={route('admin.vawc.index')}>View Full Registry</Link>
-                        </Button>
                         <Button asChild size="sm" className="font-bold uppercase text-[10px] tracking-widest bg-[#ce1126] hover:bg-red-700">
                             <a href={`/admin/analytics?year=${currentYear}`}>
                                 <ChartLine className="w-3 h-3 mr-1" />
                                 Strategic Analytics
                             </a>
+                        </Button>
+                        <Button asChild variant="outline" size="sm" className="font-bold uppercase text-[10px] tracking-widest border-2">
+                            <Link href={route('admin.vawc.index')}>View Full Registry</Link>
+                        </Button>
+                        <Button asChild size="sm" className="flex items-center gap-2">
+                            <Link href={route('admin.vawc.create')}>
+                                <Plus className="w-4 h-4" />
+                                New Intake
+                            </Link>
                         </Button>
                     </div>
                 </div>
@@ -144,7 +152,7 @@ export default function VawcDashboard({ criticalQueue, moderateQueue, unassessed
                     <Card className="border shadow-sm">
                         <CardHeader className="pb-2">
                             <CardTitle className="text-[10px] font-black text-muted-foreground uppercase tracking-widest flex items-center gap-1">
-                                <ShieldAlert className="w-3 h-3" /> Aggregate Cases
+                                <ShieldAlert className="w-3 h-3" /> Total Cases
                             </CardTitle>
                         </CardHeader>
                         <CardContent>
@@ -191,17 +199,17 @@ export default function VawcDashboard({ criticalQueue, moderateQueue, unassessed
                 </div>
 
                 {/* ── PRIORITY QUEUES ── */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
 
                     {/* CRITICAL / HIGH Queue */}
-                    <Card className="border-l-4 border-l-red-600 border-red-200 dark:border-red-900 shadow-sm lg:col-span-1">
+                    <Card className="border-l-4 border-l-red-600 border-red-200 dark:border-red-900 shadow-sm col-span-1">
                         <CardHeader className="pb-3 border-b bg-red-50/40 dark:bg-red-950/10">
                             <CardTitle className="text-xs font-black uppercase tracking-widest flex items-center text-red-600">
                                 <AlertTriangle className="h-4 w-4 mr-2" />
                                 Critical / High Risk Queue
                             </CardTitle>
                             <CardDescription className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mt-1">
-                                {criticalQueue.length} case(s) · VAWC-RAVE Score ≥ 7
+                                {criticalQueue.length} case(s) · Triage Index ≥ 8
                             </CardDescription>
                         </CardHeader>
                         <CardContent className="p-0">
@@ -217,14 +225,14 @@ export default function VawcDashboard({ criticalQueue, moderateQueue, unassessed
                     </Card>
 
                     {/* MODERATE Queue */}
-                    <Card className="border-l-4 border-l-yellow-500 border-yellow-200 dark:border-yellow-900 shadow-sm lg:col-span-1">
+                    <Card className="border-l-4 border-l-yellow-500 border-yellow-200 dark:border-yellow-900 shadow-sm col-span-1">
                         <CardHeader className="pb-3 border-b bg-yellow-50/40 dark:bg-yellow-950/10">
                             <CardTitle className="text-xs font-black uppercase tracking-widest flex items-center text-yellow-600">
                                 <TrendingUp className="h-4 w-4 mr-2" />
                                 Moderate Risk Queue
                             </CardTitle>
                             <CardDescription className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mt-1">
-                                {moderateQueue.length} case(s) · VAWC-RAVE Score 4–6
+                                {moderateQueue.length} case(s) · Triage Index 6–7
                             </CardDescription>
                         </CardHeader>
                         <CardContent className="p-0">
@@ -239,15 +247,38 @@ export default function VawcDashboard({ criticalQueue, moderateQueue, unassessed
                         </CardContent>
                     </Card>
 
+                    {/* LOW RISK Queue */}
+                    <Card className="border-l-4 border-l-blue-600 border-blue-200 dark:border-blue-900 shadow-sm col-span-1">
+                        <CardHeader className="pb-3 border-b bg-blue-50/40 dark:bg-blue-950/10">
+                            <CardTitle className="text-xs font-black uppercase tracking-widest flex items-center text-blue-600">
+                                <Clock className="h-4 w-4 mr-2" />
+                                Low Risk / Routine Monitoring
+                            </CardTitle>
+                            <CardDescription className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mt-1">
+                                {lowQueue.length} case(s) · Triage Index 4–5
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent className="p-0">
+                            {lowQueue.length === 0 ? (
+                                <div className="p-6 flex flex-col items-center justify-center text-center text-slate-400 gap-2">
+                                    <CheckCircle2 className="w-8 h-8 text-emerald-400" />
+                                    <p className="text-[10px] font-black uppercase tracking-widest">No low-risk cases</p>
+                                </div>
+                            ) : (
+                                <div>{lowQueue.map(item => <CaseQueueRow key={item.id} item={item} />)}</div>
+                            )}
+                        </CardContent>
+                    </Card>
+
                     {/* UNASSESSED / PENDING TRIAGE Queue */}
-                    <Card className="border-l-4 border-l-slate-400 shadow-sm lg:col-span-1">
+                    <Card className="border-l-4 border-l-slate-400 shadow-sm col-span-1">
                         <CardHeader className="pb-3 border-b bg-slate-50/40 dark:bg-slate-900/20">
                             <CardTitle className="text-xs font-black uppercase tracking-widest flex items-center text-slate-600">
                                 <HelpCircle className="h-4 w-4 mr-2" />
                                 Pending Triage Queue
                             </CardTitle>
                             <CardDescription className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mt-1">
-                                {unassessedQueue.length} case(s) · Awaiting RAVE Assessment
+                                {unassessedQueue.length} case(s) · Awaiting Assessment
                             </CardDescription>
                         </CardHeader>
                         <CardContent className="p-0">

@@ -9,7 +9,8 @@ import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { CheckCircle2, ChevronRight, Gavel, Printer, Search, ShieldCheck, MapPin, ClipboardList, Info, ArchiveX, Lock, AlertTriangle, Activity, HeartPulse } from 'lucide-react';
+import { CheckCircle2, ChevronRight, Gavel, Printer, Search, ShieldCheck, MapPin, ClipboardList, Info, ArchiveX, Lock, AlertTriangle, Activity, HeartPulse, HelpCircle } from 'lucide-react';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
 interface Props {
     case: any;
@@ -48,6 +49,17 @@ export default function Show({ case: vawcCase }: Props) {
         closure_remarks: '',
     });
 
+    const assessForm = useForm<any>({
+        requires_medical: false,
+        requires_alternative_housing: false,
+        is_repeat_offense: false,
+        has_weapon_involved: false,
+        weapons_confiscated: false,
+        perpetrator_present: false,
+        warrantless_arrest_made: false,
+        incident_veracity: false,
+    });
+
     // Modal State
     const [showCloseModal, setShowCloseModal] = React.useState(false);
 
@@ -58,9 +70,11 @@ export default function Show({ case: vawcCase }: Props) {
     const handleLogCompliance = (e: React.FormEvent) => { e.preventDefault(); complianceForm.post(route('admin.vawc.log-compliance', vawcCase.id), { onSuccess: () => complianceForm.reset() }); };
     const handleEscalate = (e: React.FormEvent) => { e.preventDefault(); escalationForm.post(route('admin.vawc.escalate', vawcCase.id)); };
     const handleCloseCase = (e: React.FormEvent) => { e.preventDefault(); closeForm.post(route('admin.vawc.close', vawcCase.id), { onSuccess: () => setShowCloseModal(false) }); };
+    const handleAssessCase = (e: React.FormEvent) => { e.preventDefault(); assessForm.post(route('admin.vawc.assess', vawcCase.id)); };
 
     // Workflow Logic
     const currentStep = () => {
+        if (!vawcCase.assessment) return 1; // Perform Triage
         if (vawcCase.status === 'Closed') return 7; // Case Archival / Closed
         if (vawcCase.status === 'Escalated') return 6; // Legal/External Agency Referral
         if (vawcCase.protection_orders.length === 0) return 2; // BPO Application
@@ -72,12 +86,12 @@ export default function Show({ case: vawcCase }: Props) {
     const stepNum = currentStep();
 
     return (
-        <AppLayout breadcrumbs={[{ title: 'Case Registry', href: route('admin.vawc.index') }, { title: vawcCase.case_report.case_number, href: '#' }]}>
+        <AppLayout breadcrumbs={[{ title: 'Triage & Action Center', href: route('admin.vawc.dashboard') }, { title: vawcCase.case_report.case_number, href: '#' }]}>
             <Head title={`Case Workflow: ${vawcCase.case_report.case_number}`} />
 
             <div className="p-6 space-y-8 max-w-5xl mx-auto">
                 {vawcCase.assessment?.risk_score > 0 && vawcCase.status !== 'Closed' && (
-                    <div className={`p-6 rounded-xl shadow-lg ring-4 flex flex-col md:flex-row items-center justify-between gap-6 transition-all animate-in slide-in-from-top ${vawcCase.assessment.risk_level === 'CRITICAL' ? 'bg-destructive text-destructive-foreground ring-destructive/50' :
+                    <div className={`p-6 rounded-xl shadow-lg ring-4 flex flex-col md:flex-row items-center justify-between gap-6 transition-all animate-in slide-in-from-top ${vawcCase.assessment.risk_level === 'CRITICAL' ? 'bg-destructive text-white ring-destructive/50' :
                         vawcCase.assessment.risk_level === 'HIGH' ? 'bg-orange-600 dark:bg-orange-700 text-white ring-orange-600/50' :
                             vawcCase.assessment.risk_level === 'MODERATE' ? 'bg-yellow-500 dark:bg-yellow-600 text-black dark:text-white ring-yellow-500/50' :
                                 'bg-blue-600 dark:bg-blue-700 text-white ring-blue-600/50'
@@ -107,15 +121,90 @@ export default function Show({ case: vawcCase }: Props) {
                 )}
 
                 {/* 🩺 PHASE TRACKER */}
-                <div className="grid grid-cols-7 gap-2 px-1 mt-4">
-                    {[1, 2, 3, 4, 5, 6, 7].map((s) => (
-                        <div key={s} className="flex flex-col gap-2">
-                            <div className={`h-1.5 rounded-full ${s < stepNum ? 'bg-primary' : (s === stepNum ? (s === 7 ? 'bg-slate-500' : 'bg-primary animate-pulse') : 'bg-muted')}`} />
-                            <span className={`text-[9px] uppercase font-bold tracking-tight text-center ${s === stepNum ? (s === 7 ? 'text-slate-600 dark:text-slate-400' : 'text-primary') : 'text-muted-foreground'}`}>
-                                {s === 1 ? 'Intake' : s === 2 ? 'Apply' : s === 3 ? 'Issue' : s === 4 ? 'Serve' : s === 5 ? 'Monitor' : s === 6 ? 'Referral' : 'Archive'}
-                            </span>
-                        </div>
-                    ))}
+                <div className="space-y-3">
+                    <div className="flex justify-between items-center px-1">
+                        <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground">Case Progress Flow</h3>
+
+                        <Dialog>
+                            <DialogTrigger asChild>
+                                <Button variant="ghost" size="sm" className="h-7 text-[9px] uppercase tracking-wider font-bold text-primary gap-1">
+                                    <HelpCircle className="w-3.5 h-3.5" /> View Legal Bases & Protocols
+                                </Button>
+                            </DialogTrigger>
+                            <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+                                <DialogHeader>
+                                    <DialogTitle className="text-sm font-black uppercase tracking-widest text-[#ce1126]">
+                                        Barangay VAWC Desk Triage & Legal Framework
+                                    </DialogTitle>
+                                    <DialogDescription className="text-xs font-bold uppercase tracking-wider">
+                                        Official RA 9262 and DILG Case Handling Guidelines
+                                    </DialogDescription>
+                                </DialogHeader>
+                                <div className="mt-4 space-y-4 text-xs leading-relaxed">
+                                    <div className="p-3 bg-muted rounded-lg space-y-1">
+                                        <h4 className="font-bold text-slate-900 dark:text-white uppercase tracking-tight">Step 1: Intake</h4>
+                                        <p className="text-slate-600 dark:text-slate-400">
+                                            <strong>Protocol:</strong> Reception of the victim-survivor, recording details in the official Barangay VAWC Desk Logbook in a private, secure area to maintain confidentiality.
+                                        </p>
+                                        <p className="text-[10px] italic font-bold text-primary">DILG Barangay VAWC Desk Handbook - Protocol 1</p>
+                                    </div>
+                                    <div className="p-3 bg-muted rounded-lg space-y-1">
+                                        <h4 className="font-bold text-slate-900 dark:text-white uppercase tracking-tight">Step 2: BPO Application</h4>
+                                        <p className="text-slate-600 dark:text-slate-400">
+                                            <strong>Protocol:</strong> Assessing the victim's immediate safety and assisting them in filing an application for a Barangay Protection Order (BPO).
+                                        </p>
+                                        <p className="text-[10px] italic font-bold text-primary">RA 9262 (Anti-VAWC Act of 2004) Section 14 & Section 8(a)</p>
+                                    </div>
+                                    <div className="p-3 bg-muted rounded-lg space-y-1">
+                                        <h4 className="font-bold text-slate-900 dark:text-white uppercase tracking-tight">Step 3: BPO Issuance</h4>
+                                        <p className="text-slate-600 dark:text-slate-400">
+                                            <strong>Protocol:</strong> The Punong Barangay (or Kagawad in their absence) reviews the application and must issue the BPO within 24 hours of filing.
+                                        </p>
+                                        <p className="text-[10px] italic font-bold text-primary">RA 9262 Section 15 & Section 16 - Issuance within 24 hours (SLA)</p>
+                                    </div>
+                                    <div className="p-3 bg-muted rounded-lg space-y-1">
+                                        <h4 className="font-bold text-slate-900 dark:text-white uppercase tracking-tight">Step 4: Serve BPO</h4>
+                                        <p className="text-slate-600 dark:text-slate-400">
+                                            <strong>Protocol:</strong> Immediate service of the issued BPO to the respondent. Served by the Barangay Tanod or any peace officer. A copy is transmitted to the local PNP WCPD within 24 hours.
+                                        </p>
+                                        <p className="text-[10px] italic font-bold text-primary">RA 9262 Section 16 & DILG Handbook Protocol 3</p>
+                                    </div>
+                                    <div className="p-3 bg-muted rounded-lg space-y-1">
+                                        <h4 className="font-bold text-slate-900 dark:text-white uppercase tracking-tight">Step 5: Monitor Compliance</h4>
+                                        <p className="text-slate-600 dark:text-slate-400">
+                                            <strong>Protocol:</strong> Active monitoring of compliance with BPO provisions. Checking in periodically on the victim-survivor's safety and facilitating counseling or DSWD referrals.
+                                        </p>
+                                        <p className="text-[10px] italic font-bold text-primary">DILG Handbook Protocol 4 - Monitoring & Follow-up</p>
+                                    </div>
+                                    <div className="p-3 bg-muted rounded-lg space-y-1">
+                                        <h4 className="font-bold text-slate-900 dark:text-white uppercase tracking-tight">Step 6: Referral / Escalation</h4>
+                                        <p className="text-slate-600 dark:text-slate-400">
+                                            <strong>Protocol:</strong> If a BPO violation is recorded, the Barangay assists the victim-survivor in filing a complaint for BPO violation in court, referring to the Prosecutor or PNP WCPD.
+                                        </p>
+                                        <p className="text-[10px] italic font-bold text-primary">RA 9262 Section 21 & Section 12 - Criminal Violation of BPO</p>
+                                    </div>
+                                    <div className="p-3 bg-muted rounded-lg space-y-1">
+                                        <h4 className="font-bold text-slate-900 dark:text-white uppercase tracking-tight">Step 7: Case Archival</h4>
+                                        <p className="text-slate-600 dark:text-slate-400">
+                                            <strong>Protocol:</strong> Closing and archiving case files upon final resolution or legal handover. Retention is strictly locked and archived to preserve the audit trail.
+                                        </p>
+                                        <p className="text-[10px] italic font-bold text-primary">DILG/DSWD Records Management & Privacy Act Compliance</p>
+                                    </div>
+                                </div>
+                            </DialogContent>
+                        </Dialog>
+                    </div>
+
+                    <div className="grid grid-cols-7 gap-2 px-1">
+                        {[1, 2, 3, 4, 5, 6, 7].map((s) => (
+                            <div key={s} className="flex flex-col gap-2">
+                                <div className={`h-1.5 rounded-full ${s < stepNum ? 'bg-primary' : (s === stepNum ? (s === 7 ? 'bg-slate-500' : 'bg-primary animate-pulse') : 'bg-muted')}`} />
+                                <span className={`text-[9px] uppercase font-bold tracking-tight text-center ${s === stepNum ? (s === 7 ? 'text-slate-600 dark:text-slate-400' : 'text-primary') : 'text-muted-foreground'}`}>
+                                    {s === 1 ? 'Intake' : s === 2 ? 'Apply' : s === 3 ? 'Issue' : s === 4 ? 'Serve' : s === 5 ? 'Monitor' : s === 6 ? 'Referral' : 'Archive'}
+                                </span>
+                            </div>
+                        ))}
+                    </div>
                 </div>
 
                 {/* 🔍 VRA RISK SCORECARD (Complexity Feature) */}
@@ -127,7 +216,7 @@ export default function Show({ case: vawcCase }: Props) {
                                     'border-blue-500 bg-blue-50 dark:bg-blue-950/20'
                             }`}>
                             <CardContent className="pt-6 text-center">
-                                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1">Vulnerability Score</p>
+                                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1">Triage Priority Index</p>
                                 <div className={`text-5xl font-black italic tracking-tighter ${vawcCase.assessment.risk_level === 'CRITICAL' ? 'text-destructive' :
                                     vawcCase.assessment.risk_level === 'HIGH' ? 'text-orange-600 dark:text-orange-400' :
                                         vawcCase.assessment.risk_level === 'MODERATE' ? 'text-yellow-600 dark:text-yellow-400' :
@@ -198,6 +287,7 @@ export default function Show({ case: vawcCase }: Props) {
                                 <Badge className={`mb-2 ${stepNum === 7 ? 'bg-slate-600' : 'bg-primary/90'}`}>STEP {stepNum}: CURRENT PHASE</Badge>
                                 <div className="flex justify-between items-center w-full">
                                     <CardTitle className="text-2xl font-bold flex items-center gap-2">
+                                        {stepNum === 1 && "Perform Triage Assessment"}
                                         {stepNum === 2 && "File Application for Protection Order"}
                                         {stepNum === 3 && "Barangay Head: Issue the Protection Order"}
                                         {stepNum === 4 && "Print & Serve the Official Protection Order"}
@@ -212,6 +302,7 @@ export default function Show({ case: vawcCase }: Props) {
                                     )}
                                 </div>
                                 <CardDescription className="text-base mt-2">
+                                    {stepNum === 1 && "This case is pending initial triage. Please assess the risk level and immediate needs of the victim below to activate the protection workflow."}
                                     {stepNum === 2 && "The resident has reported the case. Click below to officially open the 15-day Protection Order application."}
                                     {stepNum === 3 && "The application is filed. Now, the Punong Barangay must review and 'Confirm Issuance' to make it a legal document."}
                                     {stepNum === 4 && "The Protection Order is Issued! DO THIS NEXT: (1) Print the document below, (2) Get it signed, (3) Deliver it (Serve) to the respondent, then (4) Record the service status in the form below."}
@@ -224,6 +315,131 @@ export default function Show({ case: vawcCase }: Props) {
                     </CardHeader>
                     <CardContent className="pt-6 border-t">
                         {/* ACTION CONTENT BY STEP */}
+                        {stepNum === 1 && (
+                            <form onSubmit={handleAssessCase} className="space-y-6 max-w-2xl mx-auto py-4">
+                                <div className="p-4 bg-primary/5 border border-primary/10 rounded-xl space-y-4">
+                                    <div className="flex gap-2 items-center text-primary mb-2">
+                                        <ClipboardList className="w-5 h-5" />
+                                        <h4 className="text-sm font-black uppercase tracking-wider">VAWC Desk Triage Checklist</h4>
+                                    </div>
+                                    <p className="text-xs text-muted-foreground leading-relaxed">
+                                        Select all applicable risk factors and immediate needs identified during investigation/interview. The VAWC-RAVE algorithm will quantify these to determine the priority level.
+                                    </p>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+                                        <label className="flex items-start space-x-3 p-3 rounded-lg border border-border bg-background hover:bg-muted/50 transition-colors cursor-pointer">
+                                            <input
+                                                type="checkbox"
+                                                checked={assessForm.data.requires_medical}
+                                                onChange={e => assessForm.setData('requires_medical', e.target.checked)}
+                                                className="mt-1 rounded border-input text-primary focus:ring-primary h-4 w-4"
+                                            />
+                                            <div className="ml-2">
+                                                <p className="text-xs font-bold text-foreground">Medical Attention Required</p>
+                                                <p className="text-[10px] text-muted-foreground mt-0.5">Physical injuries/harm needing clinic transfer</p>
+                                            </div>
+                                        </label>
+
+                                        <label className="flex items-start space-x-3 p-3 rounded-lg border border-border bg-background hover:bg-muted/50 transition-colors cursor-pointer">
+                                            <input
+                                                type="checkbox"
+                                                checked={assessForm.data.requires_alternative_housing}
+                                                onChange={e => assessForm.setData('requires_alternative_housing', e.target.checked)}
+                                                className="mt-1 rounded border-input text-primary focus:ring-primary h-4 w-4"
+                                            />
+                                            <div className="ml-2">
+                                                <p className="text-xs font-bold text-foreground">Alternative Housing / Shelter Needed</p>
+                                                <p className="text-[10px] text-muted-foreground mt-0.5">Displaced or unsafe; needs temporary placement</p>
+                                            </div>
+                                        </label>
+
+                                        <label className="flex items-start space-x-3 p-3 rounded-lg border border-border bg-background hover:bg-muted/50 transition-colors cursor-pointer">
+                                            <input
+                                                type="checkbox"
+                                                checked={assessForm.data.is_repeat_offense}
+                                                onChange={e => assessForm.setData('is_repeat_offense', e.target.checked)}
+                                                className="mt-1 rounded border-input text-primary focus:ring-primary h-4 w-4"
+                                            />
+                                            <div className="ml-2">
+                                                <p className="text-xs font-bold text-foreground">Repeat Offense / History of Abuse</p>
+                                                <p className="text-[10px] text-muted-foreground mt-0.5">Perpetrator has a history of domestic violence</p>
+                                            </div>
+                                        </label>
+
+                                        <label className="flex items-start space-x-3 p-3 rounded-lg border border-border bg-background hover:bg-muted/50 transition-colors cursor-pointer">
+                                            <input
+                                                type="checkbox"
+                                                checked={assessForm.data.has_weapon_involved}
+                                                onChange={e => assessForm.setData('has_weapon_involved', e.target.checked)}
+                                                className="mt-1 rounded border-input text-primary focus:ring-primary h-4 w-4"
+                                            />
+                                            <div className="ml-2">
+                                                <p className="text-xs font-bold text-foreground">Weapons Involved</p>
+                                                <p className="text-[10px] text-muted-foreground mt-0.5">Abuse involves use/threat of physical weapons</p>
+                                            </div>
+                                        </label>
+
+                                        <label className="flex items-start space-x-3 p-3 rounded-lg border border-border bg-background hover:bg-muted/50 transition-colors cursor-pointer">
+                                            <input
+                                                type="checkbox"
+                                                checked={assessForm.data.weapons_confiscated}
+                                                onChange={e => assessForm.setData('weapons_confiscated', e.target.checked)}
+                                                className="mt-1 rounded border-input text-primary focus:ring-primary h-4 w-4"
+                                            />
+                                            <div className="ml-2">
+                                                <p className="text-xs font-bold text-foreground">Weapons Confiscated</p>
+                                                <p className="text-[10px] text-muted-foreground mt-0.5">Tanod/PNP retrieved weapons from the scene</p>
+                                            </div>
+                                        </label>
+
+                                        <label className="flex items-start space-x-3 p-3 rounded-lg border border-border bg-background hover:bg-muted/50 transition-colors cursor-pointer">
+                                            <input
+                                                type="checkbox"
+                                                checked={assessForm.data.perpetrator_present}
+                                                onChange={e => assessForm.setData('perpetrator_present', e.target.checked)}
+                                                className="mt-1 rounded border-input text-primary focus:ring-primary h-4 w-4"
+                                            />
+                                            <div className="ml-2">
+                                                <p className="text-xs font-bold text-foreground">Perpetrator Present at Scene</p>
+                                                <p className="text-[10px] text-muted-foreground mt-0.5">Active threat remaining at the location</p>
+                                            </div>
+                                        </label>
+
+                                        <label className="flex items-start space-x-3 p-3 rounded-lg border border-border bg-background hover:bg-muted/50 transition-colors cursor-pointer">
+                                            <input
+                                                type="checkbox"
+                                                checked={assessForm.data.warrantless_arrest_made}
+                                                onChange={e => assessForm.setData('warrantless_arrest_made', e.target.checked)}
+                                                className="mt-1 rounded border-input text-primary focus:ring-primary h-4 w-4"
+                                            />
+                                            <div className="ml-2">
+                                                <p className="text-xs font-bold text-foreground">Warrantless Arrest Made</p>
+                                                <p className="text-[10px] text-muted-foreground mt-0.5">Citizen/Tanod arrest due to active crime/threat</p>
+                                            </div>
+                                        </label>
+
+                                        <label className="flex items-start space-x-3 p-3 rounded-lg border border-border bg-background hover:bg-muted/50 transition-colors cursor-pointer">
+                                            <input
+                                                type="checkbox"
+                                                checked={assessForm.data.incident_veracity}
+                                                onChange={e => assessForm.setData('incident_veracity', e.target.checked)}
+                                                className="mt-1 rounded border-input text-primary focus:ring-primary h-4 w-4"
+                                            />
+                                            <div className="ml-2">
+                                                <p className="text-xs font-bold text-foreground">Incident Verified</p>
+                                                <p className="text-[10px] text-muted-foreground mt-0.5">Veracity of report physically confirmed by Tanod/Officer</p>
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div className="flex justify-end">
+                                    <Button type="submit" size="lg" disabled={assessForm.processing} className="h-12 px-8 font-bold shadow-md">
+                                        {assessForm.processing ? 'Calculating...' : 'Save & Calculate Risk Triage'}
+                                    </Button>
+                                </div>
+                            </form>
+                        )}
                         {stepNum === 2 && (
                             <div className="flex flex-col items-center justify-center py-8 gap-4">
                                 <ShieldCheck className="w-16 h-16 text-primary/20" />
@@ -475,10 +691,10 @@ export default function Show({ case: vawcCase }: Props) {
                                 <p className="text-muted-foreground text-xs">{victim?.age} Years / {victim?.gender}</p>
                                 {victim?.civil_status && <p className="text-xs text-muted-foreground mt-1">Status: {victim.civil_status}</p>}
                                 {(victim?.educational_attainment || victim?.occupation) && (
-                                     <p className="text-[11px] text-slate-600 dark:text-slate-400 mt-0.5">
+                                    <p className="text-[11px] text-slate-600 dark:text-slate-400 mt-0.5">
                                         {victim.educational_attainment && <span className="mr-2 border-r pr-2 border-border">Ed: {victim.educational_attainment}</span>}
                                         {victim.occupation && <span>Job: {victim.occupation}</span>}
-                                     </p>
+                                    </p>
                                 )}
                                 <p className="text-[10px] text-muted-foreground mt-2 uppercase flex items-center gap-1"><Info className="w-3 h-3" /> Contact: [ENCRYPTED]</p>
                             </div>
@@ -497,10 +713,10 @@ export default function Show({ case: vawcCase }: Props) {
                                 )}
                                 {respondent?.age && <p className="text-muted-foreground text-xs mt-1">{respondent.age} Years / {respondent.gender}</p>}
                                 {(respondent?.civil_status || respondent?.occupation) && (
-                                     <p className="text-[11px] text-slate-600 dark:text-slate-400 mt-0.5">
+                                    <p className="text-[11px] text-slate-600 dark:text-slate-400 mt-0.5">
                                         {respondent.civil_status && <span className="mr-2 border-r pr-2 border-border">{respondent.civil_status}</span>}
                                         {respondent.occupation && <span>Job: {respondent.occupation}</span>}
-                                     </p>
+                                    </p>
                                 )}
                                 {respondent?.physical_description && (
                                     <div className="mt-2 p-2 bg-muted/30 border border-border rounded-md text-xs space-y-1">
@@ -530,7 +746,7 @@ export default function Show({ case: vawcCase }: Props) {
                                     {(() => {
                                         let referrals = [];
                                         if (typeof vawcCase.referral_status === 'string') {
-                                            try { referrals = JSON.parse(vawcCase.referral_status); } catch (e) {}
+                                            try { referrals = JSON.parse(vawcCase.referral_status); } catch (e) { }
                                         } else if (Array.isArray(vawcCase.referral_status)) {
                                             referrals = vawcCase.referral_status;
                                         }

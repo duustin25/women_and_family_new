@@ -45,8 +45,8 @@ const mainNavItems: NavItem[] = [
     },
     // --- CORE SERVICES (Capstone Focus) ---
     {
-        title: 'VAWC Case Protection Registry',
-        href: '/admin/vawc/cases',
+        title: 'VAWC Triage & Action Center',
+        href: '/admin/vawc/dashboard',
         icon: ShieldAlert,
     },
     {
@@ -132,6 +132,7 @@ export function AppSidebar() {
 
         if (role === 'president') {
             const hiddenFromPresident = [
+                'VAWC Triage & Action Center',
                 'Violence Against Women and Children Case Protection Registry',
                 'Child Health and Nutritional Status Monitoring (BCPC)',
                 'System Users',
