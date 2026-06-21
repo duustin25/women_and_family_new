@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ArrowLeft, User, Calendar, MapPin, Phone, Scale, RefreshCw, FileText, CheckCircle2, History, Activity } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -16,12 +17,20 @@ export default function BcpcShow({ child, computedAge }: any) {
     const isMalnourished = latest && ['Underweight', 'Severely Underweight'].includes(latest.wfa_status);
     const isStunted = latest && ['Stunted', 'Severely Stunted'].includes(latest.hfa_status);
 
+    const day1Record = child.assessments?.find((a: any) => a.sfp_day_number === 1);
+    const day30Record = child.assessments?.find((a: any) => a.sfp_day_number === 30);
+    const day60Record = child.assessments?.find((a: any) => a.sfp_day_number === 60);
+    const day90Record = child.assessments?.find((a: any) => a.sfp_day_number === 90);
+
     const { data: updateData, setData: setUpdateData, put, processing } = useForm({
         date_of_weighing: new Date().toISOString().split('T')[0],
         weight_kg: latest?.weight_kg || '',
         height_cm: latest?.height_cm || '',
         intervention_logs: latest?.intervention_logs || [],
         remarks: '',
+        bns_assessor: '',
+        sfp_day_number: '',
+        sfp_status: child.sfp_status || 'None',
     });
 
     const handleUpdate = (e: React.FormEvent) => {
@@ -84,7 +93,7 @@ export default function BcpcShow({ child, computedAge }: any) {
 
                 {/* Header Section */}
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-card p-6 rounded-2xl border border-border shadow-sm relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
                     <div className="flex gap-4 items-center z-10">
                         <Link href="/admin/bcpc/cases">
                             <Button variant="outline" size="icon" className="rounded-xl">
@@ -97,9 +106,12 @@ export default function BcpcShow({ child, computedAge }: any) {
                                     {child.child_first_name} {child.child_last_name}
                                 </h1>
                                 <Badge variant={child.status === 'Active' ? 'default' : 'secondary'} className="font-black uppercase tracking-widest text-[10px]">Registry: {child.status}</Badge>
+                                {child.sfp_status !== 'None' && (
+                                    <Badge className="font-black uppercase tracking-widest text-[10px] bg-emerald-600 hover:bg-emerald-700 text-white">SFP: {child.sfp_status}</Badge>
+                                )}
                             </div>
                             <p className="text-muted-foreground text-xs font-black uppercase tracking-widest flex items-center gap-2 mt-1">
-                                <User className="h-3 w-3" /> Guardian: {child.guardian_name}
+                                <User className="h-3 w-3" /> Guardian: {child.guardian_name} {child.bns_name ? `| Assigned BNS: ${child.bns_name}` : ''}
                             </p>
                         </div>
                     </div>
@@ -137,6 +149,10 @@ export default function BcpcShow({ child, computedAge }: any) {
                                     <span className="text-slate-400 text-[9px]">Resident Address</span>
                                     <span className="text-foreground lowercase first-letter:uppercase">{child.address}</span>
                                 </div>
+                                <div className="flex flex-col gap-1 border-b border-border/50 pb-3">
+                                    <span className="text-slate-400 text-[9px]">Assigned BNS Volunteer</span>
+                                    <span className="text-foreground">{child.bns_name || 'None Assigned'}</span>
+                                </div>
                                 {child.member_id && (
                                     <div className="mt-4 pt-4 border-t border-dashed">
                                         <p className="text-[9px] font-black text-emerald-600 mb-2 uppercase tracking-tight">Verified Social Registry Link</p>
@@ -153,12 +169,106 @@ export default function BcpcShow({ child, computedAge }: any) {
 
                     {/* Right Column: Nutrition Status */}
                     <div className="md:col-span-2 space-y-6">
-                        <Card className={`shadow-lg border-2 transition-all ${isMalnourished ? 'border-red-500 bg-red-50/5' : 'border-emerald-500 bg-emerald-50/5'}`}>
+                        {/* 🧸 90-DAY SUPPLEMENTAL FEEDING PROGRAM (SFP) TRACKER */}
+                        {child.sfp_status !== 'None' && (
+                            <Card className="border-emerald-200 bg-emerald-50/10 shadow-md">
+                                <CardHeader className="pb-3 border-b bg-emerald-50/30">
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <CardTitle className="text-xs font-black uppercase tracking-widest flex items-center gap-2 text-emerald-700">
+                                                <Activity className="h-4 w-4" />
+                                                90-Day Supplemental Feeding Program (SFP)
+                                            </CardTitle>
+                                            <CardDescription className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mt-1">
+                                                Enrollment Cycle: {child.sfp_start_date ? new Date(child.sfp_start_date).toLocaleDateString() : 'N/A'} 
+                                                {child.sfp_end_date ? ` to ${new Date(child.sfp_end_date).toLocaleDateString()}` : ' (Active)'}
+                                            </CardDescription>
+                                        </div>
+                                        <Badge className={`font-black uppercase text-[9px] tracking-widest px-2.5 py-1 bg-emerald-600 text-white hover:bg-emerald-700`}>
+                                            Status: {child.sfp_status}
+                                        </Badge>
+                                    </div>
+                                </CardHeader>
+                                <CardContent className="pt-6">
+                                    {/* Program Progress Stats */}
+                                    <div className="grid grid-cols-3 gap-4 mb-6 text-center">
+                                        <div className="p-3 bg-white dark:bg-neutral-900 border rounded-xl">
+                                            <span className="text-[9px] font-black uppercase text-slate-400 tracking-wider block">Baseline Weight</span>
+                                            <span className="text-lg font-black text-slate-700 dark:text-slate-200">{day1Record ? `${day1Record.weight_kg} kg` : '—'}</span>
+                                        </div>
+                                        <div className="p-3 bg-white dark:bg-neutral-900 border rounded-xl">
+                                            <span className="text-[9px] font-black uppercase text-slate-400 tracking-wider block">Current Weight</span>
+                                            <span className="text-lg font-black text-slate-700 dark:text-slate-200">{latest ? `${latest.weight_kg} kg` : '—'}</span>
+                                        </div>
+                                        <div className="p-3 bg-white dark:bg-neutral-900 border rounded-xl">
+                                            <span className="text-[9px] font-black uppercase text-slate-400 tracking-wider block">Recovery Velocity</span>
+                                            <span className={`text-lg font-black block ${
+                                                day1Record && latest && latest.weight_kg - day1Record.weight_kg > 0 ? 'text-emerald-600' : 'text-slate-600'
+                                            }`}>
+                                                {day1Record && latest ? `${(latest.weight_kg - day1Record.weight_kg).toFixed(2)} kg` : '—'}
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    {/* Milestones timeline */}
+                                    <div className="relative flex justify-between items-center px-4 py-2 mt-4">
+                                        {/* Connecting Line */}
+                                        <div className="absolute left-8 right-8 top-1/2 h-1 bg-slate-200 dark:bg-slate-800 -translate-y-1/2 z-0"></div>
+                                        
+                                        {/* Day 1 Milestone */}
+                                        <div className="flex flex-col items-center z-10 bg-white dark:bg-neutral-900 px-1">
+                                            <div className={`w-8 h-8 rounded-full flex items-center justify-center font-black text-xs border-2 ${
+                                                day1Record ? 'bg-emerald-500 text-white border-emerald-600 shadow-md' : 'bg-slate-100 text-slate-400 border-slate-300'
+                                            }`}>
+                                                {day1Record ? '✓' : '1'}
+                                            </div>
+                                            <span className="text-[9px] font-black uppercase tracking-tighter mt-1 block">Day 1</span>
+                                            <span className="text-[8px] text-muted-foreground">{day1Record ? `${day1Record.weight_kg}kg` : 'Pending'}</span>
+                                        </div>
+
+                                        {/* Day 30 Milestone */}
+                                        <div className="flex flex-col items-center z-10 bg-white dark:bg-neutral-900 px-1">
+                                            <div className={`w-8 h-8 rounded-full flex items-center justify-center font-black text-xs border-2 ${
+                                                day30Record ? 'bg-emerald-500 text-white border-emerald-600 shadow-md' : 'bg-slate-100 text-slate-400 border-slate-300'
+                                            }`}>
+                                                {day30Record ? '✓' : '30'}
+                                            </div>
+                                            <span className="text-[9px] font-black uppercase tracking-tighter mt-1 block">Day 30</span>
+                                            <span className="text-[8px] text-muted-foreground">{day30Record ? `${day30Record.weight_kg}kg` : 'Pending'}</span>
+                                        </div>
+
+                                        {/* Day 60 Milestone */}
+                                        <div className="flex flex-col items-center z-10 bg-white dark:bg-neutral-900 px-1">
+                                            <div className={`w-8 h-8 rounded-full flex items-center justify-center font-black text-xs border-2 ${
+                                                day60Record ? 'bg-emerald-500 text-white border-emerald-600 shadow-md' : 'bg-slate-100 text-slate-400 border-slate-300'
+                                            }`}>
+                                                {day60Record ? '✓' : '60'}
+                                            </div>
+                                            <span className="text-[9px] font-black uppercase tracking-tighter mt-1 block">Day 60</span>
+                                            <span className="text-[8px] text-muted-foreground">{day60Record ? `${day60Record.weight_kg}kg` : 'Pending'}</span>
+                                        </div>
+
+                                        {/* Day 90 Milestone */}
+                                        <div className="flex flex-col items-center z-10 bg-white dark:bg-neutral-900 px-1">
+                                            <div className={`w-8 h-8 rounded-full flex items-center justify-center font-black text-xs border-2 ${
+                                                day90Record ? 'bg-emerald-500 text-white border-emerald-600 shadow-md' : 'bg-slate-100 text-slate-400 border-slate-300'
+                                            }`}>
+                                                {day90Record ? '✓' : '90'}
+                                            </div>
+                                            <span className="text-[9px] font-black uppercase tracking-tighter mt-1 block">Day 90</span>
+                                            <span className="text-[8px] text-muted-foreground">{day90Record ? `${day90Record.weight_kg}kg` : 'Pending'}</span>
+                                        </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        )}
+
+                        <Card className={`shadow-lg border-2 transition-all ${isMalnourished ? 'border-amber-500 bg-amber-50/5' : 'border-emerald-500 bg-emerald-50/5'}`}>
                             <CardHeader className="bg-muted/10 pb-4 border-b">
                                 <div className="flex items-center justify-between">
                                     <div>
                                         <CardTitle className="text-xs font-black uppercase tracking-widest flex items-center gap-2">
-                                            <Scale className="h-4 w-4 text-primary" />
+                                            <Scale className="h-4 w-4 text-emerald-600" />
                                             e-OPT SMART TRIAGE ENGINE
                                         </CardTitle>
                                         <CardDescription className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mt-1">Automatic malnutrition risk classification</CardDescription>
@@ -189,6 +299,46 @@ export default function BcpcShow({ child, computedAge }: any) {
                                                         <Input type="number" step="0.1" value={updateData.height_cm} onChange={e => setUpdateData('height_cm', e.target.value)} required />
                                                     </div>
                                                 </div>
+
+                                                <div className="grid grid-cols-2 gap-6">
+                                                    <div className="space-y-2">
+                                                        <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Assessor (BNS Volunteer)</Label>
+                                                        <Input type="text" value={updateData.bns_assessor} onChange={e => setUpdateData('bns_assessor', e.target.value)} placeholder="e.g. Maria Clara" />
+                                                    </div>
+                                                    <div className="space-y-2">
+                                                        <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">SFP Milestone Day (If Applicable)</Label>
+                                                        <Select value={updateData.sfp_day_number.toString()} onValueChange={val => setUpdateData('sfp_day_number', val)}>
+                                                            <SelectTrigger className="rounded-xl">
+                                                                <SelectValue placeholder="Milestone Day" />
+                                                            </SelectTrigger>
+                                                            <SelectContent>
+                                                                <SelectItem value="0">None (Standard Weighing)</SelectItem>
+                                                                <SelectItem value="1">Day 1 (Baseline)</SelectItem>
+                                                                <SelectItem value="30">Day 30</SelectItem>
+                                                                <SelectItem value="60">Day 60</SelectItem>
+                                                                <SelectItem value="90">Day 90</SelectItem>
+                                                            </SelectContent>
+                                                        </Select>
+                                                    </div>
+                                                </div>
+
+                                                {child.sfp_status !== 'None' && (
+                                                    <div className="space-y-2">
+                                                        <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">SFP Status Override</Label>
+                                                        <Select value={updateData.sfp_status} onValueChange={val => setUpdateData('sfp_status', val)}>
+                                                            <SelectTrigger className="rounded-xl">
+                                                                <SelectValue placeholder="Override SFP Status" />
+                                                            </SelectTrigger>
+                                                            <SelectContent>
+                                                                <SelectItem value="None">None (Discharged)</SelectItem>
+                                                                <SelectItem value="Enrolled">Enrolled (Active Feeding)</SelectItem>
+                                                                <SelectItem value="Graduated">Graduated (Recovered)</SelectItem>
+                                                                <SelectItem value="Completed">Completed Cycle</SelectItem>
+                                                                <SelectItem value="Terminated">Terminated</SelectItem>
+                                                            </SelectContent>
+                                                        </Select>
+                                                    </div>
+                                                )}
                                                 <div className="space-y-4 border-t pt-4">
                                                     <Label className="text-[10px] font-black uppercase tracking-widest text-primary">Biomedical Interventions</Label>
                                                     <div className="grid grid-cols-1 gap-3">

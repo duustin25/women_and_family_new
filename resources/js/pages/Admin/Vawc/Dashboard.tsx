@@ -252,7 +252,7 @@ export default function VawcDashboard({ criticalQueue, moderateQueue, lowQueue, 
                         <CardHeader className="pb-3 border-b bg-blue-50/40 dark:bg-blue-950/10">
                             <CardTitle className="text-xs font-black uppercase tracking-widest flex items-center text-blue-600">
                                 <Clock className="h-4 w-4 mr-2" />
-                                Low Risk / Routine Monitoring
+                                Low Risk Queue
                             </CardTitle>
                             <CardDescription className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mt-1">
                                 {lowQueue.length} case(s) · Triage Index 4–5
@@ -296,14 +296,14 @@ export default function VawcDashboard({ criticalQueue, moderateQueue, lowQueue, 
                 </div>
 
                 {/* Footer note */}
-                <div className="pb-6 text-center">
+                {/* <div className="pb-6 text-center">
                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
                         For longitudinal trends, BPO activity, zone hotspots, and demographic reports →{' '}
                         <a href={`/admin/analytics?year=${currentYear}`} className="text-[#ce1126] hover:underline">
                             View Official Strategic Analytics & Reports
                         </a>
                     </p>
-                </div>
+                </div> */}
 
             </div>
         </AppLayout>

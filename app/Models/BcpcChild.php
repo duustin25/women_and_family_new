@@ -24,16 +24,22 @@ class BcpcChild extends Model
         'guardian_name',
         'address',
         'contact_number',
+        'bns_name',
         'child_first_name',
         'child_last_name',
         'child_middle_name',
         'date_of_birth',
         'sex',
         'status',
+        'sfp_status',
+        'sfp_start_date',
+        'sfp_end_date',
     ];
 
     protected $casts = [
         'date_of_birth' => 'date',
+        'sfp_start_date' => 'date',
+        'sfp_end_date' => 'date',
     ];
 
     /**

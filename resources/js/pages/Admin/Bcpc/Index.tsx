@@ -15,6 +15,7 @@ interface Props {
     filters: {
         search?: string;
         status?: string;
+        sfp_status?: string;
     };
     metrics: {
         total_monitored: number;
@@ -24,6 +25,7 @@ interface Props {
 export default function Index({ monitoredChildren, filters }: Props) {
     const [search, setSearch] = useState(filters?.search || '');
     const [status, setStatus] = useState(filters?.status || 'all');
+    const [sfpStatus, setSfpStatus] = useState(filters?.sfp_status || 'all');
     const debouncedSearch = useDebounce(search, 300);
 
     // Apply filters via Inertia router
@@ -31,11 +33,12 @@ export default function Index({ monitoredChildren, filters }: Props) {
         router.get('/admin/bcpc/cases', {
             search: debouncedSearch,
             status: status,
+            sfp_status: sfpStatus,
         }, {
             preserveState: true,
             replace: true
         });
-    }, [debouncedSearch, status]);
+    }, [debouncedSearch, status, sfpStatus]);
 
     return (
         <AppLayout breadcrumbs={[{ title: 'Dashboard', href: '/admin/dashboard' }, { title: 'BCPC Health Registry', href: '#' }]}>
@@ -45,19 +48,19 @@ export default function Index({ monitoredChildren, filters }: Props) {
                 {/* Header */}
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <div>
-                        <h1 className="text-2xl font-bold tracking-tight bg-clip-text text-foreground uppercase">Child Health and Nutritional Status Registry</h1>
+                        <h1 className="text-2xl font-bold tracking-tight text-foreground uppercase">Child Health and Nutritional Status Registry</h1>
                         <p className="text-muted-foreground text-xs font-black uppercase tracking-widest flex items-center gap-2 mt-1">
-                            Health and Nutrition Monitoring
+                            [RA 11037] Health and Nutrition Monitoring
                         </p>
                     </div>
                     <div className="flex gap-2">
-                        <Button asChild variant="outline" size="sm" className="flex items-center gap-2 font-bold uppercase text-[10px] tracking-widest">
+                        <Button asChild variant="outline" size="sm" className="flex items-center gap-2 font-bold uppercase text-[10px] tracking-widest border-2">
                             <Link href="/admin/bcpc/dashboard">
-                                <BarChart3 className="w-4 h-4" />
+                                <BarChart3 className="w-4 h-4 text-emerald-600" />
                                 Analytics Dashboard
                             </Link>
                         </Button>
-                        <Button asChild size="sm" className="flex items-center gap-2 font-bold uppercase text-[10px] tracking-widest">
+                        <Button asChild size="sm" className="flex items-center gap-2 font-bold uppercase text-[10px] tracking-widest bg-emerald-600 hover:bg-emerald-700 text-white">
                             <Link href="/admin/bcpc/cases/create">
                                 <Plus className="w-4 h-4" />
                                 Register Child
@@ -77,7 +80,7 @@ export default function Index({ monitoredChildren, filters }: Props) {
 
                             <div className="flex flex-1 flex-col sm:flex-row items-center justify-end gap-2 w-full">
                                 <Select value={status} onValueChange={setStatus}>
-                                    <SelectTrigger className="h-9 w-full sm:w-[220px] rounded-lg">
+                                    <SelectTrigger className="h-9 w-full sm:w-[180px] rounded-lg">
                                         <div className="flex items-center gap-2">
                                             <Filter className="w-4 h-4 text-muted-foreground" />
                                             <SelectValue placeholder="All Nutrition Status" />
@@ -91,7 +94,24 @@ export default function Index({ monitoredChildren, filters }: Props) {
                                     </SelectContent>
                                 </Select>
 
-                                <div className="relative w-full sm:w-64">
+                                <Select value={sfpStatus} onValueChange={setSfpStatus}>
+                                    <SelectTrigger className="h-9 w-full sm:w-[180px] rounded-lg">
+                                        <div className="flex items-center gap-2">
+                                            <Filter className="w-4 h-4 text-muted-foreground" />
+                                            <SelectValue placeholder="All Feeding (SFP)" />
+                                        </div>
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="all">Global SFP Registry</SelectItem>
+                                        <SelectItem value="None">Not in SFP</SelectItem>
+                                        <SelectItem value="Enrolled">Enrolled in SFP</SelectItem>
+                                        <SelectItem value="Graduated">Graduated SFP</SelectItem>
+                                        <SelectItem value="Completed">Completed SFP</SelectItem>
+                                        <SelectItem value="Terminated">Terminated SFP</SelectItem>
+                                    </SelectContent>
+                                </Select>
+
+                                <div className="relative w-full sm:w-56">
                                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                                     <Input
                                         placeholder="Search Child / Guardian..."
@@ -111,6 +131,7 @@ export default function Index({ monitoredChildren, filters }: Props) {
                                     <TableHead className="font-bold uppercase text-[10px] tracking-widest text-slate-500">Demographics</TableHead>
                                     <TableHead className="font-bold uppercase text-[10px] tracking-widest text-slate-500 text-center">Nutrition Triage (WFA)</TableHead>
                                     <TableHead className="font-bold uppercase text-[10px] tracking-widest text-slate-500 text-center">Stunting Risk (HFA)</TableHead>
+                                    <TableHead className="font-bold uppercase text-[10px] tracking-widest text-slate-500 text-center">SFP Status</TableHead>
                                     <TableHead className="font-bold uppercase text-[10px] tracking-widest text-slate-500">Latest Record</TableHead>
                                     <TableHead className="text-right font-bold uppercase text-[10px] tracking-widest text-slate-500 pr-6">Management</TableHead>
                                 </TableRow>
@@ -118,7 +139,7 @@ export default function Index({ monitoredChildren, filters }: Props) {
                             <TableBody>
                                 {monitoredChildren.length === 0 && (
                                     <TableRow>
-                                        <TableCell colSpan={6} className="h-48 text-center text-muted-foreground italic font-medium">
+                                        <TableCell colSpan={7} className="h-48 text-center text-muted-foreground italic font-medium">
                                             No children matching these filters were found in the health registry.
                                         </TableCell>
                                     </TableRow>
@@ -128,6 +149,15 @@ export default function Index({ monitoredChildren, filters }: Props) {
                                     const isSAM = latest?.wfa_status === 'Severely Underweight';
                                     const isMAM = latest?.wfa_status === 'Underweight';
                                     const isRecent = Math.abs(new Date().getTime() - new Date(child.created_at).getTime()) < 600000;
+
+                                    const sfpColorMap: Record<string, string> = {
+                                        None: 'text-slate-500 border-slate-200 bg-slate-50 dark:bg-slate-900/40',
+                                        Enrolled: 'bg-emerald-600 text-white font-black hover:bg-emerald-700',
+                                        Graduated: 'bg-teal-100 text-teal-800 border-teal-300 dark:bg-teal-950/40 dark:text-teal-400',
+                                        Completed: 'bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-950/40 dark:text-blue-400',
+                                        Terminated: 'bg-red-100 text-red-800 border-red-300 dark:bg-red-950/40 dark:text-red-400',
+                                    };
+                                    const sfpStyle = sfpColorMap[child.sfp_status] || 'text-slate-500 border-slate-200';
 
                                     return (
                                         <TableRow key={child.id} className={`transition-all group ${isSAM ? 'bg-destructive/5 hover:bg-destructive/10 dark:bg-red-950/20' : 'hover:bg-muted/5'}`}>
@@ -140,7 +170,7 @@ export default function Index({ monitoredChildren, filters }: Props) {
                                                         </span>
                                                     </div>
                                                     <span className="text-[10px] text-muted-foreground font-black uppercase tracking-widest mt-0.5">
-                                                        Guardian: {child.guardian_name}
+                                                        Guardian: {child.guardian_name} {child.bns_name ? `| BNS: ${child.bns_name}` : ''}
                                                     </span>
                                                 </div>
                                             </TableCell>
@@ -152,7 +182,7 @@ export default function Index({ monitoredChildren, filters }: Props) {
                                                         <span>{new Date(child.date_of_birth).toLocaleDateString()}</span>
                                                     </div>
                                                     {child.zone && (
-                                                        <Badge variant="outline" className="text-[8px] font-black border-primary/20 bg-primary/5 text-primary w-fit uppercase">
+                                                        <Badge variant="outline" className="text-[8px] font-black border-emerald-500/20 bg-emerald-50 text-emerald-600 w-fit uppercase">
                                                             {child.zone.name}
                                                         </Badge>
                                                     )}
@@ -171,6 +201,14 @@ export default function Index({ monitoredChildren, filters }: Props) {
                                                     {latest?.hfa_status || 'N/A'}
                                                 </Badge>
                                             </TableCell>
+                                            <TableCell className="text-center">
+                                                <Badge
+                                                    variant={child.sfp_status === 'Enrolled' ? 'default' : 'outline'}
+                                                    className={`text-[8px] uppercase font-black tracking-tight px-2 py-0.5 ${sfpStyle}`}
+                                                >
+                                                    {child.sfp_status}
+                                                </Badge>
+                                            </TableCell>
                                             <TableCell className="text-muted-foreground text-[12px] font-medium leading-tight">
                                                 <div className="flex flex-col">
                                                     <span>
@@ -186,7 +224,7 @@ export default function Index({ monitoredChildren, filters }: Props) {
                                                 </div>
                                             </TableCell>
                                             <TableCell className="text-right pr-6">
-                                                <Button variant="ghost" size="sm" asChild className="opacity-70 group-hover:opacity-100 group-hover:bg-primary/10 transition-all font-bold text-xs ring-offset-background hover:text-primary">
+                                                <Button variant="ghost" size="sm" asChild className="opacity-70 group-hover:opacity-100 group-hover:bg-emerald-500/10 transition-all font-bold text-xs ring-offset-background hover:text-emerald-600">
                                                     <Link href={`/admin/bcpc/cases/${child.id}`}>
                                                         Profile <ChevronRight className="w-3 h-3 ml-1" />
                                                     </Link>

@@ -27,11 +27,13 @@ export default function BcpcCreate({ members, zones }: Props) {
         child_middle_name: '',
         date_of_birth: '',
         sex: '',
+        bns_name: '',
         date_of_weighing: new Date().toISOString().split('T')[0],
         weight_kg: '',
         height_cm: '',
         intervention_logs: [] as string[],
         remarks: '',
+        bns_assessor: '',
     });
 
     // Handle Resident auto-fill
@@ -80,9 +82,9 @@ export default function BcpcCreate({ members, zones }: Props) {
             <Head title="Register Child - BCPC" />
             <div className="flex flex-1 flex-col gap-8 p-6 max-w-7xl mx-auto w-full">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-card p-6 rounded-2xl border border-border shadow-sm relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
                     <div className="flex gap-4 items-center z-10">
-                        <div className="bg-gradient-to-br from-primary/20 to-primary/5 p-4 rounded-xl border border-primary/20 text-primary">
+                        <div className="bg-gradient-to-br from-emerald-500/20 to-emerald-500/5 p-4 rounded-xl border border-emerald-500/20 text-emerald-600">
                             <Activity className="w-8 h-8" />
                         </div>
                         <div>
@@ -96,9 +98,9 @@ export default function BcpcCreate({ members, zones }: Props) {
                                 <ArrowLeft className="w-4 h-4" /> Cancel
                             </Link>
                         </Button>
-                        <Button onClick={submit} size="lg" disabled={processing} className="rounded-xl bg-primary hover:bg-primary/90 shadow-md shadow-primary/20 transition-all font-semibold px-6">
+                        <Button onClick={submit} size="lg" disabled={processing} className="rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-600/20 transition-all font-semibold px-6">
                             {processing ? 'Analyzing...' : (
-                                <span className="flex gap-2 items-center"><Save className="w-4 h-4" /> {processing ? 'Analyzing...' : 'Save & Triage Profile'}</span>
+                                <span className="flex gap-2 items-center"><Save className="w-4 h-4" /> Save & Triage Profile</span>
                             )}
                         </Button>
                     </div>
@@ -238,15 +240,26 @@ export default function BcpcCreate({ members, zones }: Props) {
                                     </Select>
                                     {errors.zone_id && <p className="text-xs text-destructive mt-1">{errors.zone_id}</p>}
                                 </div>
+                                <div className="space-y-2">
+                                    <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground" htmlFor="bns_name">Assigned BNS Scholar</Label>
+                                    <Input
+                                        id="bns_name"
+                                        className="rounded-xl"
+                                        value={data.bns_name}
+                                        onChange={e => setData('bns_name', e.target.value)}
+                                        placeholder="e.g. Maria Clara, BNS"
+                                    />
+                                    {errors.bns_name && <p className="text-xs text-destructive mt-1">{errors.bns_name}</p>}
+                                </div>
                             </CardContent>
                         </Card>
 
                         {/* OPT Metrics */}
-                        <Card className="border-indigo-100 shadow-sm hover:shadow-md transition-shadow duration-300 relative overflow-hidden">
-                            <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-500"></div>
-                            <CardHeader className="border-b bg-indigo-50/30 pb-4">
+                        <Card className="border-emerald-100 shadow-sm hover:shadow-md transition-shadow duration-300 relative overflow-hidden">
+                            <div className="absolute left-0 top-0 bottom-0 w-1 bg-emerald-500"></div>
+                            <CardHeader className="border-b bg-emerald-50/30 pb-4">
                                 <div className="flex items-center gap-2">
-                                    <Calculator className="h-5 w-5 text-indigo-600" />
+                                    <Calculator className="h-5 w-5 text-emerald-600" />
                                     <div>
                                         <CardTitle className="text-lg">Nutritional Assessment</CardTitle>
                                         <CardDescription>Electronic Operation Timbang (OPT) automated triage system.</CardDescription>
@@ -264,6 +277,17 @@ export default function BcpcCreate({ members, zones }: Props) {
                                         onChange={e => setData('date_of_weighing', e.target.value)}
                                     />
                                     {errors.date_of_weighing && <p className="text-xs text-destructive mt-1">{errors.date_of_weighing}</p>}
+                                </div>
+                                <div className="space-y-2">
+                                    <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground" htmlFor="bns_assessor">Assessor (BNS Scholar / Health Worker)</Label>
+                                    <Input
+                                        id="bns_assessor"
+                                        className="rounded-xl"
+                                        value={data.bns_assessor}
+                                        onChange={e => setData('bns_assessor', e.target.value)}
+                                        placeholder="e.g. Maria Clara, BNS"
+                                    />
+                                    {errors.bns_assessor && <p className="text-xs text-destructive mt-1">{errors.bns_assessor}</p>}
                                 </div>
                                 <div className="space-y-2">
                                     <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground" htmlFor="weight_kg">Weight (kg)</Label>
@@ -298,7 +322,7 @@ export default function BcpcCreate({ members, zones }: Props) {
                                     {errors.height_cm && <p className="text-xs text-destructive mt-1">{errors.height_cm}</p>}
                                 </div>
                                 <div className="space-y-4 md:col-span-3 border-t pt-4">
-                                    <Label className="text-[10px] font-black uppercase tracking-widest text-primary flex items-center gap-2">
+                                    <Label className="text-[10px] font-black uppercase tracking-widest text-emerald-600 flex items-center gap-2">
                                         <Activity className="h-3 w-3" /> Initial Biomedical Interventions
                                     </Label>
                                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 mt-2">

@@ -1,16 +1,19 @@
 <?php
- 
+
 namespace App\Models;
- 
+
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
- 
+
+/**
+ *
+ */
 class BcpcAssessment extends Model
 {
     use HasFactory;
- 
+
     protected $table = 'bcpc_assessments';
- 
+
     protected $fillable = [
         'bcpc_child_id',
         'user_id',
@@ -21,15 +24,17 @@ class BcpcAssessment extends Model
         'hfa_status',
         'intervention_logs',
         'remarks',
+        'bns_assessor',
+        'sfp_day_number',
     ];
- 
+
     protected $casts = [
         'date_of_weighing' => 'date',
         'weight_kg' => 'float',
         'height_cm' => 'float',
         'intervention_logs' => 'array',
     ];
- 
+
     /**
      * Relationship back to the Child profile.
      */
@@ -37,7 +42,7 @@ class BcpcAssessment extends Model
     {
         return $this->belongsTo(BcpcChild::class, 'bcpc_child_id');
     }
- 
+
     /**
      * Relationship to the Recording User (BNS/Admin).
      */

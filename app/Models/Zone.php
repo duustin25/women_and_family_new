@@ -5,6 +5,9 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * @mixin \Eloquent
+ */
 class Zone extends Model
 {
     protected $fillable = ['name', 'color_code', 'description', 'is_active'];
