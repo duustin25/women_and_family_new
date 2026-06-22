@@ -119,6 +119,9 @@ class NutritionCalculatorService
      */
     public function evaluateHeightForAge(int $ageInMonths, string $sex, float $heightCm): string
     {
+        // Cap age at 60 months since e-OPT covers 0-60
+        $ageInMonths = min($ageInMonths, 60);
+
         // Baseline linear approximations for simplicity in Capstone model
         // A child grows roughly 25cm first year, 12cm second, etc.
         $medianHeight = 50 + ($ageInMonths * 0.8); // Very loose estimation metric

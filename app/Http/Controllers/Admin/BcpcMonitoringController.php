@@ -13,6 +13,7 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Redirect;
 
 class BcpcMonitoringController extends Controller
 {
@@ -28,6 +29,7 @@ class BcpcMonitoringController extends Controller
      */
     public function index(Request $request)
     {
+        $this->ensureZonesExist();
         $query = BcpcChild::with(['latestAssessment', 'zone', 'member']);
 
         // 1. Apply Search Filter (Child, Guardian, or BNS Name)
@@ -82,6 +84,7 @@ class BcpcMonitoringController extends Controller
      */
     public function dashboard()
     {
+        $this->ensureZonesExist();
         $children = BcpcChild::with(['latestAssessment', 'zone'])
             ->where('status', 'Active')
             ->get();
@@ -193,6 +196,7 @@ class BcpcMonitoringController extends Controller
      */
     public function create()
     {
+        $this->ensureZonesExist();
         return Inertia::render('Admin/Bcpc/Create', [
             'members' => Member::query()->select('id', 'fullname')->where('status', 'Active')->get(),
             'zones' => Zone::query()->get(),
@@ -215,11 +219,11 @@ class BcpcMonitoringController extends Controller
             'child_first_name' => 'required|string|max:255',
             'child_last_name' => 'required|string|max:255',
             'child_middle_name' => 'nullable|string|max:255',
-            'date_of_birth' => 'required|date',
+            'date_of_birth' => 'required|date|before_or_equal:today',
             'sex' => 'required|in:Male,Female',
-            'date_of_weighing' => 'required|date',
-            'weight_kg' => 'required|numeric',
-            'height_cm' => 'required|numeric',
+            'date_of_weighing' => 'required|date|after_or_equal:date_of_birth|before_or_equal:today',
+            'weight_kg' => 'required|numeric|min:0.5|max:100',
+            'height_cm' => 'required|numeric|min:30|max:200',
             'intervention_logs' => 'nullable|array',
             'remarks' => 'nullable|string',
             'bns_assessor' => 'nullable|string|max:255',
@@ -241,8 +245,8 @@ class BcpcMonitoringController extends Controller
 
             // 3. Create Child Profile
             $child = BcpcChild::create([
-                'member_id' => $validated['member_id'] ?? null,
-                'zone_id' => $validated['zone_id'] ?? null,
+                'member_id' => $validated['member_id'] ?: null,
+                'zone_id' => $validated['zone_id'] ?: null,
                 'guardian_name' => $validated['guardian_name'],
                 'address' => $validated['address'],
                 'contact_number' => $validated['contact_number'],
@@ -271,7 +275,7 @@ class BcpcMonitoringController extends Controller
                 'sfp_day_number' => $sfpStatus === 'Enrolled' ? 1 : null,
             ]);
 
-            return redirect()->route('admin.bcpc.index')->with('success', 'Child registered and evaluated successfully.');
+            return Redirect::route('admin.bcpc.index')->with('success', 'Child registered and evaluated successfully.');
         });
     }
 
@@ -302,9 +306,9 @@ class BcpcMonitoringController extends Controller
         $child = BcpcChild::findOrFail($id);
 
         $validated = $request->validate([
-            'date_of_weighing' => 'required|date',
-            'weight_kg' => 'required|numeric',
-            'height_cm' => 'required|numeric',
+            'date_of_weighing' => 'required|date|after_or_equal:' . $child->date_of_birth->format('Y-m-d') . '|before_or_equal:today',
+            'weight_kg' => 'required|numeric|min:0.5|max:100',
+            'height_cm' => 'required|numeric|min:30|max:200',
             'intervention_logs' => 'nullable|array',
             'remarks' => 'nullable|string',
             'bns_assessor' => 'nullable|string|max:255',
@@ -368,7 +372,29 @@ class BcpcMonitoringController extends Controller
                 'sfp_day_number' => $validated['sfp_day_number'] ?? ($sfpStatus === 'Enrolled' ? 1 : null),
             ]);
 
-            return back()->with('success', 'New nutrition measurement recorded successfully.');
+            return Redirect::back()->with('success', 'New nutrition measurement recorded successfully.');
         });
+    }
+
+    /**
+     * Ensure default zones (Puroks) are seeded for Barangay 183 Villamor.
+     */
+    protected function ensureZonesExist()
+    {
+        if (Zone::query()->count() === 0) {
+            $defaultZones = [
+                ['name' => 'Purok 1', 'color_code' => '#10b981', 'description' => 'Barangay 183 Villamor - Purok 1', 'is_active' => true],
+                ['name' => 'Purok 2', 'color_code' => '#3b82f6', 'description' => 'Barangay 183 Villamor - Purok 2', 'is_active' => true],
+                ['name' => 'Purok 3', 'color_code' => '#f59e0b', 'description' => 'Barangay 183 Villamor - Purok 3', 'is_active' => true],
+                ['name' => 'Purok 4', 'color_code' => '#ef4444', 'description' => 'Barangay 183 Villamor - Purok 4', 'is_active' => true],
+                ['name' => 'Purok 5', 'color_code' => '#8b5cf6', 'description' => 'Barangay 183 Villamor - Purok 5', 'is_active' => true],
+                ['name' => 'Purok 6', 'color_code' => '#ec4899', 'description' => 'Barangay 183 Villamor - Purok 6', 'is_active' => true],
+                ['name' => 'Purok 7', 'color_code' => '#6b7280', 'description' => 'Barangay 183 Villamor - Purok 7', 'is_active' => true],
+                ['name' => 'Purok 8', 'color_code' => '#06b6d4', 'description' => 'Barangay 183 Villamor - Purok 8', 'is_active' => true],
+            ];
+            foreach ($defaultZones as $dz) {
+                Zone::create($dz);
+            }
+        }
     }
 }

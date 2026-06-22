@@ -16,13 +16,54 @@ export default function BcpcShow({ child, computedAge }: any) {
     const latest = child.assessments?.[0]; // Assumed ordered by date_of_weighing DESC
     const isMalnourished = latest && ['Underweight', 'Severely Underweight'].includes(latest.wfa_status);
     const isStunted = latest && ['Stunted', 'Severely Stunted'].includes(latest.hfa_status);
-
     const day1Record = child.assessments?.find((a: any) => a.sfp_day_number === 1);
     const day30Record = child.assessments?.find((a: any) => a.sfp_day_number === 30);
     const day60Record = child.assessments?.find((a: any) => a.sfp_day_number === 60);
     const day90Record = child.assessments?.find((a: any) => a.sfp_day_number === 90);
 
-    const { data: updateData, setData: setUpdateData, put, processing } = useForm({
+    const getMilestoneStatus = (day: number, record: any) => {
+        if (record) {
+            return { 
+                status: 'completed', 
+                text: `${record.weight_kg} kg`,
+                subText: new Date(record.date_of_weighing).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+            };
+        }
+        
+        if (!child.sfp_start_date) return { status: 'pending', text: 'Pending', subText: '' };
+        
+        const start = new Date(child.sfp_start_date);
+        const today = new Date();
+        const diffDays = Math.floor((today.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+        
+        const dueDayOffset = day === 1 ? 0 : day;
+        const daysToMilestone = dueDayOffset - diffDays;
+        
+        if (daysToMilestone < 0) {
+            return { 
+                status: 'overdue', 
+                text: 'Weighing Due', 
+                subText: `${Math.abs(daysToMilestone)}d Overdue` 
+            };
+        } else {
+            return { 
+                status: 'upcoming', 
+                text: 'Upcoming', 
+                subText: `Due in ${daysToMilestone}d` 
+            };
+        }
+    };
+
+    const activeWidth = day90Record ? 100 : (day60Record ? 66 : (day30Record ? 33 : 0));
+
+    const milestones = [
+        { day: 1, record: day1Record },
+        { day: 30, record: day30Record },
+        { day: 60, record: day60Record },
+        { day: 90, record: day90Record },
+    ];
+
+    const { data: updateData, setData: setUpdateData, put, processing, errors } = useForm({
         date_of_weighing: new Date().toISOString().split('T')[0],
         weight_kg: latest?.weight_kg || '',
         height_cm: latest?.height_cm || '',
@@ -211,53 +252,48 @@ export default function BcpcShow({ child, computedAge }: any) {
                                     </div>
 
                                     {/* Milestones timeline */}
-                                    <div className="relative flex justify-between items-center px-4 py-2 mt-4">
-                                        {/* Connecting Line */}
-                                        <div className="absolute left-8 right-8 top-1/2 h-1 bg-slate-200 dark:bg-slate-800 -translate-y-1/2 z-0"></div>
+                                    <div className="relative flex justify-between items-center px-4 py-8 mt-6 bg-slate-50 dark:bg-neutral-900 border border-border/60 rounded-2xl p-6 shadow-inner">
+                                        {/* Connecting Background Line */}
+                                        <div className="absolute left-10 right-10 top-1/2 h-1.5 bg-slate-200 dark:bg-slate-800 -translate-y-1/2 z-0 rounded-full"></div>
+                                        {/* Active Progress Line */}
+                                        <div 
+                                            className="absolute left-10 top-1/2 h-1.5 bg-gradient-to-r from-emerald-500 to-teal-500 -translate-y-1/2 z-0 rounded-full transition-all duration-1000 ease-out shadow-lg shadow-emerald-500/20" 
+                                            style={{ width: `calc(${activeWidth}% - ${activeWidth > 0 ? (activeWidth === 100 ? '20px' : '10px') : '0px'})` }}
+                                        ></div>
                                         
-                                        {/* Day 1 Milestone */}
-                                        <div className="flex flex-col items-center z-10 bg-white dark:bg-neutral-900 px-1">
-                                            <div className={`w-8 h-8 rounded-full flex items-center justify-center font-black text-xs border-2 ${
-                                                day1Record ? 'bg-emerald-500 text-white border-emerald-600 shadow-md' : 'bg-slate-100 text-slate-400 border-slate-300'
-                                            }`}>
-                                                {day1Record ? '✓' : '1'}
-                                            </div>
-                                            <span className="text-[9px] font-black uppercase tracking-tighter mt-1 block">Day 1</span>
-                                            <span className="text-[8px] text-muted-foreground">{day1Record ? `${day1Record.weight_kg}kg` : 'Pending'}</span>
-                                        </div>
-
-                                        {/* Day 30 Milestone */}
-                                        <div className="flex flex-col items-center z-10 bg-white dark:bg-neutral-900 px-1">
-                                            <div className={`w-8 h-8 rounded-full flex items-center justify-center font-black text-xs border-2 ${
-                                                day30Record ? 'bg-emerald-500 text-white border-emerald-600 shadow-md' : 'bg-slate-100 text-slate-400 border-slate-300'
-                                            }`}>
-                                                {day30Record ? '✓' : '30'}
-                                            </div>
-                                            <span className="text-[9px] font-black uppercase tracking-tighter mt-1 block">Day 30</span>
-                                            <span className="text-[8px] text-muted-foreground">{day30Record ? `${day30Record.weight_kg}kg` : 'Pending'}</span>
-                                        </div>
-
-                                        {/* Day 60 Milestone */}
-                                        <div className="flex flex-col items-center z-10 bg-white dark:bg-neutral-900 px-1">
-                                            <div className={`w-8 h-8 rounded-full flex items-center justify-center font-black text-xs border-2 ${
-                                                day60Record ? 'bg-emerald-500 text-white border-emerald-600 shadow-md' : 'bg-slate-100 text-slate-400 border-slate-300'
-                                            }`}>
-                                                {day60Record ? '✓' : '60'}
-                                            </div>
-                                            <span className="text-[9px] font-black uppercase tracking-tighter mt-1 block">Day 60</span>
-                                            <span className="text-[8px] text-muted-foreground">{day60Record ? `${day60Record.weight_kg}kg` : 'Pending'}</span>
-                                        </div>
-
-                                        {/* Day 90 Milestone */}
-                                        <div className="flex flex-col items-center z-10 bg-white dark:bg-neutral-900 px-1">
-                                            <div className={`w-8 h-8 rounded-full flex items-center justify-center font-black text-xs border-2 ${
-                                                day90Record ? 'bg-emerald-500 text-white border-emerald-600 shadow-md' : 'bg-slate-100 text-slate-400 border-slate-300'
-                                            }`}>
-                                                {day90Record ? '✓' : '90'}
-                                            </div>
-                                            <span className="text-[9px] font-black uppercase tracking-tighter mt-1 block">Day 90</span>
-                                            <span className="text-[8px] text-muted-foreground">{day90Record ? `${day90Record.weight_kg}kg` : 'Pending'}</span>
-                                        </div>
+                                        {milestones.map((m) => {
+                                            const info = getMilestoneStatus(m.day, m.record);
+                                            return (
+                                                <div key={m.day} className="flex flex-col items-center z-10 px-1 relative">
+                                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center font-black text-xs border-2 transition-all duration-500 ${
+                                                        info.status === 'completed' 
+                                                            ? 'bg-emerald-500 text-white border-emerald-600 shadow-md ring-4 ring-emerald-500/20' 
+                                                            : info.status === 'overdue'
+                                                            ? 'bg-red-500 text-white border-red-600 shadow-md ring-4 ring-red-500/20 animate-pulse'
+                                                            : info.status === 'upcoming'
+                                                            ? 'bg-sky-50 text-sky-600 border-sky-400 dark:bg-sky-950/40 dark:text-sky-400 dark:border-sky-800 border-dashed'
+                                                            : 'bg-slate-50 text-slate-400 border-slate-300 dark:bg-slate-900/40 dark:border-slate-800'
+                                                    }`}>
+                                                        {info.status === 'completed' ? '✓' : m.day}
+                                                    </div>
+                                                    <span className="text-[10px] font-black uppercase tracking-tight mt-2 block text-slate-700 dark:text-slate-200">
+                                                        Day {m.day}
+                                                    </span>
+                                                    <span className={`text-[9px] font-bold mt-0.5 block ${
+                                                        info.status === 'completed' ? 'text-emerald-600' :
+                                                        info.status === 'overdue' ? 'text-red-500 font-extrabold animate-bounce' :
+                                                        info.status === 'upcoming' ? 'text-sky-600' : 'text-slate-400'
+                                                    }`}>
+                                                        {info.text}
+                                                    </span>
+                                                    {info.subText && (
+                                                        <span className="text-[8px] text-muted-foreground font-medium block">
+                                                            {info.subText}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            );
+                                        })}
                                     </div>
                                 </CardContent>
                             </Card>
@@ -288,22 +324,26 @@ export default function BcpcShow({ child, computedAge }: any) {
                                                 <div className="space-y-2">
                                                     <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Date of Weighing</Label>
                                                     <Input type="date" value={updateData.date_of_weighing} onChange={e => setUpdateData('date_of_weighing', e.target.value)} required />
+                                                    {errors.date_of_weighing && <p className="text-xs text-destructive mt-1">{errors.date_of_weighing}</p>}
                                                 </div>
                                                 <div className="grid grid-cols-2 gap-6">
                                                     <div className="space-y-2">
                                                         <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Weight (kg)</Label>
                                                         <Input type="number" step="0.01" value={updateData.weight_kg} onChange={e => setUpdateData('weight_kg', e.target.value)} required />
+                                                        {errors.weight_kg && <p className="text-xs text-destructive mt-1">{errors.weight_kg}</p>}
                                                     </div>
                                                     <div className="space-y-2">
                                                         <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Height (cm)</Label>
                                                         <Input type="number" step="0.1" value={updateData.height_cm} onChange={e => setUpdateData('height_cm', e.target.value)} required />
+                                                        {errors.height_cm && <p className="text-xs text-destructive mt-1">{errors.height_cm}</p>}
                                                     </div>
                                                 </div>
-
+ 
                                                 <div className="grid grid-cols-2 gap-6">
                                                     <div className="space-y-2">
                                                         <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Assessor (BNS Volunteer)</Label>
                                                         <Input type="text" value={updateData.bns_assessor} onChange={e => setUpdateData('bns_assessor', e.target.value)} placeholder="e.g. Maria Clara" />
+                                                        {errors.bns_assessor && <p className="text-xs text-destructive mt-1">{errors.bns_assessor}</p>}
                                                     </div>
                                                     <div className="space-y-2">
                                                         <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">SFP Milestone Day (If Applicable)</Label>
@@ -321,7 +361,7 @@ export default function BcpcShow({ child, computedAge }: any) {
                                                         </Select>
                                                     </div>
                                                 </div>
-
+ 
                                                 {child.sfp_status !== 'None' && (
                                                     <div className="space-y-2">
                                                         <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">SFP Status Override</Label>
@@ -365,10 +405,11 @@ export default function BcpcShow({ child, computedAge }: any) {
                                                         ))}
                                                     </div>
                                                 </div>
-
+ 
                                                 <div className="space-y-2">
                                                     <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground" htmlFor="remarks_update">Clinical Remarks / Observations</Label>
                                                     <Input id="remarks_update" className="rounded-xl" value={updateData.remarks} onChange={e => setUpdateData('remarks', e.target.value)} placeholder="Note edema, wasting, etc." />
+                                                    {errors.remarks && <p className="text-xs text-destructive mt-1">{errors.remarks}</p>}
                                                 </div>
                                                 <Button type="submit" size="lg" className="w-full mt-4 font-black uppercase text-[10px] tracking-widest" disabled={processing}>Store Assessment & Triage</Button>
                                             </form>

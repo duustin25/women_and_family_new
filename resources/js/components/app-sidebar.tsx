@@ -51,7 +51,7 @@ const mainNavItems: NavItem[] = [
     },
     {
         title: 'Child Health and Nutritional Status Monitoring (BCPC)',
-        href: '/admin/bcpc/cases',
+        href: '/admin/bcpc/dashboard',
         icon: Activity,
     },
     {

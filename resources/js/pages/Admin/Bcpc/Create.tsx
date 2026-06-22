@@ -38,14 +38,20 @@ export default function BcpcCreate({ members, zones }: Props) {
 
     // Handle Resident auto-fill
     const handleMemberSelect = (memberId: string) => {
+        if (memberId === 'none' || !memberId) {
+            setData(prev => ({
+                ...prev,
+                member_id: '',
+            }));
+            toast.info('Unlinked from Resident Profile.');
+            return;
+        }
         const member = members.find(m => m.id.toString() === memberId);
         if (member) {
             setData(prev => ({
                 ...prev,
                 member_id: memberId,
-                // Assuming fullname is "First Last", we try to split or just clear
-                // If the system has meta, we'd use that. For now, we'll just set the ID
-                // and maybe clear the manual fields to indicate it's linked.
+                guardian_name: member.fullname, // Auto-fill guardian name!
             }));
             toast.info(`Linked to Resident Profile: ${member.fullname}`);
         }
@@ -120,6 +126,26 @@ export default function BcpcCreate({ members, zones }: Props) {
                                 </div>
                             </CardHeader>
                             <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-5 pt-6">
+                                <div className="md:col-span-2 space-y-2">
+                                    <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Link to Registered Resident Profile (Optional)</Label>
+                                    <Select
+                                        onValueChange={handleMemberSelect}
+                                        value={data.member_id || 'none'}
+                                    >
+                                        <SelectTrigger className="rounded-xl border-dashed border-2 hover:border-emerald-500 transition-colors">
+                                            <SelectValue placeholder="Select a resident to link this child's profile..." />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="none">Do not link (Manual entry)</SelectItem>
+                                            {members.map(m => (
+                                                <SelectItem key={m.id} value={m.id.toString()}>{m.fullname}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                    <p className="text-[9px] text-muted-foreground font-semibold uppercase tracking-wider">
+                                        Linking a resident associates this child with a parent/guardian registered in the Barangay Social Registry.
+                                    </p>
+                                </div>
                                 <div className="space-y-2">
                                     <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground" htmlFor="guardian_name">Guardian Full Name</Label>
                                     <Input
@@ -140,6 +166,7 @@ export default function BcpcCreate({ members, zones }: Props) {
                                         onChange={e => setData('contact_number', e.target.value)}
                                         placeholder="09XXXXXXXXX"
                                     />
+                                    {errors.contact_number && <p className="text-xs text-destructive mt-1">{errors.contact_number}</p>}
                                 </div>
                                 <div className="md:col-span-2 space-y-2">
                                     <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground" htmlFor="address">Residential Address</Label>
@@ -358,6 +385,7 @@ export default function BcpcCreate({ members, zones }: Props) {
                                         onChange={e => setData('remarks', e.target.value)}
                                         placeholder="Note any visible SAM symptoms like edema, wasting, etc."
                                     />
+                                    {errors.remarks && <p className="text-xs text-destructive mt-1">{errors.remarks}</p>}
                                 </div>
                             </CardContent>
                             <div className="bg-muted/50 px-6 py-4 flex items-center gap-3 border-t">

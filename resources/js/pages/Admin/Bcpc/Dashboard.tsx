@@ -9,7 +9,6 @@ import {
     ChevronRight, Scale, Clock, ShieldAlert, HeartHandshake, MapPin, Users
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
 
 export default function BcpcDashboard({
     monitoredChildren,
@@ -34,7 +33,7 @@ export default function BcpcDashboard({
                             <Activity className="w-8 h-8 text-emerald-600 animate-pulse" />
                             BCPC Nutrition Dashboard
                         </h1>
-                        <p className="text-muted-foreground text-xs font-black uppercase tracking-widest flex items-center gap-2">
+                        <p className="text-muted-foreground text-xs font-black uppercase tracking-widest flex items-center gap-2 mt-1">
                             [RA 11037] Barangay Nutrition Committee (BNC) Growth & OPT+ Action Center
                         </p>
                     </div>
@@ -57,7 +56,7 @@ export default function BcpcDashboard({
                 {/* Key Metrics */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     {/* Card 1: Total Monitored */}
-                    <Card className="border shadow-sm hover:shadow-md transition-shadow relative overflow-hidden">
+                    <Card className="border shadow-sm hover:shadow-md transition-shadow relative overflow-hidden rounded-xl">
                         <div className="absolute right-0 top-0 w-24 h-24 bg-slate-500/5 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2"></div>
                         <CardHeader className="pb-2">
                             <CardTitle className="text-[10px] font-black text-muted-foreground uppercase tracking-widest flex items-center gap-1.5">
@@ -76,7 +75,7 @@ export default function BcpcDashboard({
                     </Card>
 
                     {/* Card 2: SAM (Immediate Referral) */}
-                    <Card className="border-red-500/20 bg-red-50/20 dark:bg-red-950/10 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden">
+                    <Card className="border-red-500/20 bg-red-50/20 dark:bg-red-950/10 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden rounded-xl">
                         <div className="absolute right-0 top-0 w-24 h-24 bg-red-500/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2"></div>
                         <CardHeader className="pb-2">
                             <CardTitle className="text-[10px] font-black text-red-600 dark:text-red-400 uppercase tracking-widest flex items-center gap-1.5">
@@ -95,7 +94,7 @@ export default function BcpcDashboard({
                     </Card>
 
                     {/* Card 3: Active SFP (90-Day Supplemental Feeding) */}
-                    <Card className="border-emerald-500/20 bg-emerald-50/20 dark:bg-emerald-950/10 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden">
+                    <Card className="border-emerald-500/20 bg-emerald-50/20 dark:bg-emerald-950/10 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden rounded-xl">
                         <div className="absolute right-0 top-0 w-24 h-24 bg-emerald-500/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2"></div>
                         <CardHeader className="pb-2">
                             <CardTitle className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest flex items-center gap-1.5">
@@ -114,7 +113,7 @@ export default function BcpcDashboard({
                     </Card>
 
                     {/* Card 4: Overdue Weighing Check-ins */}
-                    <Card className="border-amber-500/20 bg-amber-50/20 dark:bg-amber-950/10 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden">
+                    <Card className="border-amber-500/20 bg-amber-50/20 dark:bg-amber-950/10 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden rounded-xl">
                         <div className="absolute right-0 top-0 w-24 h-24 bg-amber-500/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2"></div>
                         <CardHeader className="pb-2">
                             <CardTitle className="text-[10px] font-black text-amber-600 dark:text-amber-500 uppercase tracking-widest flex items-center gap-1.5">
@@ -140,8 +139,8 @@ export default function BcpcDashboard({
                     <div className="lg:col-span-2 flex flex-col gap-6">
 
                         {/* Severe Malnutrition (SAM) - Immediate Action */}
-                        <Card className="border-l-4 border-l-red-500">
-                            <CardHeader className="pb-3 border-b border-border/50 bg-red-50/10">
+                        <Card className="border-l-4 border-l-red-500 rounded-xl shadow-sm">
+                            <CardHeader className="pb-3 border-b border-border/50 bg-red-500/5">
                                 <CardTitle className="text-xs font-black uppercase tracking-widest flex items-center text-red-600 dark:text-red-400">
                                     <AlertCircle className="h-4 w-4 mr-2 text-red-500" />
                                     Urgent SAM Action Queue
@@ -158,24 +157,24 @@ export default function BcpcDashboard({
                                 ) : (
                                     <div className="divide-y divide-border/50">
                                         {topPriority.map((child: any) => (
-                                            <div key={child.id} className="p-4 flex items-center justify-between hover:bg-muted/50 transition-colors">
+                                            <div key={child.id} className="p-4 flex items-center justify-between hover:bg-muted/30 transition-colors">
                                                 <div className="flex items-center gap-3">
                                                     <Avatar className="h-9 w-9 border border-red-200">
                                                         <AvatarFallback className="bg-red-100 text-red-600 font-bold">{child.child_first_name[0]}</AvatarFallback>
                                                     </Avatar>
                                                     <div>
-                                                        <p className="font-black text-sm uppercase tracking-tight">{child.child_first_name} {child.child_last_name}</p>
-                                                        <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">
+                                                        <p className="font-black text-sm uppercase tracking-tight text-slate-900 dark:text-slate-100">{child.child_first_name} {child.child_last_name}</p>
+                                                        <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground mt-0.5">
                                                             Guardian: {child.guardian_name} {child.zone ? `| ${child.zone.name}` : ''}
                                                         </p>
                                                     </div>
                                                 </div>
                                                 <div className="flex items-center gap-4">
-                                                    <Badge variant="destructive" className="bg-red-600 shadow-sm font-black uppercase text-[8px] tracking-widest px-2 py-0.5">
+                                                    <Badge variant="destructive" className="bg-red-600 shadow-sm font-black uppercase text-[8px] tracking-widest px-2 py-0.5 rounded-lg">
                                                         {child.latest_assessment?.wfa_status || 'SAM Flagged'}
                                                     </Badge>
                                                     <Link href={`/admin/bcpc/cases/${child.id}`}>
-                                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
+                                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-emerald-600 rounded-xl hover:bg-emerald-500/10">
                                                             <ChevronRight className="h-4 w-4" />
                                                         </Button>
                                                     </Link>
@@ -188,8 +187,8 @@ export default function BcpcDashboard({
                         </Card>
 
                         {/* Active SFP progress */}
-                        <Card className="border-l-4 border-l-emerald-500">
-                            <CardHeader className="pb-3 border-b border-border/50 bg-emerald-50/10">
+                        <Card className="border-l-4 border-l-emerald-500 rounded-xl shadow-sm">
+                            <CardHeader className="pb-3 border-b border-border/50 bg-emerald-500/5">
                                 <CardTitle className="text-xs font-black uppercase tracking-widest flex items-center text-emerald-700 dark:text-emerald-400">
                                     <HeartHandshake className="h-4 w-4 mr-2 text-emerald-600" />
                                     Active Feeding Program Progress (SFP)
@@ -205,39 +204,56 @@ export default function BcpcDashboard({
                                     </div>
                                 ) : (
                                     <div className="divide-y divide-border/50">
-                                        {activeSfp.map((child: any) => (
-                                            <div key={child.id} className="p-4 flex items-center justify-between hover:bg-muted/50 transition-colors">
-                                                <div className="flex items-center gap-3">
-                                                    <Avatar className="h-9 w-9 border border-emerald-200">
-                                                        <AvatarFallback className="bg-emerald-100 text-emerald-600 font-bold">{child.child_first_name[0]}</AvatarFallback>
-                                                    </Avatar>
-                                                    <div>
-                                                        <p className="font-black text-sm uppercase tracking-tight">{child.child_first_name} {child.child_last_name}</p>
-                                                        <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">
-                                                            Started: {child.sfp_start_date ? new Date(child.sfp_start_date).toLocaleDateString() : 'N/A'} {child.bns_name ? `| BNS: ${child.bns_name}` : ''}
-                                                        </p>
+                                        {activeSfp.map((child: any) => {
+                                            const daysElapsed = child.sfp_start_date ? Math.min(90, Math.floor((new Date().getTime() - new Date(child.sfp_start_date).getTime()) / (1000 * 60 * 60 * 24))) : 0;
+                                            const percent = Math.min(100, Math.max(0, (daysElapsed / 90) * 100));
+
+                                            return (
+                                                <div key={child.id} className="p-4 flex items-center justify-between hover:bg-muted/30 transition-colors">
+                                                    <div className="flex items-center gap-3">
+                                                        <Avatar className="h-9 w-9 border border-emerald-200">
+                                                            <AvatarFallback className="bg-emerald-100 text-emerald-600 font-bold">{child.child_first_name[0]}</AvatarFallback>
+                                                        </Avatar>
+                                                        <div>
+                                                            <p className="font-black text-sm uppercase tracking-tight text-slate-900 dark:text-slate-100">{child.child_first_name} {child.child_last_name}</p>
+                                                            <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground mt-0.5">
+                                                                Started: {child.sfp_start_date ? new Date(child.sfp_start_date).toLocaleDateString() : 'N/A'} {child.bns_name ? `| Scholar: ${child.bns_name}` : ''}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    {/* Progress bar alignment */}
+                                                    <div className="flex items-center gap-6">
+                                                        <div className="w-24 text-right hidden sm:block">
+                                                            <div className="flex justify-between items-center text-[8px] font-black uppercase text-emerald-600 mb-0.5">
+                                                                <span>Progress</span>
+                                                                <span>Day {daysElapsed}/90</span>
+                                                            </div>
+                                                            <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-1.5 overflow-hidden border">
+                                                                <div className="bg-emerald-500 h-full rounded-full" style={{ width: `${percent}%` }}></div>
+                                                            </div>
+                                                        </div>
+
+                                                        <Badge className="bg-emerald-600 text-white font-black uppercase text-[8px] tracking-widest px-2 py-0.5 rounded-lg">
+                                                            Day {child.latest_assessment?.sfp_day_number || 'Intake'}
+                                                        </Badge>
+                                                        <Link href={`/admin/bcpc/cases/${child.id}`}>
+                                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-emerald-600 rounded-xl hover:bg-emerald-500/10">
+                                                                <ChevronRight className="h-4 w-4" />
+                                                            </Button>
+                                                        </Link>
                                                     </div>
                                                 </div>
-                                                <div className="flex items-center gap-4">
-                                                    <Badge className="bg-emerald-600 text-white font-black uppercase text-[8px] tracking-widest px-2 py-0.5">
-                                                        Day {child.latest_assessment?.sfp_day_number || 'Intake'}
-                                                    </Badge>
-                                                    <Link href={`/admin/bcpc/cases/${child.id}`}>
-                                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
-                                                            <ChevronRight className="h-4 w-4" />
-                                                        </Button>
-                                                    </Link>
-                                                </div>
-                                            </div>
-                                        ))}
+                                            );
+                                        })}
                                     </div>
                                 )}
                             </CardContent>
                         </Card>
 
                         {/* Overdue Check-ins */}
-                        <Card className="border-l-4 border-l-amber-500">
-                            <CardHeader className="pb-3 border-b border-border/50 bg-amber-50/10">
+                        <Card className="border-l-4 border-l-amber-500 rounded-xl shadow-sm">
+                            <CardHeader className="pb-3 border-b border-border/50 bg-amber-500/5">
                                 <CardTitle className="text-xs font-black uppercase tracking-widest flex items-center text-amber-600 dark:text-amber-400">
                                     <Clock className="h-4 w-4 mr-2 text-amber-500" />
                                     Overdue Re-Weighings Alert
@@ -257,24 +273,24 @@ export default function BcpcDashboard({
                                             const lastDate = child.latest_assessment ? new Date(child.latest_assessment.date_of_weighing) : null;
                                             const daysOverdue = lastDate ? Math.floor((new Date().getTime() - lastDate.getTime()) / (1000 * 3600 * 24)) : 0;
                                             return (
-                                                <div key={child.id} className="p-4 flex items-center justify-between hover:bg-muted/50 transition-colors">
+                                                <div key={child.id} className="p-4 flex items-center justify-between hover:bg-muted/30 transition-colors">
                                                     <div className="flex items-center gap-3">
                                                         <Avatar className="h-9 w-9 border border-amber-200">
                                                             <AvatarFallback className="bg-amber-100 text-amber-600 font-bold">{child.child_first_name[0]}</AvatarFallback>
                                                         </Avatar>
                                                         <div>
-                                                            <p className="font-black text-sm uppercase tracking-tight">{child.child_first_name} {child.child_last_name}</p>
-                                                            <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">
+                                                            <p className="font-black text-sm uppercase tracking-tight text-slate-900 dark:text-slate-100">{child.child_first_name} {child.child_last_name}</p>
+                                                            <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground mt-0.5">
                                                                 Last Checked: {lastDate ? lastDate.toLocaleDateString() : 'N/A'} {child.bns_name ? `| Scholar: ${child.bns_name}` : ''}
                                                             </p>
                                                         </div>
                                                     </div>
                                                     <div className="flex items-center gap-4">
-                                                        <Badge variant="outline" className="text-amber-600 border-amber-300 bg-amber-50 font-black text-[8px] tracking-widest px-2 py-0.5">
+                                                        <Badge variant="outline" className="text-amber-600 border-amber-300 bg-amber-50 font-black text-[8px] tracking-widest px-2 py-0.5 rounded-lg">
                                                             {daysOverdue} Days Ago
                                                         </Badge>
                                                         <Link href={`/admin/bcpc/cases/${child.id}`}>
-                                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
+                                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-emerald-600 rounded-xl hover:bg-emerald-500/10">
                                                                 <ChevronRight className="h-4 w-4" />
                                                             </Button>
                                                         </Link>
@@ -292,7 +308,7 @@ export default function BcpcDashboard({
                     <div className="flex flex-col gap-6">
 
                         {/* Barangay 183 Malnutrition Hotspots */}
-                        <Card className="border shadow-sm">
+                        <Card className="border shadow-sm rounded-xl overflow-hidden">
                             <CardHeader className="pb-3 border-b bg-muted/20">
                                 <CardTitle className="text-xs font-black uppercase tracking-widest flex items-center">
                                     <MapPin className="h-4 w-4 mr-2 text-emerald-600" />
@@ -312,24 +328,24 @@ export default function BcpcDashboard({
                                         {zonesBreakdown.map((zone: any) => (
                                             <div key={zone.id} className="p-4 flex items-center justify-between hover:bg-muted/30 transition-colors">
                                                 <div>
-                                                    <p className="font-black text-sm uppercase tracking-tight">{zone.name}</p>
+                                                    <p className="font-black text-sm uppercase tracking-tight text-slate-800 dark:text-slate-200">{zone.name}</p>
                                                     <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400 mt-0.5">
                                                         Total Checked: {zone.total_monitored}
                                                     </p>
                                                 </div>
                                                 <div className="flex items-center gap-2">
                                                     {zone.sam > 0 && (
-                                                        <Badge variant="destructive" className="font-black text-[9px] px-1.5 h-5 flex items-center justify-center bg-red-600">
+                                                        <Badge variant="destructive" className="font-black text-[9px] px-1.5 h-5 flex items-center justify-center bg-red-600 rounded-lg">
                                                             {zone.sam} SAM
                                                         </Badge>
                                                     )}
                                                     {zone.mam > 0 && (
-                                                        <Badge className="font-black text-[9px] px-1.5 h-5 flex items-center justify-center bg-amber-500 text-white hover:bg-amber-600">
+                                                        <Badge className="font-black text-[9px] px-1.5 h-5 flex items-center justify-center bg-amber-500 text-white hover:bg-amber-600 rounded-lg">
                                                             {zone.mam} MAM
                                                         </Badge>
                                                     )}
                                                     {zone.sam === 0 && zone.mam === 0 && (
-                                                        <Badge variant="outline" className="text-emerald-600 border-emerald-200 bg-emerald-50 font-black text-[9px]">
+                                                        <Badge variant="outline" className="text-emerald-600 border-emerald-200 bg-emerald-50 font-black text-[9px] rounded-lg">
                                                             0 Cases
                                                         </Badge>
                                                     )}
@@ -342,7 +358,7 @@ export default function BcpcDashboard({
                         </Card>
 
                         {/* Birthdays */}
-                        <Card className="border shadow-sm overflow-hidden flex flex-col">
+                        <Card className="border shadow-sm overflow-hidden flex flex-col rounded-xl">
                             <CardHeader className="pb-3 border-b bg-muted/20">
                                 <CardTitle className="text-xs font-black uppercase tracking-widest flex items-center">
                                     <Cake className="h-4 w-4 mr-2 text-emerald-600" />
@@ -365,11 +381,11 @@ export default function BcpcDashboard({
                                                     <span className="text-sm leading-none mt-1">{new Date(child.date_of_birth).getDate()}</span>
                                                 </div>
                                                 <div className="flex-1">
-                                                    <p className="font-black text-sm uppercase tracking-tight">{child.child_first_name} {child.child_last_name}</p>
+                                                    <p className="font-black text-sm uppercase tracking-tight text-slate-800 dark:text-slate-200">{child.child_first_name} {child.child_last_name}</p>
                                                     <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground mt-0.5">Turns {new Date().getFullYear() - new Date(child.date_of_birth).getFullYear()} Yrs Old</p>
                                                 </div>
                                                 <Link href={`/admin/bcpc/cases/${child.id}`}>
-                                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-100">
+                                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-100 rounded-xl">
                                                         <ChevronRight className="h-4 w-4" />
                                                     </Button>
                                                 </Link>
