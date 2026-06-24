@@ -24,6 +24,12 @@ export default function Edit({ application, organization }: { application: any, 
         form_data: initialFormData,
     });
 
+    const activeFieldIds = new Set((org.form_schema || []).map((f: any) => f.id));
+    const legacyFields = Object.entries(data.form_data).filter(([key]) => {
+        if (key === 'fullname' || key === 'address' || key === 'email') return false;
+        return !activeFieldIds.has(key);
+    });
+
     const handleDynamicInputChange = (fieldId: string, value: any) => {
         setData('form_data', {
             ...data.form_data,
@@ -183,6 +189,28 @@ export default function Edit({ application, organization }: { application: any, 
                                             </div>
                                         ) : (
                                             <p className="italic text-neutral-400 text-sm py-4">No additional organizational questions recorded.</p>
+                                        )}
+
+                                        {legacyFields.length > 0 && (
+                                            <div className="mt-6 border-t border-dashed border-neutral-200 dark:border-neutral-800 pt-6">
+                                                <h3 className="text-xs font-black uppercase tracking-widest text-amber-600 dark:text-amber-500 mb-4">
+                                                    Retired/Legacy Data Fields (Read-Only Archive)
+                                                </h3>
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-white dark:bg-neutral-950/50 p-4 rounded-xl border border-dashed border-neutral-200 dark:border-neutral-800">
+                                                    {legacyFields.map(([key, value]: [string, any]) => (
+                                                        <div key={key} className="space-y-1.5">
+                                                            <Label className="text-[10px] font-bold uppercase tracking-wider text-neutral-400">
+                                                                {key.replace(/_/g, ' ')}
+                                                            </Label>
+                                                            <Input
+                                                                value={Array.isArray(value) ? value.join(', ') : value || ''}
+                                                                disabled
+                                                                className="bg-neutral-50 dark:bg-neutral-950 text-neutral-500 font-medium shadow-none cursor-not-allowed border-neutral-200 dark:border-neutral-800"
+                                                            />
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
                                         )}
                                     </div>
                                 </div>

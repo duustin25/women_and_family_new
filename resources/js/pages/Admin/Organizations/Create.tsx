@@ -1,20 +1,22 @@
-import { Head, useForm, Link } from '@inertiajs/react';
+import { Head, useForm, Link, router } from '@inertiajs/react';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Save, LayoutTemplate, Settings, FileText, Loader2 } from "lucide-react";
 import AppLayout from '@/layouts/app-layout';
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import LivePaperPreview from "@/components/Admin/LivePaperPreview";
 import OrganizationSettings from "@/components/Admin/OrganizationSettings";
 import FormBuilder from "@/components/Admin/FormBuilder";
 import PrintSettingsBuilder from "@/components/Admin/PrintSettingsBuilder";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
+import { useUnsavedChanges } from '@/hooks/use-unsaved-changes';
+import { UnsavedChangesDialog } from '@/components/Admin/UnsavedChangesDialog';
 
 export default function Create({ users }: { users: any[] }) {
     const [activeTab, setActiveTab] = useState('settings');
 
-    const { data, setData, post, processing, errors } = useForm({
+    const { data, setData, post, processing, errors, isDirty, reset } = useForm({
         name: '',
         description: '',
         president_name: '',
@@ -37,8 +39,43 @@ export default function Create({ users }: { users: any[] }) {
         },
     });
 
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
+    const initialSchema = [
+        { id: 'fullname', type: 'text', label: 'Full Name', required: true, width: 'w-full', layout: 'block', is_core: true },
+        { id: 'address', type: 'text', label: 'Address', required: true, width: 'w-full', layout: 'block', is_core: true },
+        { id: 'contact_number', type: 'number', label: 'Contact Number', required: true, width: 'w-full' },
+        { id: 'email', type: 'email', label: 'Email Address', required: false, width: 'w-full' },
+    ];
+
+    const initialSchemaStr = useRef(JSON.stringify(initialSchema));
+    const schemaIsDirty = JSON.stringify(data.form_schema) !== initialSchemaStr.current;
+    const formIsDirty = isDirty || schemaIsDirty;
+
+    const {
+        showWarningModal,
+        setShowWarningModal,
+        handleSaveAndLeave,
+        handleDiscardChanges,
+        handleStayOnPage,
+        bypassWarningRef
+    } = useUnsavedChanges({
+        isDirty: formIsDirty,
+        onReset: reset,
+        onSave: (url) => {
+            post('/admin/organizations', {
+                forceFormData: true,
+                preserveScroll: true,
+                onSuccess: () => {
+                    if (url) {
+                        bypassWarningRef.current = true;
+                        router.visit(url);
+                    }
+                }
+            });
+        }
+    });
+
+    const handleSubmit = (e?: React.FormEvent | React.MouseEvent) => {
+        if (e) e.preventDefault();
         post('/admin/organizations', {
             forceFormData: true,
             preserveScroll: true,
@@ -48,6 +85,15 @@ export default function Create({ users }: { users: any[] }) {
     return (
         <AppLayout breadcrumbs={[{ title: 'Dashboard', href: '/admin/dashboard' }, { title: 'Organizations', href: '/admin/organizations' }, { title: 'Create Profile', href: '#' }]}>
             <Head title="Create Organization" />
+
+            <UnsavedChangesDialog
+                open={showWarningModal}
+                onOpenChange={setShowWarningModal}
+                itemName="New Organization Profile"
+                onSaveAndLeave={handleSaveAndLeave}
+                onDiscardChanges={handleDiscardChanges}
+                onStayOnPage={handleStayOnPage}
+            />
 
             <div className="p-6 max-w-[1600px] mx-auto space-y-6">
                 {/* Header */}

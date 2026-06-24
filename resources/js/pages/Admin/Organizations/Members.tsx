@@ -52,25 +52,48 @@ export default function Members({ organization, members, filters }: PageProps) {
 
     const dynamicColumns = useMemo(() => {
         const keys = new Set<string>();
+
+        // 1. Gather all fields defined in the current form schema (Active Fields)
+        const schemaRaw = org.form_schema;
+        let schemaFields: any[] = [];
+        try {
+            schemaFields = typeof schemaRaw === 'string' ? JSON.parse(schemaRaw) : schemaRaw || [];
+        } catch (e) { }
+
+        if (Array.isArray(schemaFields)) {
+            schemaFields.forEach((field: any) => {
+                // Exclude core static columns (fullname, address) and section dividers
+                if (field.id && !field.is_core && field.type !== 'section' && field.id !== 'fullname' && field.id !== 'address') {
+                    keys.add(field.id);
+                }
+            });
+        }
+
+        // 2. Gather all fields from members' historical data (Legacy/Retired Fields)
         membersData.forEach((member: any) => {
             let formData = typeof member.form_data === 'string'
                 ? JSON.parse(member.form_data)
                 : member.form_data || {};
 
             Object.keys(formData).forEach(key => {
-                // exclude already rendered static or core columns
                 if (key !== 'fullname' && key !== 'address') {
                     keys.add(key);
                 }
             });
         });
+
         return Array.from(keys);
-    }, [membersData]);
+    }, [membersData, org.form_schema]);
 
     const getFieldLabel = (fieldId: string) => {
         if (!org.form_schema || !Array.isArray(org.form_schema)) return fieldId.replace(/_/g, ' ').toUpperCase();
         const field = org.form_schema.find((f: any) => f.id === fieldId);
         return field ? field.label : fieldId.replace(/_/g, ' ').toUpperCase();
+    };
+
+    const isFieldRetired = (fieldId: string) => {
+        if (!org.form_schema || !Array.isArray(org.form_schema)) return false;
+        return !org.form_schema.some((f: any) => f.id === fieldId);
     };
 
     const handleSearch = (term: string) => {
@@ -169,11 +192,20 @@ export default function Members({ organization, members, filters }: PageProps) {
                                         <th className={thClasses} onClick={() => handleSort('address')}>
                                             Registered Address <SortIcon column="address" />
                                         </th>
-                                        {dynamicColumns.map(col => (
-                                            <th key={col} className="p-3 px-4 border-r border-neutral-200 dark:border-neutral-800 whitespace-nowrap" title={getFieldLabel(col)} onClick={() => handleSort(col)}>
-                                                {getFieldLabel(col)} <SortIcon column={col} />
-                                            </th>
-                                        ))}
+                                        {dynamicColumns.map(col => {
+                                            const retired = isFieldRetired(col);
+                                            const label = getFieldLabel(col);
+                                            return (
+                                                <th
+                                                    key={col}
+                                                    className={`p-3 px-4 border-r border-neutral-200 dark:border-neutral-800 whitespace-nowrap cursor-pointer hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors ${retired ? 'text-amber-600 dark:text-amber-400 bg-amber-500/[0.03]' : ''}`}
+                                                    title={retired ? `${label} (This question has been deleted from form builder)` : label}
+                                                    onClick={() => handleSort(col)}
+                                                >
+                                                    {label} {retired && <span className="text-[8px] font-black uppercase text-amber-600 bg-amber-100 dark:bg-amber-950/40 px-1 py-0.5 rounded ml-1 tracking-tighter">Retired</span>} <SortIcon column={col} />
+                                                </th>
+                                            );
+                                        })}
                                         <th className={thClasses} onClick={() => handleSort('actioned_at')}>
                                             Approval Date <SortIcon column="actioned_at" />
                                         </th>
@@ -209,9 +241,10 @@ export default function Members({ organization, members, filters }: PageProps) {
                                                     let subData = typeof member.form_data === 'string' ? JSON.parse(member.form_data) : (member.form_data || {});
                                                     let val = subData[col];
                                                     let displayVal = Array.isArray(val) ? val.join(', ') : (typeof val === 'object' && val !== null ? JSON.stringify(val) : val);
+                                                    const retired = isFieldRetired(col);
                                                     return (
-                                                        <td key={col} className={tdClasses} title={displayVal || ''}>
-                                                            <span className="truncate block opacity-80">{displayVal || '—'}</span>
+                                                        <td key={col} className={`${tdClasses} ${retired ? 'text-neutral-400 dark:text-neutral-500 bg-amber-500/[0.01] italic' : 'opacity-80'}`} title={displayVal || ''}>
+                                                            <span className="truncate block">{displayVal || '—'}</span>
                                                         </td>
                                                     );
                                                 })}

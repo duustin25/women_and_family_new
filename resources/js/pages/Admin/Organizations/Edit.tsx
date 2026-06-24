@@ -2,7 +2,7 @@ import { Head, useForm, Link, router } from '@inertiajs/react';
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, LayoutTemplate, Settings, FileText, Save, Loader2 } from "lucide-react";
 import AppLayout from '@/layouts/app-layout';
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import LivePaperPreview from "@/components/Admin/LivePaperPreview";
 import OrganizationSettings from "@/components/Admin/OrganizationSettings";
 import FormBuilder from "@/components/Admin/FormBuilder";
@@ -62,6 +62,11 @@ export default function Edit({ organization, users }: { organization: any, users
         });
     };
 
+    // Use string serialization to ensure deep tracking of nested schema builder changes
+    const initialSchemaStr = useRef(JSON.stringify(ensureCoreFields(record?.form_schema || [])));
+    const schemaIsDirty = JSON.stringify(data.form_schema) !== initialSchemaStr.current;
+    const formIsDirty = isDirty || schemaIsDirty;
+
     const {
         showWarningModal,
         setShowWarningModal,
@@ -70,7 +75,7 @@ export default function Edit({ organization, users }: { organization: any, users
         handleStayOnPage,
         bypassWarningRef
     } = useUnsavedChanges({
-        isDirty,
+        isDirty: formIsDirty,
         onReset: reset,
         onSave: (url) => {
             post(`/admin/organizations/${record.slug}`, {

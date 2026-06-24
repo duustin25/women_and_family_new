@@ -127,42 +127,75 @@ export default function ReviewData({ application, organization }: { application:
                         <div className="lg:col-span-2 space-y-6">
 
                             {/* Dynamic Requirements (Form Data) */}
-                            {Object.keys(formData).length > 2 && (
-                                <div className="bg-white dark:bg-neutral-900 rounded-xl shadow-sm border border-neutral-200 dark:border-neutral-800 overflow-hidden">
-                                    <div className="p-4 border-b border-neutral-100 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-900/50 flex justify-between items-center">
-                                        <h2 className="text-xs font-black uppercase tracking-widest text-neutral-700 dark:text-neutral-300 flex items-center">
-                                            Data Forms
-                                        </h2>
+                            {Object.keys(formData).length > 2 && (() => {
+                                const schemaRaw = organization?.data?.form_schema || organization?.form_schema;
+                                let schemaFields: any[] = [];
+                                try {
+                                    schemaFields = typeof schemaRaw === 'string' ? JSON.parse(schemaRaw) : schemaRaw || [];
+                                } catch (e) { }
+                                const activeFieldIds = new Set(Array.isArray(schemaFields) ? schemaFields.map((f: any) => f.id) : []);
+
+                                const activeEntries = Object.entries(formData).filter(([key]) => {
+                                    if (key === 'fullname' || key === 'address' || key === 'email') return false;
+                                    return activeFieldIds.has(key);
+                                });
+
+                                const legacyEntries = Object.entries(formData).filter(([key]) => {
+                                    if (key === 'fullname' || key === 'address' || key === 'email') return false;
+                                    return !activeFieldIds.has(key);
+                                });
+
+                                // Helper to get true label from schema
+                                const getFieldLabel = (keyId: string) => {
+                                    if (Array.isArray(schemaFields)) {
+                                        const field = schemaFields.find((f: any) => f.id === keyId);
+                                        return field ? field.label : keyId.replace(/_/g, ' ');
+                                    }
+                                    return keyId.replace(/_/g, ' ');
+                                };
+
+                                return (
+                                    <div className="space-y-6">
+                                        {/* Active Form Fields */}
+                                        {activeEntries.length > 0 && (
+                                            <div className="bg-white dark:bg-neutral-900 rounded-xl shadow-sm border border-neutral-200 dark:border-neutral-800 overflow-hidden">
+                                                <div className="p-4 border-b border-neutral-100 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-900/50">
+                                                    <h2 className="text-xs font-black uppercase tracking-widest text-neutral-700 dark:text-neutral-300">
+                                                        Active Data Questionnaire
+                                                    </h2>
+                                                </div>
+                                                <div className="p-2 grid grid-cols-1 sm:grid-cols-2 gap-x-4">
+                                                    {activeEntries.map(([key, value]: [string, any]) => {
+                                                        const formattedLabel = getFieldLabel(key);
+                                                        const formattedValue = Array.isArray(value) ? value.join(', ') :
+                                                            typeof value === 'object' ? JSON.stringify(value) : value;
+                                                        return <DataRow key={key} label={formattedLabel} value={formattedValue} />;
+                                                    })}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Retired/Legacy Data Fields */}
+                                        {legacyEntries.length > 0 && (
+                                            <div className="bg-white dark:bg-neutral-900 rounded-xl shadow-sm border border-dashed border-neutral-300 dark:border-neutral-800 overflow-hidden">
+                                                <div className="p-4 border-b border-dashed border-neutral-200 dark:border-neutral-800 bg-amber-50/20 dark:bg-amber-950/10">
+                                                    <h2 className="text-xs font-black uppercase tracking-widest text-amber-600 dark:text-amber-400">
+                                                        Retired/Legacy Data Fields (Historical Record)
+                                                    </h2>
+                                                </div>
+                                                <div className="p-2 grid grid-cols-1 sm:grid-cols-2 gap-x-4">
+                                                    {legacyEntries.map(([key, value]: [string, any]) => {
+                                                        const formattedLabel = key.replace(/_/g, ' ');
+                                                        const formattedValue = Array.isArray(value) ? value.join(', ') :
+                                                            typeof value === 'object' ? JSON.stringify(value) : value;
+                                                        return <DataRow key={key} label={formattedLabel} value={formattedValue} />;
+                                                    })}
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
-                                    {/* This is where the dynamic data (JSON data from organizations) is displayed */}
-                                    <div className="p-2 grid grid-cols-1 sm:grid-cols-2 gap-x-4">
-                                        {Object.entries(formData).map(([key, value]: [string, any]) => {
-                                            if (key === 'fullname' || key === 'address' || key === 'email') return null; // Skip redundant
-
-                                            // Helper to get true label from schema
-                                            const getFieldLabel = (keyId: string) => {
-                                                const schemaRaw = organization?.data?.form_schema || organization?.form_schema;
-                                                if (!schemaRaw) return keyId.replace(/_/g, ' ');
-                                                try {
-                                                    const schema = typeof schemaRaw === 'string' ? JSON.parse(schemaRaw) : schemaRaw;
-                                                    if (Array.isArray(schema)) {
-                                                        const field = schema.find((f: any) => f.id === keyId);
-                                                        return field ? field.label : keyId.replace(/_/g, ' ');
-                                                    }
-                                                } catch (e) { }
-                                                return keyId.replace(/_/g, ' ');
-                                            };
-
-                                            const formattedLabel = getFieldLabel(key);
-                                            const formattedValue = Array.isArray(value) ? value.join(', ') :
-                                                typeof value === 'object' ? JSON.stringify(value) :
-                                                    value;
-
-                                            return <DataRow key={key} label={formattedLabel} value={formattedValue} />;
-                                        })}
-                                    </div>
-                                </div>
-                            )}
+                                );
+                            })()}
 
 
                         </div>
