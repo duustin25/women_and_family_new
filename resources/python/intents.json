@@ -214,6 +214,24 @@
             ]
         },
         {
+            "tag": "case_status_inquiry",
+            "patterns": [
+                "Ano ang status ng kaso ko?",
+                "My case status",
+                "Kumusta ang report ko?",
+                "Maria dela Cruz case",
+                "Case update",
+                "Check my report",
+                "Who reported the case?",
+                "Status of complaint",
+                "Update sa reklamo ko",
+                "Sino ang nagreklamo?"
+            ],
+            "responses": [
+                "To ensure strict confidentiality and comply with the Data Privacy Act of 2012, case statuses and private records cannot be accessed through this chatbot. Please log in to your secure account dashboard, or visit the Barangay 183 VAW Desk in person with a valid ID for case updates. (Para sa kaligtasan at privacy, hindi po natin maibibigay ang status ng kaso rito. Mangyaring mag-log in sa inyong secure dashboard o bumisita sa Barangay 183 VAW Desk.)"
+            ]
+        },
+        {
             "tag": "irrelevant",
             "patterns": [
                 "Sinong nanalo sa basketball?",

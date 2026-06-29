@@ -151,5 +151,31 @@ This module tracks project proposals, budgets, and beneficiary targeting specifi
 
 * **Key Functionality:** Ties into `Organization` and `User` relations to track which group is sponsoring a proposal, streamlining the approval matrix from proposal phase through dispatching beneficiaries (`BeneficiaryDispatch.php`).
 
-## 7. Conclusion & System Defensibility
-The WFP Barangay Management system answers the complex operational needs of LGUs through a scalable architecture. By cleanly separating specific module logics (VAWC Risk algorithms, WHO Nutrition data types, JSON-casted dynamic membership schemas) while tying it all together with unified Audit Logging and structured Try-Catch fault tolerance, the codebase is secure, legally reliable, and built to professional enterprise standards.
+## 7. AI Chatbot (The Sentinel) Engine & Subprocess Bridge
+
+The AI chatbot module ("The Sentinel") employs Natural Language Processing (NLP) and Artificial Neural Networks (ANN) to classify user intents and provide automated responses or invoke dynamic backend data lookups.
+
+### Model Architecture & Training (`train.py`, `chat.py`)
+The model uses `scikit-learn`'s `MLPClassifier` trained on dynamic text patterns.
+
+```python
+# Multi-Layer Perceptron (MLP) architecture
+model = MLPClassifier(hidden_layer_sizes=(128, 64), max_iter=1000, activation='relu', solver='adam')
+model.fit(train_x, train_y)
+```
+
+- **Preprocessing:** Words are tokenized (`nltk.word_tokenize`) and lemmatized (`WordNetLemmatizer`). A Bag of Words (BoW) vector representing vocabulary frequencies is then constructed.
+- **Process Bridge:** Laravel initiates a Symfony Process executing Python to run inference locally:
+
+```php
+// app/Services/ChatbotService.php
+$process = new Process(['python', $scriptPath, $query]);
+$process->run();
+```
+
+- **Action Interception:** When the Python script detects a dynamic intent, it returns a tag (e.g., `ACTION_FETCH_ANNOUNCEMENTS`), causing the Laravel service to query the MySQL database dynamically.
+
+---
+
+## 8. Conclusion & System Defensibility
+The WFP Barangay Management system answers the complex operational needs of LGUs through a scalable architecture. By cleanly separating specific module logics (VAWC Risk algorithms, WHO Nutrition data types, JSON-casted dynamic membership schemas, local MLP-based AI chatbots) while tying it all together with unified Audit Logging and structured Try-Catch fault tolerance, the codebase is secure, legally reliable, and built to professional enterprise standards.

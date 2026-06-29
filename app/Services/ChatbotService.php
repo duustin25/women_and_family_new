@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Organization;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Symfony\Component\Process\Process;
 use Symfony\Component\Process\Exception\ProcessFailedException;
@@ -21,6 +22,12 @@ class ChatbotService
             // Handle environment where 'python' might be 'python3'
             $process = new Process(['python', $scriptPath, $query]);
             $process->run();
+
+            if (!$process->isSuccessful()) {
+                // Fallback to python3 if python failed (common on Linux production servers)
+                $process = new Process(['python3', $scriptPath, $query]);
+                $process->run();
+            }
 
             if (!$process->isSuccessful()) {
                 throw new ProcessFailedException($process);
@@ -45,7 +52,7 @@ class ChatbotService
             return ['response' => "I apologize, but I'm having trouble processing that right now. Please try again."];
 
         } catch (\Exception $e) {
-            \Log::error('Chatbot Python Error: ' . $e->getMessage());
+            Log::error('Chatbot Python Error: ' . $e->getMessage());
             return ['response' => $this->fallbackLogic($query)];
         }
     }
@@ -119,8 +126,8 @@ class ChatbotService
 
         $response = "Here are our Barangay Officials:\n\n";
         foreach ($officials as $official) {
-            // Adjust fields based on your Official model (e.g., name, position)
-            $response .= "{$official->official_name} - {$official->position}\n";
+            // Mapping to the 'name' attribute from organizational_members table
+            $response .= "{$official->name} - {$official->position}\n";
         }
 
         return ['response' => $response];

@@ -12,7 +12,8 @@
 4. **Phase 3: VAWC-RAVE Implementation & Lifecycle Narrative**
 5. **Phase 4: BCPC Nutrition Command Center & WHO Triage**
 6. **Phase 5: Automated Operation Lifecycle (Organization & GAD)**
-7. **Legal Alignment & Panelist Defense Q&A**
+7. **Phase 6: AI Chatbot (The Sentinel) Core & Neural Network Training**
+8. **Legal Alignment & Panelist Defense Q&A**
 
 ---
 
@@ -115,7 +116,26 @@ The system utilizes robust Queue-based background processing to prevent UI throt
 
 ---
 
-## 7. Legal Alignment & Panelist Defense Q&A
+## 7. Phase 6: AI Chatbot (The Sentinel) Core & Neural Network Training
+
+The system features **The Sentinel**, an AI-powered conversational assistant to guide citizens on RA 9262, barangay officials, emergency contacts, accredited organizations, and active announcements.
+
+### Algorithmic Execution: NLP Pipeline & MLP Neural Network Classifier
+1. **Preprocessing (NLP):**
+   * **Tokenization:** Breaks query into words using NLTK `word_tokenize`.
+   * **Lemmatization:** Reduces words to base root form using `WordNetLemmatizer` (e.g. "complained" $\rightarrow$ "complaint").
+   * **Bag of Words (BoW):** Creates a binary vector representing word occurrences.
+2. **Classification (Neural Network):**
+   * Processes vector input through a **Multi-Layer Perceptron (MLP) Classifier** (`sklearn.neural_network.MLPClassifier`) trained on `intents.json`.
+   * **Architecture:** Two hidden layers `(128, 64)`, `ReLU` activation, and `Adam` solver optimization.
+   * **Softmax Threshold:** Only proceeds if the prediction confidence $> 0.25$ to handle out-of-scope queries safely.
+3. **Hybrid Dynamic Action Mapping:**
+   * If the classified intent requires live data, the Python script returns an Action Tag (e.g., `ACTION_FETCH_ANNOUNCEMENTS`).
+   * Laravel's `ChatbotService` catches the tag and runs live Eloquent queries on MySQL database records (e.g. latest 3 announcements, active barangay officials) to return real-time updates.
+
+---
+
+## 8. Legal Alignment & Panelist Defense Q&A
 
 **Crucial Defense Statement:** *"This system transforms the Barangay VAW Desk from a reactive record-keeping office into a proactive protective service through algorithmic triage and legal compliance monitoring."*
 
