@@ -305,10 +305,14 @@ class ChatbotService
                 return ['response' => $response];
 
             case 'ACTION_FETCH_OFFICIALS':
-                $officials = \App\Models\OrganizationalMember::where('is_active', true)->orderBy('display_order')->get();
+                $officials = \App\Models\OrganizationalMember::with('user')
+                    ->where('is_active', true)
+                    ->orderBy('display_order')
+                    ->get();
                 $response = "Here are our Barangay Officials:\n\n";
                 foreach ($officials as $official) {
-                    $response .= "{$official->name} - {$official->position}\n";
+                    $name = $official->name ?: ($official->user ? $official->user->name : 'Unnamed');
+                    $response .= "• {$name} - {$official->position}\n";
                 }
                 return ['response' => $response];
 

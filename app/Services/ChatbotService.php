@@ -116,7 +116,8 @@ class ChatbotService
 
     private function fetchOfficials(): array
     {
-        $officials = \App\Models\OrganizationalMember::where('is_active', true)
+        $officials = \App\Models\OrganizationalMember::with('user')
+            ->where('is_active', true)
             ->orderBy('display_order')
             ->get();
 
@@ -126,8 +127,9 @@ class ChatbotService
 
         $response = "Here are our Barangay Officials:\n\n";
         foreach ($officials as $official) {
-            // Mapping to the 'name' attribute from organizational_members table
-            $response .= "{$official->name} - {$official->position}\n";
+            // Fallback to linked user account name if the name column is null (normalized database design)
+            $name = $official->name ?: ($official->user ? $official->user->name : 'Unnamed');
+            $response .= "• {$name} - {$official->position}\n";
         }
 
         return ['response' => $response];
