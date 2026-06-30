@@ -15,6 +15,7 @@ This master documentation details the **Why, How, and What** of the Barangay 183
    * E. React Frontend Component (`Chatbot.tsx`)
 3. **Data Security, Privacy Boundary & DPA Compliance**
 4. **Academic Recommendations (Chapter 5 Future Scope)**
+5. **Chatbot Training Corpus & The "Self-Learning" Question (Defense Q&A)**
 
 ---
 
@@ -428,3 +429,35 @@ During your capstone defense, propose these upgrades as your system's planned **
 1. **FastAPI Microservice Integration**: To eliminate the latency of booting python packages for every PHP execution, transition the Python scripts to a persistent, background FastAPI web application, reducing chatbot response latency from 800ms to <30ms.
 2. **Audio/Voice Dictation Integration**: For citizens with lower digital literacy, integrate browser-based Web Speech API into the frontend, allowing voice dictation.
 3. **Session-Level Context Memory**: Maintain conversational memory inside PHP Session/React state so the MLP classifier can keep track of pronouns (e.g. "it", "them") across dialogue turns.
+
+---
+
+## 5. Chatbot Training Corpus & The "Self-Learning" Question (Defense Q&A)
+
+To help you defend your capstone project against panel questions regarding how the chatbot is updated, what it has been trained on, and whether it "self-learns", refer to the structured details below:
+
+### 🎓 What has the AI Chatbot been trained on?
+The chatbot classifies user input using the training dictionary in [intents.json](file:///c:/Users/djemp/Herd/wfp-system_captsone/resources/python/intents.json). So far, it has been trained on:
+*   **Greetings & Goodbyes (`greeting`, `goodbye`)**: Polite conversational greetings in both Tagalog (e.g., *"Magandang umaga"*, *"Tao po"*) and English.
+*   **VAWC Case Filing (`vawc_filing`)**: Guidance on how to file a VAWC case.
+*   **BCPC & Child Protection (`bcpc_filing`)**: Child protection reports and child nutrition monitoring (e-OPT Plus / Operation Timbang).
+*   **General Reports (`general_report_inquiry`)**: Vague reporting requests (e.g., *"Paano magreport?"*) which prompt clarifying choices (Quick Replies for VAWC or BCPC).
+*   **GAD Initiatives (`gad_initiatives`)**: General inquiries regarding Gender and Development programs.
+*   **Barangay Officials (`officials`)**: Triggers database query mapping (`ACTION_FETCH_OFFICIALS`) to dynamically list active officials.
+*   **Laws Info (`laws_info`)**: Basic overview of relevant laws (RA 9262, RA 7610, RA 11313).
+*   **Organizations (`organizations_general`, `organization_info`)**: Fetches accredited community organizations and details their requirements.
+*   **Announcements (`announcements`)**: Triggers dynamic database queries (`ACTION_FETCH_ANNOUNCEMENTS`) for the latest announcements.
+*   **Emergency Contact Hotline (`emergency`, `contact_numbers`)**: Important numbers like 911 and child protection centers.
+*   **Case Status Inquiries (`case_status_inquiry`)**: Specifically trained to block status requests on sensitive reports to satisfy **DPA 2012 compliance**, redirecting users to secure dashboards or physical desks.
+*   **Irrelevant Queries (`irrelevant`)**: Polite fallbacks for off-topic questions (e.g., weather, sports).
+
+### 🤖 Does the Chatbot AI "Self-Learn" from human replies?
+**No. The chatbot does not automatically "self-learn" or update its weights live from human replies in real-time.** 
+
+During your defense, explain this design choice using the following key concepts:
+1. **Retrieval-Based MLP Classifier Architecture**: The chatbot utilizes a **Multi-Layer Perceptron (MLP) Neural Network** statically trained using [train.py](file:///c:/Users/djemp/Herd/wfp-system_captsone/resources/python/train.py). It classifies questions into preset categories. It does not update its parameters or vocabulary in real-time during conversations.
+2. **Why Live "Self-Learning" is Dangerous for Barangay Systems**:
+    *   **Data Poisoning Risk**: If the AI automatically learned from any message it received, a malicious user could feed the chatbot abusive, false, or incorrect legal information, and the chatbot would repeat it to others.
+    *   **Determinism & Compliance**: Legal advice and barangay resources must be 100% accurate and consistent. Live self-learning makes chatbot responses unpredictable.
+    *   **Data Privacy (DPA 2012)**: Sensitive case details input by citizens must never be incorporated into the AI model's training vocabulary, protecting survivor confidentiality.
+3. **How Learning Updates Actually Happen**: To teach the chatbot new queries, an admin must add the patterns/responses to [intents.json](file:///c:/Users/djemp/Herd/wfp-system_captsone/resources/python/intents.json) and execute [train.py](file:///c:/Users/djemp/Herd/wfp-system_captsone/resources/python/train.py) offline to generate a new model file `chatbot_model.pkl`. This is a controlled, supervised process.
