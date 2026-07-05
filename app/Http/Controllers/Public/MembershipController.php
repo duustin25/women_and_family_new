@@ -95,6 +95,7 @@ class MembershipController extends Controller
                         $fieldRules[] = 'boolean';
                         break;
                     case 'repeater':
+                    case 'table':
                         $fieldRules[] = 'nullable';
                         $fieldRules[] = 'array';
                         break;

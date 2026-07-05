@@ -102,39 +102,87 @@ export default function Print({ application, organization }: PrintProps) {
 
             {/* --- SIGNATURES --- */}
             <section className="mt-16 px-2 text-[11pt] break-inside-avoid">
-                <div className="flex justify-end mb-16">
-                    <div className="text-center w-64">
-                        <div className="h-8 border-b border-black mb-1 relative font-bold">
-                            {record.fullname}
+                {(!printSettings.signatures || printSettings.signatures.length === 0) ? (
+                    <>
+                        <div className="flex justify-end mb-16">
+                            <div className="text-center w-64">
+                                <div className="h-8 border-b border-black mb-1 relative font-bold">
+                                    {record.fullname}
+                                </div>
+                                <p className="italic text-[10pt]">Applicant's Signature over Printed name</p>
+                            </div>
                         </div>
-                        <p className="italic text-[10pt]">Applicant's Signature over Printed name</p>
-                    </div>
-                </div>
 
-                <div className="grid grid-cols-2 gap-12 mt-8">
-                    <div className="text-center">
-                        <p className="mb-8 italic text-left pl-8">Noted by:</p>
-                        <div className="border-b border-black w-3/4 mx-auto mb-1"></div>
-                        <p className="font-bold">Kagawad In-Charge</p>
-                    </div>
+                        <div className="grid grid-cols-2 gap-12 mt-8">
+                            <div className="text-center">
+                                <p className="mb-8 italic text-left pl-8">Noted by:</p>
+                                <div className="border-b border-black w-3/4 mx-auto mb-1"></div>
+                                <p className="font-bold">Kagawad In-Charge</p>
+                            </div>
 
-                    <div className="text-center">
-                        <p className="mb-8 italic text-left pl-8">Recommending Approval:</p>
-                        <div className="border-b border-black w-3/4 mx-auto mb-1 font-bold">
-                            {org.president_name || 'Kathleen Kaye D. Amarille'}
+                            <div className="text-center">
+                                <p className="mb-8 italic text-left pl-8">Recommending Approval:</p>
+                                <div className="border-b border-black w-3/4 mx-auto mb-1 font-bold">
+                                    {org.president_name || 'Kathleen Kaye D. Amarille'}
+                                </div>
+                                <p className="font-bold">{org.name} President</p>
+                            </div>
                         </div>
-                        <p className="font-bold">{org.name} President</p>
-                    </div>
-                </div>
 
-                <div className="text-center mt-12 w-1/2 mx-auto">
-                    <p className="mb-8 italic">Approved by:</p>
-                    <div className="border-b border-black w-full mb-1 font-bold uppercase">
-                        Gerald John M. Sobrevega
+                        <div className="text-center mt-12 w-1/2 mx-auto">
+                            <p className="mb-8 italic">Approved by:</p>
+                            <div className="border-b border-black w-full mb-1 font-bold uppercase">
+                                Gerald John M. Sobrevega
+                            </div>
+                            <p className="font-bold">BARANGAY KAGAWAD</p>
+                            <p className="text-[10pt]">Committee Head, Women and Family</p>
+                        </div>
+                    </>
+                ) : (
+                    <div className="space-y-8">
+                        {printSettings.signatures.map((row: any, rIdx: number) => {
+                            const colsCount = row.columns?.length || 1;
+                            return (
+                                <div 
+                                    key={rIdx} 
+                                    className={`grid gap-12 text-center items-end ${
+                                        colsCount === 1 ? 'grid-cols-1 w-1/2 mx-auto' : 
+                                        colsCount === 2 ? 'grid-cols-2' : 
+                                        colsCount === 3 ? 'grid-cols-3' : 'grid-cols-4'
+                                    }`}
+                                >
+                                    {row.columns?.map((col: any, cIdx: number) => {
+                                        let substitutedName = col.name || '';
+                                        if (substitutedName.includes('{applicant_name}')) {
+                                            substitutedName = substitutedName.replace('{applicant_name}', record?.fullname || 'Applicant Name');
+                                        }
+                                        if (substitutedName.includes('{president_name}')) {
+                                            substitutedName = substitutedName.replace('{president_name}', org.president_name || 'President Name');
+                                        }
+                                        if (substitutedName.includes('{organization_name}')) {
+                                            substitutedName = substitutedName.replace('{organization_name}', org.name || 'Organization');
+                                        }
+
+                                        let substitutedLabel = col.label || '';
+                                        if (substitutedLabel.includes('{organization_name}')) {
+                                            substitutedLabel = substitutedLabel.replace('{organization_name}', org.name || 'Organization');
+                                        }
+
+                                        return (
+                                            <div key={cIdx} className="text-center flex flex-col justify-end min-h-[3.5rem]">
+                                                {col.title && <p className="text-[9pt] italic text-left pl-4 mb-4">{col.title}</p>}
+                                                <div className="border-b border-black w-full mb-1 font-bold min-h-[1.5rem]">
+                                                    {substitutedName}
+                                                </div>
+                                                <p className="font-bold text-[9pt] leading-tight uppercase whitespace-pre-line">{substitutedLabel}</p>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            );
+                        })}
                     </div>
-                    <p className="font-bold">BARANGAY KAGAWAD</p>
-                    <p className="text-[10pt]">Committee Head, Women and Family</p>
-                </div>
+                )}
             </section>
 
             <style>

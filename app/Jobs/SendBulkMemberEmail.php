@@ -23,9 +23,16 @@ class SendBulkMemberEmail implements ShouldQueue
     public int $tries = 3;
 
     /**
-     * The number of seconds the job can run before timing out.
+     * The number of seconds to wait before retrying on failure.
+     *
+     * @var array<int>
      */
-    public int $timeout = 120;
+    public array $backoff = [30, 60];
+
+    /**
+     * The maximum number of seconds the job may run before it is killed.
+     */
+    public int $timeout = 300;
 
     /**
      * Create a new job instance.
@@ -38,42 +45,84 @@ class SendBulkMemberEmail implements ShouldQueue
     ) {}
 
     /**
-     * Execute the job: Send the email to all eligible members.
+     * Execute the job: Send emails to all eligible members using chunked processing.
+     * Gmail SMTP handles high throughput reliably — no artificial delays needed.
      */
     public function handle(): void
     {
-        $query = Member::query()->whereNotNull('email');
+        $query = Member::query()
+            ->whereIn('status', ['Active', 'active'])
+            ->whereNotNull('email')
+            ->select(['id', 'email', 'fullname', 'organization_id']);
 
         // Scope to a specific organization if provided (President RBAC)
         if ($this->organizationId) {
             $query->where('organization_id', $this->organizationId);
         }
 
-        $members = $query->get();
+        $totalSent    = 0;
+        $totalFailed  = 0;
+        $communications = [];
 
-        set_time_limit(120); // Prevent PHP timeout in sync queue
+        // Chunk through members to avoid loading all records into memory at once
+        $query->chunk(50, function ($members) use (&$totalSent, &$totalFailed, &$communications) {
+            foreach ($members as $member) {
+                $status = 'Sent';
 
-        foreach ($members as $member) {
-            $status = 'Sent';
+                try {
+                    Mail::to($member->email)->send(new GeneralMessage($this->subject, $this->body));
+                    $totalSent++;
+                } catch (\Throwable $e) {
+                    $status = 'Failed';
+                    $totalFailed++;
+                    Log::error("BulkEmail failed for Member ID {$member->id} ({$member->email})", [
+                        'exception' => $e->getMessage(),
+                        'subject'   => $this->subject,
+                    ]);
+                }
 
-            try {
-                Mail::to($member->email)->send(new GeneralMessage($this->subject, $this->body));
-            } catch (\Throwable $e) {
-                $status = 'Failed';
-                Log::error("BulkEmail failed for member ID {$member->id}", ['exception' => $e]);
+                // Buffer audit log entries and insert in batches for performance
+                $communications[] = [
+                    'member_id'  => $member->id,
+                    'sent_by'    => $this->sentById,
+                    'subject'    => $this->subject,
+                    'body'       => $this->body,
+                    'type'       => 'Bulk',
+                    'status'     => $status,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ];
+
+                // Flush to database every 50 records
+                if (count($communications) >= 50) {
+                    MemberCommunication::insert($communications);
+                    $communications = [];
+                }
             }
+        });
 
-            // Single point of entry for database recording
-            MemberCommunication::create([
-                'member_id' => $member->id,
-                'sent_by'   => $this->sentById,
-                'subject'   => $this->subject,
-                'body'      => $this->body,
-                'type'      => 'Bulk',
-                'status'    => $status,
-            ]);
+        // Flush any remaining buffered communications
+        if (!empty($communications)) {
+            MemberCommunication::insert($communications);
         }
 
-        Log::info("Bulk email dispatched to {$members->count()} members.");
+        Log::info("Bulk Member email job completed.", [
+            'subject' => $this->subject,
+            'org_id'  => $this->organizationId ?? 'ALL',
+            'sent'    => $totalSent,
+            'failed'  => $totalFailed,
+        ]);
+    }
+
+    /**
+     * Handle a job failure after all retries are exhausted.
+     */
+    public function failed(\Throwable $exception): void
+    {
+        Log::critical("SendBulkMemberEmail job FAILED entirely.", [
+            'subject'   => $this->subject,
+            'org_id'    => $this->organizationId ?? 'ALL',
+            'exception' => $exception->getMessage(),
+        ]);
     }
 }

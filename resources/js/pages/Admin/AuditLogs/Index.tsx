@@ -1,12 +1,13 @@
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
-import { History, User, Search, FileText, Clock, Server } from 'lucide-react';
+import { History, User, Search, FileText, Clock, Server, Eye } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
-import { useState } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
+import { useState, useEffect } from 'react';
 
 interface AuditLogProps {
     logs: {
@@ -31,7 +32,25 @@ interface AuditLogProps {
 }
 
 export default function AuditLogs({ logs, filters }: AuditLogProps) {
-    const [searchQuery, setSearchQuery] = useState('');
+    const [searchQuery, setSearchQuery] = useState(filters.search || '');
+    const [selectedLog, setSelectedLog] = useState<any>(null);
+
+    useEffect(() => {
+        const timeoutId = setTimeout(() => {
+            if (searchQuery !== (filters.search || '')) {
+                router.get('/admin/audit-logs', { 
+                    ...filters, 
+                    search: searchQuery 
+                }, { 
+                    preserveState: true, 
+                    preserveScroll: true,
+                    replace: true
+                });
+            }
+        }, 400);
+
+        return () => clearTimeout(timeoutId);
+    }, [searchQuery]);
 
     const formatActionType = (action: string) => {
         const _action = action.toLowerCase();
@@ -48,11 +67,35 @@ export default function AuditLogs({ logs, filters }: AuditLogProps) {
 
     const getRecordIdentifier = (log: any) => {
         try {
+            const extractIdentifier = (item: any, type: string) => {
+                if (!item) return null;
+
+                if (item.case_number) return `Case #${item.case_number}`;
+                if (item.child_first_name) return `${item.child_first_name} ${item.child_last_name || ''}`.trim();
+                if (item.subject) return `Subj: ${item.subject}`;
+                if (item.title) return item.title;
+                if (item.first_name) return `${item.first_name} ${item.last_name || ''}`.trim();
+                if (item.name) return item.name;
+                
+                if (type) {
+                    if (type.includes('VawcCase')) return `VAWC Case Record`;
+                    if (type.includes('BcpcAssessment')) return `BCPC Assessment`;
+                    if (type.includes('VawcAssessment')) return `VAWC Assessment`;
+                    if (type.includes('VawcProtectionOrder')) return `Protection Order`;
+                    if (type.includes('VawcComplianceLog')) return `Compliance Log`;
+                    if (type.includes('VawcLegalEscalation')) return `Legal Escalation`;
+                    if (type.includes('VawcInvolvedParty')) return `Involved Party`;
+                    if (type.includes('MemberCommunication')) return `Communication`;
+                    if (type.includes('AuditLog')) return `Audit Log Entry`;
+                }
+
+                return null;
+            };
+
             // First, try if the actual record is still attached (via relation)
             if (log.auditable) {
-                const a = log.auditable;
-                const name = a.name || a.title || (a.first_name ? `${a.first_name} ${a.last_name || ''}`.trim() : null);
-                if (name) return name;
+                const id = extractIdentifier(log.auditable, log.auditable_type);
+                if (id) return id;
             }
 
             // If the record relation is null (likely deleted), try to salvage from the snapshot values
@@ -63,13 +106,17 @@ export default function AuditLogs({ logs, filters }: AuditLogProps) {
                 return `${data.method || 'GET'} /${data.path.replace(/^\//, '')}`;
             }
 
-            const snapshotName = data.name || data.title || (data.first_name ? `${data.first_name} ${data.last_name || ''}`.trim() : null);
+            const snapshotId = extractIdentifier(data, log.auditable_type);
             
-            if (snapshotName) {
-                return `${snapshotName} (Deleted/Snapshot)`;
+            if (snapshotId) {
+                // If it's a generic fallback we don't append Snapshot, but if it's a specific name we do
+                if (snapshotId.includes('Record') || snapshotId.includes('Assessment') || snapshotId.includes('Log') || snapshotId.includes('Order') || snapshotId.includes('Party') || snapshotId.includes('Communication')) {
+                   return snapshotId;
+                }
+                return `${snapshotId} (Deleted/Snapshot)`;
             }
 
-            return `Specific identifier unavailable`;
+            return `Record ID: ${log.auditable_id}`;
         } catch (error) {
             return `Data parsing error`;
         }
@@ -121,13 +168,14 @@ export default function AuditLogs({ logs, filters }: AuditLogProps) {
                                     <TableHead className="font-bold py-4 pl-6">Action Taken</TableHead>
                                     <TableHead className="font-bold">User Responsible</TableHead>
                                     <TableHead className="font-bold">Target Record</TableHead>
-                                    <TableHead className="text-right font-bold pr-6">Timestamp</TableHead>
+                                    <TableHead className="text-right font-bold">Timestamp</TableHead>
+                                    <TableHead className="text-center font-bold pr-6">Details</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
                                 {logs.data.length === 0 ? (
                                     <TableRow>
-                                        <TableCell colSpan={4} className="h-32 text-center text-muted-foreground italic">
+                                        <TableCell colSpan={5} className="h-32 text-center text-muted-foreground italic">
                                             No logs found in the system.
                                         </TableCell>
                                     </TableRow>
@@ -181,7 +229,7 @@ export default function AuditLogs({ logs, filters }: AuditLogProps) {
                                                     </div>
                                                 </TableCell>
 
-                                                <TableCell className="text-right pr-6">
+                                                <TableCell className="text-right">
                                                     <div className="flex flex-col items-end">
                                                         <span className="text-xs font-bold uppercase tracking-tight">
                                                             {new Date(log.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
@@ -190,6 +238,12 @@ export default function AuditLogs({ logs, filters }: AuditLogProps) {
                                                             <Clock className="h-3 w-3" /> {new Date(log.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
                                                         </span>
                                                     </div>
+                                                </TableCell>
+
+                                                <TableCell className="text-center pr-6">
+                                                    <Button variant="ghost" size="icon" onClick={() => setSelectedLog(log)}>
+                                                        <Eye className="h-4 w-4" />
+                                                    </Button>
                                                 </TableCell>
                                             </TableRow>
                                         )
@@ -220,6 +274,63 @@ export default function AuditLogs({ logs, filters }: AuditLogProps) {
                     </div>
                 </div>
             </div>
+
+            <Dialog open={!!selectedLog} onOpenChange={(open) => !open && setSelectedLog(null)}>
+                <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+                    <DialogHeader>
+                        <DialogTitle>Audit Log Details</DialogTitle>
+                        <DialogDescription>
+                            Review the changes made during this system event.
+                        </DialogDescription>
+                    </DialogHeader>
+                    {selectedLog && (
+                        <div className="space-y-4">
+                            <div className="grid grid-cols-2 gap-4 text-sm">
+                                <div>
+                                    <span className="font-semibold block text-muted-foreground">Action Taken</span>
+                                    <Badge variant="outline" className="mt-1 font-bold uppercase tracking-wider">{selectedLog.action}</Badge>
+                                </div>
+                                <div>
+                                    <span className="font-semibold block text-muted-foreground">Target Record</span>
+                                    <span className="mt-1 block font-medium">{getRecordIdentifier(selectedLog)} ({getModelName(selectedLog.auditable_type)})</span>
+                                </div>
+                                <div>
+                                    <span className="font-semibold block text-muted-foreground">User Responsible</span>
+                                    <span className="mt-1 block font-medium">{selectedLog.user ? selectedLog.user.name : 'System Generated'}</span>
+                                </div>
+                                <div>
+                                    <span className="font-semibold block text-muted-foreground">Timestamp</span>
+                                    <span className="mt-1 block font-medium">{new Date(selectedLog.created_at).toLocaleString()}</span>
+                                </div>
+                            </div>
+                            
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t">
+                                <div>
+                                    <h4 className="text-sm font-semibold mb-2">Previous Values</h4>
+                                    <pre className="bg-muted/50 p-4 rounded-md text-xs overflow-x-auto border">
+                                        {selectedLog.old_values && Object.keys(selectedLog.old_values).length > 0 
+                                            ? JSON.stringify(selectedLog.old_values, null, 2) 
+                                            : <span className="text-muted-foreground italic">No previous values recorded.</span>}
+                                    </pre>
+                                </div>
+                                <div>
+                                    <h4 className="text-sm font-semibold mb-2">New Values</h4>
+                                    <pre className="bg-muted/50 p-4 rounded-md text-xs overflow-x-auto border">
+                                        {selectedLog.new_values && Object.keys(selectedLog.new_values).length > 0
+                                            ? JSON.stringify(selectedLog.new_values, null, 2)
+                                            : <span className="text-muted-foreground italic">No new values recorded.</span>}
+                                    </pre>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                    <DialogFooter>
+                        <DialogClose asChild>
+                            <Button type="button" variant="secondary">Close</Button>
+                        </DialogClose>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </AppLayout>
     );
 }

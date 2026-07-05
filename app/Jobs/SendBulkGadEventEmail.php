@@ -24,9 +24,16 @@ class SendBulkGadEventEmail implements ShouldQueue
     public int $tries = 3;
 
     /**
-     * The number of seconds the job can run before timing out.
+     * The number of seconds to wait before retrying on failure.
+     *
+     * @var array<int>
      */
-    public int $timeout = 120;
+    public array $backoff = [30, 60];
+
+    /**
+     * The maximum number of seconds the job may run before it is killed.
+     */
+    public int $timeout = 300;
 
     /**
      * Create a new job instance.
@@ -38,40 +45,78 @@ class SendBulkGadEventEmail implements ShouldQueue
 
     /**
      * Execute the job: Send the GAD event invitation email to all active members.
+     * Gmail SMTP handles high throughput reliably — no artificial delays needed.
      */
     public function handle(): void
     {
-        $query = Member::where('status', 'Active')->whereNotNull('email');
+        $query = Member::where('status', 'Active')
+            ->whereNotNull('email')
+            ->select(['id', 'email', 'fullname', 'organization_id']);
 
         // Target organization members if organization_id exists, otherwise global broadcast
         if ($this->event->organization_id) {
             $query->where('organization_id', $this->event->organization_id);
         }
 
-        $members = $query->get();
+        $totalSent   = 0;
+        $totalFailed = 0;
+        $communications = [];
 
-        set_time_limit(120); // Prevent PHP timeout in sync queue
+        $query->chunk(50, function ($members) use (&$totalSent, &$totalFailed, &$communications) {
+            foreach ($members as $member) {
+                $status = 'Sent';
 
-        foreach ($members as $member) {
-            $status = 'Sent';
-            try {
-                Mail::to($member->email)->send(new EventInvitation($this->event));
-            } catch (\Throwable $e) {
-                $status = 'Failed';
-                Log::error("Failed to broadcast GAD Event to member {$member->id}", ['exception' => $e]);
+                try {
+                    Mail::to($member->email)->send(new EventInvitation($this->event));
+                    $totalSent++;
+                } catch (\Throwable $e) {
+                    $status = 'Failed';
+                    $totalFailed++;
+                    Log::error("Failed to broadcast GAD Event to member {$member->id}", [
+                        'exception' => $e->getMessage(),
+                        'event_id'  => $this->event->id,
+                    ]);
+                }
+
+                $communications[] = [
+                    'member_id'  => $member->id,
+                    'sent_by'    => $this->sentById,
+                    'subject'    => 'Official Event Invitation: ' . $this->event->title,
+                    'body'       => $this->event->description,
+                    'type'       => 'Bulk',
+                    'status'     => $status,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ];
+
+                if (count($communications) >= 50) {
+                    MemberCommunication::insert($communications);
+                    $communications = [];
+                }
             }
+        });
 
-            // Audit Trail
-            MemberCommunication::create([
-                'member_id' => $member->id,
-                'sent_by'   => $this->sentById,
-                'subject'   => 'Official Event Invitation: ' . $this->event->title,
-                'body'      => $this->event->description,
-                'type'      => 'Bulk',
-                'status'    => $status,
-            ]);
+        if (!empty($communications)) {
+            MemberCommunication::insert($communications);
         }
 
-        Log::info("Bulk GAD event email dispatched to {$members->count()} members.");
+        Log::info("Bulk GAD event email job completed.", [
+            'event_id' => $this->event->id,
+            'title'    => $this->event->title,
+            'org_id'   => $this->event->organization_id ?? 'ALL',
+            'sent'     => $totalSent,
+            'failed'   => $totalFailed,
+        ]);
+    }
+
+    /**
+     * Handle a job failure after all retries are exhausted.
+     */
+    public function failed(\Throwable $exception): void
+    {
+        Log::critical("SendBulkGadEventEmail job FAILED entirely.", [
+            'event_id'  => $this->event->id,
+            'exception' => $exception->getMessage(),
+        ]);
     }
 }

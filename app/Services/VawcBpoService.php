@@ -16,13 +16,19 @@ class VawcBpoService
      */
     public function fileApplication(VawcCase $case, array $data): VawcProtectionOrder
     {
-        return VawcProtectionOrder::create([
-            'vawc_case_id' => $case->id,
-            'type' => $data['type'] ?? 'BPO',
-            'status' => 'Applied',
-            'application_datetime' => now(),
-            'is_sla_breached' => false,
-        ]);
+        return \Illuminate\Support\Facades\DB::transaction(function () use ($case, $data) {
+            $order = VawcProtectionOrder::create([
+                'vawc_case_id' => $case->id,
+                'type' => $data['type'] ?? 'BPO',
+                'status' => 'Applied',
+                'application_datetime' => now(),
+                'is_sla_breached' => false,
+            ]);
+
+            $case->update(['status' => 'BPO Processing']);
+
+            return $order;
+        });
     }
 
     /**

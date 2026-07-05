@@ -29,6 +29,8 @@ export default function Index({ cases, filters }: Props) {
     const getStatusVariant = (status: string) => {
         switch (status) {
             case 'Intake': return 'outline';
+            case 'Assessment': return 'outline';
+            case 'Alternative Housing': return 'outline';
             case 'BPO Processing': return 'default';
             case 'Monitoring': return 'secondary';
             case 'Escalated': return 'destructive';
@@ -113,6 +115,8 @@ export default function Index({ cases, filters }: Props) {
                                     <SelectContent>
                                         <SelectItem value="all">All Registry Stages</SelectItem>
                                         <SelectItem value="Intake">Intake</SelectItem>
+                                        <SelectItem value="Assessment">Assessment</SelectItem>
+                                        <SelectItem value="Alternative Housing">Alternative Housing</SelectItem>
                                         <SelectItem value="BPO Processing">BPO Processing</SelectItem>
                                         <SelectItem value="Monitoring">Monitoring</SelectItem>
                                         <SelectItem value="Escalated">Escalated</SelectItem>

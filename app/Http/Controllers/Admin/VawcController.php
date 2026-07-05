@@ -207,6 +207,7 @@ class VawcController extends Controller
                 'perpetrator_present' => $request->boolean('perpetrator_present'),
                 'incident_veracity' => $request->boolean('incident_veracity'),
                 'warrantless_arrest_made' => $request->boolean('warrantless_arrest_made'),
+                'status' => $request->boolean('requires_alternative_housing') ? 'Alternative Housing' : 'Assessment',
             ]);
 
             $case->assessment()->create([

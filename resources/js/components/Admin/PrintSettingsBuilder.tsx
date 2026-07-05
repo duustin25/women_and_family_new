@@ -4,7 +4,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
-import { CopySlash, AlignCenter, AlignLeft, Image as ImageIcon, Type, Upload } from "lucide-react";
+import { CopySlash, AlignCenter, AlignLeft, Image as ImageIcon, Type, Upload, Plus, Trash2 } from "lucide-react";
 
 interface PrintSettingsBuilderProps {
     data: any;
@@ -160,12 +160,138 @@ export default function PrintSettingsBuilder({ data, setData, record }: PrintSet
                         <p className="text-[10px] text-neutral-400 uppercase font-bold tracking-tight">Usually for Organization Logo</p>
                     </div>
                 </div>
+
+                {/* SIGNATURES BUILDER */}
+                <div className="space-y-4 pt-8 border-t border-neutral-100 dark:border-neutral-800">
+                    <Label className="text-xs font-black uppercase tracking-widest text-neutral-500 flex items-center gap-2 mb-2">
+                        Custom Signature Blocks & Approval Chain
+                    </Label>
+                    <p className="text-[10px] text-neutral-400 uppercase font-bold tracking-tight">
+                        Configure rows of signatures for physical printed applications. Placeholders: use <code className="font-mono bg-neutral-100 dark:bg-neutral-800 p-0.5 rounded text-neutral-900 dark:text-neutral-100">{"{applicant_name}"}</code>, <code className="font-mono bg-neutral-100 dark:bg-neutral-800 p-0.5 rounded text-neutral-900 dark:text-neutral-100">{"{president_name}"}</code>, or <code className="font-mono bg-neutral-100 dark:bg-neutral-800 p-0.5 rounded text-neutral-900 dark:text-neutral-100">{"{organization_name}"}</code>.
+                    </p>
+
+                    <div className="space-y-6">
+                        {(settings.signatures || []).map((row: any, rIdx: number) => (
+                            <div key={rIdx} className="p-5 border-2 border-neutral-200 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-950/30 rounded-xl space-y-4 relative group">
+                                <div className="flex justify-between items-center pb-2 border-b border-neutral-200 dark:border-neutral-800">
+                                    <span className="text-xs font-black uppercase tracking-widest text-blue-600">Row #{rIdx + 1} Layout</span>
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => {
+                                            const updatedSignatures = (settings.signatures || []).filter((_: any, i: number) => i !== rIdx);
+                                            updateSetting('signatures', updatedSignatures);
+                                        }}
+                                        className="h-8 w-8 p-0 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg"
+                                    >
+                                        <Trash2 size={16} className="text-red-400 dark:text-red-500" />
+                                    </Button>
+                                </div>
+
+                                <div className="space-y-6">
+                                    {(row.columns || []).map((col: any, cIdx: number) => (
+                                        <div key={cIdx} className="grid grid-cols-1 sm:grid-cols-3 gap-4 border-t border-neutral-200 dark:border-neutral-800 pt-4 first:border-0 first:pt-0 items-end">
+                                            <div className="space-y-1">
+                                                <Label className="text-[9px] font-bold uppercase tracking-wider text-neutral-400">Header Note (e.g. "Recommending Approval:")</Label>
+                                                <Input
+                                                    value={col.title || ''}
+                                                    onChange={e => {
+                                                        const updatedSignatures = [...(settings.signatures || [])];
+                                                        updatedSignatures[rIdx].columns[cIdx] = { ...col, title: e.target.value };
+                                                        updateSetting('signatures', updatedSignatures);
+                                                    }}
+                                                    className="h-9 text-xs font-semibold bg-white dark:bg-neutral-950"
+                                                    placeholder="e.g. Recommended by:"
+                                                />
+                                            </div>
+                                            <div className="space-y-1">
+                                                <Label className="text-[9px] font-bold uppercase tracking-wider text-neutral-400">Name (e.g. "{"{president_name}"}")</Label>
+                                                <Input
+                                                    value={col.name || ''}
+                                                    onChange={e => {
+                                                        const updatedSignatures = [...(settings.signatures || [])];
+                                                        updatedSignatures[rIdx].columns[cIdx] = { ...col, name: e.target.value };
+                                                        updateSetting('signatures', updatedSignatures);
+                                                    }}
+                                                    className="h-9 text-xs font-semibold bg-white dark:bg-neutral-950"
+                                                    placeholder="e.g. {president_name}"
+                                                />
+                                            </div>
+                                            <div className="flex gap-2 items-center">
+                                                <div className="space-y-1 flex-1">
+                                                    <Label className="text-[9px] font-bold uppercase tracking-wider text-neutral-400">Sub-Title / Role Name</Label>
+                                                    <Input
+                                                        value={col.label || ''}
+                                                        onChange={e => {
+                                                            const updatedSignatures = [...(settings.signatures || [])];
+                                                            updatedSignatures[rIdx].columns[cIdx] = { ...col, label: e.target.value };
+                                                            updateSetting('signatures', updatedSignatures);
+                                                        }}
+                                                        className="h-9 text-xs font-semibold bg-white dark:bg-neutral-950"
+                                                        placeholder="e.g. Chapter President"
+                                                    />
+                                                </div>
+                                                {row.columns.length > 1 && (
+                                                    <Button
+                                                        type="button"
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        onClick={() => {
+                                                            const updatedSignatures = [...(settings.signatures || [])];
+                                                            updatedSignatures[rIdx].columns = row.columns.filter((_: any, idx: number) => idx !== cIdx);
+                                                            updateSetting('signatures', updatedSignatures);
+                                                        }}
+                                                        className="h-9 w-9 p-0 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg self-end"
+                                                    >
+                                                        <Trash2 size={16} className="text-red-400" />
+                                                    </Button>
+                                                )}
+                                            </div>
+                                        </div>
+                                    ))}
+
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => {
+                                            const updatedSignatures = [...(settings.signatures || [])];
+                                            updatedSignatures[rIdx].columns = [...(row.columns || []), { title: '', name: '', label: '' }];
+                                            updateSetting('signatures', updatedSignatures);
+                                        }}
+                                        className="text-[10px] font-bold uppercase tracking-widest h-8 px-4 border bg-white dark:bg-neutral-950 text-neutral-700 dark:text-neutral-300"
+                                    >
+                                        + Add Column to Row
+                                    </Button>
+                                </div>
+                            </div>
+                        ))}
+
+                        <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                                const newRow = {
+                                    type: 'row',
+                                    columns: [{ title: '', name: '', label: '' }]
+                                };
+                                const updatedSignatures = [...(settings.signatures || []), newRow];
+                                updateSetting('signatures', updatedSignatures);
+                            }}
+                            className="text-[10px] font-black uppercase tracking-widest h-11 px-6 border-2 border-neutral-300 dark:border-neutral-700 w-full bg-white dark:bg-neutral-950 hover:bg-neutral-50"
+                        >
+                            + Add New Signature Row
+                        </Button>
+                    </div>
+                </div>
             </div>
 
-            <div className="mt-8 p-4 bg-blue-50/50 dark:bg-blue-900/10 rounded-lg text-[10px] text-blue-800 dark:text-blue-300 uppercase tracking-widest font-bold border-l-4 border-blue-500 flex gap-3 items-start">
+            {/* <div className="mt-8 p-4 bg-blue-50/50 dark:bg-blue-900/10 rounded-lg text-[10px] text-blue-800 dark:text-blue-300 uppercase tracking-widest font-bold border-l-4 border-blue-500 flex gap-3 items-start">
                 <CopySlash size={16} className="shrink-0 mt-0.5" />
                 <p className="leading-relaxed">INFO: Uploading logos here allows for a highly official physical form look. Recommended: Use transparent PNGs for best results on printed paper.</p>
-            </div>
+            </div> */}
         </div>
     );
 }

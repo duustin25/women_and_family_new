@@ -77,6 +77,15 @@ export default function DynamicFields({ schema, data, setData, errors, mode = 'e
                     </div>
                 );
 
+            case 'paragraph':
+                return (
+                    <div key={field.id || field.label} className="w-full py-2">
+                        <p className={theme === 'modern' ? 'text-sm text-neutral-600 leading-relaxed dark:text-neutral-400 font-medium' : 'text-[10pt] leading-relaxed text-justify text-neutral-800'}>
+                            {field.label}
+                        </p>
+                    </div>
+                );
+
             case 'text':
             case 'email':
             case 'number':
@@ -163,12 +172,28 @@ export default function DynamicFields({ schema, data, setData, errors, mode = 'e
                         </Label>
                         <RadioGroup value={data[field.id]} onValueChange={(val: string) => mode === 'edit' && setData(field.id, val)} required={field.required} disabled={mode === 'view'}>
                             <div className={`flex ${theme === 'modern' ? 'flex-col gap-3' : `flex-wrap gap-4 ${field.layout === 'block' ? 'flex-col' : ''}`}`}>
-                                {field.options?.map((opt: string, idx: number) => (
-                                    <div className={`flex items-center space-x-3 ${theme === 'modern' ? 'p-1' : ''}`} key={idx}>
-                                        <RadioGroupItem value={opt} id={`${field.id}-${idx}`} className={`${theme === 'modern' ? 'border-neutral-400 text-blue-600 w-5 h-5' : 'border-black text-black'}`} />
-                                        <Label htmlFor={`${field.id}-${idx}`} className={theme === 'modern' ? 'text-sm font-normal text-neutral-800 dark:text-neutral-200 cursor-pointer' : 'text-sm font-medium'}>{opt}</Label>
-                                    </div>
-                                ))}
+                                {field.options?.map((opt: string, idx: number) => {
+                                    const isSelected = data[field.id] === opt;
+                                    const isSpecify = opt.toLowerCase().includes('(specify)') || opt.toLowerCase().includes('(indicate)') || opt.toLowerCase() === 'others';
+                                    return (
+                                        <div className="flex flex-col gap-2 w-full" key={idx}>
+                                            <div className={`flex items-center space-x-3 ${theme === 'modern' ? 'p-1' : ''}`}>
+                                                <RadioGroupItem value={opt} id={`${field.id}-${idx}`} className={`${theme === 'modern' ? 'border-neutral-400 text-blue-600 w-5 h-5' : 'border-black text-black'}`} />
+                                                <Label htmlFor={`${field.id}-${idx}`} className={theme === 'modern' ? 'text-sm font-normal text-neutral-800 dark:text-neutral-200 cursor-pointer' : 'text-sm font-medium'}>
+                                                    {opt} {mode === 'view' && isSelected && data[`${field.id}_specify_${idx}`] ? ` (${data[`${field.id}_specify_${idx}`]})` : ''}
+                                                </Label>
+                                            </div>
+                                            {isSpecify && isSelected && mode === 'edit' && (
+                                                <Input 
+                                                    value={data[`${field.id}_specify_${idx}`] || ''}
+                                                    onChange={e => setData(`${field.id}_specify_${idx}`, e.target.value)}
+                                                    placeholder="Please specify..."
+                                                    className="h-9 font-semibold text-xs ml-8 max-w-xs bg-white dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800"
+                                                />
+                                            )}
+                                        </div>
+                                    );
+                                })}
                             </div>
                         </RadioGroup>
                         {errors && errors[`submission_data.${field.id}`] && <p className="text-red-500 text-sm mt-2 flex items-center gap-1"><span className="text-lg leading-none">!</span> {errors[`submission_data.${field.id}`]}</p>}
@@ -235,24 +260,35 @@ export default function DynamicFields({ schema, data, setData, errors, mode = 'e
                             {field.options?.map((opt: string, idx: number) => {
                                 const currentValues = Array.isArray(data[field.id]) ? data[field.id] : [];
                                 const isChecked = currentValues.includes(opt);
+                                const isSpecify = opt.toLowerCase().includes('(specify)') || opt.toLowerCase().includes('(indicate)') || opt.toLowerCase() === 'others';
                                 return (
-                                    <div className={`flex items-start space-x-3 ${theme === 'modern' ? 'p-1' : ''}`} key={idx}>
-                                        <Checkbox
-                                            id={`${field.id}-${idx}`}
-                                            checked={isChecked}
-                                            onCheckedChange={(checked) => {
-                                                if (mode === 'view') return;
-                                                const newValues = checked
-                                                    ? [...currentValues, opt]
-                                                    : currentValues.filter((v: string) => v !== opt);
-                                                setData(field.id, newValues);
-                                            }}
-                                            className={theme === 'modern' ? 'mt-0.5 border-neutral-400 data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600 w-5 h-5 rounded' : 'border-black data-[state=checked]:bg-black data-[state=checked]:text-white'}
-                                            disabled={mode === 'view'}
-                                        />
-                                        <Label htmlFor={`${field.id}-${idx}`} className={`${theme === 'modern' ? 'text-sm font-normal text-neutral-800 dark:text-neutral-200 cursor-pointer pt-1' : 'text-sm font-medium leading-none cursor-pointer pt-0.5'}`}>
-                                            {opt}
-                                        </Label>
+                                    <div className="flex flex-col gap-2 w-full" key={idx}>
+                                        <div className={`flex items-start space-x-3 ${theme === 'modern' ? 'p-1' : ''}`}>
+                                            <Checkbox
+                                                id={`${field.id}-${idx}`}
+                                                checked={isChecked}
+                                                onCheckedChange={(checked) => {
+                                                    if (mode === 'view') return;
+                                                    const newValues = checked
+                                                        ? [...currentValues, opt]
+                                                        : currentValues.filter((v: string) => v !== opt);
+                                                    setData(field.id, newValues);
+                                                }}
+                                                className={theme === 'modern' ? 'mt-0.5 border-neutral-400 data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600 w-5 h-5 rounded' : 'border-black data-[state=checked]:bg-black data-[state=checked]:text-white'}
+                                                disabled={mode === 'view'}
+                                            />
+                                            <Label htmlFor={`${field.id}-${idx}`} className={`${theme === 'modern' ? 'text-sm font-normal text-neutral-800 dark:text-neutral-200 cursor-pointer pt-1' : 'text-sm font-medium leading-none cursor-pointer pt-0.5'}`}>
+                                                {opt} {mode === 'view' && isChecked && data[`${field.id}_specify_${idx}`] ? ` (${data[`${field.id}_specify_${idx}`]})` : ''}
+                                            </Label>
+                                        </div>
+                                        {isSpecify && isChecked && mode === 'edit' && (
+                                            <Input 
+                                                value={data[`${field.id}_specify_${idx}`] || ''}
+                                                onChange={e => setData(`${field.id}_specify_${idx}`, e.target.value)}
+                                                placeholder="Please specify..."
+                                                className="h-9 font-semibold text-xs ml-8 max-w-xs bg-white dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800"
+                                            />
+                                        )}
                                     </div>
                                 );
                             })}
@@ -330,6 +366,97 @@ export default function DynamicFields({ schema, data, setData, errors, mode = 'e
                         </div>
                     </div>
                 );
+
+            case 'table': {
+                const tableRows = Array.isArray(data[field.id]) ? data[field.id] : [];
+                return (
+                    <div key={field.id} className={`${theme === 'modern' ? 'w-full bg-white dark:bg-neutral-900 p-6 rounded-xl shadow-sm border border-neutral-200/60 dark:border-neutral-800 transition-all hover:shadow-md' : widthClass} space-y-4 pt-4`}>
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2">
+                            <Label className={theme === 'modern' ? 'text-base font-medium text-neutral-900 dark:text-neutral-100 block' : 'text-[10pt] font-bold uppercase text-black dark:text-neutral-400'}>
+                                {field.label} {field.required && mode === 'edit' && <span className="text-red-500">*</span>}
+                            </Label>
+                            {mode === 'edit' && (
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => {
+                                        const newRow = (field.columns || []).reduce((acc: any, col: any) => {
+                                            acc[col.name] = '';
+                                            return acc;
+                                        }, {});
+                                        setData(field.id, [...tableRows, newRow]);
+                                    }}
+                                    className={theme === 'modern' ? 'h-9 px-4 text-sm font-medium border-neutral-200 rounded-md hover:bg-neutral-50 hover:text-blue-600 transition-colors no-print' : 'h-6 text-[9px] font-black uppercase tracking-widest border border-black rounded-none hover:bg-black hover:text-white transition-colors no-print'}
+                                >
+                                    <Plus className={`w-4 h-4 ${theme === 'modern' ? 'mr-2' : 'mr-1'}`} /> Add Row
+                                </Button>
+                            )}
+                        </div>
+
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-left border-collapse border border-neutral-200 dark:border-neutral-800">
+                                <thead>
+                                    <tr className="bg-neutral-50 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 text-xs font-bold uppercase tracking-wider border-b border-neutral-200 dark:border-neutral-800">
+                                        {(field.columns || []).map((col: any, cIdx: number) => (
+                                            <th key={cIdx} className="px-4 py-2 border-r border-neutral-200 dark:border-neutral-800">{col.name}</th>
+                                        ))}
+                                        {mode === 'edit' && <th className="px-4 py-2 w-12 text-center">Actions</th>}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {tableRows.map((row: any, rIdx: number) => (
+                                        <tr key={rIdx} className="border-b border-neutral-200 dark:border-neutral-800 hover:bg-neutral-50/50 dark:hover:bg-neutral-800/50">
+                                            {(field.columns || []).map((col: any, cIdx: number) => (
+                                                <td key={cIdx} className="px-4 py-2 border-r border-neutral-200 dark:border-neutral-800">
+                                                    {mode === 'view' ? (
+                                                        <span className="text-sm font-bold text-neutral-800 dark:text-neutral-200">{row[col.name] || ''}</span>
+                                                    ) : (
+                                                        <Input
+                                                            type={col.type === 'number' ? 'number' : 'text'}
+                                                            value={row[col.name] || ''}
+                                                            onChange={(e) => {
+                                                                const updatedRows = [...tableRows];
+                                                                updatedRows[rIdx] = { ...updatedRows[rIdx], [col.name]: e.target.value };
+                                                                setData(field.id, updatedRows);
+                                                            }}
+                                                            className="h-9 px-2 text-sm bg-transparent border border-neutral-200 dark:border-neutral-700 focus:ring-1 focus:ring-blue-500 rounded text-neutral-900 dark:text-white"
+                                                        />
+                                                    )}
+                                                </td>
+                                            ))}
+                                            {mode === 'edit' && (
+                                                <td className="px-4 py-2 text-center">
+                                                    <Button
+                                                        type="button"
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        onClick={() => {
+                                                            const updatedRows = tableRows.filter((_: any, i: number) => i !== rIdx);
+                                                            setData(field.id, updatedRows);
+                                                        }}
+                                                        className="h-8 w-8 text-neutral-400 hover:text-red-500 hover:bg-red-50 rounded no-print"
+                                                    >
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </Button>
+                                                </td>
+                                            )}
+                                        </tr>
+                                    ))}
+                                    {tableRows.length === 0 && (
+                                        <tr>
+                                            <td colSpan={(field.columns || []).length + (mode === 'edit' ? 1 : 0)} className="text-center py-6 text-xs italic text-neutral-400 bg-neutral-50/20 dark:bg-neutral-800/10">
+                                                No entries added. Click "Add Row" to start.
+                                            </td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                        {errors && errors[`submission_data.${field.id}`] && <p className="text-red-500 text-sm mt-2 flex items-center gap-1"><span className="text-lg leading-none">!</span> {errors[`submission_data.${field.id}`]}</p>}
+                    </div>
+                );
+            }
 
             default:
                 return null;

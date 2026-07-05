@@ -137,7 +137,6 @@ export function AppSidebar() {
                 'Child Health and Nutritional Status Monitoring (BCPC)',
                 'System Users',
                 'Officials',
-                'Intelligent System Analytics & Official Reports',
                 'Settings',
                 'Gender and Development (GAD) Advocacy & Programs',
             ];

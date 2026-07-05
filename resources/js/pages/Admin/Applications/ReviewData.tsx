@@ -154,48 +154,126 @@ export default function ReviewData({ application, organization }: { application:
                                     return keyId.replace(/_/g, ' ');
                                 };
 
-                                return (
-                                    <div className="space-y-6">
-                                        {/* Active Form Fields */}
-                                        {activeEntries.length > 0 && (
-                                            <div className="bg-white dark:bg-neutral-900 rounded-xl shadow-sm border border-neutral-200 dark:border-neutral-800 overflow-hidden">
-                                                <div className="p-4 border-b border-neutral-100 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-900/50">
-                                                    <h2 className="text-xs font-black uppercase tracking-widest text-neutral-700 dark:text-neutral-300">
-                                                        Active Data Questionnaire
-                                                    </h2>
-                                                </div>
-                                                <div className="p-2 grid grid-cols-1 sm:grid-cols-2 gap-x-4">
-                                                    {activeEntries.map(([key, value]: [string, any]) => {
-                                                        const formattedLabel = getFieldLabel(key);
-                                                        const formattedValue = Array.isArray(value) ? value.join(', ') :
-                                                            typeof value === 'object' ? JSON.stringify(value) : value;
-                                                        return <DataRow key={key} label={formattedLabel} value={formattedValue} />;
-                                                    })}
-                                                </div>
-                                            </div>
-                                        )}
+                                 const getFieldType = (keyId: string) => {
+                                     if (Array.isArray(schemaFields)) {
+                                         const field = schemaFields.find((f: any) => f.id === keyId);
+                                         return field ? field.type : 'text';
+                                     }
+                                     return 'text';
+                                 };
 
-                                        {/* Retired/Legacy Data Fields */}
-                                        {legacyEntries.length > 0 && (
-                                            <div className="bg-white dark:bg-neutral-900 rounded-xl shadow-sm border border-dashed border-neutral-300 dark:border-neutral-800 overflow-hidden">
-                                                <div className="p-4 border-b border-dashed border-neutral-200 dark:border-neutral-800 bg-amber-50/20 dark:bg-amber-950/10">
-                                                    <h2 className="text-xs font-black uppercase tracking-widest text-amber-600 dark:text-amber-400">
-                                                        Retired/Legacy Data Fields (Historical Record)
-                                                    </h2>
-                                                </div>
-                                                <div className="p-2 grid grid-cols-1 sm:grid-cols-2 gap-x-4">
-                                                    {legacyEntries.map(([key, value]: [string, any]) => {
-                                                        const formattedLabel = key.replace(/_/g, ' ');
-                                                        const formattedValue = Array.isArray(value) ? value.join(', ') :
-                                                            typeof value === 'object' ? JSON.stringify(value) : value;
-                                                        return <DataRow key={key} label={formattedLabel} value={formattedValue} />;
-                                                    })}
-                                                </div>
-                                            </div>
-                                        )}
-                                    </div>
-                                );
-                            })()}
+                                 const isComplexKey = (key: string, val: any) => {
+                                     const type = getFieldType(key);
+                                     if (type === 'table' || type === 'repeater') return true;
+                                     return Array.isArray(val) && val.length > 0 && typeof val[0] === 'object';
+                                 };
+
+                                 const standardEntries = activeEntries.filter(([key, val]) => !isComplexKey(key, val));
+                                 const complexEntries = activeEntries.filter(([key, val]) => isComplexKey(key, val));
+
+                                 return (
+                                     <div className="space-y-6">
+                                         {/* Active Form Fields */}
+                                         {(standardEntries.length > 0 || complexEntries.length > 0) && (
+                                             <div className="bg-white dark:bg-neutral-900 rounded-xl shadow-sm border border-neutral-200 dark:border-neutral-800 overflow-hidden">
+                                                 <div className="p-4 border-b border-neutral-100 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-900/50">
+                                                     <h2 className="text-xs font-black uppercase tracking-widest text-neutral-700 dark:text-neutral-300">
+                                                         Active Data Questionnaire
+                                                     </h2>
+                                                 </div>
+                                                 
+                                                 {standardEntries.length > 0 && (
+                                                     <div className="p-2 grid grid-cols-1 sm:grid-cols-2 gap-x-4">
+                                                         {standardEntries.map(([key, value]: [string, any]) => {
+                                                             const formattedLabel = getFieldLabel(key);
+                                                             const formattedValue = Array.isArray(value) ? value.join(', ') : value;
+                                                             return <DataRow key={key} label={formattedLabel} value={formattedValue} />;
+                                                         })}
+                                                     </div>
+                                                 )}
+
+                                                 {complexEntries.length > 0 && (
+                                                     <div className="border-t border-neutral-100 dark:border-neutral-800 p-4 space-y-6">
+                                                         {complexEntries.map(([key, value]: [string, any]) => {
+                                                             const label = getFieldLabel(key);
+                                                             const type = getFieldType(key);
+                                                             const rows = Array.isArray(value) ? value : [];
+                                                             
+                                                             return (
+                                                                 <div key={key} className="space-y-2">
+                                                                     <h3 className="text-[10px] font-black uppercase text-neutral-400 tracking-widest">
+                                                                         {label} ({type === 'table' ? 'Table Grid' : 'Repeated Section'})
+                                                                     </h3>
+                                                                     
+                                                                     {rows.length === 0 ? (
+                                                                         <p className="text-xs text-neutral-400 italic">No entries added.</p>
+                                                                     ) : type === 'table' ? (
+                                                                         <div className="overflow-x-auto border border-neutral-200 dark:border-neutral-800 rounded-lg">
+                                                                             <table className="w-full text-left border-collapse text-xs">
+                                                                                 <thead>
+                                                                                     <tr className="bg-neutral-50 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 font-bold border-b border-neutral-200 dark:border-neutral-800">
+                                                                                         {Object.keys(rows[0] || {}).map((colName) => (
+                                                                                             <th key={colName} className="px-4 py-2 border-r border-neutral-200 dark:border-neutral-800 last:border-0">{colName}</th>
+                                                                                         ))}
+                                                                                     </tr>
+                                                                                 </thead>
+                                                                                 <tbody>
+                                                                                     {rows.map((row: any, rIdx: number) => (
+                                                                                         <tr key={rIdx} className="border-b border-neutral-200 dark:border-neutral-800 last:border-0 hover:bg-neutral-50/50 dark:hover:bg-neutral-800/50">
+                                                                                             {Object.entries(row).map(([colName, colVal]: [string, any]) => (
+                                                                                                 <td key={colName} className="px-4 py-2 border-r border-neutral-200 dark:border-neutral-800 last:border-0 font-medium text-neutral-800 dark:text-neutral-200">{colVal}</td>
+                                                                                             ))}
+                                                                                         </tr>
+                                                                                     ))}
+                                                                                 </tbody>
+                                                                             </table>
+                                                                         </div>
+                                                                     ) : (
+                                                                         <div className="space-y-3">
+                                                                             {rows.map((row: any, rIdx: number) => (
+                                                                                 <div key={rIdx} className="p-3 bg-neutral-50 dark:bg-neutral-800/50 rounded-lg border border-neutral-100 dark:border-neutral-800 flex gap-4">
+                                                                                     <span className="font-bold text-xs text-neutral-400">{rIdx + 1}.</span>
+                                                                                     <div className="flex flex-wrap gap-x-6 gap-y-2 text-xs">
+                                                                                         {Object.entries(row || {}).map(([subKey, subVal]: [string, any]) => (
+                                                                                             <div key={subKey} className="flex gap-2">
+                                                                                                 <span className="font-black uppercase text-neutral-400">{subKey.replace(/_/g, ' ')}:</span>
+                                                                                                 <span className="font-bold text-neutral-800 dark:text-neutral-200">{subVal}</span>
+                                                                                             </div>
+                                                                                         ))}
+                                                                                     </div>
+                                                                                 </div>
+                                                                             ))}
+                                                                         </div>
+                                                                     )}
+                                                                 </div>
+                                                             );
+                                                         })}
+                                                     </div>
+                                                 )}
+                                             </div>
+                                         )}
+
+                                         {/* Retired/Legacy Data Fields */}
+                                         {legacyEntries.length > 0 && (
+                                             <div className="bg-white dark:bg-neutral-900 rounded-xl shadow-sm border border-dashed border-neutral-300 dark:border-neutral-800 overflow-hidden">
+                                                 <div className="p-4 border-b border-dashed border-neutral-200 dark:border-neutral-800 bg-amber-50/20 dark:bg-amber-950/10">
+                                                     <h2 className="text-xs font-black uppercase tracking-widest text-amber-600 dark:text-amber-400">
+                                                         Retired/Legacy Data Fields (Historical Record)
+                                                     </h2>
+                                                 </div>
+                                                 <div className="p-2 grid grid-cols-1 sm:grid-cols-2 gap-x-4">
+                                                     {legacyEntries.map(([key, value]: [string, any]) => {
+                                                         const formattedLabel = key.replace(/_/g, ' ');
+                                                         const formattedValue = Array.isArray(value) ? value.join(', ') :
+                                                             typeof value === 'object' ? JSON.stringify(value) : value;
+                                                         return <DataRow key={key} label={formattedLabel} value={formattedValue} />;
+                                                     })}
+                                                 </div>
+                                             </div>
+                                         )}
+                                     </div>
+                                 );
+                             })()}
 
 
                         </div>

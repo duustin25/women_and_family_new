@@ -92,7 +92,6 @@ class MembersController extends Controller
             ]);
 
             return back()->with('success', 'Message sent successfully to ' . $member->fullname);
-
         } catch (\Throwable $e) {
             // Mail server or SMTP error — log for admin review, return friendly message
             Log::error("IndividualEmail failed for Member ID {$member->id}: " . $e->getMessage());
@@ -114,15 +113,32 @@ class MembersController extends Controller
         /** @var \App\Models\User $user */
         $user = Auth::user();
 
+        // Resolve the recipient group into an organization_id for the job.
+        // - 'all' → null (broadcast to all orgs)
+        // - numeric string → specific organization ID
+        // - President → always scoped to their own org regardless of selection
+        $organizationId = null;
+
+        if ($user->isPresident()) {
+            // Presidents are always scoped to their own organization
+            $organizationId = $user->organization_id;
+        } elseif ($validated['recipient_group'] !== 'all') {
+            $organizationId = (int) $validated['recipient_group'];
+        }
+
         // Dispatch a background job — admin gets an instant response
         SendBulkMemberEmail::dispatch(
             $validated['subject'],
             $validated['body'],
             Auth::id(),
-            $user->isPresident() ? $user->organization_id : null
+            $organizationId
         );
 
-        return back()->with('success', 'Bulk message queued and will be delivered to all eligible members shortly.');
+        $groupLabel = $organizationId
+            ? (Organization::find($organizationId)?->name ?? "Organization #{$organizationId}")
+            : 'All Members';
+
+        return back()->with('success', "Bulk broadcast queued for: {$groupLabel}. Emails will be delivered shortly.");
     }
 
     /**
@@ -169,7 +185,6 @@ class MembersController extends Controller
                     'type'      => 'Beneficiary',
                     'status'    => 'Sent',
                 ]);
-
             } catch (\Throwable $e) {
                 // Email notification failed — log it, but the benefit tag was already saved successfully.
                 // The admin still gets the success message with the reference number.

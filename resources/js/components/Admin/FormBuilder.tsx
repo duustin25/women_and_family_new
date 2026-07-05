@@ -17,10 +17,11 @@ export default function FormBuilder({ schema, onSchemaChange }: FormBuilderProps
         const newField = {
             id: `field_${Date.now()}`,
             type,
-            label: 'New Question',
+            label: type === 'paragraph' ? 'Enter your disclaimer/privacy text here.' : 'New Question',
             required: false,
             options: type === 'select' || type === 'radio' || type === 'checkbox_group' ? ['Option 1'] : [],
             columns: type === 'table' ? [{ name: 'Name', type: 'text' }, { name: 'Age', type: 'number' }] : [],
+            schema: type === 'repeater' ? [] : [],
             width: 'w-full',
             id_manually_edited: false
         };
@@ -95,7 +96,7 @@ export default function FormBuilder({ schema, onSchemaChange }: FormBuilderProps
                 </div>
                 <div className="flex flex-wrap gap-2.5 justify-end max-w-[600px] mt-6 sm:mt-0">
                     <span className="text-xs uppercase font-black text-neutral-400 self-center mr-3 tracking-widest">Add New Field:</span>
-                    {['section', 'text', 'textarea', 'select', 'radio', 'checkbox', 'checkbox_group', 'date', 'file'].map(type => (
+                    {['section', 'paragraph', 'text', 'textarea', 'select', 'radio', 'checkbox', 'checkbox_group', 'date', 'file', 'table', 'repeater'].map(type => (
                         <Button
                             key={type}
                             type="button"
@@ -183,6 +184,7 @@ export default function FormBuilder({ schema, onSchemaChange }: FormBuilderProps
                                                 </SelectTrigger>
                                                 <SelectContent className="dark:bg-neutral-900 dark:border-neutral-800">
                                                     <SelectItem value="section" className="font-bold py-3">Section Header (Text Only)</SelectItem>
+                                                    <SelectItem value="paragraph" className="font-bold py-3">Legal Disclaimer / Plain Text Block</SelectItem>
                                                     <SelectItem value="text" className="font-bold py-3">Short Text Answer</SelectItem>
                                                     <SelectItem value="textarea" className="font-bold py-3">Long Paragraph Answer</SelectItem>
                                                     <SelectItem value="select" className="font-bold py-3">Dropdown Selection List</SelectItem>
@@ -191,6 +193,8 @@ export default function FormBuilder({ schema, onSchemaChange }: FormBuilderProps
                                                     <SelectItem value="checkbox_group" className="font-bold py-3">Multiple Choice Checklist</SelectItem>
                                                     <SelectItem value="date" className="font-bold py-3">Calendar Date Picker</SelectItem>
                                                     <SelectItem value="file" className="font-bold py-3">Document / Image Upload</SelectItem>
+                                                    <SelectItem value="table" className="font-bold py-3">Custom Data Table Grid</SelectItem>
+                                                    <SelectItem value="repeater" className="font-bold py-3">Repeating Section List</SelectItem>
                                                 </SelectContent>
                                             </Select>
                                         </div>
@@ -213,6 +217,163 @@ export default function FormBuilder({ schema, onSchemaChange }: FormBuilderProps
                                                 ))}
                                                 <Button type="button" variant="outline" size="sm" onClick={() => addOption(index)} className="text-xs mt-4 h-10 px-6 bg-white dark:bg-neutral-950 text-indigo-600 dark:text-indigo-400 border-2 border-indigo-200 dark:border-indigo-800 hover:bg-indigo-600 hover:text-white tracking-widest font-black uppercase transition-all rounded-xl shadow-md">
                                                     + Add New Choice
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* TABLE COLUMNS DESIGNER */}
+                                    {(!field.is_core && field.type === 'table') && (
+                                        <div className="bg-indigo-50/50 dark:bg-indigo-950/20 p-8 rounded-2xl border-2 border-indigo-100 dark:border-indigo-900/30 shadow-inner">
+                                            <Label className="text-xs font-black uppercase tracking-widest text-indigo-600 dark:text-indigo-400 mb-6 block flex items-center gap-2">
+                                                <div className="w-2 h-2 rounded-full bg-indigo-500"></div> Table Columns Definition
+                                            </Label>
+                                            <div className="space-y-4">
+                                                {(field.columns || []).map((column: any, colIndex: number) => (
+                                                    <div key={colIndex} className="flex gap-4 items-center">
+                                                        <Input
+                                                            value={column.name}
+                                                            onChange={e => {
+                                                                const updatedColumns = [...(field.columns || [])];
+                                                                updatedColumns[colIndex] = { ...column, name: e.target.value };
+                                                                updateFormField(index, 'columns', updatedColumns);
+                                                            }}
+                                                            className="h-11 bg-white dark:bg-neutral-950 border-2 border-indigo-100 dark:border-indigo-900/50 shadow-sm text-sm font-bold dark:text-white rounded-xl px-4 flex-1"
+                                                            placeholder="Column Header Name"
+                                                        />
+                                                        <Select
+                                                            value={column.type || 'text'}
+                                                            onValueChange={val => {
+                                                                const updatedColumns = [...(field.columns || [])];
+                                                                updatedColumns[colIndex] = { ...column, type: val };
+                                                                updateFormField(index, 'columns', updatedColumns);
+                                                            }}
+                                                        >
+                                                            <SelectTrigger className="h-11 bg-white dark:bg-neutral-950 border-2 border-indigo-100 dark:border-indigo-900/50 shadow-sm text-sm font-bold dark:text-white rounded-xl px-4 w-40">
+                                                                <SelectValue />
+                                                            </SelectTrigger>
+                                                            <SelectContent>
+                                                                <SelectItem value="text">Short Text</SelectItem>
+                                                                <SelectItem value="number">Number</SelectItem>
+                                                            </SelectContent>
+                                                        </Select>
+                                                        <Button type="button" variant="ghost" size="sm" onClick={() => {
+                                                            const updatedColumns = (field.columns || []).filter((_: any, idx: number) => idx !== colIndex);
+                                                            updateFormField(index, 'columns', updatedColumns);
+                                                        }} className="h-11 w-11 p-0 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-xl transition-colors">
+                                                            <Trash2 size={20} className="text-red-400 dark:text-red-500" />
+                                                        </Button>
+                                                    </div>
+                                                ))}
+                                                <Button
+                                                    type="button"
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={() => {
+                                                        const updatedColumns = [...(field.columns || []), { name: `Column ${field.columns.length + 1}`, type: 'text' }];
+                                                        updateFormField(index, 'columns', updatedColumns);
+                                                    }}
+                                                    className="text-xs mt-4 h-10 px-6 bg-white dark:bg-neutral-950 text-indigo-600 dark:text-indigo-400 border-2 border-indigo-200 dark:border-indigo-800 hover:bg-indigo-600 hover:text-white tracking-widest font-black uppercase transition-all rounded-xl shadow-md"
+                                                >
+                                                    + Add Column
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* REPEATER SUBFIELDS DESIGNER */}
+                                    {(!field.is_core && field.type === 'repeater') && (
+                                        <div className="bg-indigo-50/50 dark:bg-indigo-950/20 p-8 rounded-2xl border-2 border-indigo-100 dark:border-indigo-900/30 shadow-inner">
+                                            <Label className="text-xs font-black uppercase tracking-widest text-indigo-600 dark:text-indigo-400 mb-6 block flex items-center gap-2">
+                                                <div className="w-2 h-2 rounded-full bg-indigo-500"></div> Repeater Sub-Fields Configuration
+                                            </Label>
+                                            <div className="space-y-6">
+                                                {(field.schema || []).map((subField: any, subIndex: number) => (
+                                                    <div key={subIndex} className="p-4 border border-indigo-100 dark:border-indigo-900 rounded-xl bg-white dark:bg-neutral-900 space-y-4">
+                                                        <div className="flex justify-between items-center">
+                                                            <span className="text-[10px] font-black uppercase tracking-widest text-neutral-400">Sub-Field #{subIndex + 1} ({subField.id})</span>
+                                                            <Button type="button" variant="ghost" size="sm" onClick={() => {
+                                                                const updatedSchema = (field.schema || []).filter((_: any, idx: number) => idx !== subIndex);
+                                                                updateFormField(index, 'schema', updatedSchema);
+                                                            }} className="h-8 w-8 p-0 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg transition-colors">
+                                                                <Trash2 size={16} className="text-red-400 dark:text-red-500" />
+                                                            </Button>
+                                                        </div>
+                                                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                                            <div className="space-y-1">
+                                                                <Label className="text-[10px] font-bold uppercase tracking-wider text-neutral-400">Label (Question Text)</Label>
+                                                                <Input
+                                                                    value={subField.label}
+                                                                    onChange={e => {
+                                                                        const updatedSchema = [...(field.schema || [])];
+                                                                        let slug = e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/(^_|_$)/g, '');
+                                                                        updatedSchema[subIndex] = { ...subField, label: e.target.value, id: slug || `sub_${Date.now()}` };
+                                                                        updateFormField(index, 'schema', updatedSchema);
+                                                                    }}
+                                                                    className="h-9 font-semibold text-xs bg-neutral-50 dark:bg-neutral-950"
+                                                                    placeholder="e.g. Relationship"
+                                                                />
+                                                            </div>
+                                                            <div className="space-y-1">
+                                                                <Label className="text-[10px] font-bold uppercase tracking-wider text-neutral-400">Type</Label>
+                                                                <Select
+                                                                    value={subField.type || 'text'}
+                                                                    onValueChange={val => {
+                                                                        const updatedSchema = [...(field.schema || [])];
+                                                                        updatedSchema[subIndex] = { ...subField, type: val };
+                                                                        updateFormField(index, 'schema', updatedSchema);
+                                                                    }}
+                                                                >
+                                                                    <SelectTrigger className="h-9 font-semibold text-xs bg-neutral-50 dark:bg-neutral-950">
+                                                                        <SelectValue />
+                                                                    </SelectTrigger>
+                                                                    <SelectContent>
+                                                                        <SelectItem value="text">Short Text</SelectItem>
+                                                                        <SelectItem value="number">Number</SelectItem>
+                                                                        <SelectItem value="date">Calendar Date</SelectItem>
+                                                                    </SelectContent>
+                                                                </Select>
+                                                            </div>
+                                                            <div className="space-y-1">
+                                                                <Label className="text-[10px] font-bold uppercase tracking-wider text-neutral-400">Horizontal Width</Label>
+                                                                <Select
+                                                                    value={subField.width || 'flex-1'}
+                                                                    onValueChange={val => {
+                                                                        const updatedSchema = [...(field.schema || [])];
+                                                                        updatedSchema[subIndex] = { ...subField, width: val };
+                                                                        updateFormField(index, 'schema', updatedSchema);
+                                                                    }}
+                                                                >
+                                                                    <SelectTrigger className="h-9 font-semibold text-xs bg-neutral-50 dark:bg-neutral-950">
+                                                                        <SelectValue />
+                                                                    </SelectTrigger>
+                                                                    <SelectContent>
+                                                                        <SelectItem value="flex-1">Fill Row</SelectItem>
+                                                                        <SelectItem value="w-1/2">Half Row</SelectItem>
+                                                                        <SelectItem value="w-1/4">Quarter Row</SelectItem>
+                                                                    </SelectContent>
+                                                                </Select>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                                <Button
+                                                    type="button"
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={() => {
+                                                        const newSubField = {
+                                                            id: `sub_${Date.now()}`,
+                                                            type: 'text',
+                                                            label: 'Subfield Label',
+                                                            width: 'flex-1'
+                                                        };
+                                                        const updatedSchema = [...(field.schema || []), newSubField];
+                                                        updateFormField(index, 'schema', updatedSchema);
+                                                    }}
+                                                    className="text-xs mt-4 h-10 px-6 bg-white dark:bg-neutral-950 text-indigo-600 dark:text-indigo-400 border-2 border-indigo-200 dark:border-indigo-800 hover:bg-indigo-600 hover:text-white tracking-widest font-black uppercase transition-all rounded-xl shadow-md"
+                                                >
+                                                    + Add Subfield
                                                 </Button>
                                             </div>
                                         </div>

@@ -12,6 +12,8 @@ use App\Models\User;
 use App\Models\GadEvent;
 use App\Models\Organization;
 use App\Models\VawcAssessment;
+use App\Models\Member;
+use App\Models\MemberCommunication;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -188,12 +190,14 @@ class AnalyticsService
         })->map(fn($group) => count($group));
 
         $statusColors = [
-            'Intake'         => '#f59e0b',
-            'BPO Processing' => '#a855f7',
-            'Monitoring'     => '#0ea5e9',
-            'Escalated'      => '#ef4444',
-            'Resolved'       => '#10b981',
-            'Closed'         => '#64748b',
+            'Intake'              => '#f59e0b',
+            'Assessment'          => '#f97316',
+            'Alternative Housing' => '#6366f1',
+            'BPO Processing'      => '#a855f7',
+            'Monitoring'          => '#0ea5e9',
+            'Escalated'           => '#ef4444',
+            'Resolved'            => '#10b981',
+            'Closed'              => '#64748b',
         ];
 
         $stats = [];
@@ -449,12 +453,14 @@ class AnalyticsService
     public function getVawcStatusBreakdown(int $year): array
     {
         $colors = [
-            'Intake'         => '#f59e0b',
-            'BPO Processing' => '#a855f7',
-            'Monitoring'     => '#0ea5e9',
-            'Escalated'      => '#ef4444',
-            'Resolved'       => '#10b981',
-            'Closed'         => '#64748b',
+            'Intake'              => '#f59e0b',
+            'Assessment'          => '#f97316',
+            'Alternative Housing' => '#6366f1',
+            'BPO Processing'      => '#a855f7',
+            'Monitoring'          => '#0ea5e9',
+            'Escalated'           => '#ef4444',
+            'Resolved'            => '#10b981',
+            'Closed'              => '#64748b',
         ];
 
         return VawcCase::select('status', DB::raw('count(*) as total'))
@@ -576,13 +582,48 @@ class AnalyticsService
                 ->groupBy('bcpc_child_id');
         })->get();
 
-        $normal     = $latestAssessments->where('wfa_status', 'Normal')->count();
-        $sam        = $latestAssessments->where('wfa_status', 'Severely Underweight')->count();
-        $mam        = $latestAssessments->where('wfa_status', 'Underweight')->count();
-        $stunted    = $latestAssessments->where('hfa_status', 'Stunted')->count();
-        $sevStunted = $latestAssessments->where('hfa_status', 'Severely Stunted')->count();
+        $normal      = $latestAssessments->where('wfa_status', 'Normal')->count();
+        $sam         = $latestAssessments->where('wfa_status', 'Severely Underweight')->count();
+        $mam         = $latestAssessments->where('wfa_status', 'Underweight')->count();
+        $stunted     = $latestAssessments->where('hfa_status', 'Stunted')->count();
+        $sevStunted  = $latestAssessments->where('hfa_status', 'Severely Stunted')->count();
+        $normalHeight = $latestAssessments->where('hfa_status', 'Normal')->count();
 
         $malnutritionRate = $total > 0 ? round((($sam + $mam) / $total) * 100, 1) : 0.0;
+
+        // SFP Breakdown
+        $sfpBreakdown = [
+            'Enrolled'   => \App\Models\BcpcChild::where('sfp_status', 'Enrolled')->count(),
+            'Graduated'  => \App\Models\BcpcChild::where('sfp_status', 'Graduated')->count(),
+            'Completed'  => \App\Models\BcpcChild::where('sfp_status', 'Completed')->count(),
+            'Terminated' => \App\Models\BcpcChild::where('sfp_status', 'Terminated')->count(),
+            'None'       => \App\Models\BcpcChild::where('sfp_status', 'None')->count(),
+        ];
+
+        // Zones Breakdown for Malnutrition Hotspots
+        $zones = \App\Models\Zone::all();
+        $zonesBreakdown = [];
+        foreach ($zones as $zone) {
+            $zoneChildrenIds = \App\Models\BcpcChild::where('zone_id', $zone->id)->pluck('id');
+            $zoneTotal = $zoneChildrenIds->count();
+            
+            $zoneLatest = $latestAssessments->whereIn('bcpc_child_id', $zoneChildrenIds);
+            $zoneMalnourished = $zoneLatest->whereIn('wfa_status', ['Underweight', 'Severely Underweight'])->count();
+            $zoneStunted = $zoneLatest->whereIn('hfa_status', ['Stunted', 'Severely Stunted'])->count();
+            
+            $zonesBreakdown[] = [
+                'name'         => $zone->name,
+                'total'        => $zoneTotal,
+                'malnourished' => $zoneMalnourished,
+                'stunted'      => $zoneStunted,
+                'rate'         => $zoneTotal > 0 ? round(($zoneMalnourished / $zoneTotal) * 100, 1) : 0.0,
+            ];
+        }
+
+        // Sort zones by malnutrition count descending
+        usort($zonesBreakdown, function ($a, $b) {
+            return $b['malnourished'] <=> $a['malnourished'];
+        });
 
         return [
             'total'              => $total,
@@ -591,13 +632,20 @@ class AnalyticsService
             'mam'                => $mam,
             'stunted'            => $stunted,
             'severely_stunted'   => $sevStunted,
+            'normal_height'      => $normalHeight,
             'malnutrition_rate'  => $malnutritionRate,
+            'sfp_breakdown'      => $sfpBreakdown,
+            'zones_breakdown'    => $zonesBreakdown,
             'distribution'       => [
                 ['name' => 'Normal',              'value' => $normal, 'fill' => '#10b981'],
                 ['name' => 'Underweight (MAM)',   'value' => $mam,    'fill' => '#f59e0b'],
                 ['name' => 'Sev. Underweight (SAM)', 'value' => $sam, 'fill' => '#ef4444'],
-                ['name' => 'Stunted',             'value' => $stunted, 'fill' => '#a855f7'],
             ],
+            'height_distribution' => [
+                ['name' => 'Normal Height',       'value' => $normalHeight, 'fill' => '#10b981'],
+                ['name' => 'Stunted (MAM Height)', 'value' => $stunted,      'fill' => '#a855f7'],
+                ['name' => 'Severely Stunted',    'value' => $sevStunted,   'fill' => '#6b21a8'],
+            ]
         ];
     }
 
@@ -679,6 +727,285 @@ class AnalyticsService
             ['name' => 'Alternative Housing', 'count' => $assessments->where('requires_alternative_housing', true)->count()],
             ['name' => 'DSWD Referral',       'count' => $assessments->where('dswd_referral_made', true)->count()],
             ['name' => 'Legal Intervention',   'count' => DB::table('vawc_protection_orders')->whereYear('created_at', $year)->count()],
+        ];
+    }
+
+    /**
+     * Get detailed analytics for GAD Organizations & Membership.
+     */
+    public function getOrganizationAnalytics(int $year, ?int $orgId = null): array
+    {
+        // Get organizations or a specific one
+        $orgQuery = Organization::query();
+        if ($orgId) {
+            $orgQuery->where('id', $orgId);
+        }
+        $organizations = $orgQuery->get();
+
+        // 1. Members stats
+        $membersQuery = Member::query()->whereIn('status', ['Active', 'active']);
+        if ($orgId) {
+            $membersQuery->where('organization_id', $orgId);
+        }
+        $members = $membersQuery->with('organization')->get();
+
+        $totalMembers = $members->count();
+
+        // Demographics mapping
+        $ageCategories = [
+            'Under 18 (Youth)' => 0,
+            '18-30 (Young Adult)' => 0,
+            '31-50 (Adult)' => 0,
+            '51-64 (Middle-aged)' => 0,
+            '65+ (Senior)' => 0,
+            'Unknown' => 0
+        ];
+
+        $genderCategories = [
+            'Male' => 0,
+            'Female' => 0,
+            'Other/Not Disclosed' => 0
+        ];
+
+        $civilStatusCategories = [
+            'Single' => 0,
+            'Married' => 0,
+            'Widowed' => 0,
+            'Separated' => 0,
+            'Unknown' => 0
+        ];
+
+        $purokDistribution = [];
+
+        foreach ($members as $member) {
+            $meta = $member->member_meta ?: [];
+            
+            // Age extraction
+            $age = null;
+            foreach ($meta as $key => $val) {
+                if (str_ends_with($key, '_age') || $key === 'age') {
+                    if (is_numeric($val)) {
+                        $age = (int)$val;
+                        break;
+                    }
+                }
+                if (str_ends_with($key, '_dob') || str_ends_with($key, '_date_of_birth') || $key === 'dob' || $key === 'date_of_birth') {
+                    try {
+                        $age = Carbon::parse($val)->age;
+                        break;
+                    } catch (\Throwable $e) {}
+                }
+            }
+            if ($age !== null) {
+                if ($age < 18) $ageCategories['Under 18 (Youth)']++;
+                elseif ($age <= 30) $ageCategories['18-30 (Young Adult)']++;
+                elseif ($age <= 50) $ageCategories['31-50 (Adult)']++;
+                elseif ($age <= 64) $ageCategories['51-64 (Middle-aged)']++;
+                else $ageCategories['65+ (Senior)']++;
+            } else {
+                $ageCategories['Unknown']++;
+            }
+
+            // Gender extraction
+            $gender = null;
+            foreach ($meta as $key => $val) {
+                if (str_ends_with($key, '_sex') || str_ends_with($key, '_gender') || $key === 'sex' || $key === 'gender') {
+                    $gender = ucfirst(strtolower(trim($val)));
+                    break;
+                }
+            }
+            // Smart fallbacks based on organization slug
+            if (!$gender && $member->organization) {
+                $orgSlug = $member->organization->slug;
+                if (str_contains($orgSlug, 'erpat') || str_contains($orgSlug, 'father')) {
+                    $gender = 'Male';
+                } elseif (str_contains($orgSlug, 'kalipi') || str_contains($orgSlug, 'woman') || str_contains($orgSlug, 'women')) {
+                    $gender = 'Female';
+                }
+            }
+            if ($gender === 'Male' || $gender === 'M') {
+                $genderCategories['Male']++;
+            } elseif ($gender === 'Female' || $gender === 'F') {
+                $genderCategories['Female']++;
+            } else {
+                $genderCategories['Other/Not Disclosed']++;
+            }
+
+            // Civil status extraction
+            $civilStatus = null;
+            foreach ($meta as $key => $val) {
+                if (str_ends_with($key, '_civil_status') || str_ends_with($key, '_marital') || $key === 'civil_status' || $key === 'marital_status') {
+                    $civilStatus = ucfirst(strtolower(trim($val)));
+                    break;
+                }
+            }
+            if ($civilStatus) {
+                if (str_contains($civilStatus, 'Single')) $civilStatusCategories['Single']++;
+                elseif (str_contains($civilStatus, 'Married')) $civilStatusCategories['Married']++;
+                elseif (str_contains($civilStatus, 'Widow')) $civilStatusCategories['Widowed']++;
+                elseif (str_contains($civilStatus, 'Separated') || str_contains($civilStatus, 'Divorced')) $civilStatusCategories['Separated']++;
+                else $civilStatusCategories['Unknown']++;
+            } else {
+                $civilStatusCategories['Unknown']++;
+            }
+
+            // Purok/Zone extraction
+            $purok = null;
+            foreach ($meta as $key => $val) {
+                if (str_ends_with($key, '_zone') || str_ends_with($key, '_purok') || $key === 'zone' || $key === 'purok') {
+                    $purok = trim($val);
+                    break;
+                }
+            }
+            if (!$purok && $member->address) {
+                // Try to extract "Purok X" or "Zone X" from address
+                if (preg_match('/(Purok\s*\d+|Zone\s*\d+)/i', $member->address, $matches)) {
+                    $purok = ucwords(strtolower($matches[0]));
+                }
+            }
+            if (!$purok) {
+                $purok = 'Not Disclosed';
+            }
+            $purokDistribution[$purok] = ($purokDistribution[$purok] ?? 0) + 1;
+        }
+
+        // Format Purok distribution for Recharts
+        $purokData = [];
+        foreach ($purokDistribution as $purokName => $count) {
+            $purokData[] = ['name' => $purokName, 'count' => $count];
+        }
+        // Sort by count descending
+        usort($purokData, fn($a, $b) => $b['count'] <=> $a['count']);
+
+        // Format age and gender categories
+        $ageData = [];
+        foreach ($ageCategories as $name => $count) {
+            if ($count > 0 || $name === 'Unknown') {
+                $ageData[] = ['name' => $name, 'value' => $count];
+            }
+        }
+        $genderData = [];
+        foreach ($genderCategories as $name => $count) {
+            $genderData[] = ['name' => $name, 'value' => $count];
+        }
+        $civilStatusData = [];
+        foreach ($civilStatusCategories as $name => $count) {
+            if ($count > 0) {
+                $civilStatusData[] = ['name' => $name, 'value' => $count];
+            }
+        }
+
+        // 2. Applications stats
+        $appsQuery = MembershipApplication::whereYear('created_at', $year);
+        if ($orgId) {
+            $appsQuery->where('organization_id', $orgId);
+        }
+        $apps = $appsQuery->get();
+
+        $totalApps = $apps->count();
+        $approvedApps = $apps->where('status', 'Approved')->count();
+        $pendingApps = $apps->where('status', 'Pending')->count();
+        $disapprovedApps = $apps->where('status', 'Disapproved')->count();
+
+        // Monthly application trend
+        $months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+        $monthlyApps = [];
+        $appsByMonth = $apps->groupBy(fn($a) => Carbon::parse($a->created_at)->month);
+        foreach ($months as $idx => $mName) {
+            $mNum = $idx + 1;
+            $monthGroup = $appsByMonth->get($mNum, collect());
+            $monthlyApps[] = [
+                'month' => $mName,
+                'submitted' => $monthGroup->count(),
+                'approved' => $monthGroup->where('status', 'Approved')->count(),
+                'disapproved' => $monthGroup->where('status', 'Disapproved')->count(),
+            ];
+        }
+
+        // 3. GAD Events Stats (scoped to organization if president)
+        $gadQuery = GadEvent::whereYear('event_date', $year);
+        if ($orgId) {
+            $gadQuery->where('organization_id', $orgId);
+        }
+        $gadEvents = $gadQuery->get();
+        $totalGad = $gadEvents->count();
+        $approvedGad = $gadEvents->where('status', 'approved')->count();
+        $pendingGad = $gadEvents->where('status', 'pending')->count();
+        $rejectedGad = $gadEvents->where('status', 'rejected')->count();
+
+        // Monthly GAD event proposals
+        $monthlyGad = [];
+        $gadByMonth = $gadEvents->groupBy(fn($e) => Carbon::parse($e->event_date)->month);
+        foreach ($months as $idx => $mName) {
+            $mNum = $idx + 1;
+            $monthGroup = $gadByMonth->get($mNum, collect());
+            $monthlyGad[] = [
+                'month' => $mName,
+                'proposed' => $monthGroup->count(),
+                'approved' => $monthGroup->where('status', 'approved')->count(),
+            ];
+        }
+
+        // 4. Messaging & Communication Analytics
+        $commQuery = MemberCommunication::query()
+            ->join('members', 'member_communications.member_id', '=', 'members.id')
+            ->whereYear('member_communications.created_at', $year);
+        if ($orgId) {
+            $commQuery->where('members.organization_id', $orgId);
+        }
+        $commQuery->select('member_communications.*');
+        $comms = $commQuery->get();
+
+        $totalComms = $comms->count();
+        $sentComms = $comms->where('status', 'Sent')->count();
+        $failedComms = $comms->where('status', 'Failed')->count();
+
+        $monthlyComms = [];
+        $commsByMonth = $comms->groupBy(fn($c) => Carbon::parse($c->created_at)->month);
+        foreach ($months as $idx => $mName) {
+            $mNum = $idx + 1;
+            $monthGroup = $commsByMonth->get($mNum, collect());
+            $monthlyComms[] = [
+                'month' => $mName,
+                'sent' => $monthGroup->count(),
+            ];
+        }
+
+        // List of organizations (for Admin filter/overview)
+        $orgList = Organization::all()->map(fn($o) => [
+            'id' => $o->id,
+            'name' => $o->name,
+            'slug' => $o->slug,
+            'members_count' => $o->membershipApplications()->where('status', 'Approved')->count()
+        ])->toArray();
+
+        return [
+            'total_members' => $totalMembers,
+            'age_distribution' => $ageData,
+            'gender_distribution' => $genderData,
+            'civil_status_distribution' => $civilStatusData,
+            'purok_distribution' => $purokData,
+            'applications' => [
+                'total' => $totalApps,
+                'approved' => $approvedApps,
+                'pending' => $pendingApps,
+                'disapproved' => $disapprovedApps,
+                'monthly_trend' => $monthlyApps,
+            ],
+            'gad' => [
+                'total' => $totalGad,
+                'approved' => $approvedGad,
+                'pending' => $pendingGad,
+                'rejected' => $rejectedGad,
+                'monthly_trend' => $monthlyGad,
+            ],
+            'communications' => [
+                'total' => $totalComms,
+                'sent' => $sentComms,
+                'failed' => $failedComms,
+                'monthly_trend' => $monthlyComms,
+            ],
+            'organizations_list' => $orgList,
         ];
     }
 

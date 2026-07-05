@@ -32,11 +32,22 @@ class AuditLogController extends Controller
             $query->where('user_id', $request->user_id);
         }
 
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('action', 'like', "%{$search}%")
+                  ->orWhere('auditable_type', 'like', "%{$search}%")
+                  ->orWhereHas('user', function ($uq) use ($search) {
+                      $uq->where('name', 'like', "%{$search}%");
+                  });
+            });
+        }
+
         $logs = $query->paginate(15)->withQueryString();
 
         return Inertia::render('Admin/AuditLogs/Index', [
             'logs' => $logs,
-            'filters' => $request->only(['action', 'user_id'])
+            'filters' => $request->only(['action', 'user_id', 'search'])
         ]);
     }
 }
