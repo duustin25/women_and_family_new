@@ -108,6 +108,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('analytics', [AnalyticsController::class, 'index'])->name('analytics.index');
 
         // Audit Trail / Backtrack
+        Route::get('/audit-logs/export', [AuditLogController::class, 'export'])
+            ->name('audit-logs.export');
         Route::get('/audit-logs', [AuditLogController::class, 'index'])
             ->name('audit-logs');
 

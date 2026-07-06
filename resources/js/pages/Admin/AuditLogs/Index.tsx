@@ -19,6 +19,8 @@ interface AuditLogProps {
             old_values: any;
             new_values: any;
             created_at: string;
+            ip_address: string | null;
+            user_agent: string | null;
             user: {
                 name: string;
                 role: string;
@@ -33,14 +35,22 @@ interface AuditLogProps {
 
 export default function AuditLogs({ logs, filters }: AuditLogProps) {
     const [searchQuery, setSearchQuery] = useState(filters.search || '');
+    const [dateStart, setDateStart] = useState(filters.date_start || '');
+    const [dateEnd, setDateEnd] = useState(filters.date_end || '');
     const [selectedLog, setSelectedLog] = useState<any>(null);
 
     useEffect(() => {
         const timeoutId = setTimeout(() => {
-            if (searchQuery !== (filters.search || '')) {
+            const hasSearchChanged = searchQuery !== (filters.search || '');
+            const hasDateStartChanged = dateStart !== (filters.date_start || '');
+            const hasDateEndChanged = dateEnd !== (filters.date_end || '');
+
+            if (hasSearchChanged || hasDateStartChanged || hasDateEndChanged) {
                 router.get('/admin/audit-logs', { 
                     ...filters, 
-                    search: searchQuery 
+                    search: searchQuery,
+                    date_start: dateStart,
+                    date_end: dateEnd
                 }, { 
                     preserveState: true, 
                     preserveScroll: true,
@@ -50,7 +60,77 @@ export default function AuditLogs({ logs, filters }: AuditLogProps) {
         }, 400);
 
         return () => clearTimeout(timeoutId);
-    }, [searchQuery]);
+    }, [searchQuery, dateStart, dateEnd]);
+
+    const handleExportCsv = () => {
+        const params = new URLSearchParams({
+            search: searchQuery,
+            date_start: dateStart,
+            date_end: dateEnd,
+            action: filters.action || '',
+            user_id: filters.user_id || '',
+        });
+        window.location.href = `/admin/audit-logs/export?${params.toString()}`;
+    };
+
+    const renderVisualDiff = (oldVals: any, newVals: any) => {
+        const oldData = oldVals || {};
+        const newData = newVals || {};
+        
+        const excludeKeys = ['created_at', 'updated_at', 'deleted_at', 'id', 'password', 'remember_token'];
+        const allKeys = Array.from(
+            new Set([...Object.keys(oldData), ...Object.keys(newData)])
+        ).filter(key => !excludeKeys.includes(key));
+
+        if (allKeys.length === 0) {
+            return <div className="text-xs text-muted-foreground italic p-2">No differences detected.</div>;
+        }
+
+        return (
+            <div className="border rounded-md divide-y overflow-hidden max-h-[400px] overflow-y-auto">
+                <table className="min-w-full divide-y text-xs text-left">
+                    <thead className="bg-muted/50 font-semibold">
+                        <tr>
+                            <th className="p-2 w-1/4">Field</th>
+                            <th className="p-2 w-3/8 bg-red-50/50 dark:bg-red-950/20 text-red-700 dark:text-red-400">Previous Value</th>
+                            <th className="p-2 w-3/8 bg-green-50/50 dark:bg-green-950/20 text-green-700 dark:text-green-400">New Value</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y bg-background">
+                        {allKeys.map(key => {
+                            const oldVal = oldData[key];
+                            const newVal = newData[key];
+                            
+                            const formatValue = (val: any) => {
+                                if (val === null || val === undefined) return <span className="text-muted-foreground italic font-normal">empty</span>;
+                                if (typeof val === 'boolean') return val ? 'true' : 'false';
+                                if (typeof val === 'object') return JSON.stringify(val);
+                                return String(val);
+                            };
+
+                            const isAdded = !(key in oldData);
+                            const isDeleted = !(key in newData);
+                            const isModified = !isAdded && !isDeleted && oldVal !== newVal;
+
+                            if (!isAdded && !isDeleted && !isModified) return null;
+
+                            return (
+                                <tr key={key} className="hover:bg-muted/30">
+                                    <td className="p-2 font-mono font-medium truncate max-w-[120px]" title={key}>{key}</td>
+                                    <td className={`p-2 font-mono ${isModified || isDeleted ? 'bg-red-50/30 dark:bg-red-950/10 text-red-600 dark:text-red-300' : 'text-muted-foreground/40'}`}>
+                                        {isAdded ? '' : formatValue(oldVal)}
+                                    </td>
+                                    <td className={`p-2 font-mono ${isModified || isAdded ? 'bg-green-50/30 dark:bg-green-950/10 text-green-600 dark:text-green-300 font-medium' : 'text-muted-foreground/40'}`}>
+                                        {isDeleted ? '' : formatValue(newVal)}
+                                    </td>
+                                </tr>
+                            );
+                        })}
+                    </tbody>
+                </table>
+            </div>
+        );
+    };
 
     const formatActionType = (action: string) => {
         const _action = action.toLowerCase();
@@ -143,17 +223,35 @@ export default function AuditLogs({ logs, filters }: AuditLogProps) {
                                 System Logs
                             </CardTitle>
 
-                            <div className="flex items-center gap-2 w-full md:w-auto">
-                                <div className="relative w-full md:w-64">
+                            <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
+                                <div className="relative w-full sm:w-48">
                                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                                     <Input
                                         placeholder="Search logs..."
-                                        className="pl-9 h-9 w-full"
+                                        className="pl-9 h-9 w-full shadow-xs"
                                         value={searchQuery}
                                         onChange={(e) => setSearchQuery(e.target.value)}
                                     />
                                 </div>
-                                <Button asChild variant="outline" size="sm" className="h-9">
+                                <div className="flex items-center gap-1 w-full sm:w-auto">
+                                    <Input
+                                        type="date"
+                                        className="h-9 w-full sm:w-36 text-xs shadow-xs"
+                                        value={dateStart}
+                                        onChange={(e) => setDateStart(e.target.value)}
+                                    />
+                                    <span className="text-muted-foreground text-[10px] uppercase font-bold px-1">to</span>
+                                    <Input
+                                        type="date"
+                                        className="h-9 w-full sm:w-36 text-xs shadow-xs"
+                                        value={dateEnd}
+                                        onChange={(e) => setDateEnd(e.target.value)}
+                                    />
+                                </div>
+                                <Button variant="outline" size="sm" className="h-9 text-xs" onClick={handleExportCsv}>
+                                    Export CSV
+                                </Button>
+                                <Button asChild variant="outline" size="sm" className="h-9 text-xs">
                                     <Link href="/admin/audit-logs" className="flex items-center">
                                         <History className="w-4 h-4 mr-2" /> Refresh
                                     </Link>
@@ -302,26 +400,44 @@ export default function AuditLogs({ logs, filters }: AuditLogProps) {
                                     <span className="font-semibold block text-muted-foreground">Timestamp</span>
                                     <span className="mt-1 block font-medium">{new Date(selectedLog.created_at).toLocaleString()}</span>
                                 </div>
+                                <div>
+                                    <span className="font-semibold block text-muted-foreground">IP Address</span>
+                                    <span className="mt-1 block font-medium text-xs font-mono">{selectedLog.ip_address || 'N/A'}</span>
+                                </div>
+                                <div>
+                                    <span className="font-semibold block text-muted-foreground">User Agent</span>
+                                    <span className="mt-1 block font-medium text-[11px] truncate max-w-[250px]" title={selectedLog.user_agent || 'N/A'}>
+                                        {selectedLog.user_agent || 'N/A'}
+                                    </span>
+                                </div>
                             </div>
                             
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t">
-                                <div>
-                                    <h4 className="text-sm font-semibold mb-2">Previous Values</h4>
-                                    <pre className="bg-muted/50 p-4 rounded-md text-xs overflow-x-auto border">
-                                        {selectedLog.old_values && Object.keys(selectedLog.old_values).length > 0 
-                                            ? JSON.stringify(selectedLog.old_values, null, 2) 
-                                            : <span className="text-muted-foreground italic">No previous values recorded.</span>}
-                                    </pre>
-                                </div>
-                                <div>
-                                    <h4 className="text-sm font-semibold mb-2">New Values</h4>
-                                    <pre className="bg-muted/50 p-4 rounded-md text-xs overflow-x-auto border">
-                                        {selectedLog.new_values && Object.keys(selectedLog.new_values).length > 0
-                                            ? JSON.stringify(selectedLog.new_values, null, 2)
-                                            : <span className="text-muted-foreground italic">No new values recorded.</span>}
-                                    </pre>
-                                </div>
+                            <div className="pt-4 border-t">
+                                <h4 className="text-sm font-semibold mb-2">Changes Summary</h4>
+                                {renderVisualDiff(selectedLog.old_values, selectedLog.new_values)}
                             </div>
+                            
+                            <details className="text-xs border rounded-md p-2 bg-muted/20">
+                                <summary className="cursor-pointer font-medium text-muted-foreground select-none">View Raw JSON Payload</summary>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                                    <div>
+                                        <h5 className="font-semibold mb-1">Old Values</h5>
+                                        <pre className="bg-muted/50 p-2 rounded text-[10px] overflow-x-auto border max-h-[150px]">
+                                            {selectedLog.old_values && Object.keys(selectedLog.old_values).length > 0 
+                                                ? JSON.stringify(selectedLog.old_values, null, 2) 
+                                                : 'No old values'}
+                                        </pre>
+                                    </div>
+                                    <div>
+                                        <h5 className="font-semibold mb-1">New Values</h5>
+                                        <pre className="bg-muted/50 p-2 rounded text-[10px] overflow-x-auto border max-h-[150px]">
+                                            {selectedLog.new_values && Object.keys(selectedLog.new_values).length > 0 
+                                                ? JSON.stringify(selectedLog.new_values, null, 2) 
+                                                : 'No new values'}
+                                        </pre>
+                                    </div>
+                                </div>
+                            </details>
                         </div>
                     )}
                     <DialogFooter>
