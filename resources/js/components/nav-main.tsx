@@ -9,12 +9,14 @@ import { useCurrentUrl } from '@/hooks/use-current-url';
 import type { NavItem } from '@/types';
 import { Link } from '@inertiajs/react';
 
-export function NavMain({ items = [] }: { items: NavItem[] }) {
+export function NavMain({ title, items = [] }: { title: string; items: NavItem[] }) {
     const { isCurrentUrl } = useCurrentUrl();
 
+    if (items.length === 0) return null;
+
     return (
-        <SidebarGroup className="px-2 py-0">
-            <SidebarGroupLabel>Platform</SidebarGroupLabel>
+        <SidebarGroup className="px-2 py-1">
+            <SidebarGroupLabel className="text-[10px] font-black uppercase tracking-wider text-slate-400/80 dark:text-slate-500">{title}</SidebarGroupLabel>
             <SidebarMenu>
                 {items.map((item) => (
                     <SidebarMenuItem key={item.title}>

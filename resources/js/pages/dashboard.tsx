@@ -284,6 +284,86 @@ export default function Dashboard({
                         </div>
                     </div>
 
+                    {/* Right: Community & GAD Snapshot */}
+                    {!isPresident && communitySnapshot && (
+                        <div className="lg:col-span-2 flex flex-col h-full">
+                            <Card className="border shadow-sm flex flex-col h-full bg-white dark:bg-slate-900">
+                                <CardHeader className="pb-3 border-b bg-slate-50/30 dark:bg-slate-800/10">
+                                    <CardTitle className="text-xs font-black uppercase tracking-widest text-purple-700 dark:text-purple-400 flex items-center gap-2">
+                                        <Users className="w-4 h-4" /> Community & GAD Snapshot
+                                    </CardTitle>
+                                    <CardDescription className="text-[9px] font-bold uppercase text-slate-400">
+                                        Active Sectors & Program Engagement
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent className="flex-1 flex flex-col justify-between p-6 gap-6">
+                                    {/* Member Growth Indicator */}
+                                    <div className="flex items-center justify-between p-3.5 bg-slate-50 dark:bg-slate-800/30 rounded-xl border border-slate-100 dark:border-slate-850">
+                                        <div>
+                                            <p className="text-[9px] font-black uppercase text-slate-400 tracking-wider">Member Growth</p>
+                                            <p className="text-xl font-black text-slate-950 dark:text-white mt-0.5">+{communitySnapshot.memberTrend.growth}%</p>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="text-[9px] font-black uppercase text-slate-400 tracking-wider">Total Members</p>
+                                            <p className="text-sm font-bold text-slate-600 dark:text-slate-400 mt-0.5">{communitySnapshot.memberTrend.total}</p>
+                                        </div>
+                                    </div>
+
+                                    {/* Sector Distribution Summary */}
+                                    <div className="space-y-3">
+                                        <h4 className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Sectors Distribution</h4>
+                                        <div className="h-[110px] w-full flex items-center justify-between">
+                                            <div className="w-[110px] h-[110px]">
+                                                <ResponsiveContainer width="100%" height="100%">
+                                                    <PieChart>
+                                                        <Pie
+                                                            data={communitySnapshot.orgSummary}
+                                                            cx="50%"
+                                                            cy="50%"
+                                                            innerRadius={22}
+                                                            outerRadius={38}
+                                                            paddingAngle={3}
+                                                            dataKey="value"
+                                                        >
+                                                            {communitySnapshot.orgSummary.map((entry: any, index: number) => (
+                                                                <Cell key={`cell-${index}`} fill={['#3b82f6', '#ec4899', '#8b5cf6', '#14b8a6', '#f59e0b'][index % 5]} />
+                                                            ))}
+                                                        </Pie>
+                                                        <Tooltip />
+                                                    </PieChart>
+                                                </ResponsiveContainer>
+                                            </div>
+                                            <div className="flex-1 text-[9px] font-bold uppercase text-slate-500 dark:text-slate-450 space-y-1 pl-4">
+                                                {communitySnapshot.orgSummary.map((entry: any, index: number) => (
+                                                    <div key={index} className="flex items-center justify-between border-b border-slate-50 dark:border-neutral-800 pb-0.5 last:border-0">
+                                                        <span className="flex items-center gap-1.5">
+                                                            <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: ['#3b82f6', '#ec4899', '#8b5cf6', '#14b8a6', '#f59e0b'][index % 5] }} />
+                                                            {entry.name}
+                                                        </span>
+                                                        <span className="font-black text-slate-900 dark:text-white">{entry.value}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* GAD Programs status */}
+                                    <div className="border-t pt-4 dark:border-neutral-800 mt-auto">
+                                        <div className="flex justify-between items-center mb-2.5">
+                                            <h4 className="text-[10px] font-black uppercase text-slate-400 tracking-wider">GAD Advocacy Projects</h4>
+                                            <span className="text-[9px] font-black uppercase text-indigo-600 bg-indigo-50 dark:bg-indigo-900/30 dark:text-indigo-400 px-2 py-0.5 rounded">
+                                                {communitySnapshot.gadSummary.approved} Approved
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center justify-between text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400">
+                                            <span>Total Events: {communitySnapshot.gadSummary.total_events}</span>
+                                            <span>Pending Proposals: {communitySnapshot.gadSummary.pending}</span>
+                                        </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        </div>
+                    )}
 
                 </div>
 

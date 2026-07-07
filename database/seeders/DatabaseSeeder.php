@@ -47,10 +47,10 @@ class DatabaseSeeder extends Seeder
 
         // 2. Seed Default Case Abuse Types
         $abuseTypes = [
-            ['name' => 'Physical Abuse', 'category' => 'VAWC', 'color' => '#ef4444', 'description' => 'Bodily injury or physical harm.', 'is_active' => true],
-            ['name' => 'Sexual Abuse', 'category' => 'VAWC', 'color' => '#ec4899', 'description' => 'Sexual acts or coercion.', 'is_active' => true],
-            ['name' => 'Psychological Abuse', 'category' => 'VAWC', 'color' => '#8b5cf6', 'description' => 'Mental distress or harassment.', 'is_active' => true],
-            ['name' => 'Economic Abuse', 'category' => 'VAWC', 'color' => '#f59e0b', 'description' => 'Deprivation of financial resources.', 'is_active' => true],
+            ['name' => 'Physical', 'category' => 'VAWC', 'color' => '#ef4444', 'description' => 'Bodily injury or physical harm.', 'is_active' => true],
+            ['name' => 'Sexual', 'category' => 'VAWC', 'color' => '#2d00f5ff', 'description' => 'Sexual acts or coercion.', 'is_active' => true],
+            ['name' => 'Psychological', 'category' => 'VAWC', 'color' => '#02ff0fff', 'description' => 'Mental distress or harassment.', 'is_active' => true],
+            ['name' => 'Economic', 'category' => 'VAWC', 'color' => '#fae903ff', 'description' => 'Deprivation of financial resources.', 'is_active' => true],
             ['name' => 'Neglect / Nutritional Deprivation', 'category' => 'BCPC', 'color' => '#3b82f6', 'description' => 'Failure to provide child nourishment or safety.', 'is_active' => true],
             ['name' => 'Child Labor Exploitation', 'category' => 'BCPC', 'color' => '#10b981', 'description' => 'Exploitative work conditions for minors.', 'is_active' => true],
         ];
@@ -99,17 +99,17 @@ class DatabaseSeeder extends Seeder
             ['id' => 'fullname', 'type' => 'text', 'label' => 'Full Name', 'required' => true, 'width' => 'w-full', 'layout' => 'block', 'is_core' => true],
             ['id' => 'address', 'type' => 'text', 'label' => 'Address', 'required' => true, 'width' => 'w-full', 'layout' => 'block', 'is_core' => true],
             ['id' => 'email', 'type' => 'email', 'label' => 'Email Address', 'required' => false, 'width' => 'w-full', 'layout' => 'block', 'is_core' => true],
-            
+
             ['id' => 'vco_dob', 'type' => 'date', 'label' => 'Date of Birth', 'required' => true, 'width' => 'w-1/2', 'layout' => 'block'],
             ['id' => 'vco_age', 'type' => 'number', 'label' => 'Age', 'required' => true, 'width' => 'w-1/2', 'layout' => 'block'],
-            
+
             ['id' => 'vco_school', 'type' => 'text', 'label' => 'School Name', 'required' => true, 'width' => 'w-1/2', 'layout' => 'block'],
             ['id' => 'vco_grade', 'type' => 'text', 'label' => 'Grade Level', 'required' => true, 'width' => 'w-1/2', 'layout' => 'block'],
-            
+
             ['id' => 'vco_guardian', 'type' => 'text', 'label' => 'Parent/Guardian Name', 'required' => true, 'width' => 'w-full', 'layout' => 'block'],
             ['id' => 'vco_guardian_email', 'type' => 'email', 'label' => 'Parent/Guardian Email', 'required' => true, 'width' => 'w-full', 'layout' => 'block'],
             ['id' => 'vco_guardian_phone', 'type' => 'text', 'label' => 'Parent/Guardian Phone Number', 'required' => true, 'width' => 'w-full', 'layout' => 'block'],
-            
+
             ['id' => 'vco_confidentiality', 'type' => 'paragraph', 'label' => 'All information provided is kept confidential, securely protected, and used only for membership and organizational purposes.', 'required' => false, 'width' => 'w-full']
         ];
 
@@ -133,38 +133,38 @@ class DatabaseSeeder extends Seeder
             ['id' => 'fullname', 'type' => 'text', 'label' => 'Full Name', 'required' => true, 'width' => 'w-full', 'layout' => 'block', 'is_core' => true],
             ['id' => 'address', 'type' => 'text', 'label' => 'Address', 'required' => true, 'width' => 'w-full', 'layout' => 'block', 'is_core' => true],
             ['id' => 'email', 'type' => 'email', 'label' => 'Email Address', 'required' => false, 'width' => 'w-full', 'layout' => 'block', 'is_core' => true],
-            
+
             ['id' => 'erpat_age', 'type' => 'number', 'label' => 'Age', 'required' => true, 'width' => 'w-1/3', 'layout' => 'block'],
             ['id' => 'erpat_sex', 'type' => 'text', 'label' => 'Sex', 'required' => true, 'width' => 'w-1/3', 'layout' => 'block'],
             ['id' => 'erpat_dob', 'type' => 'date', 'label' => 'Date of Birth', 'required' => true, 'width' => 'w-1/3', 'layout' => 'block'],
-            
+
             ['id' => 'erpat_religion', 'type' => 'text', 'label' => 'Religion', 'required' => true, 'width' => 'w-1/2'],
             ['id' => 'erpat_occupation', 'type' => 'text', 'label' => 'Occupation', 'required' => true, 'width' => 'w-1/2'],
-            
+
             ['id' => 'erpat_phone', 'type' => 'text', 'label' => 'Cellphone / Telephone No.', 'required' => true, 'width' => 'w-full'],
-            
+
             ['id' => 'erpat_status', 'type' => 'checkbox_group', 'label' => 'Status', 'required' => true, 'options' => ['Biological Father', 'Solo Parent', 'Guardian', 'Foster Father', 'Adoptive Father', 'Others (specify)']],
-            
+
             ['id' => 'erpat_family_composition', 'type' => 'table', 'label' => 'Family Composition', 'required' => false, 'columns' => [
                 ['name' => 'Name', 'type' => 'text'],
                 ['name' => 'Sex', 'type' => 'text'],
                 ['name' => 'Relationship', 'type' => 'text'],
                 ['name' => 'Age', 'type' => 'number']
             ]],
-            
+
             ['id' => 'erpat_attainment', 'type' => 'checkbox_group', 'label' => 'Educational Attainment', 'required' => true, 'options' => ['Elementary', 'High School', 'Vocational', 'College', 'Masteral/Doctorate']],
             ['id' => 'erpat_school', 'type' => 'text', 'label' => 'School Name', 'required' => true, 'width' => 'w-1/2'],
             ['id' => 'erpat_year_sem', 'type' => 'text', 'label' => 'Year / Semester Completed', 'required' => true, 'width' => 'w-1/2'],
-            
+
             ['id' => 'erpat_skills', 'type' => 'text', 'label' => 'Skills / Talents', 'required' => false],
             ['id' => 'erpat_hobbies', 'type' => 'text', 'label' => 'Hobbies', 'required' => false],
-            
+
             ['id' => 'erpat_aff_school', 'type' => 'text', 'label' => 'Affiliations - School', 'required' => false, 'width' => 'w-1/2'],
             ['id' => 'erpat_aff_civic', 'type' => 'text', 'label' => 'Affiliations - Civic', 'required' => false, 'width' => 'w-1/2'],
             ['id' => 'erpat_aff_community', 'type' => 'text', 'label' => 'Affiliations - Community', 'required' => false, 'width' => 'w-1/2'],
             ['id' => 'erpat_aff_work', 'type' => 'text', 'label' => 'Affiliations - Workplace', 'required' => false, 'width' => 'w-1/2'],
             ['id' => 'erpat_aff_others', 'type' => 'text', 'label' => 'Affiliations - Others', 'required' => false, 'width' => 'w-full'],
-            
+
             ['id' => 'erpat_seminars', 'type' => 'repeater', 'label' => 'Seminars / Trainings Attended', 'required' => false, 'schema' => [
                 ['id' => 'title', 'type' => 'text', 'label' => 'Seminar Title', 'width' => 'flex-1'],
                 ['id' => 'organizer', 'type' => 'text', 'label' => 'Organizer', 'width' => 'w-1/2'],
@@ -192,33 +192,33 @@ class DatabaseSeeder extends Seeder
             ['id' => 'fullname', 'type' => 'text', 'label' => 'Full Name', 'required' => true, 'width' => 'w-full', 'layout' => 'block', 'is_core' => true],
             ['id' => 'address', 'type' => 'text', 'label' => 'Address', 'required' => true, 'width' => 'w-full', 'layout' => 'block', 'is_core' => true],
             ['id' => 'email', 'type' => 'email', 'label' => 'Email Address', 'required' => false, 'width' => 'w-full', 'layout' => 'block', 'is_core' => true],
-            
+
             ['id' => 'kalipi_age', 'type' => 'number', 'label' => 'Age', 'required' => true, 'width' => 'w-1/2'],
             ['id' => 'kalipi_dob', 'type' => 'date', 'label' => 'Date of Birth', 'required' => true, 'width' => 'w-1/2'],
-            
+
             ['id' => 'kalipi_religion', 'type' => 'text', 'label' => 'Religion', 'required' => true, 'width' => 'w-1/2'],
             ['id' => 'kalipi_civil_status', 'type' => 'text', 'label' => 'Civil Status', 'required' => true, 'width' => 'w-1/2'],
-            
+
             ['id' => 'kalipi_cellphone', 'type' => 'text', 'label' => 'Cellphone No.', 'required' => true, 'width' => 'w-full'],
-            
+
             ['id' => 'kalipi_sectoral', 'type' => 'checkbox_group', 'label' => 'Sectoral Categories', 'required' => true, 'options' => ['Person with disability (indicate)', 'Solo parent', 'IP (indicate)', 'Others']],
-            
+
             ['id' => 'kalipi_attainment', 'type' => 'text', 'label' => 'Highest Educational Attainment', 'required' => true],
-            
+
             ['id' => 'kalipi_occupation', 'type' => 'text', 'label' => 'Occupation', 'required' => true, 'width' => 'w-1/2'],
             ['id' => 'kalipi_income', 'type' => 'text', 'label' => 'Monthly Income', 'required' => true, 'width' => 'w-1/2'],
-            
+
             ['id' => 'kalipi_company', 'type' => 'text', 'label' => 'Name of Company (if applicable)', 'required' => false],
             ['id' => 'kalipi_company_address', 'type' => 'text', 'label' => 'Address of Company (if applicable)', 'required' => false, 'width' => 'w-1/2'],
             ['id' => 'kalipi_company_phone', 'type' => 'text', 'label' => 'Telephone no. (if applicable)', 'required' => false, 'width' => 'w-1/2'],
-            
+
             ['id' => 'kalipi_skills', 'type' => 'text', 'label' => 'Skills / Hobbies', 'required' => false],
-            
+
             ['id' => 'kalipi_other_org', 'type' => 'text', 'label' => 'Name of Organization (if any)', 'required' => false],
             ['id' => 'kalipi_other_org_address', 'type' => 'text', 'label' => 'Address of Organization (if any)', 'required' => false],
             ['id' => 'kalipi_other_org_pos', 'type' => 'text', 'label' => 'Position (if any)', 'required' => false, 'width' => 'w-1/2'],
             ['id' => 'kalipi_other_org_date', 'type' => 'text', 'label' => 'Date of Membership (if any)', 'required' => false, 'width' => 'w-1/2'],
-            
+
             ['id' => 'kalipi_family_composition', 'type' => 'table', 'label' => 'Family Composition', 'required' => false, 'columns' => [
                 ['name' => 'Name', 'type' => 'text'],
                 ['name' => 'Age', 'type' => 'number'],
@@ -228,7 +228,7 @@ class DatabaseSeeder extends Seeder
                 ['name' => 'Income', 'type' => 'text'],
                 ['name' => 'Remarks (Disability, IP, Solo Parent)', 'type' => 'text']
             ]],
-            
+
             ['id' => 'kalipi_consent', 'type' => 'paragraph', 'label' => 'I hereby permit the Kalipunan ng Liping Pilipina (KALIPI) Nasyonal, Inc. and its chapters on the collection, use, sharing, and disposing of my data/information for the exclusive purpose of implementing, administering, and managing my membership in the federation.', 'required' => false, 'width' => 'w-full']
         ];
 
@@ -258,22 +258,22 @@ class DatabaseSeeder extends Seeder
             ['id' => 'fullname', 'type' => 'text', 'label' => 'Full Name', 'required' => true, 'width' => 'w-full', 'layout' => 'block', 'is_core' => true],
             ['id' => 'address', 'type' => 'text', 'label' => 'Address', 'required' => true, 'width' => 'w-full', 'layout' => 'block', 'is_core' => true],
             ['id' => 'email', 'type' => 'email', 'label' => 'Email Address', 'required' => false, 'width' => 'w-full', 'layout' => 'block', 'is_core' => true],
-            
+
             ['id' => 'solo_occupation', 'type' => 'text', 'label' => 'Occupation', 'required' => true, 'width' => 'w-1/2'],
             ['id' => 'solo_dob', 'type' => 'date', 'label' => 'Birthdate', 'required' => true, 'width' => 'w-1/2'],
-            
+
             ['id' => 'solo_phone', 'type' => 'text', 'label' => 'Contact No.', 'required' => true, 'width' => 'w-1/3'],
             ['id' => 'solo_age', 'type' => 'number', 'label' => 'Age', 'required' => true, 'width' => 'w-1/3'],
             ['id' => 'solo_marital', 'type' => 'text', 'label' => 'Marital Status', 'required' => true, 'width' => 'w-1/3'],
-            
+
             ['id' => 'solo_id', 'type' => 'text', 'label' => 'Solo Parent ID Number', 'required' => true, 'width' => 'w-1/2'],
             ['id' => 'solo_expiration', 'type' => 'date', 'label' => 'Date of Expiration', 'required' => true, 'width' => 'w-1/2'],
-            
+
             ['id' => 'solo_category', 'type' => 'text', 'label' => 'Category of being a Solo Parent', 'required' => true, 'width' => 'w-full'],
-            
+
             ['id' => 'solo_zone', 'type' => 'text', 'label' => 'Zone', 'required' => true, 'width' => 'w-1/2'],
             ['id' => 'solo_precinct', 'type' => 'text', 'label' => 'Precinct No.', 'required' => true, 'width' => 'w-1/2'],
-            
+
             ['id' => 'solo_children', 'type' => 'repeater', 'label' => 'Name of Child/Children', 'required' => false, 'schema' => [
                 ['id' => 'name', 'type' => 'text', 'label' => 'Child Name', 'width' => 'flex-1'],
                 ['id' => 'age', 'type' => 'number', 'label' => 'Age', 'width' => 'w-1/4']
@@ -312,10 +312,10 @@ class DatabaseSeeder extends Seeder
             ['id' => 'fullname', 'type' => 'text', 'label' => 'Full Name', 'required' => true, 'width' => 'w-full', 'layout' => 'block', 'is_core' => true],
             ['id' => 'address', 'type' => 'text', 'label' => 'Address', 'required' => true, 'width' => 'w-full', 'layout' => 'block', 'is_core' => true],
             ['id' => 'email', 'type' => 'email', 'label' => 'Email Address', 'required' => false, 'width' => 'w-full', 'layout' => 'block', 'is_core' => true],
-            
+
             ['id' => 'kabahagi_dob', 'type' => 'date', 'label' => 'Date of Birth', 'required' => true, 'width' => 'w-1/2'],
             ['id' => 'kabahagi_phone', 'type' => 'text', 'label' => 'Contact Number', 'required' => true, 'width' => 'w-1/2'],
-            
+
             ['id' => 'kabahagi_pwd_id', 'type' => 'text', 'label' => 'PWD ID Card Number (if any)', 'required' => false],
             ['id' => 'kabahagi_disability', 'type' => 'text', 'label' => 'Disability / Clinical Diagnosis', 'required' => true]
         ];
@@ -547,8 +547,8 @@ class DatabaseSeeder extends Seeder
                 'child_middle_name' => $faker->lastName(),
                 'date_of_birth' => $dob,
                 'sex' => $faker->randomElement(['Male', 'Female']),
-                'status' => $faker->randomElement(['Active', 'Inactive']),
-                'sfp_status' => $faker->randomElement(['None', 'Enrolled', 'Completed', 'Graduated', 'Terminated']),
+                'status' => $faker->randomElement(['Active', 'Graduated']),
+                'sfp_status' => $faker->randomElement(['Not Enrolled', 'Enrolled', 'Completed']),
             ]);
 
             // Add 1 to 3 Nutritional Assessments
@@ -559,7 +559,7 @@ class DatabaseSeeder extends Seeder
                 $weighingDate = now()->subMonths(($assessmentsCount - $j) * 2);
                 $weight = $baseWeight + ($j * 0.8);
                 $height = $baseHeight + ($j * 1.5);
-                
+
                 // Determine Nutritional Status
                 $wfa = $faker->randomElement(['Normal', 'Underweight', 'Severely Underweight']);
                 $hfa = $faker->randomElement(['Normal', 'Stunted', 'Severely Stunted']);
@@ -582,7 +582,7 @@ class DatabaseSeeder extends Seeder
         for ($i = 0; $i < 50; $i++) {
             $incidentZone = $faker->randomElement($zones);
             $incidentType = $faker->randomElement($vawcAbuseTypes);
-            
+
             $caseNumber = 'VAWC-' . now()->year . '-' . str_pad($i + 1, 4, '0', STR_PAD_LEFT);
 
             $caseReport = CaseReport::create([
@@ -606,10 +606,9 @@ class DatabaseSeeder extends Seeder
             ]);
 
             // Create VAWC Case
-            $vawcStatus = $faker->randomElement(['Intake', 'Assessment', 'Alternative Housing', 'BPO Processing', 'Monitoring', 'Escalated', 'Closed']);
             $vawcCase = VawcCase::create([
                 'case_report_id' => $caseReport->id,
-                'intake_type' => $faker->randomElement(['Direct', 'Third-Party']),
+                'intake_type' => $faker->randomElement(['Walk-in', 'Phone Call', 'Barangay Referral']),
                 'children_count' => rand(0, 4),
                 'is_repeat_offense' => $faker->boolean(15),
                 'has_weapon_involved' => $faker->boolean(25),
@@ -617,37 +616,40 @@ class DatabaseSeeder extends Seeder
                 'perpetrator_present' => $faker->boolean(30),
                 'warrantless_arrest_made' => $faker->boolean(10),
                 'weapons_confiscated' => $faker->boolean(10),
-                'status' => $vawcStatus,
+                'status' => $caseReport->lifecycle_status,
                 'referral_status' => $faker->randomElement(['Handled Internally', 'Referred to PNP', 'Referred to DSWD']),
             ]);
 
-            // Add involved parties (Respondent)
+            // Add involved parties (Perpetrator)
             VawcInvolvedParty::create([
                 'vawc_case_id' => $vawcCase->id,
-                'role' => 'Respondent',
-                'name' => $faker->name('male'),
+                'party_type' => 'perpetrator',
+                'fullname' => $faker->name('male'),
                 'age' => rand(20, 60),
-                'gender' => 'Male',
-                'relationship_to_victim' => $faker->randomElement(['Husband', 'Partner', 'Father', 'Brother']),
+                'sex' => 'Male',
+                'relationship' => $faker->randomElement(['Husband', 'Partner', 'Father', 'Brother']),
                 'contact_number' => $faker->phoneNumber(),
                 'address' => $faker->address(),
             ]);
 
-            // Seed VawcAssessment which triggers automatic RAVE Risk calculation on save
-            $reqMed = $faker->boolean(20);
-            $reqHouse = $faker->boolean(15);
+            // Calculate RAVE Score & Seed Safety Assessment
+            $score = rand(1, 12);
+            $risk = 'Low';
+            if ($score >= 9) {
+                $risk = 'High';
+            } elseif ($score >= 5) {
+                $risk = 'Medium';
+            }
+
             VawcAssessment::create([
                 'vawc_case_id' => $vawcCase->id,
-                'requires_medical' => $reqMed,
-                'medical_notes' => $reqMed ? 'Victim shows physical signs of trauma.' : null,
-                'requires_alternative_housing' => $reqHouse,
-                'housing_notes' => $reqHouse ? 'Victim requires shelter at barangay safe house.' : null,
-                'lswo_referral_made' => $faker->boolean(30),
-                'dswd_referral_made' => $faker->boolean(10),
-                'abuse_frequency' => rand(1, 3),
-                'abuse_severity' => rand(1, 3),
-                'weapon_access' => rand(1, 3),
-                'life_threat_level' => rand(1, 3),
+                'user_id' => $vawcOfficer->id,
+                'safety_score' => $score,
+                'risk_level' => $risk,
+                'safety_plan' => $faker->sentence(),
+                'medical_referral_details' => $score > 8 ? 'Referred to hospital for checkup' : null,
+                'police_assistance_details' => $score > 8 ? 'Requested PNP escort' : null,
+                'remarks' => $faker->sentence(),
             ]);
         }
     }

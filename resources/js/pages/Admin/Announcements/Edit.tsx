@@ -112,12 +112,12 @@ export default function Edit({ announcement }: { announcement: any}) {
                                         value={data.category} 
                                         onChange={e => setData('category', e.target.value)}
                                     >
+                                        <option value="Bulletin">Bulletin</option>
+                                        <option value="Advisory">Advisory</option>
                                         <option value="General">General</option>
                                         <option value="VAWC">VAWC</option>
-                                        <option value="GAD">GAD</option>
                                         <option value="Health">Health</option>
                                         <option value="Emergency">Emergency</option>
-                                        <option value="Events">Events</option>
                                         <option value="Organizations">Organizations</option>
                                     </select>
                                 </div>

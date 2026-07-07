@@ -12,8 +12,8 @@ use App\Models\User;
 use App\Models\GadEvent;
 use App\Models\Organization;
 use App\Models\VawcAssessment;
-use App\Models\Member;
 use App\Models\MemberCommunication;
+use App\Models\Member;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -606,11 +606,11 @@ class AnalyticsService
         foreach ($zones as $zone) {
             $zoneChildrenIds = \App\Models\BcpcChild::where('zone_id', $zone->id)->pluck('id');
             $zoneTotal = $zoneChildrenIds->count();
-            
+
             $zoneLatest = $latestAssessments->whereIn('bcpc_child_id', $zoneChildrenIds);
             $zoneMalnourished = $zoneLatest->whereIn('wfa_status', ['Underweight', 'Severely Underweight'])->count();
             $zoneStunted = $zoneLatest->whereIn('hfa_status', ['Stunted', 'Severely Stunted'])->count();
-            
+
             $zonesBreakdown[] = [
                 'name'         => $zone->name,
                 'total'        => $zoneTotal,
@@ -743,7 +743,7 @@ class AnalyticsService
         $organizations = $orgQuery->get();
 
         // 1. Members stats
-        $membersQuery = Member::query()->whereIn('status', ['Active', 'active']);
+        $membersQuery = Member::query()->where('status', 'active');
         if ($orgId) {
             $membersQuery->where('organization_id', $orgId);
         }
@@ -779,7 +779,7 @@ class AnalyticsService
 
         foreach ($members as $member) {
             $meta = $member->member_meta ?: [];
-            
+
             // Age extraction
             $age = null;
             foreach ($meta as $key => $val) {
@@ -793,7 +793,8 @@ class AnalyticsService
                     try {
                         $age = Carbon::parse($val)->age;
                         break;
-                    } catch (\Throwable $e) {}
+                    } catch (\Throwable $e) {
+                    }
                 }
             }
             if ($age !== null) {

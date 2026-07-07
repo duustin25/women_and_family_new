@@ -31,80 +31,101 @@ import {
 } from 'lucide-react';
 import AppLogo from './app-logo';
 
-const mainNavItems: NavItem[] = [
-    // --- OVERVIEW ---
+interface NavGroup {
+    title: string;
+    items: NavItem[];
+}
+
+const navGroups: NavGroup[] = [
     {
-        title: 'Dashboard',
-        href: dashboard(),
-        icon: LayoutGrid,
+        title: 'Control Center',
+        items: [
+            {
+                title: 'Dashboard',
+                href: dashboard(),
+                icon: LayoutGrid,
+            },
+            {
+                title: 'Announcements',
+                href: '/admin/announcements',
+                icon: Wallpaper,
+            },
+            {
+                title: 'Data Analytics & Official Reports',
+                href: '/admin/analytics',
+                icon: ChartLine,
+            },
+        ],
     },
     {
-        title: 'Announcements',
-        href: '/admin/announcements',
-        icon: Wallpaper,
-    },
-    // --- CORE SERVICES (Capstone Focus) ---
-    {
-        title: 'VAWC Triage & Action Center',
-        href: '/admin/vawc/dashboard',
-        icon: ShieldAlert,
-    },
-    {
-        title: 'Child Health and Nutritional Status Monitoring (BCPC)',
-        href: '/admin/bcpc/dashboard',
-        icon: Activity,
-    },
-    {
-        title: 'Gender and Development (GAD) Advocacy & Programs',
-        href: '/admin/gad/events',
-        icon: CalendarRange,
-    },
-    {
-        title: 'Data Analytics & Official Reports',
-        href: '/admin/analytics',
-        icon: ChartLine,
-    },
-    // --- COMMUNITY & ORGS ---
-    {
-        title: 'Organizations',
-        href: '/admin/organizations',
-        icon: Building2,
+        title: 'Social Service Modules',
+        items: [
+            {
+                title: 'VAWC Triage & Action Center',
+                href: '/admin/vawc/dashboard',
+                icon: ShieldAlert,
+            },
+            {
+                title: 'Child Health and Nutritional Status Monitoring (BCPC)',
+                href: '/admin/bcpc/dashboard',
+                icon: Activity,
+            },
+            {
+                title: 'Gender and Development (GAD) Advocacy & Programs',
+                href: '/admin/gad/events',
+                icon: CalendarRange,
+            },
+        ],
     },
     {
-        title: 'Membership Applications',
-        href: '/admin/applications',
-        icon: FileSearch,
+        title: 'Community & Membership',
+        items: [
+            {
+                title: 'Organizations',
+                href: '/admin/organizations',
+                icon: Building2,
+            },
+            {
+                title: 'Membership Applications',
+                href: '/admin/applications',
+                icon: FileSearch,
+            },
+            {
+                title: 'Members',
+                href: '/admin/members',
+                icon: Users,
+            },
+            {
+                title: 'Org Proposals',
+                href: '/admin/organization/events',
+                icon: FileText,
+            },
+        ],
     },
     {
-        title: 'Members',
-        href: '/admin/members',
-        icon: Users,
-    },
-    {
-        title: 'Org Proposals',
-        href: '/admin/organization/events',
-        icon: FileText,
-    },
-    // --- GOVERNANCE & ADMIN ---
-    {
-        title: 'Officials',
-        href: '/admin/officials',
-        icon: User2,
-    },
-    {
-        title: 'System Users',
-        href: '/admin/system-users',
-        icon: CircleUser,
-    },
-    {
-        title: 'Audit Logs',
-        href: '/admin/audit-logs',
-        icon: Logs,
-    },
-    {
-        title: 'Settings',
-        href: '/admin/settings',
-        icon: Settings,
+        title: 'Governance & Administration',
+        items: [
+            {
+                title: 'Officials',
+                href: '/admin/officials',
+                icon: User2,
+            },
+            {
+                title: 'System Users',
+                href: '/admin/system-users',
+                icon: CircleUser,
+            },
+            {
+                title: 'Audit Logs',
+                href: '/admin/audit-logs',
+                icon: Logs,
+            },
+            {
+                title: 'Settings',
+                href: '/admin/settings',
+                icon: Settings,
+            },
+        ],
     },
 ];
 
@@ -112,47 +133,53 @@ const footerNavItems: NavItem[] = [];
 
 export function AppSidebar() {
     const { auth } = usePage<any>().props;
+    const role = auth.user.role;
 
-    // Filter Navigation based on Roles
-    const filteredNavItems = mainNavItems.filter((item) => {
-        const role = auth.user.role;
-
-        // Settings is strictly Admin ONLY
-        if (item.title === 'Settings' && role !== 'admin') {
-            return false;
-        }
-
-        // Audit Logs: Admin and Head see system-wide. President sees only their own (Scoped in Controller).
-        if (item.title === 'Audit Logs' && !['admin', 'head', 'president'].includes(role)) {
-            return false;
-        }
-
-        // Presidents see Org Proposals, not the admin GAD menu
-        if (item.title === 'Org Proposals' && role !== 'president') return false;
-
-        if (role === 'president') {
-            const hiddenFromPresident = [
-                'VAWC Triage & Action Center',
-                'Violence Against Women and Children Case Protection Registry',
-                'Child Health and Nutritional Status Monitoring (BCPC)',
-                'System Users',
-                'Officials',
-                'Settings',
-                'Gender and Development (GAD) Advocacy & Programs',
-            ];
-            if (hiddenFromPresident.includes(item.title)) return false;
-        }
-
-        // Head Committee visibility
-        if (role === 'head') {
-            const hiddenFromHead = ['System Users', 'Settings'];
-            if (hiddenFromHead.includes(item.title)) {
+    // Filter dynamic groups based on roles
+    const filteredGroups = navGroups.map((group) => {
+        const filteredItems = group.items.filter((item) => {
+            // Settings is strictly Admin ONLY
+            if (item.title === 'Settings' && role !== 'admin') {
                 return false;
             }
-        }
 
-        return true;
-    });
+            // Audit Logs: Admin and Head see system-wide. President sees only their own (Scoped in Controller).
+            if (item.title === 'Audit Logs' && !['admin', 'head', 'president'].includes(role)) {
+                return false;
+            }
+
+            // Presidents see Org Proposals, not the admin GAD menu
+            if (item.title === 'Org Proposals' && role !== 'president') return false;
+
+            if (role === 'president') {
+                const hiddenFromPresident = [
+                    'VAWC Triage & Action Center',
+                    'Violence Against Women and Children Case Protection Registry',
+                    'Child Health and Nutritional Status Monitoring (BCPC)',
+                    'System Users',
+                    'Officials',
+                    'Settings',
+                    'Gender and Development (GAD) Advocacy & Programs',
+                ];
+                if (hiddenFromPresident.includes(item.title)) return false;
+            }
+
+            // Head Committee visibility
+            if (role === 'head') {
+                const hiddenFromHead = ['System Users', 'Settings'];
+                if (hiddenFromHead.includes(item.title)) {
+                    return false;
+                }
+            }
+
+            return true;
+        });
+
+        return {
+            ...group,
+            items: filteredItems,
+        };
+    }).filter(group => group.items.length > 0);
 
     return (
         <Sidebar collapsible="icon" variant="inset">
@@ -168,8 +195,10 @@ export function AppSidebar() {
                 </SidebarMenu>
             </SidebarHeader>
 
-            <SidebarContent>
-                <NavMain items={filteredNavItems} />
+            <SidebarContent className="gap-2 py-2">
+                {filteredGroups.map((group) => (
+                    <NavMain key={group.title} title={group.title} items={group.items} />
+                ))}
             </SidebarContent>
 
             <SidebarFooter>

@@ -5,6 +5,7 @@ import React, { useState, useEffect } from "react";
 interface LivePaperPreviewProps {
     data: {
         name: string;
+        fullname: string;
         president_name: string;
         form_schema: any[];
         print_settings?: any;
@@ -177,14 +178,14 @@ export default function LivePaperPreview({ data, record }: LivePaperPreviewProps
                                                     <p className="font-bold uppercase text-gray-700 mb-1">{field.label}:</p>
                                                     <div className={`flex flex-wrap gap-x-4 gap-y-2 ${field.layout === 'block' ? 'flex-col' : ''}`}>
                                                         {field.options?.map((opt: string, idx: number) => {
-                                                             const isSpecify = opt.toLowerCase().includes('(specify)') || opt.toLowerCase().includes('(indicate)') || opt.toLowerCase() === 'others';
-                                                             return (
-                                                                 <div key={idx} className="flex items-center gap-1">
-                                                                     <div className={`w-4 h-4 border border-black ${field.type === 'radio' ? 'rounded-full' : 'rounded-sm'}`}></div>
-                                                                     <span className="text-[10pt]">{opt} {isSpecify && "_________________"}</span>
-                                                                 </div>
-                                                             );
-                                                         })}
+                                                            const isSpecify = opt.toLowerCase().includes('(specify)') || opt.toLowerCase().includes('(indicate)') || opt.toLowerCase() === 'others';
+                                                            return (
+                                                                <div key={idx} className="flex items-center gap-1">
+                                                                    <div className={`w-4 h-4 border border-black ${field.type === 'radio' ? 'rounded-full' : 'rounded-sm'}`}></div>
+                                                                    <span className="text-[10pt]">{opt} {isSpecify && "_________________"}</span>
+                                                                </div>
+                                                            );
+                                                        })}
                                                         {(!field.options || field.options.length === 0) && (
                                                             <span className="text-gray-400 italic text-xs">No options defined</span>
                                                         )}
@@ -195,9 +196,9 @@ export default function LivePaperPreview({ data, record }: LivePaperPreviewProps
                                                     <h3 className="text-[12pt] font-black uppercase text-gray-800 border-b-2 border-gray-300 leading-tight">{field.label}</h3>
                                                 </div>
                                             ) : field.type === 'paragraph' ? (
-                                                 <div className="w-full py-2">
-                                                     <p className="text-[10pt] leading-relaxed text-justify text-neutral-700 whitespace-pre-wrap">{field.label}</p>
-                                                 </div>
+                                                <div className="w-full py-2">
+                                                    <p className="text-[10pt] leading-relaxed text-justify text-neutral-700 whitespace-pre-wrap">{field.label}</p>
+                                                </div>
                                             ) : field.type === 'checkbox' ? (
                                                 <div className="w-full flex items-start gap-2 pt-1 pb-1">
                                                     <div className="w-4 h-4 border border-black rounded-sm shrink-0 mt-[2px]"></div>
@@ -271,13 +272,12 @@ export default function LivePaperPreview({ data, record }: LivePaperPreviewProps
                         {data.print_settings.signatures.map((row: any, rIdx: number) => {
                             const colsCount = row.columns?.length || 1;
                             return (
-                                <div 
-                                    key={rIdx} 
-                                    className={`grid gap-12 text-center items-end ${
-                                        colsCount === 1 ? 'grid-cols-1 w-1/2 mx-auto' : 
-                                        colsCount === 2 ? 'grid-cols-2' : 
-                                        colsCount === 3 ? 'grid-cols-3' : 'grid-cols-4'
-                                    }`}
+                                <div
+                                    key={rIdx}
+                                    className={`grid gap-12 text-center items-end ${colsCount === 1 ? 'grid-cols-1 w-1/2 mx-auto' :
+                                        colsCount === 2 ? 'grid-cols-2' :
+                                            colsCount === 3 ? 'grid-cols-3' : 'grid-cols-4'
+                                        }`}
                                 >
                                     {row.columns?.map((col: any, cIdx: number) => {
                                         let substitutedName = col.name || '';
