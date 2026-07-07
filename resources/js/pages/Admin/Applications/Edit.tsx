@@ -30,6 +30,38 @@ export default function Edit({ application, organization }: { application: any, 
         return !activeFieldIds.has(key);
     });
 
+    const formatDisplayValue = (val: any): string => {
+        if (val === null || val === undefined) return '';
+
+        if (Array.isArray(val)) {
+            if (val.length === 0) return '';
+            
+            if (typeof val[0] === 'object' && val[0] !== null) {
+                return val.map((row: any, index: number) => {
+                    const rowValues = Object.entries(row)
+                        .filter(([_, v]) => typeof v !== 'object' && v !== null && v !== '')
+                        .map(([k, v]) => `${k}: ${v}`)
+                        .join(', ');
+                    return `[${index + 1}] ${rowValues}`;
+                }).join(' | ');
+            }
+            
+            return val.join(', ');
+        }
+
+        if (typeof val === 'object') {
+            if ('label' in val) return String(val.label);
+            if ('value' in val) return String(val.value);
+
+            return Object.entries(val)
+                .filter(([_, v]) => typeof v !== 'object' && v !== null && v !== '')
+                .map(([k, v]) => `${k}: ${v}`)
+                .join(', ');
+        }
+
+        return String(val);
+    };
+
     const handleDynamicInputChange = (fieldId: string, value: any) => {
         setData('form_data', {
             ...data.form_data,
@@ -203,7 +235,7 @@ export default function Edit({ application, organization }: { application: any, 
                                                                 {key.replace(/_/g, ' ')}
                                                             </Label>
                                                             <Input
-                                                                value={Array.isArray(value) ? value.join(', ') : value || ''}
+                                                                value={formatDisplayValue(value)}
                                                                 disabled
                                                                 className="bg-neutral-50 dark:bg-neutral-950 text-neutral-500 font-medium shadow-none cursor-not-allowed border-neutral-200 dark:border-neutral-800"
                                                             />

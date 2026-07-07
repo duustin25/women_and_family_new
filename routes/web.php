@@ -82,6 +82,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::group(['prefix' => 'admin', 'as' => 'admin.', 'middleware' => ['role:admin,head,president']], function () {
         Route::resource('announcements', AnnouncementController::class);
         Route::get('organizations/{organization:slug}/members', [OrganizationController::class, 'members'])->name('organizations.members');
+        Route::get('organizations/{organization:slug}/members/export', [OrganizationController::class, 'exportMembers'])->name('organizations.members.export');
         Route::resource('organizations', OrganizationController::class);
 
 

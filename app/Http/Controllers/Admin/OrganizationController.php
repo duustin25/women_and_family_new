@@ -280,4 +280,187 @@ class OrganizationController extends Controller
             'filters' => $request->only(['search', 'sort', 'direction'])
         ]);
     }
+
+    public function exportMembers(Request $request, Organization $organization)
+    {
+        // RBAC: President can only view/export members of their own organization
+        $user = $request->user();
+        if ($user->isPresident() && (int)$user->organization_id !== (int)$organization->id) {
+            abort(403, 'You can only view members of your own organization.');
+        }
+
+        $query = \App\Models\MembershipApplication::where('organization_id', $organization->id)
+            ->where('status', 'Approved');
+
+        if ($request->filled('search')) {
+            $searchTerm = $request->input('search');
+            $query->where('fullname', 'LIKE', "%{$searchTerm}%");
+        }
+
+        // Setup Sorting
+        $sortColumn = $request->input('sort', 'actioned_at'); // default sort
+        $sortDirection = $request->input('direction', 'desc');
+
+        $coreColumns = ['fullname', 'address', 'actioned_at', 'status'];
+        $sortDirectionSafe = $sortDirection === 'asc' ? 'asc' : 'desc';
+
+        if (in_array($sortColumn, $coreColumns)) {
+            $query->orderBy($sortColumn, $sortDirectionSafe);
+        } else {
+            // Assume it is a dynamic JSON field inside `form_data`
+            // Sanitize column name to alphanumerics/underscores to prevent SQL injection issues
+            $safeColumn = preg_replace('/[^a-zA-Z0-9_]/', '', $sortColumn);
+            if ($safeColumn) {
+                $query->orderBy("form_data->{$safeColumn}", $sortDirectionSafe);
+            } else {
+                $query->latest('actioned_at');
+            }
+        }
+
+        $members = $query->get();
+
+        // 1. Gather all fields defined in the current form schema (Active Fields)
+        $schemaRaw = $organization->form_schema;
+        $schemaFields = is_array($schemaRaw) ? $schemaRaw : [];
+        $dynamicColumnKeys = [];
+        $dynamicColumnLabels = [];
+
+        foreach ($schemaFields as $field) {
+            if (isset($field['id']) && 
+                empty($field['is_core']) && 
+                ($field['type'] ?? '') !== 'section' && 
+                $field['id'] !== 'fullname' && 
+                $field['id'] !== 'address'
+            ) {
+                $dynamicColumnKeys[] = $field['id'];
+                $dynamicColumnLabels[$field['id']] = $field['label'] ?? str_replace('_', ' ', strtoupper($field['id']));
+            }
+        }
+
+        // 2. Gather all fields from members' historical data (Legacy/Retired Fields)
+        foreach ($members as $member) {
+            $formData = $member->form_data ?: [];
+            foreach (array_keys($formData) as $key) {
+                if ($key !== 'fullname' && $key !== 'address' && !in_array($key, $dynamicColumnKeys)) {
+                    $dynamicColumnKeys[] = $key;
+                    $dynamicColumnLabels[$key] = str_replace('_', ' ', strtoupper($key)) . ' (Retired)';
+                }
+            }
+        }
+
+        $filename = Str::slug($organization->name) . "_members_" . now()->format('Ymd_His') . ".csv";
+
+        $headers = [
+            "Content-type"        => "text/csv",
+            "Content-Disposition" => "attachment; filename=" . $filename,
+            "Pragma"              => "no-cache",
+            "Cache-Control"       => "must-revalidate, post-check=0, pre-check=0",
+            "Expires"             => "0"
+        ];
+
+        // Combine core columns and dynamic labels
+        $columns = array_merge(
+            ['Full Name', 'Registered Address'],
+            array_values($dynamicColumnLabels),
+            ['Approval Date', 'Status']
+        );
+
+        $callback = function() use($members, $columns, $dynamicColumnKeys) {
+            $file = fopen('php://output', 'w');
+            // Write UTF-8 BOM for Excel compatibility
+            fputs($file, "\xEF\xBB\xBF");
+            fputcsv($file, $columns);
+
+            foreach ($members as $member) {
+                $row = [
+                    $member->fullname,
+                    $member->address ?: '',
+                ];
+
+                // Add dynamic column values
+                $formData = $member->form_data ?: [];
+                foreach ($dynamicColumnKeys as $key) {
+                    $val = $formData[$key] ?? null;
+                    if (is_array($val)) {
+                        $isAssoc = false;
+                        if (!empty($val)) {
+                            $keys = array_keys($val);
+                            $isAssoc = array_keys($keys) !== $keys;
+                        }
+
+                        if ($isAssoc) {
+                            if (isset($val['label'])) {
+                                $displayVal = (string)$val['label'];
+                            } elseif (isset($val['value'])) {
+                                $displayVal = (string)$val['value'];
+                            } else {
+                                $pairs = [];
+                                foreach ($val as $k => $v) {
+                                    if (!is_array($v) && !is_object($v)) {
+                                        $pairs[] = "{$k}: {$v}";
+                                    }
+                                }
+                                $displayVal = implode(', ', $pairs);
+                            }
+                        } else {
+                            $isFlat = true;
+                            foreach ($val as $item) {
+                                if (is_array($item) || is_object($item)) {
+                                    $isFlat = false;
+                                    break;
+                                }
+                            }
+
+                            if ($isFlat) {
+                                $displayVal = implode(', ', $val);
+                            } else {
+                                $formattedItems = [];
+                                foreach ($val as $index => $item) {
+                                    if (is_array($item)) {
+                                        $itemPairs = [];
+                                        foreach ($item as $k => $v) {
+                                            if (!is_array($v) && !is_object($v) && $v !== null && $v !== '') {
+                                                $itemPairs[] = "{$k}: {$v}";
+                                            }
+                                        }
+                                        $formattedItems[] = "[" . ($index + 1) . "] " . implode(', ', $itemPairs);
+                                    } else {
+                                        $formattedItems[] = (string)$item;
+                                    }
+                                }
+                                $displayVal = implode(' | ', $formattedItems);
+                            }
+                        }
+                    } elseif (is_object($val)) {
+                        $valArr = (array)$val;
+                        if (isset($valArr['label'])) {
+                            $displayVal = (string)$valArr['label'];
+                        } elseif (isset($valArr['value'])) {
+                            $displayVal = (string)$valArr['value'];
+                        } else {
+                            $pairs = [];
+                            foreach ($valArr as $k => $v) {
+                                if (!is_array($v) && !is_object($v)) {
+                                    $pairs[] = "{$k}: {$v}";
+                                }
+                            }
+                            $displayVal = implode(', ', $pairs);
+                        }
+                    } else {
+                        $displayVal = (string)$val;
+                    }
+                    $row[] = ($displayVal !== null && $displayVal !== '') ? $displayVal : '';
+                }
+
+                $row[] = $member->actioned_at ? $member->actioned_at->toDateTimeString() : '';
+                $row[] = $member->status;
+
+                fputcsv($file, $row);
+            }
+
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
 }

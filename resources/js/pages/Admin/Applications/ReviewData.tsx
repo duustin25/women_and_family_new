@@ -15,6 +15,38 @@ export default function ReviewData({ application, organization }: { application:
     if (!formData.fullname && record.fullname) formData.fullname = record.fullname;
     if (!formData.address && record.address) formData.address = record.address;
 
+    const formatDisplayValue = (val: any): string => {
+        if (val === null || val === undefined) return '';
+
+        if (Array.isArray(val)) {
+            if (val.length === 0) return '';
+            
+            if (typeof val[0] === 'object' && val[0] !== null) {
+                return val.map((row: any, index: number) => {
+                    const rowValues = Object.entries(row)
+                        .filter(([_, v]) => typeof v !== 'object' && v !== null && v !== '')
+                        .map(([k, v]) => `${k}: ${v}`)
+                        .join(', ');
+                    return `[${index + 1}] ${rowValues}`;
+                }).join(' | ');
+            }
+            
+            return val.join(', ');
+        }
+
+        if (typeof val === 'object') {
+            if ('label' in val) return String(val.label);
+            if ('value' in val) return String(val.value);
+
+            return Object.entries(val)
+                .filter(([_, v]) => typeof v !== 'object' && v !== null && v !== '')
+                .map(([k, v]) => `${k}: ${v}`)
+                .join(', ');
+        }
+
+        return String(val);
+    };
+
     const handleAction = (status: 'Approved' | 'Disapproved') => {
         if (confirm(`Set status to ${status}?`)) {
             router.patch(`/admin/applications/${record.id}/status`,
@@ -182,15 +214,15 @@ export default function ReviewData({ application, organization }: { application:
                                                      </h2>
                                                  </div>
                                                  
-                                                 {standardEntries.length > 0 && (
-                                                     <div className="p-2 grid grid-cols-1 sm:grid-cols-2 gap-x-4">
-                                                         {standardEntries.map(([key, value]: [string, any]) => {
-                                                             const formattedLabel = getFieldLabel(key);
-                                                             const formattedValue = Array.isArray(value) ? value.join(', ') : value;
-                                                             return <DataRow key={key} label={formattedLabel} value={formattedValue} />;
-                                                         })}
-                                                     </div>
-                                                 )}
+                                                  {standardEntries.length > 0 && (
+                                                      <div className="p-2 grid grid-cols-1 sm:grid-cols-2 gap-x-4">
+                                                          {standardEntries.map(([key, value]: [string, any]) => {
+                                                              const formattedLabel = getFieldLabel(key);
+                                                              const formattedValue = formatDisplayValue(value);
+                                                              return <DataRow key={key} label={formattedLabel} value={formattedValue} />;
+                                                          })}
+                                                      </div>
+                                                  )}
 
                                                  {complexEntries.length > 0 && (
                                                      <div className="border-t border-neutral-100 dark:border-neutral-800 p-4 space-y-6">
@@ -261,14 +293,13 @@ export default function ReviewData({ application, organization }: { application:
                                                          Retired/Legacy Data Fields (Historical Record)
                                                      </h2>
                                                  </div>
-                                                 <div className="p-2 grid grid-cols-1 sm:grid-cols-2 gap-x-4">
-                                                     {legacyEntries.map(([key, value]: [string, any]) => {
-                                                         const formattedLabel = key.replace(/_/g, ' ');
-                                                         const formattedValue = Array.isArray(value) ? value.join(', ') :
-                                                             typeof value === 'object' ? JSON.stringify(value) : value;
-                                                         return <DataRow key={key} label={formattedLabel} value={formattedValue} />;
-                                                     })}
-                                                 </div>
+                                                  <div className="p-2 grid grid-cols-1 sm:grid-cols-2 gap-x-4">
+                                                      {legacyEntries.map(([key, value]: [string, any]) => {
+                                                          const formattedLabel = key.replace(/_/g, ' ');
+                                                          const formattedValue = formatDisplayValue(value);
+                                                          return <DataRow key={key} label={formattedLabel} value={formattedValue} />;
+                                                      })}
+                                                  </div>
                                              </div>
                                          )}
                                      </div>

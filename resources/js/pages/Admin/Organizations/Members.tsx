@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useState, useMemo } from 'react';
 
+declare function route(name: string, params?: any, absolute?: boolean): string;
+
 interface Member {
     id: number;
     fullname: string;
@@ -96,6 +98,42 @@ export default function Members({ organization, members, filters }: PageProps) {
         return !org.form_schema.some((f: any) => f.id === fieldId);
     };
 
+    const formatDisplayValue = (value: any, fieldId: string): string => {
+        if (value === null || value === undefined) return '';
+
+        const field = org.form_schema?.find((f: any) => f.id === fieldId);
+        const fieldType = field?.type;
+
+        if (Array.isArray(value)) {
+            if (value.length === 0) return '';
+            
+            if (fieldType === 'table' || fieldType === 'repeater' || (typeof value[0] === 'object' && value[0] !== null)) {
+                return value.map((row: any, idx: number) => {
+                    if (typeof row !== 'object' || row === null) return `[${idx + 1}] ${row}`;
+                    const rowValues = Object.entries(row)
+                        .filter(([_, v]) => typeof v !== 'object' && v !== null && v !== '')
+                        .map(([k, v]) => `${k}: ${v}`)
+                        .join(', ');
+                    return `[${idx + 1}] ${rowValues}`;
+                }).join(' | ');
+            }
+            
+            return value.join(', ');
+        }
+
+        if (typeof value === 'object') {
+            if ('label' in value) return String(value.label);
+            if ('value' in value) return String(value.value);
+
+            return Object.entries(value)
+                .filter(([_, v]) => typeof v !== 'object' && v !== null && v !== '')
+                .map(([k, v]) => `${k}: ${v}`)
+                .join(', ');
+        }
+
+        return String(value);
+    };
+
     const handleSearch = (term: string) => {
         setSearchQuery(term);
         applyFilters(term, currentSort, currentDirection);
@@ -116,6 +154,26 @@ export default function Members({ organization, members, filters }: PageProps) {
         if (direction) query.direction = direction;
 
         router.get(`/admin/organizations/${org.slug}/members`, query, { preserveState: true });
+    };
+
+    const handleExportCsv = () => {
+        const queryParams: any = {};
+        if (searchQuery) queryParams.search = searchQuery;
+        if (currentSort) queryParams.sort = currentSort;
+        if (currentDirection) queryParams.direction = currentDirection;
+
+        const url = route('admin.organizations.members.export', { 
+            organization: org.slug, 
+            ...queryParams 
+        }, false);
+        
+        // Trigger download programmatically via a hidden link to prevent hijacking SPA page state
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', '');
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     };
 
     const SortIcon = ({ column }: { column: string }) => {
@@ -157,7 +215,7 @@ export default function Members({ organization, members, filters }: PageProps) {
                                 <span className="text-[10px] font-bold uppercase text-neutral-400 tracking-widest">Active Members</span>
                             </div>
 
-                            <Button variant="outline" className="h-10 rounded-lg border-neutral-200 dark:border-neutral-800 text-neutral-700 dark:text-neutral-300 shadow-sm" onClick={() => alert('Export functionality to be implemented.')}>
+                            <Button variant="outline" className="h-10 rounded-lg border-neutral-200 dark:border-neutral-800 text-neutral-700 dark:text-neutral-300 shadow-sm" onClick={handleExportCsv}>
                                 <Download size={16} className="mr-2" /> Export CSV
                             </Button>
                         </div>
@@ -240,7 +298,7 @@ export default function Members({ organization, members, filters }: PageProps) {
                                                 {dynamicColumns.map(col => {
                                                     let subData = typeof member.form_data === 'string' ? JSON.parse(member.form_data) : (member.form_data || {});
                                                     let val = subData[col];
-                                                    let displayVal = Array.isArray(val) ? val.join(', ') : (typeof val === 'object' && val !== null ? JSON.stringify(val) : val);
+                                                    let displayVal = formatDisplayValue(val, col);
                                                     const retired = isFieldRetired(col);
                                                     return (
                                                         <td key={col} className={`${tdClasses} ${retired ? 'text-neutral-400 dark:text-neutral-500 bg-amber-500/[0.01] italic' : 'opacity-80'}`} title={displayVal || ''}>
