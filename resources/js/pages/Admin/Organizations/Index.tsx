@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useState } from 'react';
+import { useConfirm } from '@/hooks/use-confirm';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
@@ -26,13 +27,18 @@ interface Organization {
 interface PageProps {
     organization: {
         data: Organization[];
-        meta: { total: number; links: any[]; };
+        links: any[];
+        meta: {
+            total: number;
+            links: any[];
+        };
     };
     filters: { search?: string; };
 }
 
 export default function Index({ organization, filters }: PageProps) {
     const [searchQuery, setSearchQuery] = useState(filters?.search ?? '');
+    const confirm = useConfirm();
 
     const handleSearch = (term: string) => {
         setSearchQuery(term);
@@ -40,9 +46,14 @@ export default function Index({ organization, filters }: PageProps) {
     };
 
     const handleDelete = (orgs: Organization) => {
-        if (confirm(`Delete ${orgs.name}? This action cannot be undone.`)) {
-            router.delete(`/admin/organizations/${orgs.slug}`);
-        }
+        confirm({
+            title: "Delete Organization",
+            message: `Are you sure you want to delete "${orgs.name}"? This cannot be undone.`,
+            confirmText: "Delete",
+            onConfirm: () => {
+                router.delete(`/admin/organizations/${orgs.slug}`);
+            }
+        });
     };
 
     return (

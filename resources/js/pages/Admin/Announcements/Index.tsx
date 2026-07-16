@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { useState } from 'react';
+import { useConfirm } from '@/hooks/use-confirm';
 
 interface Announcement {
     id: number;
@@ -39,6 +40,7 @@ interface PageProps {
 
 export default function Index({ announcements, filters }: PageProps) {
     const [searchQuery, setSearchQuery] = useState(filters?.search ?? '');
+    const confirm = useConfirm();
 
     const handleSearch = (term: string) => {
         setSearchQuery(term);
@@ -49,9 +51,14 @@ export default function Index({ announcements, filters }: PageProps) {
     }
 
     const handleDelete = (announcement: Announcement) => {
-        if (confirm(`Delete this announcement: ${announcement.title}? This action cannot be undone.`)) {
-            router.delete(`/admin/announcements/${announcement.slug}`);
-        }
+        confirm({
+            title: "Delete Announcement",
+            message: `Are you sure you want to delete "${announcement.title}"? This cannot be undone.`,
+            confirmText: "Delete",
+            onConfirm: () => {
+                router.delete(`/admin/announcements/${announcement.slug}`);
+            }
+        });
     };
 
     // Category Badge Logic

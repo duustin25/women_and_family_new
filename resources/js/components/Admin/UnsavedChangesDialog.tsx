@@ -27,10 +27,10 @@ export function UnsavedChangesDialog({
 }: UnsavedChangesDialogProps) {
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-md">
+            <DialogContent className="sm:max-w-md p-6 gap-4">
                 <DialogHeader>
-                    <DialogTitle className="text-xl">You have unsaved changes</DialogTitle>
-                    <DialogDescription className="text-base text-neutral-600 dark:text-neutral-400 pt-2 pb-4">
+                    <DialogTitle className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">You have unsaved changes</DialogTitle>
+                    <DialogDescription className="text-base text-neutral-600 dark:text-neutral-400 pt-2">
                         Leaving this page will discard the changes you made to <span className="font-semibold text-neutral-900 dark:text-white">{itemName}</span>.
                     </DialogDescription>
                 </DialogHeader>
@@ -38,7 +38,7 @@ export function UnsavedChangesDialog({
                     <Button
                         type="button"
                         variant="ghost"
-                        className="text-neutral-500 hover:text-red-600 hover:bg-red-50 w-full sm:w-auto mt-2 sm:mt-0"
+                        className="text-white bg-red-600 hover:bg-red-700 w-full sm:w-auto mt-2 sm:mt-0"
                         onClick={onDiscardChanges}
                     >
                         Discard Changes

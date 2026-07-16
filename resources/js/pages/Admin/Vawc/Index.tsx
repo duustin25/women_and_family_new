@@ -25,6 +25,7 @@ export default function Index({ cases, filters }: Props) {
     const [status, setStatus] = useState(filters?.status || 'all');
     const [archived, setArchived] = useState(filters?.archived || '0');
     const debouncedSearch = useDebounce(search, 300);
+    const isInitialMount = React.useRef(true);
 
     const getStatusVariant = (status: string) => {
         switch (status) {
@@ -42,6 +43,11 @@ export default function Index({ cases, filters }: Props) {
 
     // Apply filters via Inertia router
     useEffect(() => {
+        if (isInitialMount.current) {
+            isInitialMount.current = false;
+            return;
+        }
+
         router.get(route('admin.vawc.index'), {
             search: debouncedSearch,
             status: status,
@@ -264,6 +270,8 @@ export default function Index({ cases, filters }: Props) {
                             <Link
                                 key={i}
                                 href={link.url || '#'}
+                                preserveScroll
+                                preserveState
                                 dangerouslySetInnerHTML={{ __html: link.label }}
                                 className={`px-3 py-1 text-xs font-semibold rounded-md border transition-all ${link.active
                                     ? 'bg-primary text-primary-foreground border-primary'

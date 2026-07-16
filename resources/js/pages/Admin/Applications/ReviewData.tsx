@@ -1,10 +1,12 @@
 import { Head, useForm, Link, router } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
+import { useConfirm } from '@/hooks/use-confirm';
 import { ArrowLeft, Printer, CheckCircle, XCircle, Building2, Edit, FileText, Users, DollarSign, BookOpen, Briefcase } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
 export default function ReviewData({ application, organization }: { application: any, organization: any }) {
+    const confirm = useConfirm();
     const record = application.data;
     const { processing } = useForm();
 
@@ -48,12 +50,18 @@ export default function ReviewData({ application, organization }: { application:
     };
 
     const handleAction = (status: 'Approved' | 'Disapproved') => {
-        if (confirm(`Set status to ${status}?`)) {
-            router.patch(`/admin/applications/${record.id}/status`,
-                { status: status },
-                { preserveScroll: true }
-            );
-        }
+        confirm({
+            title: `${status} Application`,
+            message: `Are you sure you want to set the status of this application to "${status}"?`,
+            confirmText: status,
+            variant: "info",
+            onConfirm: () => {
+                router.patch(`/admin/applications/${record.id}/status`,
+                    { status: status },
+                    { preserveScroll: true }
+                );
+            }
+        });
     };
 
     // Helper for rendering horizontal data rows

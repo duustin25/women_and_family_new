@@ -6,12 +6,6 @@ import { useEffect } from 'react';
 import { toast } from "sonner"; // OR use shadcn's useToast()
 import { Toaster } from "@/components/ui/sonner"; // Ensure this is installed
 
-// export default ({ children, breadcrumbs, ...props }: AppLayoutProps) => (
-//     <AppLayoutTemplate breadcrumbs={breadcrumbs} {...props}>
-//         {children}
-//     </AppLayoutTemplate>
-// );
-
 export default function AppLayout({ children, breadcrumbs }: any) {
     // 1. Grab flash messages from Inertia props
     const { flash }: any = usePage().props;
@@ -32,12 +26,10 @@ export default function AppLayout({ children, breadcrumbs }: any) {
     }, [flash]);
 
     return (
-        
-
         <AppLayoutTemplate breadcrumbs={breadcrumbs}>
             <div className="...">
                 <Toaster position="top-right" richColors /> {/* This renders the toasts */}
-                    <main>{children}</main>
+                <main>{children}</main>
             </div>
         </AppLayoutTemplate>
     );

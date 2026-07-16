@@ -8,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import AppLayout from '@/layouts/app-layout';
 import { Input } from '@/components/ui/input';
 import { useState } from 'react';
+import { useConfirm } from '@/hooks/use-confirm';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -41,6 +42,7 @@ export default function Index({ events, filters }: PageProps) {
     const [searchQuery, setSearchQuery] = useState(filters?.search ?? '');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingEvent, setEditingEvent] = useState<GadEvent | null>(null);
+    const confirm = useConfirm();
 
     const [formData, setFormData] = useState({
         title: '', description: '', event_date: '', event_time: '', location: '',
@@ -51,8 +53,14 @@ export default function Index({ events, filters }: PageProps) {
         router.get('/admin/organization/events', params, { preserveState: true, replace: true });
 
     const handleDelete = (event: GadEvent) => {
-        if (confirm(`Delete proposal "${event.title}"? Cannot be undone.`))
-            router.delete(`/admin/organization/events/${event.id}`, { preserveScroll: true });
+        confirm({
+            title: "Delete Proposal",
+            message: `Are you sure you want to delete proposal "${event.title}"? This cannot be undone.`,
+            confirmText: "Delete",
+            onConfirm: () => {
+                router.delete(`/admin/organization/events/${event.id}`, { preserveScroll: true });
+            }
+        });
     };
 
     const openCreate = () => {

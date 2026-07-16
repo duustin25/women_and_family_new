@@ -73,11 +73,23 @@ export default function AuditLogs({ logs, filters }: AuditLogProps) {
         window.location.href = `/admin/audit-logs/export?${params.toString()}`;
     };
 
+    const formatFieldName = (key: string) => {
+        return key
+            .replace(/_id$/, '')
+            .replace(/_/g, ' ')
+            .replace(/\b\w/g, c => c.toUpperCase());
+    };
+
     const renderVisualDiff = (oldVals: any, newVals: any) => {
         const oldData = oldVals || {};
         const newData = newVals || {};
         
-        const excludeKeys = ['created_at', 'updated_at', 'deleted_at', 'id', 'password', 'remember_token'];
+        const excludeKeys = [
+            'created_at', 'updated_at', 'deleted_at', 'id', 'password', 
+            'remember_token', 'email_verified_at', 'two_factor_secret', 
+            'two_factor_recovery_codes', 'two_factor_confirmed_at'
+        ];
+        
         const allKeys = Array.from(
             new Set([...Object.keys(oldData), ...Object.keys(newData)])
         ).filter(key => !excludeKeys.includes(key));
@@ -89,7 +101,7 @@ export default function AuditLogs({ logs, filters }: AuditLogProps) {
         return (
             <div className="border rounded-md divide-y overflow-hidden max-h-[400px] overflow-y-auto">
                 <table className="min-w-full divide-y text-xs text-left">
-                    <thead className="bg-muted/50 font-semibold">
+                    <thead className="bg-muted/50 font-semibold text-muted-foreground">
                         <tr>
                             <th className="p-2 w-1/4">Field</th>
                             <th className="p-2 w-3/8 bg-red-50/50 dark:bg-red-950/20 text-red-700 dark:text-red-400">Previous Value</th>
@@ -116,7 +128,9 @@ export default function AuditLogs({ logs, filters }: AuditLogProps) {
 
                             return (
                                 <tr key={key} className="hover:bg-muted/30">
-                                    <td className="p-2 font-mono font-medium truncate max-w-[120px]" title={key}>{key}</td>
+                                    <td className="p-2 font-sans font-bold text-muted-foreground/80 truncate max-w-[150px]" title={key}>
+                                        {formatFieldName(key)}
+                                    </td>
                                     <td className={`p-2 font-mono ${isModified || isDeleted ? 'bg-red-50/30 dark:bg-red-950/10 text-red-600 dark:text-red-300' : 'text-muted-foreground/40'}`}>
                                         {isAdded ? '' : formatValue(oldVal)}
                                     </td>

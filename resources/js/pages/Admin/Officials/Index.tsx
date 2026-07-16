@@ -3,7 +3,8 @@ import { route } from 'ziggy-js';
 import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
-import { Plus, Edit3, Trash2, User, Search, Shield, Briefcase, MoreHorizontal } from 'lucide-react';
+import { useConfirm } from '@/hooks/use-confirm';
+import { Plus, Edit3, Trash2, User as UserIcon, Search, Shield, Briefcase, MoreHorizontal } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -24,12 +25,14 @@ interface Official {
     position: string;
     committee?: string;
     image_path?: string;
-    level: 'head' | 'secretary' | 'staff';
+    level: string;
+    display_order: number;
     is_active: boolean;
 }
 
 export default function Index({ officials, users }: { officials: Official[], users: User[] }) {
     const [searchQuery, setSearchQuery] = useState('');
+    const confirm = useConfirm();
 
     const filteredOfficials = officials.filter(off => {
         const displayName = off.user ? off.user.name : (off.name || 'Vacant Position');
@@ -38,9 +41,14 @@ export default function Index({ officials, users }: { officials: Official[], use
     });
 
     const deleteOfficial = (id: number) => {
-        if (confirm('Are you sure you want to remove this official?')) {
-            router.delete(route('admin.officials.destroy', id), { preserveScroll: true });
-        }
+        confirm({
+            title: "Remove Official",
+            message: "Are you sure you want to remove this official? This action cannot be undone.",
+            confirmText: "Delete",
+            onConfirm: () => {
+                router.delete(route('admin.officials.destroy', id), { preserveScroll: true });
+            }
+        });
     };
 
     return (
@@ -112,7 +120,7 @@ export default function Index({ officials, users }: { officials: Official[], use
                                                         {official.image_path ? (
                                                             <img src={official.image_path} alt="Official" className="w-full h-full object-cover" />
                                                         ) : (
-                                                            <User className="h-5 w-5 text-muted-foreground" />
+                                                            <UserIcon className="h-5 w-5 text-muted-foreground" />
                                                         )}
                                                     </div>
                                                     <div className="flex flex-col overflow-hidden">

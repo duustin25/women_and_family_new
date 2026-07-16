@@ -10,6 +10,7 @@ import AppLayout from '@/layouts/app-layout';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { useState } from 'react';
+import { useConfirm } from '@/hooks/use-confirm';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RoleBadge } from '@/components/Admin/RoleBadge';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -43,6 +44,7 @@ interface PageProps {
 export default function Index({ users, filters }: PageProps) {
     const [searchQuery, setSearchQuery] = useState(filters?.search ?? '');
     const [roleFilter, setRoleFilter] = useState(filters?.role ?? 'all');
+    const confirm = useConfirm();
 
     const handleSearch = (term: string) => {
         setSearchQuery(term);
@@ -69,9 +71,14 @@ export default function Index({ users, filters }: PageProps) {
     };
 
     const handleDelete = (user: SystemUser) => {
-        if (confirm(`Archive this user: ${user.name}? They will be moved to archives.`)) {
-            router.delete(`/admin/system-users/${user.id}`);
-        }
+        confirm({
+            title: "Archive User",
+            message: `Are you sure you want to archive user: "${user.name}"? They will be moved to archives.`,
+            confirmText: "Archive",
+            onConfirm: () => {
+                router.delete(`/admin/system-users/${user.id}`);
+            }
+        });
     };
 
     return (

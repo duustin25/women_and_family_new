@@ -120,7 +120,11 @@ class AuditLogController extends Controller
                 $recordIdentifier = 'System/N/A';
                 if ($log->auditable) {
                     $a = $log->auditable;
-                    $recordIdentifier = $a->name || $a->title || (isset($a->first_name) ? trim("{$a->first_name} " . ($a->last_name ?? '')) : null) || (isset($a->case_number) ? "Case #{$a->case_number}" : null) || 'Record ID: ' . $log->auditable_id;
+                    $recordIdentifier = $a->name 
+                        ?: ($a->title 
+                        ?: (isset($a->first_name) ? trim("{$a->first_name} " . ($a->last_name ?? '')) 
+                        : (isset($a->case_number) ? "Case #{$a->case_number}" 
+                        : 'Record ID: ' . $log->auditable_id)));
                 } else {
                     $data = $log->new_values ?: ($log->old_values ?: []);
                     if (isset($data['path'])) {

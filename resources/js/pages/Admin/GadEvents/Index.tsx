@@ -8,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import AppLayout from '@/layouts/app-layout';
 import { Input } from '@/components/ui/input';
 import { useState } from 'react';
+import { useConfirm } from '@/hooks/use-confirm';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -45,6 +46,7 @@ export default function Index({ events, filters }: PageProps) {
     const [actionEvent, setActionEvent] = useState<GadEvent | null>(null);
     const [actionType, setActionType] = useState<'rejected' | 'reschedule_requested' | null>(null);
     const [rejectReason, setRejectReason] = useState('');
+    const confirm = useConfirm();
 
     const [formData, setFormData] = useState({
         title: '', description: '', event_date: '', event_time: '', location: '',
@@ -60,8 +62,14 @@ export default function Index({ events, filters }: PageProps) {
     };
 
     const handleDelete = (event: GadEvent) => {
-        if (confirm(`Delete "${event.title}"? This cannot be undone.`))
-            router.delete(`/admin/gad/events/${event.id}`);
+        confirm({
+            title: "Delete Event",
+            message: `Are you sure you want to delete "${event.title}"? This cannot be undone.`,
+            confirmText: "Delete",
+            onConfirm: () => {
+                router.delete(`/admin/gad/events/${event.id}`);
+            }
+        });
     };
 
     const openCreate = () => {
@@ -90,8 +98,15 @@ export default function Index({ events, filters }: PageProps) {
     };
 
     const handleApprove = (event: GadEvent) => {
-        if (confirm('Approve this event? It will be published to the public calendar.'))
-            router.patch(`/admin/gad/events/${event.id}/status`, { status: 'approved' });
+        confirm({
+            title: "Approve Event",
+            message: "Are you sure you want to approve this event? It will be published to the public calendar.",
+            confirmText: "Approve",
+            variant: "info",
+            onConfirm: () => {
+                router.patch(`/admin/gad/events/${event.id}/status`, { status: 'approved' });
+            }
+        });
     };
 
     const openStatusModal = (event: GadEvent, type: 'rejected' | 'reschedule_requested') => {

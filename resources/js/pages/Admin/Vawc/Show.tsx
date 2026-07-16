@@ -2,6 +2,7 @@ import AppLayout from '@/layouts/app-layout';
 import { Head, Link, useForm } from '@inertiajs/react';
 import React from 'react';
 import { route } from 'ziggy-js';
+import { useConfirm } from '@/hooks/use-confirm';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -17,6 +18,7 @@ interface Props {
 }
 
 export default function Show({ case: vawcCase }: Props) {
+    const confirm = useConfirm();
     const victim = vawcCase.involved_parties.find((p: any) => p.role === 'Victim');
     const respondent = vawcCase.involved_parties.find((p: any) => p.role === 'Respondent');
     const activeBpo = vawcCase.protection_orders.find((o: any) => ['Applied', 'Issued', 'Served'].includes(o.status));
@@ -64,8 +66,24 @@ export default function Show({ case: vawcCase }: Props) {
     const [showCloseModal, setShowCloseModal] = React.useState(false);
 
     // Handlers
-    const handleApplyBpo = () => { if (confirm('File Official Application for BPO?')) bpoForm.post(route('admin.vawc.apply-bpo', vawcCase.id)); };
-    const handleIssueBpo = () => { if (confirm('Confirm Official BPO Issuance? (RA 9262 Mandate)')) issuanceForm.post(route('admin.vawc.issue-bpo', vawcCase.id)); };
+    const handleApplyBpo = () => {
+        confirm({
+            title: "File BPO Application",
+            message: "Are you sure you want to file an official application for BPO?",
+            confirmText: "File Application",
+            variant: "info",
+            onConfirm: () => bpoForm.post(route('admin.vawc.apply-bpo', vawcCase.id)),
+        });
+    };
+    const handleIssueBpo = () => {
+        confirm({
+            title: "Confirm BPO Issuance",
+            message: "Are you sure you want to confirm official BPO Issuance? (RA 9262 Mandate)",
+            confirmText: "Issue BPO",
+            variant: "info",
+            onConfirm: () => issuanceForm.post(route('admin.vawc.issue-bpo', vawcCase.id)),
+        });
+    };
     const handleRecordService = (e: React.FormEvent) => { e.preventDefault(); serviceForm.post(route('admin.vawc.record-service', vawcCase.id)); };
     const handleLogCompliance = (e: React.FormEvent) => { e.preventDefault(); complianceForm.post(route('admin.vawc.log-compliance', vawcCase.id), { onSuccess: () => complianceForm.reset() }); };
     const handleEscalate = (e: React.FormEvent) => { e.preventDefault(); escalationForm.post(route('admin.vawc.escalate', vawcCase.id)); };

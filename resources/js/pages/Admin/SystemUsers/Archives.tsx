@@ -5,6 +5,7 @@ import {
 } from "lucide-react";
 import AppLayout from '@/layouts/app-layout';
 import { useState } from 'react';
+import { useConfirm } from '@/hooks/use-confirm';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RoleBadge } from '@/components/Admin/RoleBadge';
 
@@ -39,6 +40,7 @@ export default function Archives({ users, filters }: PageProps) {
     const [searchQuery, setSearchQuery] = useState(filters?.search ?? '');
     const [roleFilter, setRoleFilter] = useState(filters?.role ?? 'all');
     const [restoringId, setRestoringId] = useState<number | null>(null);
+    const confirm = useConfirm();
 
     const handleSearch = (term: string) => {
         setSearchQuery(term);
@@ -65,13 +67,19 @@ export default function Archives({ users, filters }: PageProps) {
     };
 
     const handleRestore = (user: SystemUser) => {
-        if (confirm(`Restore access for user: ${user.name}?`)) {
-            setRestoringId(user.id);
-            router.post(`/admin/system-users/${user.id}/restore`, {}, {
-                onFinish: () => setRestoringId(null),
-                preserveScroll: true
-            });
-        }
+        confirm({
+            title: "Restore Access",
+            message: `Restore access for user: "${user.name}"?`,
+            confirmText: "Restore",
+            variant: "info",
+            onConfirm: () => {
+                setRestoringId(user.id);
+                router.post(`/admin/system-users/${user.id}/restore`, {}, {
+                    onFinish: () => setRestoringId(null),
+                    preserveScroll: true
+                });
+            }
+        });
     };
 
     return (
