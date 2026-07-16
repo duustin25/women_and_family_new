@@ -747,7 +747,7 @@ class AnalyticsService
         if ($orgId) {
             $membersQuery->where('organization_id', $orgId);
         }
-        $members = $membersQuery->with('organization')->get();
+        $members = $membersQuery->with(['organization', 'application'])->get();
 
         $totalMembers = $members->count();
 
@@ -858,9 +858,10 @@ class AnalyticsService
                     break;
                 }
             }
-            if (!$purok && $member->address) {
+            $address = $meta['address'] ?? ($member->application->address ?? null);
+            if (!$purok && $address) {
                 // Try to extract "Purok X" or "Zone X" from address
-                if (preg_match('/(Purok\s*\d+|Zone\s*\d+)/i', $member->address, $matches)) {
+                if (preg_match('/(Purok\s*\d+|Zone\s*\d+)/i', $address, $matches)) {
                     $purok = ucwords(strtolower($matches[0]));
                 }
             }

@@ -1,4 +1,4 @@
-import { Head, usePage } from '@inertiajs/react';
+import { Head, usePage, router } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 import AnalyticsChart from '@/components/Admin/AnalyticsChart';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -100,14 +100,31 @@ export default function Index({
 
     // Scoped / Conditional Year and Org filters
     const handleYearChange = (year: string) => {
-        const orgParam = selectedOrgId ? `&org_id=${selectedOrgId}` : '';
-        window.location.href = `?year=${year}${orgParam}`;
+        router.get(
+            window.location.pathname,
+            {
+                year: year,
+                org_id: selectedOrgId || undefined,
+            },
+            {
+                preserveScroll: true,
+                preserveState: true,
+            }
+        );
     };
 
     const handleOrgChange = (orgId: string) => {
-        const yearParam = currentYear ? `year=${currentYear}` : `year=${new Date().getFullYear()}`;
-        const orgParam = orgId ? `&org_id=${orgId}` : '';
-        window.location.href = `?${yearParam}${orgParam}`;
+        router.get(
+            window.location.pathname,
+            {
+                year: currentYear || new Date().getFullYear(),
+                org_id: orgId || undefined,
+            },
+            {
+                preserveScroll: true,
+                preserveState: true,
+            }
+        );
     };
 
     // System-wide ribbon (Admin / Head Only)
@@ -153,22 +170,7 @@ export default function Index({
                     </div>
 
                     <div className="flex flex-wrap items-center gap-3">
-                        {/* Admin-only Organization Filter Dropdown */}
-                        {!isPresident && orgAnalytics?.organizations_list && (
-                            <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-md px-3 py-1.5 dark:bg-slate-900 dark:border-slate-700">
-                                <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Organization:</span>
-                                <select
-                                    className="border-none text-xs font-black text-slate-900 dark:text-white focus:ring-0 p-0 cursor-pointer bg-transparent"
-                                    value={selectedOrgId || ''}
-                                    onChange={(e) => handleOrgChange(e.target.value)}
-                                >
-                                    <option value="">All Organizations</option>
-                                    {orgAnalytics.organizations_list.map((org: any) => (
-                                        <option key={org.id} value={org.id}>{org.name}</option>
-                                    ))}
-                                </select>
-                            </div>
-                        )}
+
 
                         <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-md px-3 py-1.5 dark:bg-slate-900 dark:border-slate-700">
                             <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Filter Year:</span>
@@ -495,10 +497,29 @@ export default function Index({
                 {/* UPGRADED SECTION: ORG & MEMBER INTELLIGENCE            */}
                 {/* ══════════════════════════════════════════════════════ */}
                 <div className="space-y-6">
-                    <h2 className="text-base font-black tracking-tight flex items-center gap-2 py-3 mb-2 border-b uppercase text-emerald-600 dark:text-emerald-400">
-                        <Users className="w-4 h-4" />
-                        Organization & Member Intelligence (GAD Registry)
-                    </h2>
+                    <div className="flex flex-col md:flex-row md:items-center justify-between py-3 mb-2 border-b gap-4">
+                        <h2 className="text-base font-black tracking-tight flex items-center gap-2 uppercase text-emerald-600 dark:text-emerald-400 border-none py-0 mb-0">
+                            <Users className="w-4 h-4" />
+                            Organization & Member Intelligence (GAD Registry)
+                        </h2>
+                        
+                        {/* Admin-only Organization Filter Dropdown */}
+                        {!isPresident && orgAnalytics?.organizations_list && (
+                            <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-md px-3 py-1.5 dark:bg-slate-900 dark:border-slate-700">
+                                <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Organization:</span>
+                                <select
+                                    className="border-none text-xs font-black text-slate-900 dark:text-white focus:ring-0 p-0 cursor-pointer bg-transparent"
+                                    value={selectedOrgId || ''}
+                                    onChange={(e) => handleOrgChange(e.target.value)}
+                                >
+                                    <option value="">All Organizations</option>
+                                    {orgAnalytics.organizations_list.map((org: any) => (
+                                        <option key={org.id} value={org.id}>{org.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        )}
+                    </div>
 
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 

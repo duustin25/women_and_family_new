@@ -67,7 +67,9 @@ export default function BcpcShow({ child, computedAge }: any) {
         date_of_weighing: new Date().toISOString().split('T')[0],
         weight_kg: latest?.weight_kg || '',
         height_cm: latest?.height_cm || '',
-        intervention_logs: latest?.intervention_logs || [],
+        intervention_logs: (latest?.intervention_logs || []).map((log: any) =>
+            typeof log === 'object' && log !== null ? (log.type || log.label || JSON.stringify(log)) : String(log)
+        ),
         remarks: '',
         bns_assessor: '',
         sfp_day_number: '',
@@ -507,12 +509,17 @@ export default function BcpcShow({ child, computedAge }: any) {
                                                     </td>
                                                     <td className="px-4 py-5">
                                                         <div className="flex flex-wrap gap-1 max-w-[200px]">
-                                                            {ast.intervention_logs?.length > 0 ? (
-                                                                ast.intervention_logs.map((log: string, idx: number) => (
-                                                                    <Badge key={idx} variant="outline" className="text-[7px] border-emerald-200 bg-emerald-50 text-emerald-700 font-bold whitespace-nowrap">
-                                                                        {log}
-                                                                    </Badge>
-                                                                ))
+                                                            {ast.intervention_logs && ast.intervention_logs.length > 0 ? (
+                                                                ast.intervention_logs.map((log: any, idx: number) => {
+                                                                    const label = typeof log === 'object' && log !== null
+                                                                        ? (log.type || log.label || JSON.stringify(log))
+                                                                        : String(log);
+                                                                    return (
+                                                                        <Badge key={idx} variant="outline" className="text-[7px] border-emerald-200 bg-emerald-50 text-emerald-700 font-bold whitespace-nowrap">
+                                                                            {label}
+                                                                        </Badge>
+                                                                    );
+                                                                })
                                                             ) : (
                                                                 <span className="text-[9px] text-muted-foreground italic lowercase font-medium">No interventions recorded</span>
                                                             )}

@@ -431,7 +431,7 @@ class DatabaseSeeder extends Seeder
 
                 $applicantName = $faker->name();
                 $applicantEmail = $faker->unique()->safeEmail();
-                $applicantAddress = $faker->address();
+                $applicantAddress = $faker->streetAddress() . ', Purok ' . rand(1, 8);
 
                 // Mock dynamic form responses
                 $formData = [
@@ -533,36 +533,99 @@ class DatabaseSeeder extends Seeder
             }
         }
 
-        // 8. Seed 50 Children for BCPC Nutrition Monitoring
-        for ($i = 0; $i < 50; $i++) {
-            $dob = now()->subMonths(rand(6, 60)); // Under 5 years old
+        // 8. Seed 20 Children for BCPC Nutrition Monitoring with Structured Scenarios
+        $nutritionService = new \App\Services\NutritionCalculatorService();
+        for ($i = 0; $i < 20; $i++) {
+            $sex = $i % 2 === 0 ? 'Male' : 'Female';
+            
+            // Define scenarios to guarantee all KPIs are hit:
+            // 0-4: Active SAM/MAM (Supplemental Feeding Program - SFP active)
+            // 5-8: Graduated SFP (Started malnourished, now normal)
+            // 9-12: Overdue Check-ins (Enrolled in SFP, last check >30 days ago)
+            // 13-16: Chronic Stunting (Normal weight, but Stunted/Severely Stunted height)
+            // 17-19: Normal Healthy Child
+            
+            if ($i <= 4) {
+                $dob = now()->subMonths(rand(6, 24)); 
+                $profile = 'malnourished_active';
+            } elseif ($i <= 8) {
+                $dob = now()->subMonths(rand(12, 36));
+                $profile = 'graduated';
+            } elseif ($i <= 12) {
+                $dob = now()->subMonths(rand(12, 30));
+                $profile = 'overdue';
+            } elseif ($i <= 16) {
+                $dob = now()->subMonths(rand(24, 60));
+                $profile = 'stunted_only';
+            } else {
+                $dob = now()->subMonths(rand(6, 48));
+                $profile = 'normal_healthy';
+            }
+
             $child = BcpcChild::create([
                 'zone_id' => $faker->randomElement($zones)->id,
                 'guardian_name' => $faker->name(),
-                'address' => $faker->address(),
+                'address' => $faker->streetAddress() . ', Purok ' . rand(1, 8),
                 'contact_number' => $faker->phoneNumber(),
                 'bns_name' => 'BNS Maria Cruz',
-                'child_first_name' => $faker->firstName(),
+                'child_first_name' => $faker->firstName($sex === 'Male' ? 'male' : 'female'),
                 'child_last_name' => $faker->lastName(),
                 'child_middle_name' => $faker->lastName(),
                 'date_of_birth' => $dob,
-                'sex' => $faker->randomElement(['Male', 'Female']),
-                'status' => $faker->randomElement(['Active', 'Graduated']),
-                'sfp_status' => $faker->randomElement(['Not Enrolled', 'Enrolled', 'Completed']),
+                'sex' => $sex,
+                'status' => 'Active',
+                'sfp_status' => 'None',
             ]);
 
-            // Add 1 to 3 Nutritional Assessments
-            $assessmentsCount = rand(1, 3);
-            $baseWeight = rand(50, 150) / 10; // 5.0 to 15.0 kg
-            $baseHeight = rand(550, 1000) / 10; // 55 to 100 cm
-            for ($j = 0; $j < $assessmentsCount; $j++) {
-                $weighingDate = now()->subMonths(($assessmentsCount - $j) * 2);
-                $weight = $baseWeight + ($j * 0.8);
-                $height = $baseHeight + ($j * 1.5);
+            // Assessments timeline creation
+            $assessmentsCount = $profile === 'graduated' ? 4 : rand(1, 3);
+            $latestWfa = 'Normal';
+            $latestWeighingDate = null;
 
-                // Determine Nutritional Status
-                $wfa = $faker->randomElement(['Normal', 'Underweight', 'Severely Underweight']);
-                $hfa = $faker->randomElement(['Normal', 'Stunted', 'Severely Stunted']);
+            for ($j = 0; $j < $assessmentsCount; $j++) {
+                if ($profile === 'overdue') {
+                    $weighingDate = now()->subDays(35 + ($assessmentsCount - 1 - $j) * 30);
+                } else {
+                    $weighingDate = (clone $dob)->addMonths(($j + 1) * 2 + rand(0, 1));
+                    if ($weighingDate->isFuture() || $weighingDate->gt(now())) {
+                        $weighingDate = now()->subDays(($assessmentsCount - 1 - $j) * 20);
+                    }
+                }
+                
+                $ageInMonths = $nutritionService->calculateAgeInMonths($dob->toDateString(), $weighingDate->toDateString());
+                $medianWeight = 3.3 + ($ageInMonths * 0.26);
+                $medianHeight = 50 + ($ageInMonths * 0.78);
+
+                if ($profile === 'malnourished_active' || $profile === 'overdue') {
+                    $weight = $medianWeight - 2.8;
+                    $height = $medianHeight + 1.0;
+                } elseif ($profile === 'graduated') {
+                    if ($j === 0) {
+                        $weight = $medianWeight - 3.0; 
+                    } elseif ($j === 1) {
+                        $weight = $medianWeight - 2.0;
+                    } elseif ($j === 2) {
+                        $weight = $medianWeight - 1.2;
+                    } else {
+                        $weight = $medianWeight + 0.5;
+                    }
+                    $height = $medianHeight;
+                } elseif ($profile === 'stunted_only') {
+                    $weight = $medianWeight + 0.2;
+                    $height = $medianHeight - 12.0; 
+                } else {
+                    $weight = $medianWeight + 0.8;
+                    $height = $medianHeight + 2.0;
+                }
+
+                $weight = max(2.5, min(40.0, round($weight, 2)));
+                $height = max(45.0, min(120.0, round($height, 1)));
+
+                $wfa = $nutritionService->evaluateWeightForAge($ageInMonths, $sex, $weight);
+                $hfa = $nutritionService->evaluateHeightForAge($ageInMonths, $sex, $height);
+
+                $latestWfa = $wfa;
+                $latestWeighingDate = $weighingDate;
 
                 BcpcAssessment::create([
                     'bcpc_child_id' => $child->id,
@@ -572,10 +635,33 @@ class DatabaseSeeder extends Seeder
                     'height_cm' => $height,
                     'wfa_status' => $wfa,
                     'hfa_status' => $hfa,
-                    'remarks' => $faker->sentence(),
-                    'intervention_logs' => [['date' => $weighingDate->toDateString(), 'type' => 'Vit A supplementation', 'remarks' => 'Administered successfully']]
+                    'remarks' => $wfa === 'Normal' && $hfa === 'Normal' ? 'Excellent biological progress.' : 'Requires clinical feeding follow-ups.',
+                    'intervention_logs' => in_array($wfa, ['Underweight', 'Severely Underweight']) ? ['Supplemental Feeding (SFP)', 'Vitamin A Supplementation'] : [],
+                    'bns_assessor' => 'BNS Maria Cruz',
+                    'sfp_day_number' => ($profile === 'graduated' || $profile === 'overdue' || $profile === 'malnourished_active') ? ($j * 30 + 1) : null,
                 ]);
             }
+
+            // Sync SFP Status and Cycle dates
+            $sfpStatus = 'None';
+            $sfpStartDate = null;
+            $sfpEndDate = null;
+            if (in_array($latestWfa, ['Underweight', 'Severely Underweight'])) {
+                $sfpStatus = 'Enrolled';
+                $sfpStartDate = $latestWeighingDate->toDateString();
+            } else {
+                if ($profile === 'graduated') {
+                    $sfpStatus = 'Graduated';
+                    $sfpStartDate = (clone $dob)->addMonths(2)->toDateString();
+                    $sfpEndDate = $latestWeighingDate->toDateString();
+                }
+            }
+
+            $child->update([
+                'sfp_status' => $sfpStatus,
+                'sfp_start_date' => $sfpStartDate,
+                'sfp_end_date' => $sfpEndDate,
+            ]);
         }
 
         // 9. Seed 50 VAWC Case Reports and secure risk assessments
@@ -608,7 +694,7 @@ class DatabaseSeeder extends Seeder
             // Create VAWC Case
             $vawcCase = VawcCase::create([
                 'case_report_id' => $caseReport->id,
-                'intake_type' => $faker->randomElement(['Walk-in', 'Phone Call', 'Barangay Referral']),
+                'intake_type' => $faker->randomElement(['Direct', 'Third-Party']),
                 'children_count' => rand(0, 4),
                 'is_repeat_offense' => $faker->boolean(15),
                 'has_weapon_involved' => $faker->boolean(25),
@@ -616,40 +702,35 @@ class DatabaseSeeder extends Seeder
                 'perpetrator_present' => $faker->boolean(30),
                 'warrantless_arrest_made' => $faker->boolean(10),
                 'weapons_confiscated' => $faker->boolean(10),
-                'status' => $caseReport->lifecycle_status,
+                'status' => $faker->randomElement(['Intake', 'Assessment', 'Alternative Housing', 'BPO Processing', 'Monitoring', 'Escalated', 'Closed']),
                 'referral_status' => $faker->randomElement(['Handled Internally', 'Referred to PNP', 'Referred to DSWD']),
             ]);
 
             // Add involved parties (Perpetrator)
             VawcInvolvedParty::create([
                 'vawc_case_id' => $vawcCase->id,
-                'party_type' => 'perpetrator',
-                'fullname' => $faker->name('male'),
+                'role' => 'Respondent',
+                'name' => $faker->name('male'),
                 'age' => rand(20, 60),
-                'sex' => 'Male',
-                'relationship' => $faker->randomElement(['Husband', 'Partner', 'Father', 'Brother']),
+                'gender' => 'Male',
+                'relationship_to_victim' => $faker->randomElement(['Husband', 'Partner', 'Father', 'Brother']),
                 'contact_number' => $faker->phoneNumber(),
                 'address' => $faker->address(),
             ]);
 
-            // Calculate RAVE Score & Seed Safety Assessment
-            $score = rand(1, 12);
-            $risk = 'Low';
-            if ($score >= 9) {
-                $risk = 'High';
-            } elseif ($score >= 5) {
-                $risk = 'Medium';
-            }
-
+            // Seed Safety Assessment (Risk level will be automatically evaluated via model boot static saving hook)
             VawcAssessment::create([
                 'vawc_case_id' => $vawcCase->id,
-                'user_id' => $vawcOfficer->id,
-                'safety_score' => $score,
-                'risk_level' => $risk,
-                'safety_plan' => $faker->sentence(),
-                'medical_referral_details' => $score > 8 ? 'Referred to hospital for checkup' : null,
-                'police_assistance_details' => $score > 8 ? 'Requested PNP escort' : null,
-                'remarks' => $faker->sentence(),
+                'requires_medical' => $faker->boolean(30),
+                'medical_notes' => $faker->boolean(30) ? 'Emergency checkup performed.' : null,
+                'requires_alternative_housing' => $faker->boolean(15),
+                'housing_notes' => $faker->boolean(15) ? 'Shelter arrangement completed.' : null,
+                'lswo_referral_made' => $faker->boolean(20),
+                'dswd_referral_made' => $faker->boolean(25),
+                'abuse_frequency' => rand(1, 3),
+                'abuse_severity' => rand(1, 3),
+                'weapon_access' => rand(1, 3),
+                'life_threat_level' => rand(1, 3),
             ]);
         }
     }
