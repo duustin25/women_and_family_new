@@ -177,5 +177,104 @@ $process->run();
 
 ---
 
+## 7.1 Detailed API Endpoints & Request/Response Contracts
+
+To facilitate asynchronous data transfer and inter-module execution, the system implements a set of JSON APIs and AJAX endpoints.
+
+### A. AI Chatbot API
+* **Endpoint:** `POST /chatbot/query`
+* **Route Name:** N/A (Internal API)
+* **Access Control:** Public (Throttle: 10 requests per minute)
+* **Request Headers:**
+  `Content-Type: application/json`
+* **Payload Structure:**
+  ```json
+  {
+    "message": "Nais kong magsumbong ng kaso ng VAWC"
+  }
+  ```
+* **Success Response (200 OK):**
+  ```json
+  {
+    "response": "Nais mo bang mag-report ng kaso para sa isang babae (VAWC) o para sa isang bata (BCPC)?",
+    "suggestions": [
+      "File VAWC Case",
+      "File BCPC Case"
+    ]
+  }
+  ```
+* **Fallback Response (200 OK):**
+  ```json
+  {
+    "response": "I apologize, but I am having trouble processing that right now. Please try again."
+  }
+  ```
+
+### B. Public Organization Application API
+* **Endpoint:** `POST /organizations/{organization}/apply`
+* **Route Name:** `public.organizations.submit`
+* **Access Control:** Public (Throttle: 3 requests per minute)
+* **Request Headers:**
+  `Content-Type: multipart/form-data` (due to optional file attachment uploads)
+* **Payload Structure:**
+  ```json
+  {
+    "fullname": "Jane Doe",
+    "address": "Zone 4, Barangay WFP",
+    "email": "janedoe@gmail.com",
+    "form_data": {
+      "Contact Number": "09171234567",
+      "Valid ID Photo": "[Binary File Attachment]"
+    }
+  }
+  ```
+* **Success Response (302 Redirect):**
+  Redirects back to application screen with successful validation flash alerts.
+* **Error Response (302 / 422 Validation Error):**
+  Returns validation messages mapped to input fields (e.g. email must be valid, fullname unique constraint failed).
+
+### C. VAWC Case Assessment & Triage API
+* **Endpoint:** `POST /admin/vawc/cases/{id}/assess`
+* **Route Name:** `admin.vawc.assess`
+* **Access Control:** Admin, VAWC Head Only (`auth`, `role:admin,head`)
+* **Payload Structure:**
+  ```json
+  {
+    "incident_veracity": true,
+    "is_repeat_offense": true,
+    "has_weapon_involved": true,
+    "weapons_confiscated": false
+  }
+  ```
+* **Success Response (200 OK or 302):**
+  Updates the risk score dynamically and redirects the administrative panel to BPO application cues.
+
+### D. BPO Compliance & Lifecycle APIs
+* **Endpoints:**
+  * `POST /admin/vawc/cases/{id}/apply-bpo`
+  * `POST /admin/vawc/cases/{id}/issue-bpo`
+  * `POST /admin/vawc/cases/{id}/record-service`
+  * `POST /admin/vawc/cases/{id}/log-compliance`
+  * `POST /admin/vawc/cases/{id}/escalate`
+  * `POST /admin/vawc/cases/{id}/close`
+* **Access Control:** Admin, VAWC Head Only (`auth`, `role:admin,head`)
+* **Usage:** Handles transitional state changes in the BPO 15-day SLA counter. Escalate triggers court complaint generation, close sets case resolved.
+* **Response (302 Redirect):** Updates status fields and redirects to case files.
+
+### E. Notification Status API
+* **Endpoints:** 
+  * `POST /admin/notifications/{id}/read` (Mark specific notification read)
+  * `POST /admin/notifications/mark-all-read` (Mark all notifications read)
+* **Access Control:** Authenticated Users (`auth`)
+* **Success Response (200 OK):**
+  ```json
+  {
+    "success": true
+  }
+  ```
+
+---
+
+
 ## 8. Conclusion & System Defensibility
 The WFP Barangay Management system answers the complex operational needs of LGUs through a scalable architecture. By cleanly separating specific module logics (VAWC Risk algorithms, WHO Nutrition data types, JSON-casted dynamic membership schemas, local MLP-based AI chatbots) while tying it all together with unified Audit Logging and structured Try-Catch fault tolerance, the codebase is secure, legally reliable, and built to professional enterprise standards.
