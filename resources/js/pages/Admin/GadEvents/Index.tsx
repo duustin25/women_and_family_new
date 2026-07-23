@@ -1,7 +1,7 @@
 import { Head, router } from '@inertiajs/react';
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, Pencil, MapPin, Calendar, Plus, X, Search, FileText, Activity } from "lucide-react";
+import { MoreHorizontal, Pencil, MapPin, Calendar, Plus, X, Search, FileText, Activity, Calendar as CalendarIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -12,6 +12,11 @@ import { useConfirm } from '@/hooks/use-confirm';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 
 interface GadEvent {
     id: number;
@@ -155,12 +160,18 @@ export default function Index({ events, filters }: PageProps) {
                             </CardTitle>
 
                             <div className="flex flex-col sm:flex-row items-center gap-3 w-full lg:w-auto">
-                                <div className="flex bg-muted/50 p-1 rounded-lg">
-                                    {filterTab('All', undefined)}
-                                    {filterTab('Pending', 'pending')}
-                                    {filterTab('Approved', 'approved')}
-                                    {filterTab('Rejected', 'rejected')}
-                                </div>
+                                <Tabs 
+                                    value={filters?.status || "all"} 
+                                    onValueChange={(val) => navigate({ search: searchQuery, status: val === "all" ? undefined : val })}
+                                    className="w-auto"
+                                >
+                                    <TabsList className="h-9">
+                                        <TabsTrigger value="all" className="text-xs">All</TabsTrigger>
+                                        <TabsTrigger value="pending" className="text-xs">Pending</TabsTrigger>
+                                        <TabsTrigger value="approved" className="text-xs">Approved</TabsTrigger>
+                                        <TabsTrigger value="rejected" className="text-xs">Rejected</TabsTrigger>
+                                    </TabsList>
+                                </Tabs>
                                 <div className="relative w-full sm:w-64">
                                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                                     <Input
@@ -295,7 +306,7 @@ export default function Index({ events, filters }: PageProps) {
                     <DialogHeader>
                         <DialogTitle className="uppercase tracking-widest font-black">{editingEvent ? 'Edit Event' : 'New Event'}</DialogTitle>
                     </DialogHeader>
-                    <form onSubmit={handleSubmit} className="space-y-4 pt-2">
+                    <form onSubmit={handleSubmit} className="space-y-4 pt-2 w-full max-w-full min-w-0">
                         <div className="space-y-2">
                             <Label className="uppercase text-xs font-bold text-slate-500">Event Title</Label>
                             <Input required value={formData.title} onChange={e => setFormData({ ...formData, title: e.target.value })} />
@@ -304,19 +315,52 @@ export default function Index({ events, filters }: PageProps) {
                             <Label className="uppercase text-xs font-bold text-slate-500">Description</Label>
                             <Textarea required value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} />
                         </div>
-                        <div className="grid grid-cols-3 gap-3">
-                            <div className="col-span-1 space-y-2">
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2 flex flex-col">
                                 <Label className="uppercase text-xs font-bold text-slate-500">Date</Label>
-                                <Input type="date" required value={formData.event_date} onChange={e => setFormData({ ...formData, event_date: e.target.value })} />
+                                <Popover>
+                                    <PopoverTrigger asChild>
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            className={cn(
+                                                "w-full justify-start text-left font-normal h-9 border-input bg-transparent px-3 py-1",
+                                                !formData.event_date && "text-muted-foreground"
+                                            )}
+                                        >
+                                            <CalendarIcon className="mr-2 h-4 w-4 text-purple-600 shrink-0" />
+                                            {formData.event_date ? (
+                                                format(new Date(formData.event_date), "PP")
+                                            ) : (
+                                                <span>Pick a date</span>
+                                            )}
+                                        </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-auto p-0" align="start">
+                                        <CalendarComponent
+                                            mode="single"
+                                            selected={formData.event_date ? new Date(formData.event_date) : undefined}
+                                            onSelect={(date) => {
+                                                if (date) {
+                                                    const yyyy = date.getFullYear();
+                                                    const mm = String(date.getMonth() + 1).padStart(2, '0');
+                                                    const dd = String(date.getDate()).padStart(2, '0');
+                                                    setFormData({ ...formData, event_date: `${yyyy}-${mm}-${dd}` });
+                                                }
+                                            }}
+                                            initialFocus
+                                        />
+                                    </PopoverContent>
+                                </Popover>
                             </div>
-                            <div className="col-span-1 space-y-2">
+                            <div className="space-y-2">
                                 <Label className="uppercase text-xs font-bold text-slate-500">Time</Label>
                                 <Input type="time" required value={formData.event_time} onChange={e => setFormData({ ...formData, event_time: e.target.value })} />
                             </div>
-                            <div className="col-span-1 space-y-2">
-                                <Label className="uppercase text-xs font-bold text-slate-500">Venue</Label>
-                                <Input required value={formData.location} onChange={e => setFormData({ ...formData, location: e.target.value })} />
-                            </div>
+                        </div>
+                        <div className="space-y-2">
+                            <Label className="uppercase text-xs font-bold text-slate-500">Venue / Location</Label>
+                            <Input required value={formData.location} onChange={e => setFormData({ ...formData, location: e.target.value })} />
                         </div>
                         <div className="space-y-2">
                             <Label className="uppercase text-xs font-bold text-slate-500">Poster / Image (Optional)</Label>
@@ -338,7 +382,7 @@ export default function Index({ events, filters }: PageProps) {
                             {actionType === 'rejected' ? 'Reject Event' : 'Request Reschedule'}
                         </DialogTitle>
                     </DialogHeader>
-                    <form onSubmit={submitStatus} className="space-y-4 pt-2">
+                    <form onSubmit={submitStatus} className="space-y-4 pt-2 w-full max-w-full min-w-0">
                         <div className="space-y-2">
                             <Label className="uppercase text-xs font-bold text-slate-500">Reason / Instructions for the Organization</Label>
                             <Textarea required placeholder={actionType === 'reschedule_requested' ? 'Explain the scheduling conflict...' : 'Reason for rejection...'} value={rejectReason} onChange={e => setRejectReason(e.target.value)} className="min-h-[100px]" />

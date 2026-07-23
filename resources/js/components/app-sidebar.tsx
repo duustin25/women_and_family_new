@@ -61,17 +61,17 @@ const navGroups: NavGroup[] = [
         title: 'Social Service Modules',
         items: [
             {
-                title: 'VAWC Triage & Action Center',
+                title: 'VAWC Case Protection Registry',
                 href: '/admin/vawc/dashboard',
                 icon: ShieldAlert,
             },
             {
-                title: 'Child Health and Nutritional Status Monitoring (BCPC)',
+                title: 'BCPC Nutritional Status Monitoring',
                 href: '/admin/bcpc/dashboard',
                 icon: Activity,
             },
             {
-                title: 'Gender and Development (GAD) Advocacy & Programs',
+                title: 'GAD Programs Calendar of Events',
                 href: '/admin/gad/events',
                 icon: CalendarRange,
             },

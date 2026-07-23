@@ -36,9 +36,9 @@ class PublicServicesController extends Controller
 
     public function gad()
     {
-        $activities = \App\Models\GadEvent::where('status', 'approved')
+        $activities = \App\Models\GadEvent::with('organization')
+            ->where('status', 'approved')
             ->orderBy('event_date', 'desc')
-            ->take(6)
             ->get();
 
         return Inertia::render('Public/GAD/Index', [

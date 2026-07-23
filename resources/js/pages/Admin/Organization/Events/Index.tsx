@@ -1,7 +1,7 @@
 import { Head, router } from '@inertiajs/react';
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, Pencil, MapPin, Calendar, Plus, X, Search, FileText, Activity, AlertCircle } from "lucide-react";
+import { MoreHorizontal, Pencil, MapPin, Calendar, Plus, X, Search, FileText, Activity, AlertCircle, Calendar as CalendarIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -13,6 +13,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 
 interface GadEvent {
     id: number;
@@ -124,12 +129,18 @@ export default function Index({ events, filters }: PageProps) {
                             </CardTitle>
                             
                             <div className="flex flex-col sm:flex-row items-center gap-3 w-full lg:w-auto">
-                                <div className="flex bg-muted/50 p-1 rounded-lg">
-                                    {filterTab('All', undefined)}
-                                    {filterTab('Pending', 'pending')}
-                                    {filterTab('Approved', 'approved')}
-                                    {filterTab('Rejected', 'rejected')}
-                                </div>
+                                <Tabs 
+                                    value={filters?.status || "all"} 
+                                    onValueChange={(val) => navigate({ search: searchQuery, status: val === "all" ? undefined : val })}
+                                    className="w-auto"
+                                >
+                                    <TabsList className="h-9">
+                                        <TabsTrigger value="all" className="text-xs">All</TabsTrigger>
+                                        <TabsTrigger value="pending" className="text-xs">Pending</TabsTrigger>
+                                        <TabsTrigger value="approved" className="text-xs">Approved</TabsTrigger>
+                                        <TabsTrigger value="rejected" className="text-xs">Rejected</TabsTrigger>
+                                    </TabsList>
+                                </Tabs>
                                 <div className="relative w-full sm:w-64">
                                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                                     <Input
@@ -280,7 +291,7 @@ export default function Index({ events, filters }: PageProps) {
                             <AlertDescription className="text-xs mt-1">{editingEvent.reject_reason}</AlertDescription>
                         </Alert>
                     )}
-                    <form onSubmit={handleSubmit} className="space-y-4 pt-2">
+                    <form onSubmit={handleSubmit} className="space-y-4 pt-2 w-full max-w-full min-w-0">
                         <div className="space-y-2">
                             <Label>Event Title</Label>
                             <Input required value={formData.title} onChange={e => setFormData({ ...formData, title: e.target.value })} />
@@ -289,10 +300,43 @@ export default function Index({ events, filters }: PageProps) {
                             <Label>Description</Label>
                             <Textarea required value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} />
                         </div>
-                        <div className="grid grid-cols-2 gap-3">
-                            <div className="space-y-2">
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2 flex flex-col">
                                 <Label>Date</Label>
-                                <Input type="date" required value={formData.event_date} onChange={e => setFormData({ ...formData, event_date: e.target.value })} />
+                                <Popover>
+                                    <PopoverTrigger asChild>
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            className={cn(
+                                                "w-full justify-start text-left font-normal h-9 border-input bg-transparent px-3 py-1",
+                                                !formData.event_date && "text-muted-foreground"
+                                            )}
+                                        >
+                                            <CalendarIcon className="mr-2 h-4 w-4 text-purple-600 shrink-0" />
+                                            {formData.event_date ? (
+                                                format(new Date(formData.event_date), "PP")
+                                            ) : (
+                                                <span>Pick a date</span>
+                                            )}
+                                        </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-auto p-0" align="start">
+                                        <CalendarComponent
+                                            mode="single"
+                                            selected={formData.event_date ? new Date(formData.event_date) : undefined}
+                                            onSelect={(date) => {
+                                                if (date) {
+                                                    const yyyy = date.getFullYear();
+                                                    const mm = String(date.getMonth() + 1).padStart(2, '0');
+                                                    const dd = String(date.getDate()).padStart(2, '0');
+                                                    setFormData({ ...formData, event_date: `${yyyy}-${mm}-${dd}` });
+                                                }
+                                            }}
+                                            initialFocus
+                                        />
+                                    </PopoverContent>
+                                </Popover>
                             </div>
                             <div className="space-y-2">
                                 <Label>Time</Label>
