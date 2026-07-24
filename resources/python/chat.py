@@ -73,7 +73,7 @@ def predict_class(sentence, model):
 
 def get_response(ints, intents_json):
     if not ints:
-        return "I'm sorry, I don't understand that yet. Can you rephrase?"
+        return "I apologize, I do not understand that yet. Can you rephrase? (Paumanhin, hindi ko po ito naiintindihan. Maaari mo bang baguhin ang iyong tanong?)"
         
     tag = ints[0]['intent']
     list_of_intents = intents_json['intents']

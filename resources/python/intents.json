@@ -7,17 +7,37 @@
                 "Hello",
                 "Good morning",
                 "Good afternoon",
+                "Good evening",
+                "Good day",
                 "Hey",
+                "Yo",
+                "What's up",
                 "Greetings",
+                "How are you",
+                "How are you doing",
                 "Kumusta",
+                "Kamusta",
+                "Kamusta ka",
+                "Kumusta ka",
+                "Kumusta po kayo",
+                "Kamusta po kayo",
+                "Musta",
+                "Musta po",
                 "Magandang umaga",
                 "Magandang hapon",
+                "Magandang gabi",
+                "Magandang araw",
                 "Tao po",
-                "Hello po"
+                "Hello po",
+                "Hi po"
             ],
             "responses": [
                 "Hello! I am The Sentinel. How can I assist you with VAWC or women's protection services today?",
-                "Greetings! I am here to help. Maaari kang magtanong tungkol sa VAWC, Officials, o mga Anunsyo."
+                "Greetings! I am here to help. Maaari kang magtanong tungkol sa VAWC, Officials, o mga Anunsyo.",
+                "Hello there! I'm doing well, thank you. How can I help you navigate our barangay services today?",
+                "Kumusta! Mabuti naman ako. Ano ang maitutulong ko sa iyo ngayon tungkol sa mga serbisyo ng barangay?",
+                "Hi! I am here to guide you with VAWC reports, BCPC, or announcements. What would you like to know?",
+                "Mabuhay! I am The Sentinel. Paano ko kayo magagabayan sa inyong mga katanungan ngayon?"
             ]
         },
         {
@@ -76,9 +96,16 @@
             "tag": "general_report_inquiry",
             "patterns": [
                 "Paano mag report?",
+                "Paano mag-report?",
                 "I want to report",
                 "Help me report",
                 "May irereklamo ako",
+                "Nais kong magreport",
+                "Nais kong mag-report",
+                "Gusto kong magreklamo",
+                "Gusto ko mag-report",
+                "Magreport",
+                "Mag-report",
                 "File a case",
                 "Report"
             ],
@@ -170,10 +197,15 @@
             "patterns": [
                 "Any news?",
                 "Latest announcements",
+                "Latest Announcements",
                 "What is happening?",
                 "Anong balita?",
+                "May balita ba?",
+                "May balita po ba?",
                 "May mga anunsyo ba?",
-                "Activities sa barangay"
+                "Activities sa barangay",
+                "Mga bagong anunsyo",
+                "Balita ngayon"
             ],
             "responses": [
                 "ACTION_FETCH_ANNOUNCEMENTS"
@@ -235,12 +267,25 @@
             "tag": "irrelevant",
             "patterns": [
                 "Sinong nanalo sa basketball?",
+                "Sino nanalo sa basketball kahapon?",
                 "Luto ng adobo",
+                "Paano magluto ng adobo?",
+                "Masarap ba ang adobo?",
                 "Weather",
-                "Kailan ang pasko?"
+                "Ano ang panahon ngayon?",
+                "Kailan ang pasko?",
+                "Kailan ang pasko ngayong taon?",
+                "Anong chismis ngayon?",
+                "May tsismis ba ngayon sa barangay?",
+                "Saan pwedeng uminom?",
+                "Pautang naman",
+                "Magkano ang lotto ticket?",
+                "Maglaro tayo",
+                "Sino ang nag-imbento ng internet?",
+                "Sino ang presidente ng Pilipinas?"
             ],
             "responses": [
-                "I am focused on barangay services. Please ask about VAWC, Officials, or Announcements."
+                "I am focused on Barangay 183 services. Please ask about VAWC, BCPC, Officials, or Announcements. (Nakatuon po ako sa mga serbisyo ng Barangay 183. Mangyaring magtanong tungkol sa VAWC, BCPC, mga Opisyal, o mga Anunsyo.)"
             ]
         }
     ]

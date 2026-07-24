@@ -1,7 +1,7 @@
 import { Head, useForm, Link } from '@inertiajs/react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import RichTextEditor from "@/components/ui/RichTextEditor";
 import { ArrowLeft, Save, LayoutDashboard, Image as ImageIcon, Trash2 } from "lucide-react";
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
@@ -126,13 +126,13 @@ export default function Edit({ announcement }: { announcement: any}) {
                             {/* Content */}
                             <div className="space-y-2">
                                 <p className="text-[15px] text-yellow-500">
-                                    Tip: Links (e.g., https://google.com) will be automatically converted to clickable buttons on the public page.
+                                    Tip: Use the editor toolbar to format your announcement description.
                                 </p>
                                 <label className="text-sm font-bold text-slate-700 dark:text-slate-300">Main Content</label>
-                                <Textarea 
-                                    className="min-h-[250px] dark:bg-slate-800 dark:border-slate-700 py-3 leading-relaxed"
-                                    value={data.content} 
-                                    onChange={e => setData('content', e.target.value)} 
+                                <RichTextEditor
+                                    value={data.content}
+                                    onChange={value => setData('content', value)}
+                                    className="min-h-[250px]"
                                 />
                                 {errors.content && <p className="text-red-500 text-xs font-medium">{errors.content}</p>}
                             </div>

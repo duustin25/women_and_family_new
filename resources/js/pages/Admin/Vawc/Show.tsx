@@ -23,6 +23,18 @@ export default function Show({ case: vawcCase }: Props) {
     const respondent = vawcCase.involved_parties.find((p: any) => p.role === 'Respondent');
     const activeBpo = vawcCase.protection_orders.find((o: any) => ['Applied', 'Issued', 'Served'].includes(o.status));
 
+    const calculateDaysRemaining = () => {
+        if (!activeBpo?.expiration_date) return null;
+        const exp = new Date(activeBpo.expiration_date);
+        const today = new Date();
+        exp.setHours(0,0,0,0);
+        today.setHours(0,0,0,0);
+        const diffTime = exp.getTime() - today.getTime();
+        return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    };
+
+    const daysRemaining = calculateDaysRemaining();
+
     // Form Hooks
     const bpoForm = useForm<any>({ type: 'BPO' });
     const issuanceForm = useForm<any>({});
@@ -551,6 +563,29 @@ export default function Show({ case: vawcCase }: Props) {
                                         <span className="text-xs font-bold uppercase tracking-widest">Print Police Transmittal</span>
                                     </a>
                                 </Button>
+                                
+                                {daysRemaining !== null && (
+                                    <Alert className={`md:col-span-2 border border-dashed ${
+                                        daysRemaining < 0 
+                                            ? 'border-slate-300 bg-slate-50 dark:bg-slate-900/10 text-slate-700 dark:text-slate-400'
+                                            : daysRemaining <= 3 
+                                                ? 'border-rose-300 bg-rose-50 dark:bg-rose-950/20 text-rose-700 dark:text-rose-400 animate-pulse'
+                                                : 'border-amber-300 bg-amber-50 dark:bg-amber-950/20 text-amber-700 dark:text-amber-400'
+                                    }`}>
+                                        <ClipboardList className="w-4 h-4" />
+                                        <AlertTitle className="font-bold uppercase text-[10px] tracking-widest">BPO SLA Validity Countdown</AlertTitle>
+                                        <AlertDescription className="text-sm mt-1">
+                                            {daysRemaining < 0 ? (
+                                                <span>This Protection Order has <strong>Expired</strong> (Lapsed 15-day validity window). Expiration: {new Date(activeBpo.expiration_date).toLocaleDateString()}.</span>
+                                            ) : daysRemaining === 0 ? (
+                                                <span>This Protection Order <strong>Expires Today</strong>. Active monitoring required.</span>
+                                            ) : (
+                                                <span>Active Monitoring Period: <strong>{daysRemaining} Days Remaining</strong> of the 15-day SLA. Expiration: {new Date(activeBpo.expiration_date).toLocaleDateString()}.</span>
+                                            )}
+                                        </AlertDescription>
+                                    </Alert>
+                                )}
+
                                 <Alert className="md:col-span-2 border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-950/20">
                                     <CheckCircle2 className="w-4 h-4 text-green-600 dark:text-green-400" />
                                     <AlertTitle className="text-green-800 dark:text-green-400 font-bold uppercase text-[10px] tracking-widest">Status: Monitoring Mode</AlertTitle>

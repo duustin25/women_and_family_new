@@ -158,7 +158,6 @@ export default function Index({ head, secretary, staff }: Props) {
                     <div>
                         <div className="text-center mb-10">
                             <h3 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight">Office Staff & Members</h3>
-                            <p className="text-sm text-slate-500 dark:text-slate-400 mt-2">The supporting personnel driving community initiatives.</p>
                         </div>
 
                         {staff.length > 0 ? (

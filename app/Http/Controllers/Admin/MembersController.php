@@ -38,12 +38,21 @@ class MembersController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('fullname', 'like', "%{$search}%")
-                    ->orWhere('email', 'like', "%{$search}%");
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhereHas('dispatches', function ($dq) use ($search) {
+                        $dq->where('reference_number', 'like', "%{$search}%");
+                    });
             });
         }
 
         if ($request->filled('organization_id') && $request->organization_id !== 'all') {
             $query->where('organization_id', $request->organization_id);
+        }
+
+        if ($request->input('pending_claims') === '1') {
+            $query->whereHas('dispatches', function ($dq) {
+                $dq->where('status', 'Pending');
+            });
         }
 
         $members = $query->paginate(15)->withQueryString();
@@ -52,7 +61,7 @@ class MembersController extends Controller
         return Inertia::render('Admin/Members/Index', [
             'members' => $members,
             'organizations' => $organizations,
-            'filters' => $request->only(['search', 'organization_id'])
+            'filters' => $request->only(['search', 'organization_id', 'pending_claims'])
         ]);
     }
 

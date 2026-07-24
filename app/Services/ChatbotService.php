@@ -100,10 +100,10 @@ class ChatbotService
         $news = \App\Models\Announcement::latest()->take(3)->get();
 
         if ($news->isEmpty()) {
-            return ['response' => "There are no new announcements at this time."];
+            return ['response' => "Greetings! There are no new announcements at this time. Stay tuned for future updates!"];
         }
 
-        $response = "Here are the latest announcements:\n\n";
+        $response = "Greetings! I am happy to fetch the news for you. Here are the latest announcements in our barangay:\n\n";
         foreach ($news as $item) {
             $date = $item->created_at->format('M d, Y');
             // strip tags to prevent HTML from tiptap editor showing up in chatbot

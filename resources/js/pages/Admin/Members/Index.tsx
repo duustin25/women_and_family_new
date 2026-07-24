@@ -56,6 +56,7 @@ export default function MembersIndex({ members, organizations, filters }: IndexP
 
     const [searchQuery, setSearchQuery] = useState(filters.search || '');
     const [orgFilter, setOrgFilter] = useState(filters.organization_id || 'All');
+    const [pendingClaimsFilter, setPendingClaimsFilter] = useState(filters.pending_claims === '1');
     const [formData, setFormData] = useState({ subject: '', body: '', recipient_group: 'all', benefit_name: '', instructions: '' });
 
     const handleFilter = (key: string, value: string) => {
@@ -161,6 +162,19 @@ export default function MembersIndex({ members, organizations, filters }: IndexP
                             </CardTitle>
 
                             <div className="flex flex-1 flex-col sm:flex-row items-center justify-end gap-2 w-full">
+                                <Button
+                                    type="button"
+                                    variant={pendingClaimsFilter ? "default" : "outline"}
+                                    className="h-9 w-full sm:w-auto text-xs font-semibold flex items-center gap-2"
+                                    onClick={() => {
+                                        const nextVal = !pendingClaimsFilter;
+                                        setPendingClaimsFilter(nextVal);
+                                        handleFilter('pending_claims', nextVal ? '1' : '0');
+                                    }}
+                                >
+                                    <CreditCard className="w-4 h-4" /> Pending Claims Only
+                                </Button>
+
                                 <Select value={orgFilter} onValueChange={(val) => { setOrgFilter(val); handleFilter('organization_id', val); }}>
                                     <SelectTrigger className="h-9 w-full sm:w-[220px]">
                                         <SelectValue placeholder="Organization" />
@@ -219,7 +233,14 @@ export default function MembersIndex({ members, organizations, filters }: IndexP
                                                         <Users className="h-5 w-5 text-muted-foreground" />
                                                     </div>
                                                     <div className="flex flex-col overflow-hidden">
-                                                        <span className="font-bold text-sm tracking-tight truncate">{member.fullname}</span>
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="font-bold text-sm tracking-tight truncate">{member.fullname}</span>
+                                                            {member.dispatches?.some(disp => disp.status === 'Pending') && (
+                                                                <Badge variant="outline" className="h-4 px-1.5 text-[8px] font-extrabold text-amber-600 border-amber-200 bg-amber-50 dark:bg-amber-400/10 dark:border-amber-400/30 whitespace-nowrap animate-pulse uppercase tracking-wider">
+                                                                    Pending Claim
+                                                                </Badge>
+                                                            )}
+                                                        </div>
                                                         <span className="text-[10px] text-muted-foreground font-medium flex items-center gap-1 uppercase tracking-wide truncate mt-0.5">
                                                             <MapPin className="h-3 w-3 text-muted-foreground/70" />
                                                             {member.application?.address ?? 'No address on record'}
@@ -264,6 +285,27 @@ export default function MembersIndex({ members, organizations, filters }: IndexP
                                                         onClick={() => { setSelectedMember(member); setBeneficiaryModalOpen(true); }}>
                                                         <CreditCard className="h-4 w-4" />
                                                     </Button>
+                                                    {member.dispatches?.some(d => d.status === 'Pending') && (
+                                                        <Button variant="outline" size="icon"
+                                                            className="h-8 w-8 border-emerald-200 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 hover:text-emerald-700 dark:bg-emerald-950/20 dark:border-emerald-800 dark:text-emerald-400"
+                                                            title="Claim Benefit"
+                                                            onClick={() => {
+                                                                const pend = member.dispatches?.filter(d => d.status === 'Pending') || [];
+                                                                if (pend.length === 1) {
+                                                                    setSelectedMember(member);
+                                                                    router.patch(
+                                                                        route('admin.members.beneficiary.claim', { member: member.id, dispatch: pend[0].id }),
+                                                                        {},
+                                                                        { preserveScroll: true }
+                                                                    );
+                                                                } else {
+                                                                    setSelectedMember(member);
+                                                                    setHistoryModalOpen(true);
+                                                                }
+                                                            }}>
+                                                            <CheckCheck className="h-4 w-4" />
+                                                        </Button>
+                                                    )}
                                                     <Button variant="secondary" size="sm"
                                                         className="h-8 text-[10px] font-bold uppercase tracking-wider"
                                                         onClick={() => { setSelectedMember(member); setHistoryModalOpen(true); }}>

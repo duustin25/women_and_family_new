@@ -171,24 +171,26 @@ export default function Edit({ user, organizations }: { user: User, organization
                     </Card>
 
                     {/* ADMINISTRATIVE VERIFICATION */}
-                    <Alert className="bg-muted/50 border-muted-foreground/10">
-                        <ShieldCheck className="h-4 w-4 text-amber-500" />
-                        <AlertTitle className="text-sm font-bold uppercase tracking-tight">Security Authorization</AlertTitle>
-                        <AlertDescription className="text-xs text-muted-foreground mt-1">
-                            Finalizing these changes requires **your** (Super Admin) current password for verification.
-                        </AlertDescription>
-                        <div className="mt-4 max-w-sm">
-                            <Input
-                                id="current_admin_password"
-                                type="password"
-                                value={data.current_admin_password}
-                                onChange={e => setData('current_admin_password', e.target.value)}
-                                placeholder="Verify your Identity..."
-                                required
-                            />
-                            {errors.current_admin_password && <p className="text-destructive text-xs font-bold mt-1">{errors.current_admin_password}</p>}
-                        </div>
-                    </Alert>
+                    {data.password && (
+                        <Alert className="bg-muted/50 border-muted-foreground/10">
+                            <ShieldCheck className="h-4 w-4 text-amber-500" />
+                            <AlertTitle className="text-sm font-bold uppercase tracking-tight">Security Authorization</AlertTitle>
+                            <AlertDescription className="text-xs text-muted-foreground mt-1">
+                                Finalizing these changes requires **your** (Super Admin) current password for verification.
+                            </AlertDescription>
+                            <div className="mt-4 max-w-sm">
+                                <Input
+                                    id="current_admin_password"
+                                    type="password"
+                                    value={data.current_admin_password}
+                                    onChange={e => setData('current_admin_password', e.target.value)}
+                                    placeholder="Verify your Identity..."
+                                    required={!!data.password}
+                                />
+                                {errors.current_admin_password && <p className="text-destructive text-xs font-bold mt-1">{errors.current_admin_password}</p>}
+                            </div>
+                        </Alert>
+                    )}
 
                     <div className="flex items-center justify-end gap-3 pt-4">
                         <Button variant="ghost" type="button" asChild>

@@ -153,13 +153,12 @@ export function AppSidebar() {
 
             if (role === 'president') {
                 const hiddenFromPresident = [
-                    'VAWC Triage & Action Center',
-                    'Violence Against Women and Children Case Protection Registry',
-                    'Child Health and Nutritional Status Monitoring (BCPC)',
+                    'VAWC Case Protection Registry',
+                    'BCPC Nutritional Status Monitoring',
+                    'GAD Programs Calendar of Events',
                     'System Users',
                     'Officials',
                     'Settings',
-                    'Gender and Development (GAD) Advocacy & Programs',
                 ];
                 if (hiddenFromPresident.includes(item.title)) return false;
             }

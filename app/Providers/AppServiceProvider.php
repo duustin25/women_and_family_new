@@ -30,6 +30,8 @@ class AppServiceProvider extends ServiceProvider
         \App\Models\User::observe(\App\Observers\AuditObserver::class);
         \App\Models\Announcement::observe(\App\Observers\AuditObserver::class);
         \App\Models\Organization::observe(\App\Observers\AuditObserver::class);
+        \App\Models\BcpcChild::observe(\App\Observers\AuditObserver::class);
+        \App\Models\BcpcAssessment::observe(\App\Observers\AuditObserver::class);
 
         // Resolve polymorphic relation for custom non-model types
         \Illuminate\Database\Eloquent\Relations\Relation::morphMap([

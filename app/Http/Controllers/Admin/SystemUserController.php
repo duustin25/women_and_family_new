@@ -66,7 +66,6 @@ class SystemUserController extends Controller
             'role' => 'required|in:admin,head,president',
             // Make organization_id optional to break circular dependency
             'organization_id' => 'nullable|exists:organizations,id',
-            'current_admin_password' => ['required', 'string', 'current_password'],
         ]);
 
         User::create([
@@ -83,14 +82,19 @@ class SystemUserController extends Controller
 
     public function update(Request $request, User $system_user)
     {
-        $validated = $request->validate([
+        $rules = [
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email,' . $system_user->id,
             'password' => ['nullable', 'confirmed', \Illuminate\Validation\Rules\Password::defaults()],
             'role' => 'required|in:admin,head,president',
             'organization_id' => 'nullable|exists:organizations,id',
-            'current_admin_password' => ['required', 'string', 'current_password'],
-        ]);
+        ];
+
+        if ($request->filled('password')) {
+            $rules['current_admin_password'] = ['required', 'string', 'current_password'];
+        }
+
+        $validated = $request->validate($rules);
 
         $data = [
             'name' => $validated['name'],
@@ -117,7 +121,7 @@ class SystemUserController extends Controller
 
     public function destroy(User $system_user)
     {
-        if ($system_user->getKey() === auth()->id()) {
+        if ($system_user->id === Auth::id()) {
             return back()->with('error', 'You cannot delete yourself.');
         }
 

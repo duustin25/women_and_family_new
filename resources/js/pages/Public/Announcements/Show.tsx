@@ -85,9 +85,10 @@ export default function Show({ announcement }: { announcement: any }) {
                         )}
 
                         <div className="prose dark:prose-invert max-w-none">
-                            <div className="whitespace-pre-wrap leading-relaxed text-slate-700 dark:text-slate-300">
-                                {formatContent(record.content)}
-                            </div>
+                            <div 
+                                className="leading-relaxed text-slate-700 dark:text-slate-300"
+                                dangerouslySetInnerHTML={{ __html: record.content }}
+                            />
                         </div>
                     </article>
                 </div>

@@ -72,7 +72,7 @@ export default function Dashboard({
     bcpcSignal: BcpcSignal | null;
     auth: any;
 }) {
-    const isPresident = auth.user.role === 'Org President';
+    const isPresident = auth.user.role === 'president';
 
     // Stats Ribbon: Removed redundant VAWC/BCPC counters for Admin
     const stats = isPresident
