@@ -53,7 +53,10 @@ class ChatbotService
 
         } catch (\Exception $e) {
             Log::error('Chatbot Python Error: ' . $e->getMessage());
-            return ['response' => $this->fallbackLogic($query)];
+            return [
+                'response' => $this->fallbackLogic($query),
+                'error' => 'engine_offline'
+            ];
         }
     }
 

@@ -63,10 +63,17 @@
                 "File a complaint",
                 "Paano magreklamo ng VAWC?",
                 "Binubugbog ako ng asawa ko",
+                "Binubugbog",
+                "Tinorture",
+                "Inaabuso ako",
+                "Inaabuso",
                 "Gusto ko magpa blotter",
                 "Sinasaktan ako",
+                "Sinasaktan po ako ng partner ko",
                 "Report violence",
-                "Violence against women"
+                "Violence against women",
+                "Physical abuse",
+                "Emosyonal na pang-aabuso"
             ],
             "responses": [
                 "To file a VAWC case, go to 'Services' > 'VAWC'. For emergencies, call 911. (Para mag-file, pumunta sa 'Services' > 'VAWC'. Sa emergency, tumawag sa 911.)"
@@ -149,6 +156,7 @@
                 "Tell me about RA 9262",
                 "Safe Spaces Act",
                 "Anong batas para sa kababaihan?",
+                "Karapatan ng bata",
                 "Karapatan ng babae",
                 "RA 9262 info"
             ],
@@ -221,10 +229,11 @@
                 "Tulong",
                 "Police number",
                 "Ambulance",
-                "Who to call?"
+                "Who to call?",
+                "Emergency call"
             ],
             "responses": [
-                "EMERGENCY: Call 911 or the local police immediately! (TUMAWAG AGAD SA 911!)"
+                "EMERGENCY: Call 911 or the local police immediately! PNP Women and Children Protection Center (WCPC) hotline is 177 or (02) 8532-6690. (SA EMERGENCY: Tumawag agad sa 911! PNP WCPC: 177 / (02) 8532-6690.)"
             ]
         },
         {

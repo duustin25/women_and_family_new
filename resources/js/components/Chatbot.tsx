@@ -42,6 +42,7 @@ export default function Chatbot({ className }: { className?: string }) {
     ]);
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const [isEngineOffline, setIsEngineOffline] = useState(false);
     const scrollRef = useRef<HTMLDivElement>(null);
 
     const scrollToBottom = () => {
@@ -91,6 +92,12 @@ export default function Chatbot({ className }: { className?: string }) {
             if (response.data.suggestions && Array.isArray(response.data.suggestions)) {
                 setCurrentSuggestions(response.data.suggestions);
             }
+
+            if (response.data.error === 'engine_offline') {
+                setIsEngineOffline(true);
+            } else {
+                setIsEngineOffline(false);
+            }
         } catch (error) {
             console.error("Chat error:", error);
             const errorMessage: Message = {
@@ -100,6 +107,7 @@ export default function Chatbot({ className }: { className?: string }) {
                 timestamp: new Date()
             };
             setMessages(prev => [...prev, errorMessage]);
+            setIsEngineOffline(true);
         } finally {
             setIsLoading(false);
         }
@@ -144,6 +152,17 @@ export default function Chatbot({ className }: { className?: string }) {
                     </Button>
                 </div>
             </CardHeader>
+
+            {/* Offline/Fallback Banner */}
+            {isEngineOffline && (
+                <div className="bg-amber-500/10 dark:bg-amber-500/5 border-b border-amber-500/20 px-4 py-2 flex items-center gap-2 text-amber-600 dark:text-amber-400 text-[11px] font-bold">
+                    <span className="relative flex h-2 w-2">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+                    </span>
+                    <span>NLP Classification Engine Offline. Operating in keyword fallback mode.</span>
+                </div>
+            )}
 
             {/* Chat Area */}
             <CardContent className="flex-1 overflow-hidden p-0 relative flex flex-col bg-slate-50/50 dark:bg-slate-950/50">
