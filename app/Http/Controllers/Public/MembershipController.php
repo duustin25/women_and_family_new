@@ -163,6 +163,8 @@ class MembershipController extends Controller
         // Automatically sends an Email due to logic of the system na may automatic approve pag admin nag encode ng data
         if ($isAdmin) {
             event(new \App\Events\ApplicationApproved($application));
+        } else {
+            event(new \App\Events\MembershipApplicationSubmitted($application));
         }
 
 

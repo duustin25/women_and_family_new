@@ -3,21 +3,20 @@ import PublicLayout from '@/layouts/PublicLayout';
 import * as React from "react";
 import {
     Building2, Users, Search, CheckCircle2,
-    ClipboardList, MapPin, ExternalLink, ShieldCheck, ArrowRight
+    ArrowRight
 } from "lucide-react";
 
 export default function Index({ organizations = { data: [] } }: any) {
     const [searchQuery, setSearchQuery] = React.useState("");
 
-    // Filter Logic
     const filteredOrgs = organizations.data.filter((org: any) => {
         return org.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
             org.description.toLowerCase().includes(searchQuery.toLowerCase());
     });
 
     return (
-        <PublicLayout>
-            <div className="min-h-screen bg-slate-50 dark:bg-neutral-950 text-slate-900 dark:text-slate-200 font-sans selection:bg-purple-200 selection:text-purple-900 transition-colors">
+        <PublicLayout bgColor="bg-slate-50/50">
+            <div className="min-h-screen text-slate-900 dark:text-slate-100 font-sans selection:bg-purple-200 selection:text-purple-900 transition-colors">
                 <Head title="Accredited Organizations - Brgy 183 Villamor" />
 
                 {/* FIXED BACKGROUND LOGO */}
@@ -29,123 +28,111 @@ export default function Index({ organizations = { data: [] } }: any) {
                     />
                 </div>
 
+                {/* --- UNIFIED HERO SECTION --- */}
+                <section className="relative z-10 bg-slate-100 dark:bg-neutral-900 border-b border-slate-200 dark:border-neutral-800 py-16 md:py-20">
+                    <div className="container mx-auto px-6 text-center max-w-4xl">
+                        <span className="text-xs font-black tracking-widest text-purple-700 dark:text-purple-400 uppercase mb-3 block">
+                            Verified Community Partners / Mga Kasosyong Samahan
+                        </span>
+                        <h1 className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white tracking-tighter uppercase leading-none">
+                            Accredited Organizations
+                        </h1>
+                        <p className="text-slate-600 dark:text-slate-400 font-bold uppercase text-xs md:text-sm tracking-widest leading-relaxed max-w-2xl mx-auto mt-4">
+                            Explore and join accredited groups dedicated to community development, women's empowerment, and family protection.
+                        </p>
+                    </div>
+                </section>
 
-                {/* --- HERO SECTION --- */}
-                <div className="border-b border-slate-100 dark:border-neutral-800 py-16 md:py-24 relative overflow-hidden">
-                    {/* Background Pattern */}
-                    <div className="absolute top-0 right-0 w-1/3 h-full bg-slate-50 dark:bg-neutral-900 opacity-50 -skew-x-12 translate-x-12"></div>
-
-                    <div className="container mx-auto px-6 relative z-10 flex flex-col md:flex-row items-end justify-between gap-12">
-                        <div className="max-w-2xl">
-                            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 border border-purple-100 dark:border-purple-900/50 mb-6">
-                                <ShieldCheck size={14} />
-                                <span className="text-[10px] font-black uppercase tracking-widest">Verified Community Partners</span>
+                <main className="relative z-20 container mx-auto max-w-6xl px-6 py-12">
+                    {/* FILTER BAR - Standardized panel */}
+                    <div className="mb-12">
+                        <div className="bg-white dark:bg-neutral-900 p-4 md:p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-neutral-800 flex flex-col md:flex-row gap-6 justify-between items-center">
+                            {/* Stats info aligned on left */}
+                            <div className="flex items-center gap-4 text-sm font-bold text-slate-500 dark:text-slate-400">
+                                <span className="flex items-center gap-1.5 text-purple-700 dark:text-purple-400">
+                                    <Building2 size={16} />
+                                    <span>Total: {organizations.data.length} Accredited Groups</span>
+                                </span>
+                                <span className="w-px h-4 bg-slate-200 dark:bg-neutral-800 hidden md:block"></span>
+                                <span className="text-emerald-600 dark:text-emerald-400 flex items-center gap-1 font-black">
+                                    <CheckCircle2 size={16} /> Fully Verified
+                                </span>
                             </div>
-                            <h1 className="text-5xl md:text-7xl font-black text-slate-900 dark:text-white tracking-tighter mb-6 uppercase leading-[0.9]">
-                                Community <br />
-                                <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-indigo-600 dark:from-purple-400 dark:to-indigo-400">Alliance</span>
-                            </h1>
-                            <p className="text-slate-500 dark:text-slate-400 font-bold uppercase text-xs tracking-widest leading-relaxed max-w-lg">
-                                Explore and join accredited groups dedicated to community development, women's empowerment, and family protection.
-                            </p>
-                        </div>
 
-                        {/* Search Bar */}
-                        <div className="w-full md:w-96 relative group">
-                            <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5 group-focus-within:text-purple-600 dark:group-focus-within:text-purple-400 transition-colors" />
-                            <input
-                                type="text"
-                                placeholder="FIND AN ORGANIZATION..."
-                                className="w-full pl-12 pr-6 py-4 bg-slate-50 dark:bg-neutral-900 border-2 border-slate-100 dark:border-neutral-800 rounded-2xl text-xs font-black uppercase tracking-widest focus:ring-4 focus:ring-purple-100 dark:focus:ring-purple-900/20 focus:border-purple-200 dark:focus:border-purple-800 focus:bg-white dark:focus:bg-neutral-800 text-slate-900 dark:text-white transition-all shadow-sm"
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                            />
+                            <div className="relative w-full md:w-80 group">
+                                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4 group-focus-within:text-purple-700 dark:group-focus-within:text-purple-400 transition-colors" />
+                                <input
+                                    type="text"
+                                    placeholder="FIND AN ORGANIZATION..."
+                                    className="w-full pl-11 pr-4 py-3 bg-slate-50 dark:bg-neutral-950 border border-slate-250 dark:border-neutral-855 rounded-xl text-xs font-bold uppercase tracking-widest focus:ring-2 focus:ring-purple-700/20 focus:border-purple-700 focus:bg-white dark:focus:bg-neutral-900 text-slate-900 dark:text-white transition-all outline-none"
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                />
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <main className="min-h-[60vh] py-20 relative">
-                    <div className="container mx-auto px-6">
-
-                        {/* Stats Bar */}
-                        <div className="flex flex-wrap gap-8 mb-12 border-b border-slate-200 dark:border-neutral-800 pb-8">
-                            <div className="flex items-center gap-4">
-                                <div>
-                                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">Total Active</p>
-                                    <p className="font-bold text-slate-900 dark:text-white">{organizations.data.length} Groups</p>
-                                </div>
-                            </div>
-                            <div className="w-px h-12 bg-slate-200 dark:bg-neutral-800 hidden md:block"></div>
-                            <div className="flex items-center gap-4">
-                                <div>
-                                    <p className="font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
-                                        <CheckCircle2 size={14} /> Fully Accredited
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Organizations Grid */}
+                    {/* ORGANIZATIONS GRID */}
+                    <section className="pb-24">
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                             {filteredOrgs.length > 0 ? (
                                 filteredOrgs.map((org: any) => (
-                                    <Link key={org.id} href={`/organizations/${org.slug}`} className="group relative bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-3xl p-1 hover:border-purple-200 dark:hover:border-purple-800 hover:shadow-2xl hover:shadow-purple-900/10 transition-all duration-500 hover:-translate-y-2">
-                                        <div className="bg-slate-50 dark:bg-neutral-950/50 rounded-[20px] p-8 h-full flex flex-col relative overflow-hidden group-hover:bg-white dark:group-hover:bg-neutral-900 transition-colors duration-500">
-
-                                            {/* Decorative Gradient Blob */}
-                                            <div className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-br ${org.color_theme ? `from-${org.color_theme.replace('bg-', '')}-100` : 'from-purple-100'} dark:from-purple-900/20 to-transparent rounded-bl-[100px] opacity-50 group-hover:scale-150 transition-transform duration-700 ease-out`}></div>
-
-                                            {/* Organization Icon/Logo */}
-                                            <div className={`w-14 h-14 rounded-2xl ${org.color_theme || 'bg-purple-600'} text-white flex items-center justify-center mb-6 shadow-lg shadow-purple-900/20 group-hover:scale-110 transition-transform duration-500`}>
-                                                {org.image ? (
-                                                    <img src={org.image} className="w-full h-full object-cover rounded-2xl" alt={org.name} />
-                                                ) : (
-                                                    <div className="font-black text-xl">{org.name.substring(0, 2)}</div>
-                                                )}
+                                    <Link 
+                                        key={org.id} 
+                                        href={`/organizations/${org.slug}`} 
+                                        className="group bg-white dark:bg-neutral-900 rounded-3xl overflow-hidden border border-slate-200 dark:border-neutral-800 hover:border-purple-200 dark:hover:border-purple-800 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 flex flex-col h-full"
+                                    >
+                                        <div className="p-8 flex flex-col flex-grow">
+                                            {/* Organization Icon/Header */}
+                                            <div className="flex items-center gap-4 mb-6">
+                                                <div className={`w-14 h-14 rounded-2xl ${org.color_theme || 'bg-purple-700'} text-white flex items-center justify-center shadow-md shrink-0`}>
+                                                    {org.image ? (
+                                                        <img src={org.image} className="w-full h-full object-cover rounded-2xl" alt={org.name} />
+                                                    ) : (
+                                                        <span className="font-black text-xl">{org.name.substring(0, 2).toUpperCase()}</span>
+                                                    )}
+                                                </div>
+                                                <div>
+                                                    <span className="text-[10px] font-black text-purple-700 dark:text-purple-400 tracking-wider uppercase block">Accredited Partner</span>
+                                                    <h3 className="text-xl font-black text-slate-900 dark:text-white leading-tight uppercase line-clamp-1">
+                                                        {org.name}
+                                                    </h3>
+                                                </div>
                                             </div>
 
-                                            <h3 className="text-2xl font-black text-slate-900 dark:text-white mb-2 uppercase tracking-tight leading-none group-hover:text-purple-700 dark:group-hover:text-purple-400 transition-colors">
-                                                {org.name}
-                                            </h3>
-
-                                            <div className="flex items-center gap-2 mb-6">
-                                                <div className="px-2 py-1 rounded-md bg-white dark:bg-neutral-900 border border-slate-100 dark:border-neutral-800 text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 flex items-center gap-2 shadow-sm">
-                                                    <Users size={12} /> {org.president_name || 'TBA'}
-                                                </div>
+                                            <div className="flex items-center gap-2 mb-4 text-xs font-bold text-slate-500 dark:text-slate-400">
+                                                <span className="flex items-center gap-1.5">
+                                                    <Users size={14} className="text-purple-700 dark:text-purple-400" />
+                                                    <span>Pres: {org.president_name || 'TBA'}</span>
+                                                </span>
                                             </div>
 
                                             <div
-                                                className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed mb-8 line-clamp-3 group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-colors"
+                                                className="text-slate-700 dark:text-slate-300 text-sm leading-relaxed mb-6 line-clamp-3 font-semibold"
                                                 dangerouslySetInnerHTML={{ __html: org.description }}
                                             />
 
-                                            <div className="mt-auto flex items-center justify-between border-t border-slate-200/50 dark:border-neutral-800 pt-6">
-                                                <div className="flex -space-x-2">
-                                                    {[1, 2, 3].map(i => (
-                                                        <div key={i} className="w-6 h-6 rounded-full bg-slate-200 dark:bg-neutral-800 border-2 border-white dark:border-neutral-900"></div>
-                                                    ))}
-                                                    <div className="w-6 h-6 rounded-full bg-slate-100 dark:bg-neutral-800 border-2 border-white dark:border-neutral-900 flex items-center justify-center text-[8px] font-bold text-slate-400">+</div>
-                                                </div>
-                                                <div className="w-10 h-10 rounded-full bg-white dark:bg-neutral-900 border border-slate-100 dark:border-neutral-800 flex items-center justify-center text-slate-300 group-hover:border-purple-200 dark:group-hover:border-purple-800 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors shadow-sm">
-                                                    <ArrowRight size={16} />
+                                            <div className="mt-auto pt-6 border-t border-slate-100 dark:border-neutral-800 flex justify-between items-center">
+                                                <span className="text-xs font-black text-purple-700 dark:text-purple-400 uppercase tracking-widest">
+                                                    View Profile / Tignan Detalye
+                                                </span>
+                                                <div className="w-8 h-8 rounded-full bg-slate-50 dark:bg-neutral-950 text-slate-400 flex items-center justify-center group-hover:bg-purple-700 group-hover:text-white transition-all">
+                                                    <ArrowRight size={14} className="group-hover:translate-x-0.5 transition-transform duration-300" />
                                                 </div>
                                             </div>
-
                                         </div>
                                     </Link>
                                 ))
                             ) : (
-                                <div className="col-span-full py-24 text-center">
-                                    <div className="w-20 h-20 bg-slate-100 dark:bg-neutral-900 rounded-full flex items-center justify-center mx-auto mb-6 text-slate-300 dark:text-slate-700">
-                                        <Building2 size={32} />
+                                <div className="col-span-full py-24 text-center bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-3xl shadow-sm">
+                                    <div className="w-16 h-16 bg-slate-50 dark:bg-neutral-950 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-400">
+                                        <Building2 size={24} />
                                     </div>
-                                    <h3 className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-tight mb-2">No Organizations Found</h3>
-                                    <p className="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-widest">Try adjusting your search query.</p>
+                                    <p className="text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest text-xs">No active organizations found.</p>
                                 </div>
                             )}
                         </div>
-
-                    </div>
+                    </section>
                 </main>
             </div>
         </PublicLayout>

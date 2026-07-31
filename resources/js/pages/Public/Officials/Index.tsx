@@ -50,7 +50,7 @@ export default function Index({ head, secretary, staff }: Props) {
                 : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300';
 
         return (
-            <Card className={`bg-white dark:bg-neutral-900 shadow-sm hover:shadow-md transition-shadow dark:border-neutral-800 ${borderColor} border-t-4`}>
+            <Card className={`bg-white dark:bg-neutral-900 rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 dark:border-neutral-800 ${borderColor} border-t-4`}>
                 <CardContent className="p-6 flex flex-col items-center text-center">
                     {/* Avatar Container */}
                     <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-slate-100 dark:border-neutral-800 shadow-sm mb-4 bg-slate-50 dark:bg-neutral-950 flex items-center justify-center shrink-0">
@@ -95,22 +95,18 @@ export default function Index({ head, secretary, staff }: Props) {
         <PublicLayout>
             <Head title={`Organizational Chart - ${brgyName}`} />
 
-            <div className="min-h-screen bg-white dark:bg-neutral-950 font-sans text-slate-800 dark:text-slate-200 transition-colors pb-24">
+            <div className="min-h-screen bg-slate-50/50 dark:bg-neutral-950 font-sans text-slate-800 dark:text-slate-200 transition-colors pb-24">
 
-                {/* --- HERO SECTION (Matches VAWC / GAD Design) --- */}
-                <section className="bg-slate-900 border-b-8 border-purple-600 relative overflow-hidden">
-                    <div className="absolute inset-0 bg-gradient-to-r from-purple-900/40 to-transparent z-0"></div>
-                    <div className="container mx-auto px-6 py-20 relative z-10 flex flex-col items-center text-center">
-                        <div className="w-16 h-16 bg-purple-950/50 rounded-full flex items-center justify-center mb-6 border border-purple-500/20 backdrop-blur-sm">
-                            <ShieldCheck className="w-8 h-8 text-purple-400" />
-                        </div>
-                        <h2 className="text-purple-400 font-black uppercase tracking-[0.3em] text-sm mb-4">
-                            The Leadership Board
-                        </h2>
-                        <h1 className="text-4xl md:text-5xl font-black text-white uppercase leading-tight mb-4 tracking-tighter">
-                            Organizational <span className="text-purple-500">Chart</span>
+                {/* --- UNIFIED HERO SECTION --- */}
+                <section className="relative z-10 bg-slate-100 dark:bg-neutral-900 border-b border-slate-200 dark:border-neutral-800 py-16 md:py-20 mb-12">
+                    <div className="container mx-auto px-6 text-center max-w-4xl">
+                        <span className="text-xs font-black tracking-widest text-purple-700 dark:text-purple-400 uppercase mb-3 block">
+                            The Leadership Board / Ang Pamunuan
+                        </span>
+                        <h1 className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white tracking-tighter uppercase leading-none">
+                            Organizational Chart
                         </h1>
-                        <p className="text-sm md:text-base text-slate-300 font-medium max-w-2xl leading-relaxed">
+                        <p className="text-slate-600 dark:text-slate-400 font-bold uppercase text-xs md:text-sm tracking-widest leading-relaxed max-w-2xl mx-auto mt-4">
                             A clear and structured view of the dedicated individuals serving the Women & Family Office of {brgyName}.
                         </p>
                     </div>

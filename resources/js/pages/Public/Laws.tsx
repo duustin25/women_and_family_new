@@ -89,51 +89,56 @@ export default function Laws() {
                 />
             </div>
 
-            <div className="py-12 bg-slate-50 dark:bg-slate-950 min-h-screen">
-                <div className="mx-auto max-w-7xl px-6 lg:px-8">
-                    {/* Header */}
-                    <div className="mx-auto max-w-2xl text-center mb-16">
-                        <h2 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white sm:text-4xl uppercase">
-                            Laws Protecting Women and Children
-                        </h2>
-                        <p className="mt-4 text-lg leading-8 text-slate-600 dark:text-slate-400">
-                            Understanding your rights is the first step to empowerment. Click any card to read the full official documentation.
-                        </p>
-                    </div>
+            {/* --- UNIFIED HERO SECTION --- */}
+            <section className="relative z-10 bg-slate-100 dark:bg-neutral-900 border-b border-slate-200 dark:border-neutral-800 py-16 md:py-20 mb-12">
+                <div className="container mx-auto px-6 text-center max-w-4xl">
+                    <span className="text-xs font-black tracking-widest text-purple-700 dark:text-purple-400 uppercase mb-3 block">
+                        Know Your Rights / Alamin ang Inyong Karapatan
+                    </span>
+                    <h1 className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white tracking-tighter uppercase leading-none">
+                        Laws & Protections
+                    </h1>
+                    <p className="text-slate-600 dark:text-slate-400 font-bold uppercase text-xs md:text-sm tracking-widest leading-relaxed max-w-2xl mx-auto mt-4">
+                        Understanding your rights is the first step to empowerment. Click any card to read the full official documentation.
+                    </p>
+                </div>
+            </section>
 
+            <div className="bg-slate-50/50 dark:bg-neutral-950 min-h-screen pb-24 relative z-20">
+                <div className="mx-auto max-w-6xl px-6">
                     {/* Laws Grid */}
-                    <div className="grid max-w-2xl grid-cols-1 gap-6 lg:mx-0 lg:max-w-none lg:grid-cols-2 xl:grid-cols-3">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                         {laws.map((law) => (
                             <a
                                 key={law.code}
                                 href={law.link}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="group block h-full"
+                                className="group block h-full focus:outline-none focus:ring-4 focus:ring-purple-500 rounded-lg"
                             >
-                                <Card className="flex h-full flex-col hover:shadow-xl hover:border-slate-500/50 transition-all duration-300 cursor-pointer border-2 border-transparent bg-white dark:bg-slate-900">
+                                <Card className="flex h-full flex-col hover:shadow-xl hover:border-purple-200 dark:hover:border-purple-800 transition-all duration-300 cursor-pointer border border-slate-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 rounded-3xl">
                                     <CardHeader>
                                         <div className="flex items-center justify-between">
                                             <div className="flex items-center gap-x-3">
-                                                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-50 dark:bg-slate-900/20 transition-colors duration-300">
-                                                    <law.icon className="h-6 w-6 text-slate-600 dark:text-slate-400" aria-hidden="true" />
+                                                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800/80 transition-colors duration-300">
+                                                    <law.icon className="h-6 w-6 text-purple-700 dark:text-purple-400" aria-hidden="true" />
                                                 </div>
-                                                <CardTitle className="text-lg font-bold leading-7 text-slate-900 dark:text-white">
+                                                <CardTitle className="text-xl font-black leading-7 text-slate-900 dark:text-white">
                                                     {law.code}
                                                 </CardTitle>
                                             </div>
-                                            <ExternalLink className="h-4 w-4 text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                            <ExternalLink className="h-5 w-5 text-purple-600 opacity-80 group-hover:opacity-100 transition-opacity" />
                                         </div>
-                                        <CardDescription className="mt-2 text-sm font-bold text-slate-700 dark:text-slate-300">
+                                        <CardDescription className="mt-2 text-base font-black text-slate-800 dark:text-slate-200">
                                             {law.title}
                                         </CardDescription>
                                     </CardHeader>
                                     <CardContent className="flex flex-1 flex-col">
-                                        <p className="text-xs leading-5 text-slate-500 dark:text-slate-400">
+                                        <p className="text-base leading-relaxed text-slate-700 dark:text-slate-300">
                                             {law.description}
                                         </p>
-                                        <div className="mt-auto pt-4 border-t border-slate-100 dark:border-slate-800 text-[10px] font-black text-slate-600 uppercase tracking-widest flex items-center gap-1">
-                                            Read Official Document
+                                        <div className="mt-auto pt-4 border-t border-slate-150 dark:border-slate-800 text-xs font-black text-purple-700 dark:text-purple-400 uppercase tracking-widest flex items-center gap-1 group-hover:underline">
+                                            Read Official Document / Basahin ang Batas
                                         </div>
                                     </CardContent>
                                 </Card>

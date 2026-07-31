@@ -359,7 +359,7 @@ class BcpcMonitoringController extends Controller
             ]);
 
             // 3. Log assessment
-            $child->assessments()->create([
+            $assessment = $child->assessments()->create([
                 'user_id' => Auth::id(),
                 'date_of_weighing' => $validated['date_of_weighing'],
                 'weight_kg' => $validated['weight_kg'],
@@ -371,6 +371,9 @@ class BcpcMonitoringController extends Controller
                 'bns_assessor' => $validated['bns_assessor'] ?? null,
                 'sfp_day_number' => $validated['sfp_day_number'] ?? ($sfpStatus === 'Enrolled' ? 1 : null),
             ]);
+
+            // Dispatch BCPC Assessment event to alert staff of SFP enrollment/graduation
+            event(new \App\Events\BcpcAssessmentRecorded($child, $assessment));
 
             return Redirect::back()->with('success', 'New nutrition measurement recorded successfully.');
         });

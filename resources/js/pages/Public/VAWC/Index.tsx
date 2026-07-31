@@ -27,28 +27,27 @@ export default function VawcIndex() {
                 />
             </div>
 
-            <div className="min-h-screen bg-white dark:bg-neutral-950 font-sans text-slate-800 dark:text-slate-200 transition-colors">
+            <div className="min-h-screen bg-slate-50/50 dark:bg-neutral-950 font-sans text-slate-800 dark:text-slate-200 transition-colors pb-24 relative z-20">
 
-                {/* HERO SECTION - BCPC THEME */}
-                <section className="bg-slate-900 border-b-4 border-rose-500 relative overflow-hidden">
-                    <div className="absolute inset-0 bg-gradient-to-r from-rose-900/30 to-slate-900 z-0"></div>
-                    <div className="container mx-auto px-6 py-12 md:py-16 relative z-10 text-center lg:text-left">
-                        <div className="max-w-5xl mx-auto lg:mx-0">
-                            <h2 className="text-rose-400 font-black uppercase tracking-widest text-xs md:text-sm mb-3">Violence Against Women & Children</h2>
-                            <h1 className="text-3xl md:text-5xl lg:text-6xl font-black text-white uppercase leading-[1.1] mb-4 tracking-tight">
-                                Protection & <span className="text-rose-500">Support</span> Services
-                            </h1>
-                            <p className="text-base md:text-xl text-slate-300 font-medium max-w-2xl mb-6 leading-relaxed hidden md:block">
-                                Laban para sa karapatan at kaligtasan ng bawat kababaihan at kabataan sa Barangay 183 Villamor.
-                            </p>
-                            <div className="flex flex-wrap justify-center lg:justify-start gap-4">
-                                <Button
-                                    className="bg-rose-600 hover:bg-rose-700 text-white font-black uppercase px-8 py-6 text-xs tracking-widest rounded-md shadow-xl transition-all active:scale-95 cursor-pointer h-14"
-                                    onClick={() => scrollToSection('filing-process')}
-                                >
-                                    The 12-Step Pathway <ArrowRight className="ml-2 w-5 h-5" />
-                                </Button>
-                            </div>
+                {/* --- UNIFIED HERO SECTION --- */}
+                <section className="relative z-10 bg-slate-100 dark:bg-neutral-900 border-b border-slate-200 dark:border-neutral-800 py-16 md:py-20 mb-12">
+                    <div className="container mx-auto px-6 text-center max-w-4xl">
+                        <span className="text-xs font-black tracking-widest text-rose-600 dark:text-rose-400 uppercase mb-3 block">
+                            Violence Against Women & Children / VAWC Support
+                        </span>
+                        <h1 className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white tracking-tighter uppercase leading-none">
+                            Protection & Support Services
+                        </h1>
+                        <p className="text-slate-600 dark:text-slate-400 font-bold uppercase text-xs md:text-sm tracking-widest leading-relaxed max-w-2xl mx-auto mt-4 mb-8">
+                            Laban para sa karapatan at kaligtasan ng bawat kababaihan at kabataan sa Barangay 183 Villamor.
+                        </p>
+                        <div className="flex justify-center">
+                            <Button
+                                className="bg-rose-600 hover:bg-rose-700 text-white font-black uppercase px-8 py-6 text-xs tracking-widest rounded-md shadow-xl transition-all active:scale-95 cursor-pointer h-14"
+                                onClick={() => scrollToSection('filing-process')}
+                            >
+                                The 12-Step Pathway / Proseso <ArrowRight className="ml-2 w-5 h-5" />
+                            </Button>
                         </div>
                     </div>
                 </section>
@@ -171,26 +170,26 @@ export default function VawcIndex() {
                             </div>
                             <Accordion type="single" collapsible className="w-full">
                                 <AccordionItem value="item-1" className="border-b-slate-200 dark:border-b-neutral-800">
-                                    <AccordionTrigger className="uppercase font-bold text-sm hover:text-rose-600 text-slate-900 dark:text-slate-200">What acts are considered violence?</AccordionTrigger>
-                                    <AccordionContent className="text-slate-600 dark:text-slate-400 leading-relaxed font-medium">
+                                    <AccordionTrigger className="uppercase font-black text-base hover:text-rose-600 text-slate-900 dark:text-slate-200 text-left py-4">What acts are considered violence?</AccordionTrigger>
+                                    <AccordionContent className="text-base text-slate-700 dark:text-slate-300 leading-relaxed font-semibold pb-4">
                                         Physical force, sexual acts without consent, psychological violence (threats, harassment), and economic abuse.
                                     </AccordionContent>
                                 </AccordionItem>
                                 <AccordionItem value="item-2" className="border-b-slate-200 dark:border-b-neutral-800">
-                                    <AccordionTrigger className="uppercase font-bold text-sm hover:text-rose-600 text-slate-900 dark:text-slate-200">How long is a BPO valid?</AccordionTrigger>
-                                    <AccordionContent className="text-slate-600 dark:text-slate-400 leading-relaxed font-medium">
+                                    <AccordionTrigger className="uppercase font-black text-base hover:text-rose-600 text-slate-900 dark:text-slate-200 text-left py-4">How long is a BPO valid?</AccordionTrigger>
+                                    <AccordionContent className="text-base text-slate-700 dark:text-slate-300 leading-relaxed font-semibold pb-4">
                                         A Barangay Protection Order (BPO) is valid for 15 days. For long-term protection, we assist in filing for TPO/PPO in Court.
                                     </AccordionContent>
                                 </AccordionItem>
                                 <AccordionItem value="item-3" className="border-b-slate-200 dark:border-b-neutral-800">
-                                    <AccordionTrigger className="uppercase font-bold text-sm hover:text-rose-600 text-slate-900 dark:text-slate-200">Is this service free?</AccordionTrigger>
-                                    <AccordionContent className="text-slate-600 dark:text-slate-400 leading-relaxed font-medium">
+                                    <AccordionTrigger className="uppercase font-black text-base hover:text-rose-600 text-slate-900 dark:text-slate-200 text-left py-4">Is this service free?</AccordionTrigger>
+                                    <AccordionContent className="text-base text-slate-700 dark:text-slate-300 leading-relaxed font-semibold pb-4">
                                         Yes. All services provided by the Barangay 183 Women's Desk are free of charge.
                                     </AccordionContent>
                                 </AccordionItem>
                                 <AccordionItem value="item-4" className="border-b-slate-200 dark:border-b-neutral-800">
-                                    <AccordionTrigger className="uppercase font-bold text-sm hover:text-rose-600 text-slate-900 dark:text-slate-200">What if the BPO is violated?</AccordionTrigger>
-                                    <AccordionContent className="text-slate-600 dark:text-slate-400 leading-relaxed font-medium">
+                                    <AccordionTrigger className="uppercase font-black text-base hover:text-rose-600 text-slate-900 dark:text-slate-200 text-left py-4">What if the BPO is violated?</AccordionTrigger>
+                                    <AccordionContent className="text-base text-slate-700 dark:text-slate-300 leading-relaxed font-semibold pb-4">
                                         Violation of a BPO is a criminal offense. We will immediately escalate the case to the PNP and the Prosecutor.
                                     </AccordionContent>
                                 </AccordionItem>
@@ -200,16 +199,16 @@ export default function VawcIndex() {
                 </div>
 
                 {/* --- CALL TO ACTION --- */}
-                <section className="bg-white dark:bg-neutral-900 text-white py-16">
-                    <div className="container mx-auto px-6 text-center">
+                <section className="bg-rose-50/50 dark:bg-rose-950/20 text-slate-900 dark:text-slate-100 py-16 px-6 rounded-3xl max-w-6xl mx-auto shadow-sm border border-rose-200/80 dark:border-rose-900/50 mt-12 mb-16 relative overflow-hidden">
+                    <div className="container mx-auto text-center relative z-10">
                         <div className="flex justify-center mb-6">
-                            <div className="w-16 h-16 bg-rose-600 rounded-full flex items-center justify-center animate-pulse">
-                                <Phone className="w-8 h-8 text-white" />
+                            <div className="w-16 h-16 bg-rose-100 dark:bg-rose-900/40 rounded-full flex items-center justify-center shadow-inner">
+                                <Phone className="w-8 h-8 text-rose-600 dark:text-rose-400" />
                             </div>
                         </div>
-                        <h2 className="text-slate-900 dark:text-slate-200 text-3xl font-black uppercase mb-4">VAWC HOTLINE</h2>
-                        <p className="text-rose-400 font-bold text-5xl tracking-tighter mb-4">(02) 8-183-SAFE</p>
-                        <p className="text-slate-900 dark:text-slate-200 uppercase tracking-widest text-sm mb-8">Barangay 183 Villamor Women's Desk • 24/7 Monitoring</p>
+                        <h2 className="text-rose-900 dark:text-rose-300 text-2xl font-black uppercase mb-3 tracking-wider">VAWC HOTLINE / TAWAGAN KAMI</h2>
+                        <p className="text-rose-700 dark:text-rose-400 font-black text-5xl tracking-tighter mb-4">(02) 8-183-SAFE</p>
+                        <p className="text-slate-600 dark:text-slate-400 uppercase tracking-widest text-xs md:text-sm font-bold">Barangay 183 Villamor Women's Desk • 24/7 Response & Monitoring</p>
                     </div>
                 </section>
 

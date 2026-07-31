@@ -106,8 +106,8 @@ export default function Welcome({ announcements, organizations }: WelcomeProps) 
                 <div className="container mx-auto px-6">
                     <div className="flex items-end justify-between mb-12">
                         <div>
-                            <h2 className="font-bold uppercase text-xs mb-2 tracking-widest">How We Help</h2>
-                            <h3 className="font-bold text-3xl uppercase">Core Services</h3>
+                            <h2 className="font-black uppercase text-sm mb-2 tracking-widest text-purple-700 dark:text-purple-400">How We Help / Paano Kami Makakatulong</h2>
+                            <h3 className="font-black text-3xl uppercase tracking-tight text-slate-900 dark:text-white">Core Services / Pangunahing Serbisyo</h3>
                         </div>
                     </div>
 
@@ -115,10 +115,10 @@ export default function Welcome({ announcements, organizations }: WelcomeProps) 
                         {/* Service 1 */}
                         <div className="border bg-white dark:bg-neutral-950 border-neutral-200 dark:border-neutral-800 rounded-lg p-6 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1 h-full flex flex-col items-start gap-4">
                             <div className="flex items-center gap-3">
-                                <Siren size={24} className="text-neutral-900 dark:text-white shrink-0" />
-                                <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">VAWC Support & Assistance</h1>
+                                <Siren size={24} className="text-purple-700 dark:text-purple-400 shrink-0" />
+                                <h1 className="text-2xl font-black text-neutral-900 dark:text-white">VAWC Support & Assistance</h1>
                             </div>
-                            <p className="text-md leading-relaxed text-neutral-700 dark:text-neutral-300">
+                            <p className="text-base leading-relaxed text-slate-800 dark:text-slate-200">
                                 Comprehensive guidance and contact information for victims. For absolute privacy and confidentiality, all cases are securely filed in-person by our dedicated VAWC desk officers.
                             </p>
                         </div>
@@ -126,10 +126,10 @@ export default function Welcome({ announcements, organizations }: WelcomeProps) 
                         {/* Service BCPC */}
                         <div className="border bg-white dark:bg-neutral-950 border-neutral-200 dark:border-neutral-800 rounded-lg p-6 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1 h-full flex flex-col items-start gap-4">
                             <div className="flex items-center gap-3">
-                                <Baby size={24} className="text-neutral-900 dark:text-white shrink-0" />
-                                <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">BCPC Health and Nutrition</h1>
+                                <Baby size={24} className="text-purple-700 dark:text-purple-400 shrink-0" />
+                                <h1 className="text-2xl font-black text-neutral-900 dark:text-white">BCPC Health and Nutrition</h1>
                             </div>
-                            <p className="text-md leading-relaxed text-neutral-700 dark:text-neutral-300">
+                            <p className="text-base leading-relaxed text-slate-800 dark:text-slate-200">
                                 Dedicated monitoring for minors, utilizing our intake system for height, weight, and nutritional status tracking to ensure holistic child health and protection.
                             </p>
                         </div>
@@ -137,10 +137,10 @@ export default function Welcome({ announcements, organizations }: WelcomeProps) 
                         {/* Service 2 */}
                         <div className="border bg-white dark:bg-neutral-950 border-neutral-200 dark:border-neutral-800 rounded-lg p-6 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1 h-full flex flex-col items-start gap-4">
                             <div className="flex items-center gap-3">
-                                <Scale size={24} className="text-neutral-900 dark:text-white shrink-0" />
-                                <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">GAD Advocacy & Updates</h1>
+                                <Scale size={24} className="text-purple-700 dark:text-purple-400 shrink-0" />
+                                <h1 className="text-2xl font-black text-neutral-900 dark:text-white">GAD Advocacy & Updates</h1>
                             </div>
-                            <p className="text-md leading-relaxed text-neutral-700 dark:text-neutral-300">
+                            <p className="text-base leading-relaxed text-slate-800 dark:text-slate-200">
                                 Browse upcoming Gender and Development (GAD) seminars and community programs. Stay informed about the latest community.
                             </p>
                         </div>
@@ -148,10 +148,10 @@ export default function Welcome({ announcements, organizations }: WelcomeProps) 
                         {/* Service 3 */}
                         <div className="border bg-white dark:bg-neutral-950 border-neutral-200 dark:border-neutral-800 rounded-lg p-6 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1 h-full flex flex-col items-start gap-4">
                             <div className="flex items-center gap-3">
-                                <HeartHandshake size={24} className="text-neutral-900 dark:text-white shrink-0" />
-                                <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">Organization Memberships</h1>
+                                <HeartHandshake size={24} className="text-purple-700 dark:text-purple-400 shrink-0" />
+                                <h1 className="text-2xl font-black text-neutral-900 dark:text-white">Organization Memberships</h1>
                             </div>
-                            <p className="text-md leading-relaxed text-neutral-700 dark:text-neutral-300">
+                            <p className="text-base leading-relaxed text-slate-800 dark:text-slate-200">
                                 Discover accredited community partners and organizations. Submit membership applications online to join initiatives and help the community.
                             </p>
                         </div>
@@ -164,8 +164,8 @@ export default function Welcome({ announcements, organizations }: WelcomeProps) 
                 <div className="container mx-auto px-6">
                     <div className="flex items-end justify-between mb-12">
                         <div>
-                            <h2 className="font-bold uppercase text-xs mb-2 tracking-widest">Barangay Updates</h2>
-                            <h3 className="font-bold text-3xl uppercase">Latest Announcements</h3>
+                            <h2 className="font-black uppercase text-sm mb-2 tracking-widest text-purple-700 dark:text-purple-400">Barangay Updates / Mga Balita</h2>
+                            <h3 className="font-black text-3xl uppercase tracking-tight text-slate-900 dark:text-white">Latest Announcements / Mga Anunsyo</h3>
                         </div>
                     </div>
 
@@ -176,7 +176,7 @@ export default function Welcome({ announcements, organizations }: WelcomeProps) 
                                 <Link
                                     key={post.id}
                                     href={`/announcements/${post.slug}`}
-                                    className=" bg-white dark:bg-neutral-900 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+                                    className="bg-white dark:bg-neutral-900 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border border-neutral-200 dark:border-neutral-800"
                                 >
                                     {/* Image Section */}
                                     <div className="aspect-[16/9] bg-neutral-100 dark:bg-neutral-800 relative overflow-hidden">
@@ -197,7 +197,7 @@ export default function Welcome({ announcements, organizations }: WelcomeProps) 
 
                                     {/** Below of the image */}
                                     <div className="p-8">
-                                        <div className="flex items-center gap-6 mb-4">
+                                        <div className="flex items-center gap-6 mb-4 text-sm font-bold text-slate-500 dark:text-slate-400">
                                             <span className="flex items-center gap-1">
                                                 <Calendar size={18} /> {post.date}
                                             </span>
@@ -207,10 +207,10 @@ export default function Welcome({ announcements, organizations }: WelcomeProps) 
                                                 </span>
                                             )}
                                         </div>
-                                        <h4 className="text-2xl font-bold line-clamp-2">
+                                        <h4 className="text-2xl font-black text-slate-900 dark:text-white line-clamp-2">
                                             {post.title}
                                         </h4>
-                                        <p className="text-lg line-clamp-2 leading-relaxed">
+                                        <p className="text-base text-slate-700 dark:text-slate-300 line-clamp-2 leading-relaxed mt-2">
                                             {post.excerpt}
                                         </p>
                                     </div>
@@ -218,7 +218,7 @@ export default function Welcome({ announcements, organizations }: WelcomeProps) 
                             ))
                         ) : (
                             <div className="col-span-full py-16 text-center border-2 border-dashed border-neutral-200 dark:border-neutral-800 rounded-2xl">
-                                <p className="">No announcements posted yet</p>
+                                <p className="text-lg text-slate-500">No announcements posted yet / Walang anunsyo sa kasalukuyan</p>
                             </div>
                         )}
                     </div>
@@ -226,8 +226,9 @@ export default function Welcome({ announcements, organizations }: WelcomeProps) 
                     <div className="mt-8 text-center">
                         <Link
                             href="/announcements"
-                            className="inline-flex items-center gap-2 uppercase mt-5">
-                            view all announcements <ArrowRight size={14} />
+                            className="inline-flex items-center gap-2 px-8 py-4 bg-purple-700 hover:bg-purple-800 text-white font-black uppercase text-sm tracking-wider rounded-md transition-all shadow-md mt-5"
+                        >
+                            View All Announcements / Lahat ng Anunsyo <ArrowRight size={16} />
                         </Link>
                     </div>
                 </div>
