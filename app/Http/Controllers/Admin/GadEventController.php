@@ -127,6 +127,9 @@ class GadEventController extends Controller
             'reject_reason' => $validated['reject_reason'] ?? null,
         ]);
 
+        // Dispatch the status changed event to trigger listeners and notifications
+        event(new \App\Events\GadEventStatusChanged($event));
+
         $message = match ($validated['status']) {
             'approved'              => 'Event approved and published to the Global Public Calendar.',
             'reschedule_requested'  => 'Reschedule request sent to the organization.',

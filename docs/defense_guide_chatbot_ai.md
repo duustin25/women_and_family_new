@@ -16,6 +16,7 @@ This master documentation details the **Why, How, and What** of the Barangay 183
 3. **Data Security, Privacy Boundary & DPA Compliance**
 4. **Academic Recommendations (Chapter 5 Future Scope)**
 5. **Chatbot Training Corpus & The "Self-Learning" Question (Defense Q&A)**
+6. **Internet Requirements & Offline Capabilities (Defense Q&A)**
 
 ---
 
@@ -461,3 +462,21 @@ During your defense, explain this design choice using the following key concepts
     *   **Determinism & Compliance**: Legal advice and barangay resources must be 100% accurate and consistent. Live self-learning makes chatbot responses unpredictable.
     *   **Data Privacy (DPA 2012)**: Sensitive case details input by citizens must never be incorporated into the AI model's training vocabulary, protecting survivor confidentiality.
 3. **How Learning Updates Actually Happen**: To teach the chatbot new queries, an admin must add the patterns/responses to [intents.json](file:///c:/Users/djemp/Herd/wfp-system_captsone/resources/python/intents.json) and execute [train.py](file:///c:/Users/djemp/Herd/wfp-system_captsone/resources/python/train.py) offline to generate a new model file `chatbot_model.pkl`. This is a controlled, supervised process.
+
+---
+
+## 6. Internet Requirements & Offline Capabilities (Defense Q&A)
+
+### 🛜 Does the Chatbot AI require an active Internet Connection to function?
+**No. The core AI Chatbot engine does not require an active internet connection to classify queries or provide static responses.**
+
+During your defense, explain the system's internet dependency model using these key points:
+1. **Local Model Execution**: The chatbot model (`chatbot_model.pkl`) and inference scripts (`chat.py`) run entirely **locally** on the host server. The Multi-Layer Perceptron (MLP) Classifier does not call external cloud APIs (like OpenAI GPT, Claude, or Google Gemini) to process input. It is fully self-hosted.
+2. **Offline Natural Language Processing**: All text processing (tokenization and lemmatization) is handled locally by the pre-downloaded Python NLTK library assets.
+3. **Database Integration Boundaries**:
+   * **Local Network (LAN) Environment**: If the system is deployed on a local server in the Barangay Hall, client computers connected to the local intranet (LAN) can use the chatbot to query static info, announcements, and officials list **without any internet connection** (since the database and PHP/Python processes are hosted in the same local server).
+   * **Public Internet (WAN) Environment**: If citizens access the chatbot from outside the Barangay Hall (from their homes), they only need internet to access the website server itself. The server still processes the AI logic locally without needing external APIs.
+4. **Defense Advantages**:
+   * **Zero Operating Cost**: Eliminates token fees, API subscriptions, and cloud bandwidth costs.
+   * **Disaster Resilience**: If there is an internet outage in Pasay City, the Barangay Hall staff can still use the system and chatbot locally to look up guidelines, laws, and officials.
+   * **Data Privacy Protection**: Keeping data processing local guarantees that citizen interactions never touch foreign servers, strictly honoring the **Data Privacy Act of 2012**.

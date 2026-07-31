@@ -93,6 +93,8 @@ class OrganizationEventController extends Controller
             $validated['image_path'] = $path;
         }
 
+        $wasRescheduled = ($event->status === 'reschedule_requested');
+
         // Resubmitting a rescheduled event resets it back to pending
         if ($event->status === 'reschedule_requested') {
             $validated['status']        = 'pending';
@@ -100,6 +102,10 @@ class OrganizationEventController extends Controller
         }
 
         $event->update($validated);
+
+        // Notify admins of the update/resubmission
+        $admins = \App\Models\User::where('role', 'admin')->get();
+        \Illuminate\Support\Facades\Notification::send($admins, new \App\Notifications\GadEventProposalUpdated($event, $wasRescheduled));
 
         return redirect()->back()->with('success', 'Proposal updated and resubmitted for approval.');
     }
