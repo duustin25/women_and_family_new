@@ -48,7 +48,7 @@ const ActivityCard = ({ activity, onEventClick }: { activity: GadEvent; onEventC
     return (
         <div 
             onClick={() => onEventClick(activity)}
-            className={`bg-white dark:bg-neutral-900 rounded-lg border overflow-hidden shadow-sm hover:shadow-lg hover:border-purple-300 dark:hover:border-purple-800 transition-all duration-300 flex flex-col h-full cursor-pointer group ${isHappeningNow ? 'border-purple-400 ring-2 ring-purple-50 dark:ring-purple-900/30' : 'border-slate-200 dark:border-neutral-800'} relative`}
+            className={`bg-white dark:bg-neutral-900 rounded-3xl border overflow-hidden shadow-sm hover:shadow-xl hover:border-purple-250 dark:hover:border-purple-800 transition-all duration-300 flex flex-col h-full cursor-pointer group ${isHappeningNow ? 'border-purple-400 ring-2 ring-purple-50 dark:ring-purple-900/30' : 'border-slate-200/80 dark:border-neutral-800'} relative`}
         >
             {isHappeningNow && (
                 <div className="absolute top-0 right-0 bg-red-600 text-white text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-bl-lg shadow-md z-10 flex items-center animate-bounce">
@@ -259,31 +259,30 @@ export default function GadIndex({ activities = [] }: { activities?: GadEvent[] 
                 />
             </div>
 
-            <div className="min-h-screen bg-white dark:bg-neutral-950 transition-colors">
+            <div className="min-h-screen bg-slate-50/50 dark:bg-neutral-950 transition-colors pb-24 relative z-20">
 
-                {/* HERO SECTION - Streamlined for Direct Access */}
-                <section className="bg-slate-900 border-b-4 border-purple-600 relative overflow-hidden">
-                    <div className="absolute inset-0 bg-gradient-to-r from-purple-900/30 to-slate-900 z-0"></div>
-                    <div className="container mx-auto px-6 py-12 md:py-16 relative z-10 text-center lg:text-left">
-                        <div className="max-w-5xl mx-auto lg:mx-0">
-                            <h2 className="text-purple-400 font-black uppercase tracking-widest text-xs md:text-sm mb-3">Community Programs & Services</h2>
-                            <h1 className="text-3xl md:text-5xl lg:text-6xl font-black text-white uppercase leading-[1.1] mb-4 tracking-tight">
-                                Gender and <span className="text-purple-500">Development</span>
-                            </h1>
-                            <p className="text-base md:text-xl text-slate-300 font-medium max-w-2xl mb-6 leading-relaxed hidden md:block">
-                                Promoting women's empowerment and inclusive growth for every family in Barangay 183 Villamor.
-                            </p>
-                            <div className="flex flex-wrap justify-center lg:justify-start gap-4">
-                                <Button
-                                    asChild
-                                    className="bg-purple-600 hover:bg-purple-700 text-white font-black uppercase px-8 py-6 text-xs tracking-widest rounded-md shadow-xl transition-all active:scale-95 cursor-pointer h-14"
-                                    onClick={scrollToPrograms}
-                                >
-                                    <a href="#programs-board">
-                                        View All Events <ChevronDown className="ml-2 w-5 h-5" />
-                                    </a>
-                                </Button>
-                            </div>
+                {/* --- UNIFIED HERO SECTION --- */}
+                <section className="relative z-10 bg-slate-100 dark:bg-neutral-900 border-b border-slate-200 dark:border-neutral-800 py-16 md:py-20 mb-12">
+                    <div className="container mx-auto px-6 text-center max-w-4xl">
+                        <span className="text-xs font-black tracking-widest text-purple-700 dark:text-purple-400 uppercase mb-3 block">
+                            Community Programs & Services / Barangay GAD
+                        </span>
+                        <h1 className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white tracking-tighter uppercase leading-none">
+                            Gender and Development
+                        </h1>
+                        <p className="text-slate-600 dark:text-slate-400 font-bold uppercase text-xs md:text-sm tracking-widest leading-relaxed max-w-2xl mx-auto mt-4 mb-8">
+                            Promoting women's empowerment and inclusive growth for every family in Barangay 183 Villamor.
+                        </p>
+                        <div className="flex justify-center">
+                            <Button
+                                asChild
+                                className="bg-purple-700 hover:bg-purple-800 text-white font-black uppercase px-8 py-6 text-xs tracking-widest rounded-md shadow-xl transition-all active:scale-95 cursor-pointer h-14"
+                                onClick={scrollToPrograms}
+                            >
+                                <a href="#programs-board">
+                                    View All Events <ChevronDown className="ml-2 w-5 h-5" />
+                                </a>
+                            </Button>
                         </div>
                     </div>
                 </section>

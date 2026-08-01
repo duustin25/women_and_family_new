@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { toast, Toaster } from 'sonner';
 import ChatbotWidget from '@/components/ChatbotWidget';
+import AccessibilityToolbar from '@/components/AccessibilityToolbar';
 import { useAppearance } from '@/hooks/use-appearance';
 
 const brgyName = import.meta.env.VITE_APP_BARANGAY_NAME;
@@ -69,13 +70,15 @@ export default function PublicLayout({ children, bgColor = "bg-white" }: PublicL
             {/* 4. ADD THE TOASTER COMPONENT HERE */}
             <Toaster position="top-right" richColors closeButton theme={appearance === 'dark' ? 'dark' : 'light'} />
             <ChatbotWidget />
+            <AccessibilityToolbar />
+
 
             {/* --- 0. NEW TOP BAR (HOTLINE MARQUEE) --- */}
-            <div className="bg-[#3b0764] dark:bg-purple-950 text-white text-xs font-bold uppercase tracking-wider py-3 relative z-50 border-b border-white/5">
-                <div className="container mx-auto px-4 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-3">
-                    <div className="flex items-center gap-6">
-                        <span className="flex items-center gap-2 text-rose-400 animate-pulse font-black">
-                            <AlertCircle size={14} /> Emergency: <a href={`tel:${brgyNum}`} className="text-white hover:text-rose-400 transition-colors">{brgyNum}</a>
+            <div className="bg-[#3b0764] dark:bg-purple-950 text-white text-[11px] sm:text-xs font-bold uppercase tracking-wider py-1.5 sm:py-2 relative z-50 border-b border-white/5">
+                <div className="container mx-auto px-4 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-1.5 sm:gap-3">
+                    <div className="flex items-center gap-4 sm:gap-6">
+                        <span className="flex items-center gap-1.5 text-rose-400 animate-pulse font-black">
+                            <AlertCircle size={13} /> Emergency: <a href={`tel:${brgyNum}`} className="text-white hover:text-rose-400 transition-colors">{brgyNum}</a>
                         </span>
                         <span className="hidden md:flex items-center gap-2 text-purple-300">
                             <Shield size={14} /> VAWC Rescue: <a href={`tel:${vawcNum}`} className="text-white hover:text-purple-400 transition-colors">{vawcNum}</a>
@@ -93,21 +96,31 @@ export default function PublicLayout({ children, bgColor = "bg-white" }: PublicL
             {/* 1. STICKY HEADER */}
             <header className="sticky top-0 z-40 shadow-xl">
                 <div className="bg-[#6b21a8] dark:bg-purple-900 text-white border-b border-purple-500/30">
-                    <div className="container mx-auto px-4 lg:px-8 py-4 flex justify-between items-center">
-                        <div className="flex items-center gap-4">
-                            <div className="bg-white p-1 rounded-full shadow-lg border-2 border-purple-200 shrink-0">
-                                <img src="/Logo/women&family_logo.png" className="w-12 h-12 lg:w-16 lg:h-16 object-contain" alt="Logo" />
+                    <div className="container mx-auto px-3 sm:px-4 lg:px-8 py-2.5 sm:py-4 flex justify-between items-center">
+                        <div className="flex items-center gap-2 sm:gap-4 min-w-0 pr-2">
+                            {/* Official Seal 1 (Women and Family Logo) */}
+                            <div className="bg-white p-0.5 sm:p-1 rounded-full shadow-lg border-2 border-purple-200 shrink-0">
+                                <img src="/Logo/women&family_logo.png" className="w-7 h-7 sm:w-11 sm:h-11 lg:w-16 lg:h-16 object-contain" alt="Women and Family Logo" />
                             </div>
-                            <div>
-                                <h1 className="text-xl lg:text-2xl font-black uppercase leading-tight tracking-tight">
+
+                            {/* Official Seal 2 for Mobile (Barangay 183 Logo) */}
+                            <div className="bg-white p-0.5 sm:p-1 rounded-full shadow-lg border-2 border-purple-200 shrink-0 md:hidden">
+                                <img src="/Logo/barangay183LOGO.png" className="w-7 h-7 sm:w-10 sm:h-10 object-contain" alt="Barangay Logo" />
+                            </div>
+
+                            {/* Center Title Text */}
+                            <div className="min-w-0">
+                                <h1 className="text-[10px] sm:text-base lg:text-2xl font-black uppercase leading-snug sm:leading-tight tracking-tight text-white break-words">
                                     {brgyName}, {cityName}
                                 </h1>
-                                <p className="text-sm font-black uppercase tracking-widest mt-1 flex items-center gap-1 text-purple-100">
+                                <p className="text-[8.5px] sm:text-xs lg:text-sm font-extrabold uppercase tracking-wider mt-0.5 text-purple-100 break-words leading-tight">
                                     Office of the Women and Family
                                 </p>
                             </div>
-                            <div className="bg-white p-1 rounded-full shadow-lg border-2 border-purple-200 shrink-0">
-                                <img src="/Logo/barangay183LOGO.png" className="w-12 h-12 lg:w-16 lg:h-16 object-contain" alt="Logo" />
+
+                            {/* Official Seal 2 for Desktop (Barangay 183 Logo - framing title text) */}
+                            <div className="hidden md:block bg-white p-1 rounded-full shadow-lg border-2 border-purple-200 shrink-0">
+                                <img src="/Logo/barangay183LOGO.png" className="w-12 h-12 lg:w-16 lg:h-16 object-contain" alt="Barangay Logo" />
                             </div>
                         </div>
 
@@ -133,15 +146,20 @@ export default function PublicLayout({ children, bgColor = "bg-white" }: PublicL
                         </div>
 
                         {/* Mobile Menu Button */}
-                        <div className="flex items-center gap-4 md:hidden">
+                        <div className="flex items-center gap-1 sm:gap-2 md:hidden">
                             <button
                                 onClick={toggleTheme}
                                 className="p-2 rounded-full hover:bg-white/10 transition-colors text-purple-200 focus:outline-none"
+                                aria-label="Toggle Dark Mode"
                             >
-                                {appearance === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
+                                {appearance === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
                             </button>
-                            <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="p-2 text-purple-200">
-                                {isMenuOpen ? <X size={28} /> : <Menu size={28} />}
+                            <button 
+                                onClick={() => setIsMenuOpen(!isMenuOpen)} 
+                                className="p-2 text-purple-200 hover:text-white transition-colors"
+                                aria-label={isMenuOpen ? "Close menu" : "Open menu"}
+                            >
+                                {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
                             </button>
                         </div>
                     </div>
@@ -164,24 +182,25 @@ export default function PublicLayout({ children, bgColor = "bg-white" }: PublicL
 
                 {/* Mobile Navigation Dropdown */}
                 {isMenuOpen && (
-                    <div className="md:hidden bg-[#3b0764] dark:bg-purple-950 border-t border-white/10 animate-in slide-in-from-top duration-300">
+                    <div className="md:hidden bg-[#3b0764] dark:bg-purple-950 border-t border-white/10 animate-in slide-in-from-top duration-300 max-h-[calc(100vh-80px)] overflow-y-auto z-50">
                         <div className="flex flex-col p-4">
                             {navLinks.map((link) => (
                                 <Link
                                     key={link.name}
                                     href={link.href}
                                     onClick={() => setIsMenuOpen(false)}
-                                    className="py-5 px-6 text-sm font-black uppercase text-white border-b border-white/5 hover:bg-purple-900"
+                                    className="py-4 px-5 text-sm font-black uppercase text-white border-b border-white/5 hover:bg-purple-900 flex items-center justify-between"
                                 >
-                                    {link.name}
+                                    <span>{link.name}</span>
+                                    <ChevronRight size={16} className="text-purple-300" />
                                 </Link>
                             ))}
                             {auth.user ? (
-                                <Link href="/dashboard" className="mt-4 text-center bg-[#ce1126] text-white px-6 py-4 rounded-sm text-sm font-black uppercase tracking-widest">
+                                <Link href="/dashboard" className="mt-4 text-center bg-[#ce1126] text-white px-6 py-3.5 rounded-md text-xs font-black uppercase tracking-widest">
                                     Access Dashboard
                                 </Link>
                             ) : (
-                                <Link href="/login" className="mt-4 text-center bg-white/10 text-white border border-white/20 px-6 py-4 rounded-sm text-sm font-black uppercase tracking-widest">
+                                <Link href="/login" className="mt-4 text-center bg-white/10 text-white border border-white/20 px-6 py-3.5 rounded-md text-xs font-black uppercase tracking-widest">
                                     Portal Login
                                 </Link>
                             )}

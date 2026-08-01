@@ -135,19 +135,20 @@
 @layer base {
     html {
         font-size: 17.5px;
+        overflow-x: hidden;
+        max-width: 100vw;
+    }
+
+    body {
+        @apply bg-background text-foreground;
+        overflow-x: hidden;
+        max-width: 100vw;
     }
 
     * {
         @apply border-border;
     }
-
-    body {
-        @apply bg-background text-foreground;
-    }
 }
-
-
-
 
 /* MARQUEE IMPORT */
 @layer utilities {
@@ -159,4 +160,73 @@
     from { transform: translateX(0); }
     to { transform: translateX(calc(-100% - var(--gap))); }
   }
+}
+
+/* ACCESSIBILITY ENGINE STYLES */
+html.font-size-large {
+  font-size: 21px !important; /* +25% */
+}
+
+html.font-size-xlarge {
+  font-size: 25px !important; /* +50% */
+}
+
+html.font-size-large *,
+html.font-size-xlarge * {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+html.font-size-large header h1,
+html.font-size-xlarge header h1,
+html.font-size-large header p,
+html.font-size-xlarge header p {
+  white-space: normal !important;
+  text-overflow: clip !important;
+  word-break: break-word !important;
+}
+
+/* ISOLATE ACCESSIBILITY TOOLBAR MENU SIZE FROM PAGE FONT SCALING */
+html.font-size-large #accessibility-toolbar-panel {
+  max-height: 65vh !important;
+  zoom: 0.833;
+}
+
+html.font-size-xlarge #accessibility-toolbar-panel {
+  max-height: 60vh !important;
+  zoom: 0.7;
+}
+
+@supports not (zoom: 1) {
+  html.font-size-large #accessibility-toolbar-panel {
+    transform: scale(0.833);
+    transform-origin: bottom left;
+  }
+  html.font-size-xlarge #accessibility-toolbar-panel {
+    transform: scale(0.7);
+    transform-origin: bottom left;
+  }
+}
+
+html.high-contrast {
+  filter: contrast(135%) brightness(105%);
+}
+
+html.high-contrast body {
+  background-color: #000000 !important;
+  color: #ffff00 !important;
+}
+
+html.high-contrast a {
+  color: #00ffff !important;
+  text-decoration: underline !important;
+}
+
+html.dyslexic-font body, 
+html.dyslexic-font button, 
+html.dyslexic-font input, 
+html.dyslexic-font select {
+  font-family: 'Comic Sans MS', 'OpenDyslexic', sans-serif !important;
+  letter-spacing: 0.05em !important;
+  word-spacing: 0.1em !important;
 }

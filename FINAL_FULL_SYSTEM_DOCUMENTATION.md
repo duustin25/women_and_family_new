@@ -250,3 +250,35 @@ To facilitate asynchronous data transfer and inter-module execution, the system 
 
 **Q4: How do you ensure data quality during emergencies?**
 > *"We implemented Real-Time Validation Feedback. If mandatory fields like incident location are missing, the UI provides immediate red-text cues, ensuring incomplete 'trash' data never corrupts the registry."*
+
+---
+
+## 9. Phase 7: IT Expert Feedback, Web Accessibility, & Software Architecture Refactoring
+
+Following post-demo evaluation with an IT industry expert, the system architecture was expanded with inclusion engines, resilient system toggles, and software design refactoring.
+
+### A. Web Accessibility & Voice Assist Architecture (WCAG 2.1 AA & NVDA)
+* **NVDA Screen Reader Integration**: Standardized HTML markup with semantic ARIA tags (`aria-label`, `role`, `aria-live="polite"`) and visible focus ring indicators (`focus-visible:ring-4`) for keyboard tab navigation (`Tab` / `Shift+Tab`).
+* **Built-in Voice Assistant (`SpeechSynthesis`)**: Web Speech API integration in `<AccessibilityToolbar />` allowing senior citizens, visually impaired, and PWD residents to hear emergency numbers (*"Emergency 911"*) and navigation labels spoken aloud without requiring external screen reader software.
+* **Responsive Senior Usability**: Touch targets engineered with minimum 48×48px clickable areas and sticky 1-tap emergency dialers.
+
+### B. AI Chatbot Admin Feature Toggle
+* **Feature Toggle Switch (`chatbot_enabled`)**: Managed via system settings repository.
+* **Graceful Maintenance Fallback**: If disabled by Admin, `<ChatbotWidget />` automatically transitions to a maintenance card displaying emergency hotlines instead of rendering broken UI errors.
+
+### C. In-Person VAWC Desk Intake Defense Rationale (RA 9262)
+* **Architectural Safety Shield**: Open online guest filing is intentionally restricted under RA 9262 and RA 10173 to protect victim safety on shared household devices. Case intake is performed strictly **face-to-face at the Barangay VAW Desk**, eliminating public online fake reporting by design.
+
+### D. Software Design Principles & Code Defensibility Matrix
+
+| OOP / Clean Code Principle | Architectural Pattern | Panel Defense Script |
+| :--- | :--- | :--- |
+| **Encapsulation** | `useAccessibilityMode` & `SystemSettingsService` | *"Encapsulates browser theme and speech APIs inside modular state handlers, isolating UI components."* |
+| **Abstraction** | `<AccessibilityToolbar />` & `<ChatbotWidget />` | *"Abstracts low-level SpeechSynthesis and API queries behind simple UI interfaces."* |
+| **Inheritance** | Base Controllers & React Interfaces | *"Controllers inherit core authentication, validation, and response helpers from `Controller.php`."* |
+| **Polymorphism** | Dynamic Setting Repository | *"Processes diverse setting data structures through unified setting repository contracts."* |
+| **Single Responsibility (SRP)** | Segregated Component Modules | *"Each component owns a single responsibility (e.g. Accessibility toolbar vs. Chatbot widget)."* |
+| **Don't Repeat Yourself (DRY)** | Shared Theme & Speech Hooks | *"Reuses centralized accessibility hooks across all public and resident portal layouts."* |
+| **Keep It Simple (KISS)** | Browser-Native Web APIs | *"Utilizes browser-native `window.speechSynthesis` and Tailwind tokens for maximum speed and zero bloated dependencies."* |
+| **Automated QA (Unit + E2E)** | Vitest & Playwright Test Suites | *"Maintains automated component unit tests and Playwright E2E automation for regression-free releases."* |
+
