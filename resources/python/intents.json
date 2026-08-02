@@ -66,6 +66,8 @@
                 "Binubugbog",
                 "Tinorture",
                 "Inaabuso ako",
+                "Paano mag file ng case vawc",
+                "vawc case",
                 "Inaabuso",
                 "Gusto ko magpa blotter",
                 "Sinasaktan ako",
@@ -80,23 +82,46 @@
             ]
         },
         {
-            "tag": "bcpc_filing",
+            "tag": "bcpc_report",
             "patterns": [
                 "Report child abuse",
                 "Rights of a child",
                 "BCPC report",
+                "Paano mag report ng pang-aabuso sa bata?",
+                "Sinasaktan ang anak ko",
+                "Sinasaktan ang bata",
+                "Pang-aabuso sa bata",
+                "Child protection",
+                "Paano malalaman kung exposed sa child labor ang bata",
+                "Paano mag pa file ng child labor case",
+                "bcpc",
+                "bcpc case",
+                "Report child neglect"
+            ],
+            "responses": [
+                "To report child abuse, neglect, or child labor, go to 'Services' > 'BCPC' and select 'File Case'. In case of emergency or immediate threat, please call 911 or the PNP Women & Children Protection Center (WCPC) at 177 / (02) 8532-6690. (Para mag-report ng pang-aabuso sa bata o kaso ng child labor, pumunta sa 'Services' > 'BCPC' at i-click ang 'File Case'. Sa emergency, tumawag sa 911 o PNP WCPC 177.)"
+            ]
+        },
+        {
+            "tag": "bcpc_nutrition",
+            "patterns": [
                 "Nutrition monitoring for kids",
                 "Malnutrition help for children",
                 "Operation Timbang",
+                "Nutrition program",
+                "Nutrisyon",
                 "Check child height and weight",
-                "Paano mag report ng pang-aabuso sa bata?",
-                "Sinasaktan ang anak ko",
                 "Nutrisyon ng bata",
-                "Child protection",
-                "Paano malalaman kung malnourished ang bata?"
+                "Paano malalaman kung malnourished ang bata?",
+                "Malnutrition registration",
+                "How to apply for nutritional support",
+                "Nutritional program registry",
+                "Where to get child supplements",
+                "Supplemental feeding program",
+                "Registry for malnutrition"
             ],
             "responses": [
-                "For child abuse, labor, or neglect reports (RA 7610), please immediately contact the PNP Women & Children Protection Center (WCPC) at 177 or (02) 8532-6690, or DSWD at 911. For local children health, development, and nutrition monitoring (e-OPT Plus), go to 'Services' > 'BCPC'. (Sa kaso ng child abuse, makipag-ugnayan agad sa PNP WCPC 177 / 8532-6690 o DSWD 911. Para sa nutrition monitoring, pumunta sa 'Services' > 'BCPC'.)"
+                "For child nutrition monitoring (e-OPT Plus), checking your child's height/weight status, or registering for the Supplemental Feeding Program and receiving vitamin supplements, please navigate to the BCPC Nutrition module under 'Services' > 'BCPC'. (Para sa child nutrition monitoring, pagpaparehistro sa feeding programs, o paghingi ng bitamina at supplements para sa malnourished na bata, pumunta sa BCPC module sa 'Services' > 'BCPC'.)"
             ]
         },
         {

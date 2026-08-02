@@ -17,9 +17,13 @@ type Message = {
 
 const SUGGESTIONS = [
     "How do I file a VAWC case?",
+    "Report child abuse",
+    "Nutrition Program",
+    "Latest Announcements",
+    "Who are the officials?",
     "View emergency hotlines",
-    "List of accredited orgs",
-    "What is RA 9262?"
+    "What is RA 9262?",
+    "List of accredited orgs"
 ];
 
 const TypingIndicator = () => (

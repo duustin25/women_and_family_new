@@ -19,6 +19,7 @@ import {
     CalendarRange,
     ChartLine,
     CircleUser,
+    Database,
     FileSearch,
     FileText,
     LayoutGrid,
@@ -121,6 +122,11 @@ const navGroups: NavGroup[] = [
                 icon: Logs,
             },
             {
+                title: 'Backup & Recovery',
+                href: '/admin/backup-recovery',
+                icon: Database,
+            },
+            {
                 title: 'Settings',
                 href: '/admin/settings',
                 icon: Settings,
@@ -138,8 +144,8 @@ export function AppSidebar() {
     // Filter dynamic groups based on roles
     const filteredGroups = navGroups.map((group) => {
         const filteredItems = group.items.filter((item) => {
-            // Settings is strictly Admin ONLY
-            if (item.title === 'Settings' && role !== 'admin') {
+            // Settings & Backup & Recovery are strictly Admin ONLY
+            if ((item.title === 'Settings' || item.title === 'Backup & Recovery') && role !== 'admin') {
                 return false;
             }
 

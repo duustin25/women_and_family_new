@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import AuthLayout from '@/layouts/auth-layout';
-import { update } from '@/routes/password';
+// import { update } from '@/routes/password';
 import { Form, Head } from '@inertiajs/react';
 
 type Props = {
@@ -21,7 +21,9 @@ export default function ResetPassword({ token, email }: Props) {
             <Head title="Reset password" />
 
             <Form
-                {...update.form()}
+                // {...update.form()}
+                action="/reset-password"
+                method="post"
                 transform={(data) => ({ ...data, token, email })}
                 resetOnSuccess={['password', 'password_confirmation']}
             >

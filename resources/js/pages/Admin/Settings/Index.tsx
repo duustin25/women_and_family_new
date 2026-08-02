@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import AbuseTypesTable from './Partials/AbuseTypesTable';
 import AppearanceSettings from './Partials/AppearanceSettings';
 import ZonesTable from './Partials/ZonesTable';
+import FeatureToggles from './Partials/FeatureToggles';
 
 interface PageProps {
     abuseTypes: any[];
@@ -20,7 +21,8 @@ export default function Index({ abuseTypes, referralPartners, caseStatuses, zone
     const [activeTab, setActiveTab] = useState('case_categories');
 
     const tabs = [
-        { id: 'case_categories', label: 'Case Management Configuration' },
+        { id: 'case_categories', label: 'Management Configuration' },
+        { id: 'features', label: 'System Feature Switches' },
         { id: 'appearance', label: 'Display & Theme' },
     ];
 
@@ -37,12 +39,12 @@ export default function Index({ abuseTypes, referralPartners, caseStatuses, zone
                         <Settings className="w-6 h-6" />
                         System Configuration
                     </h1>
-                    <p className="text-sm mt-1">Manage dynamic lists and system security resources.</p>
+                    <p className="text-sm mt-1">Manage dynamic lists, system feature switches, and security resources.</p>
                 </div>
 
                 <div className="w-full">
                     {/* Tab Navigation */}
-                    <div className="inline-flex h-10 items-center justify-center rounded-md p-1 border w-full max-w-2xl">
+                    <div className="inline-flex h-10 items-center justify-center rounded-md p-1 border w-full max-w-3xl">
                         {tabs.map((tab) => (
                             <button
                                 key={tab.id}
@@ -64,6 +66,10 @@ export default function Index({ abuseTypes, referralPartners, caseStatuses, zone
                                 <AbuseTypesTable caseAbuseTypes={abuseTypes || []} />
                                 <ZonesTable zones={zones || []} />
                             </div>
+                        )}
+
+                        {activeTab === 'features' && (
+                            <FeatureToggles />
                         )}
 
                         {activeTab === 'appearance' && (

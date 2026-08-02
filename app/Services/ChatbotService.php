@@ -42,7 +42,20 @@ class ChatbotService
                     return $this->handleAction($result['response'], $query);
                 }
 
-                return ['response' => $result['response']];
+                $intent = $result['intent'] ?? 'unknown';
+                $payload = ['response' => $result['response']];
+
+                if ($intent === 'greeting') {
+                    $payload['suggestions'] = [
+                        'How do I file a VAWC case?',
+                        'Report child abuse',
+                        'Latest Announcements',
+                        'Nuttritio',
+                        'Who are the officials?'
+                    ];
+                }
+
+                return $payload;
             }
 
             if (!empty(trim($output))) {
@@ -50,7 +63,6 @@ class ChatbotService
             }
 
             return ['response' => "I apologize, but I'm having trouble processing that right now. Please try again."];
-
         } catch (\Exception $e) {
             Log::error('Chatbot Python Error: ' . $e->getMessage());
             return [

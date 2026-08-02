@@ -44,7 +44,7 @@ class HandleInertiaRequests extends Middleware
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         
-            'chatbot_enabled' => (bool) config('app.chatbot_enabled', true),
+            'chatbot_enabled' => (bool) session('chatbot_enabled', config('app.chatbot_enabled', true)),
             'flash' => [
                 'success' => $request->session()->get('success'),
                 'message' => $request->session()->get('message'),

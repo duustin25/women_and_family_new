@@ -153,27 +153,44 @@ This module tracks project proposals, budgets, and beneficiary targeting specifi
 
 ## 7. AI Chatbot (The Sentinel) Engine & Subprocess Bridge
 
-The AI chatbot module ("The Sentinel") employs Natural Language Processing (NLP) and Artificial Neural Networks (ANN) to classify user intents and provide automated responses or invoke dynamic backend data lookups.
+The AI chatbot module ("The Sentinel") is a **Hybrid Retrieval-Based Natural Language Processing (NLP) Classifier**. It uses a local machine learning script to classify user intent and returns either static responses or triggers backend database queries.
 
-### Model Architecture & Training (`train.py`, `chat.py`)
-The model uses `scikit-learn`'s `MLPClassifier` trained on dynamic text patterns.
+### Tech Stack, Languages & Libraries
+- **Programming Languages**: 
+  * **Python 3**: Core Machine Learning and Natural Language Processing engine.
+  * **PHP 8.x**: Back-end process runner and relational database bridge (Laravel 11).
+  * **TypeScript (React)**: Chat user interface.
+- **Machine Learning Libraries**:
+  * `scikit-learn` (`sklearn.neural_network.MLPClassifier`): Custom Multi-Layer Perceptron (neural network classifier).
+  * `nltk` (Natural Language Toolkit): Word tokenization (`nltk.word_tokenize`) and dictionary root mapping (`WordNetLemmatizer`).
+  * `numpy`: Array vector operations.
+  * `pickle`: Binary serialization for the compiled ML model brain file.
 
-```python
-# Multi-Layer Perceptron (MLP) architecture
-model = MLPClassifier(hidden_layer_sizes=(128, 64), max_iter=1000, activation='relu', solver='adam')
-model.fit(train_x, train_y)
-```
+### Custom Preprocessing & Neural Network Architecture (`train.py`, `chat.py`)
+Rather than relying on basic rule-based string matching or external cloud APIs, the system parses sentences locally:
+1. **Tokenization**: Splits input queries into raw arrays of words (tokens).
+2. **Lemmatization**: Reduces tenses and plural forms to their base root dictionary words (e.g., *"sinasaktan"* -> *"saktan"*, *"reports"* -> *"report"*).
+3. **Bag of Words (BoW) Vectorization**: Converts the array of lemmatized words into a binary frequency vector matching the training vocabulary.
+4. **ANN Classification**: Runs the vector through a **Multi-Layer Perceptron (MLP) Classifier** containing:
+   * **Input Layer**: Neurons corresponding to the vocabulary length.
+   * **Two Hidden Layers**: Nodes of size `(128, 64)` running `ReLU` (Rectified Linear Unit) activation functions.
+   * **Adam Optimizer**: Backpropagation algorithm minimizing training loss.
+   * **Output Layer**: Represents the target intent classes.
+5. **Model Serialization**: Pre-compiles vocabulary and weights into a local binary file `chatbot_model.pkl`.
 
-- **Preprocessing:** Words are tokenized (`nltk.word_tokenize`) and lemmatized (`WordNetLemmatizer`). A Bag of Words (BoW) vector representing vocabulary frequencies is then constructed.
-- **Process Bridge:** Laravel initiates a Symfony Process executing Python to run inference locally:
-
+### Laravel Process Bridge (`ChatbotService.php`)
+When a user queries the bot, the React client initiates a POST request to Laravel, which executes Python locally via Symfony Process:
 ```php
 // app/Services/ChatbotService.php
 $process = new Process(['python', $scriptPath, $query]);
 $process->run();
 ```
+- **Action Mapping**: If Python predicts a dynamic tag (e.g., `ACTION_FETCH_ANNOUNCEMENTS`), Laravel intercepts the action, runs MySQL database queries, and merges the latest live database information into the response.
 
-- **Action Interception:** When the Python script detects a dynamic intent, it returns a tag (e.g., `ACTION_FETCH_ANNOUNCEMENTS`), causing the Laravel service to query the MySQL database dynamically.
+### 🛡️ Core Defensibility: Offline & Static Security Design
+- **100% Offline Capability**: All NLP tokenization, lemmatization, and neural network inference occur locally on the hosting server. No internet or external APIs (like OpenAI GPT or Gemini) are used.
+- **Strict Data Privacy**: Citizens' messages never traverse the public internet or external databases, ensuring total compliance with the **Data Privacy Act of 2012 (DPA)**.
+- **Zero Hallucinations & Data Poisoning Defense**: The model is statically trained. **Live "Self-Learning" is intentionally disabled**. This prevents attackers from poisoning the model's vocabulary with malicious prompts (Prompt Injection) or causing the chatbot to accidentally reveal confidential victim details input in other chat sessions. All updates are made securely by admins updating `intents.json` and rebuilding the network offline.
 
 ---
 

@@ -82,4 +82,18 @@ class SettingsController extends Controller
 
         return back()->with('success', 'Zone updated.');
     }
+
+    public function updateFeatureToggle(Request $request)
+    {
+        $validated = $request->validate([
+            'feature' => 'required|string|in:chatbot_enabled',
+            'enabled' => 'required|boolean',
+        ]);
+
+        if ($validated['feature'] === 'chatbot_enabled') {
+            session(['chatbot_enabled' => (bool)$validated['enabled']]);
+        }
+
+        return back()->with('success', 'System feature toggle updated successfully.');
+    }
 }

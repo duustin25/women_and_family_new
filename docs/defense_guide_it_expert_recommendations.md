@@ -143,3 +143,59 @@ When explaining code structure to the Capstone panel, use these core software en
 ### Q4: How do you justify your codebase structure from a software engineering standpoint?
 > **Answer**:
 > *"Our codebase strictly enforces **Object-Oriented Programming (OOP)** and **SOLID design principles**. Business logic is encapsulated inside dedicated services, views follow React component-driven architecture, and UI controls abstract low-level browser APIs. We also maintain automated Vitest unit tests and Playwright E2E tests to guarantee zero regression."*
+
+---
+
+## 8. Database Backup, Disaster Recovery & Restoration Architecture
+
+### A. How, What, and Why
+- **WHAT**: An automated and manual administrative Disaster Recovery system (`/admin/backup-recovery`) that generates point-in-time SQL snapshot archives (`.sql.gz`), tracks historical backups, offers encrypted file downloads, and performs 1-click database state restorations.
+- **WHY**:
+  1. **Disaster Recovery & Business Continuity**: Protects sensitive municipal records from server crashes, power outages, database corruption, or ransomware attacks.
+  2. **Legal Compliance (RA 10173 & DILG Mandates)**: Ensures government compliance for data redundancy and disaster preparedness.
+  3. **RPO & RTO Guarantees**: Achieves a **Recovery Point Objective (RPO)** of $< 24\text{ hours}$ via daily automated cron snapshots and a **Recovery Time Objective (RTO)** of $< 5\text{ minutes}$ via 1-click administrative restoration.
+- **HOW**:
+  - `DatabaseBackupService.php` queries database parameters, extracts full MySQL schemas and table rows via streaming PDO or native `mysqldump`, compresses into timestamped gzip archives in `storage/app/backups/`, and logs execution into `AuditLogs`.
+  - **Automated Task Scheduler (`routes/console.php`)**: Executes `Schedule::command('db:backup')->dailyAt('00:00')` automatically every night at midnight.
+  - **30-Day Auto-Pruning Retention Policy**: Automatically deletes snapshots older than 30 days during backup generation to prevent server disk bloat while retaining a 30-day rolling recovery history.
+
+### B. Complete Data Scope (100% System Backup)
+The backup snapshot includes **all relational database entities**:
+1. **Residents & Accounts**: Resident profiles, credentials, role permissions.
+2. **VAWC & BCPC Confidential Records**: Case intake details, offender profiles, risk scores, legal protection order (BPO) logs, hearing schedules.
+3. **Barangay Operations & Organizations**: Accredited organizations, pending & verified member applications, GAD event calendars and budget allocations.
+4. **Public Information & Officials**: Announcements, accredited org directories, barangay officials.
+5. **Immutable Audit Logs**: Complete system activity history, IP tracking, and login logs.
+
+### C. Software Engineering & OOP Architecture Matrix
+
+| Software Principle | Implementation Pattern | Panel Defense Script |
+| :--- | :--- | :--- |
+| **Encapsulation (OOP)** | `DatabaseBackupService.php` | *"All database dump generation, compression, and file streaming logic are encapsulated inside `DatabaseBackupService`, isolating low-level shell commands from web controllers."* |
+| **Abstraction (OOP)** | `BackupStorageInterface` | *"Abstracts storage backends behind a unified interface, hiding disk read/write details."* |
+| **Inheritance (OOP)** | `DatabaseBackupCommand.php` extends `Command` | *"Artisan CLI backup commands inherit Laravel's console execution lifecycle."* |
+| **Polymorphism (OOP)** | Strategy Pattern for Storage Drivers | *"Enables dynamic switching between local storage, encrypted archives, or cloud destinations."* |
+| **Single Responsibility (SRP)** | Segregated Controllers & Commands | *"Controller handles HTTP routes and Admin permissions; Service handles dump logic; Command handles CLI scheduling."* |
+| **Open/Closed (OCP)** | Storage Driver Strategy | *"Open for extending storage destinations without modifying core dump generators."* |
+| **Don't Repeat Yourself (DRY)** | Shared Backup Core Engine | *"Web admin manual backups and CLI automated daily backups share the exact same `DatabaseBackupService` core."* |
+
+---
+
+## 9. Database Backup & Disaster Recovery Panel Q&A
+
+### Q5: What happens if your server crashes or the database gets corrupted? How do you recover?
+> **Answer**:
+> *"We implemented an **Automated Database Backup & Disaster Recovery Module**. The system generates daily scheduled point-in-time SQL database snapshots stored securely in `storage/app/backups/`. 
+> 
+> In the event of a crash, authorized Administrators can visit the **Backup & Recovery Dashboard** (`/admin/backup-recovery`) and perform a **1-Click Database Restore** to recover all lost data within minutes, or download the encrypted SQL backup file to restore on a fresh server."*
+
+### Q6: Are confidential records like VAWC cases and Resident applications included in the backup?
+> **Answer**:
+> *"Yes. The backup engine captures **100% of the relational database**, including confidential VAWC/BCPC cases, resident profiles, pending/verified organization applications, GAD budget logs, and immutable audit trails."*
+
+### Q7: Why is Database Backup & Recovery restricted strictly to Super Administrators (role:admin) and hidden from Head and Committee users?
+> **Answer**:
+> *"In accordance with **Role-Based Access Control (RBAC)** and the **Principle of Least Privilege (PoLP)**, database backup operations are restricted strictly to **Super Administrators (`role:admin`)**.
+> 
+> Department Heads (VAWC/BCPC) and Committee Members handle day-to-day operational case intake. Allowing non-IT roles to export raw database snapshots or execute database restorations introduces severe risks of **data exfiltration** (exporting confidential victim files to personal flash drives) and **accidental database overwrites** (erasing active case files)."*
+

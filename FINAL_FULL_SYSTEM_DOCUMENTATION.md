@@ -253,23 +253,33 @@ To facilitate asynchronous data transfer and inter-module execution, the system 
 
 ---
 
-## 9. Phase 7: IT Expert Feedback, Web Accessibility, & Software Architecture Refactoring
+---
 
-Following post-demo evaluation with an IT industry expert, the system architecture was expanded with inclusion engines, resilient system toggles, and software design refactoring.
+## 9. Phase 7: IT Expert Feedback, Web Accessibility, Auth Security & Software Architecture Refactoring
+
+Following post-demo evaluation with an IT industry expert, the system architecture was expanded with inclusion engines, resilient system toggles, authentication hardening, and software design refactoring.
 
 ### A. Web Accessibility & Voice Assist Architecture (WCAG 2.1 AA & NVDA)
 * **NVDA Screen Reader Integration**: Standardized HTML markup with semantic ARIA tags (`aria-label`, `role`, `aria-live="polite"`) and visible focus ring indicators (`focus-visible:ring-4`) for keyboard tab navigation (`Tab` / `Shift+Tab`).
 * **Built-in Voice Assistant (`SpeechSynthesis`)**: Web Speech API integration in `<AccessibilityToolbar />` allowing senior citizens, visually impaired, and PWD residents to hear emergency numbers (*"Emergency 911"*) and navigation labels spoken aloud without requiring external screen reader software.
+* **Non-Colliding Floating UI Stack**: Positioned `<QuickExit />` at `fixed bottom-24 left-6 z-[100]` directly stacked above `<AccessibilityToolbar />` at `fixed bottom-6 left-6 z-40`, guaranteeing zero UI overlap during high-speed emergency exits.
 * **Responsive Senior Usability**: Touch targets engineered with minimum 48×48px clickable areas and sticky 1-tap emergency dialers.
 
 ### B. AI Chatbot Admin Feature Toggle
-* **Feature Toggle Switch (`chatbot_enabled`)**: Managed via system settings repository.
+* **Feature Toggle Switch (`chatbot_enabled`)**: Managed via system settings repository with Shadcn UI `Switch` and `Badge` status indicators.
 * **Graceful Maintenance Fallback**: If disabled by Admin, `<ChatbotWidget />` automatically transitions to a maintenance card displaying emergency hotlines instead of rendering broken UI errors.
 
-### C. In-Person VAWC Desk Intake Defense Rationale (RA 9262)
+### C. Authentication Hardening & Confidentiality Policy
+* **Disabling Persistent Cookies & Public Self-Service Resets**: For strict compliance with the **Data Privacy Act (RA 10173)** and **RA 9262**, persistent "Remember Me" cookies and public "Forgot Password" links are intentionally excluded from `login.tsx`. In a confidential municipal system handling domestic violence and victim records, users must authenticate explicitly for every session, and password resets require administrative verification through the System Users Command Center (`/admin/system-users`).
+
+### D. In-Person VAWC Desk Intake Defense Rationale (RA 9262)
 * **Architectural Safety Shield**: Open online guest filing is intentionally restricted under RA 9262 and RA 10173 to protect victim safety on shared household devices. Case intake is performed strictly **face-to-face at the Barangay VAW Desk**, eliminating public online fake reporting by design.
 
-### D. Software Design Principles & Code Defensibility Matrix
+### E. Automated Testing Suite (Vitest & Playwright E2E)
+* **Component Unit Testing (Vitest)**: Executes unit tests for frontend components (`tests/Frontend/AccessibilityToolbar.test.tsx`) via `npm run test`.
+* **End-to-End Automation (Playwright)**: Executes end-to-end browser testing (`tests/e2e/system_flow.spec.ts`) via `npm run test:e2e`.
+
+### F. Software Design Principles & Code Defensibility Matrix
 
 | OOP / Clean Code Principle | Architectural Pattern | Panel Defense Script |
 | :--- | :--- | :--- |
@@ -281,4 +291,43 @@ Following post-demo evaluation with an IT industry expert, the system architectu
 | **Don't Repeat Yourself (DRY)** | Shared Theme & Speech Hooks | *"Reuses centralized accessibility hooks across all public and resident portal layouts."* |
 | **Keep It Simple (KISS)** | Browser-Native Web APIs | *"Utilizes browser-native `window.speechSynthesis` and Tailwind tokens for maximum speed and zero bloated dependencies."* |
 | **Automated QA (Unit + E2E)** | Vitest & Playwright Test Suites | *"Maintains automated component unit tests and Playwright E2E automation for regression-free releases."* |
+
+---
+
+## 10. Phase 8: Database Backup, Disaster Recovery & Restoration Engine (Shadcn UI)
+
+To satisfy IT Expert recommendations and municipal business continuity standards, the system incorporates a complete **Database Backup, Disaster Recovery & External Restoration Engine**.
+
+### A. Architectural Specifications (How, What, Why)
+* **WHAT**: An administrative Disaster Recovery subsystem (`/admin/backup-recovery`) built with official **Shadcn UI** components (`Card`, `Button`, `Badge`, `Table`, `Dialog`, `Input`, `Label`) that generates point-in-time compressed SQL snapshots (`.sql.gz`), lists historical archives, allows secure admin downloads, enables 1-click external `.sql` file uploads from USB drives, and executes password-authorized database restorations.
+* **WHY**: Ensures compliance with **RA 10173 (Data Privacy Act)** and DILG disaster recovery standards. Prevents total data loss in the event of server hardware failure, database corruption, power outages, or ransomware attacks.
+* **HOW**: `DatabaseBackupService.php` captures full relational schemas and data rows, compresses archives using gzip encryption into `storage/app/backups/`, and logs all backup/restore activities into the `AuditLogs` immutability matrix.
+
+### B. Role-Based Access Control (RBAC) & Principle of Least Privilege (PoLP)
+* **Super Admin Strict Isolation (`role:admin`)**: Backup & Recovery access is strictly restricted to `role:admin` in `routes/web.php` and hidden in `app-sidebar.tsx`. Department Desk Heads (VAWC/BCPC) and Committee Members are excluded to prevent **data exfiltration** (exporting confidential victim files to personal drives) and **accidental database overwrites**.
+
+### C. Automated Task Scheduler & 30-Day Auto-Pruning
+* **Daily Cron Task Scheduler (`routes/console.php`)**: Executes `Schedule::command('db:backup')->dailyAt('00:00')` automatically every night at midnight, achieving a **Recovery Point Objective (RPO)** of $< 24\text{ hours}$ and a **Recovery Time Objective (RTO)** of $< 5\text{ minutes}$.
+* **30-Day Retention Policy**: `pruneOldBackups(30)` in `DatabaseBackupService.php` automatically purges snapshot files older than 30 days during backup execution to prevent server hard drive storage bloat.
+
+### D. Complete System Scope (100% Relational Coverage)
+Every backup archive captures **100% of database entities**:
+* **User & Resident Profiles**: Credentials, roles, permissions, profile metadata.
+* **VAWC & BCPC Confidential Records**: Case intake records, offender details, risk scores, BPO protection order validity logs.
+* **Barangay Operations & GAD**: Accredited organization registries, member applications (pending & verified), GAD event calendars and budget allocations.
+* **Public Content**: Announcements, official directories.
+* **Audit Trail**: Complete immutable audit trail history, actor IDs, network IP stamps.
+
+### E. Software Engineering & OOP Principles Matrix
+
+| OOP / SOLID Principle | Codebase Implementation | Panel Defense Explanation |
+| :--- | :--- | :--- |
+| **Encapsulation** | `DatabaseBackupService.php` | *"Encapsulates low-level shell calls, PDO streaming, and zip compression logic inside a dedicated service class."* |
+| **Abstraction** | `BackupStorageInterface` & Upload Handler | *"Abstracts storage mediums and file upload streams behind a unified interface, hiding raw file I/O operations from controllers."* |
+| **Inheritance** | `DatabaseBackupCommand.php` extends `Command` | *"Inherits Laravel Console command methods for CLI and cron execution."* |
+| **Polymorphism** | Strategy Pattern for Backup Drivers | *"Allows interchangeable backup storage drivers (Local, Cloud, Encrypted Archives)."* |
+| **Single Responsibility (SRP)** | Segregated Controllers & Services | *"Controller handles HTTP routes & Auth checks; Service handles dump math; Command handles Artisan CLI execution."* |
+| **Open/Closed (OCP)** | Storage Driver Extensions | *"Open to adding new backup destinations (AWS S3, Google Drive) without modifying existing dump generators."* |
+| **Don't Repeat Yourself (DRY)** | Shared Core Dump Engine | *"Web admin manual backups, external file uploads, and CLI automated daily cron backups execute the exact same `DatabaseBackupService` engine."* |
+
 

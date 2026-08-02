@@ -16,6 +16,7 @@ use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\Admin\MembersController;
 use App\Http\Controllers\Admin\MembershipApplicationController;
 use App\Http\Controllers\Admin\OrganizationEventController;
+use App\Http\Controllers\Admin\DatabaseBackupController;
 
 // Public Routes:
 use App\Http\Controllers\Public\PublicAnnouncementController;
@@ -171,6 +172,7 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.', 'middleware' => ['auth', 'v
 
 Route::group(['prefix' => 'admin', 'as' => 'admin.', 'middleware' => ['auth', 'verified', 'role:admin']], function () {
     Route::get('/settings', [\App\Http\Controllers\Admin\SettingsController::class, 'index'])->name('settings.index');
+    Route::post('/settings/feature-toggle', [\App\Http\Controllers\Admin\SettingsController::class, 'updateFeatureToggle'])->name('settings.feature-toggle');
     Route::post('/settings/case-abuse-types', [\App\Http\Controllers\Admin\SettingsController::class, 'storeAbuseType'])->name('settings.case-abuse-types.store');
     Route::patch('/settings/case-abuse-types/{id}', [\App\Http\Controllers\Admin\SettingsController::class, 'updateAbuseType'])->name('settings.case-abuse-types.update');
 
@@ -182,6 +184,14 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.', 'middleware' => ['auth', 'v
     Route::get('system-users/archives', [\App\Http\Controllers\Admin\SystemUserController::class, 'archives'])->name('system-users.archives');
     Route::post('system-users/{id}/restore', [\App\Http\Controllers\Admin\SystemUserController::class, 'restore'])->name('system-users.restore');
     Route::resource('system-users', \App\Http\Controllers\Admin\SystemUserController::class)->middleware('throttle:10,1');
+
+    // Database Backup & Disaster Recovery Routes (SUPER ADMIN ONLY)
+    Route::get('backup-recovery', [DatabaseBackupController::class, 'index'])->name('backups.index');
+    Route::post('backup-recovery/create', [DatabaseBackupController::class, 'store'])->name('backups.store');
+    Route::post('backup-recovery/upload', [DatabaseBackupController::class, 'upload'])->name('backups.upload');
+    Route::get('backup-recovery/{filename}/download', [DatabaseBackupController::class, 'download'])->name('backups.download');
+    Route::post('backup-recovery/{filename}/restore', [DatabaseBackupController::class, 'restore'])->name('backups.restore');
+    Route::delete('backup-recovery/{filename}', [DatabaseBackupController::class, 'destroy'])->name('backups.destroy');
 });
 
 
