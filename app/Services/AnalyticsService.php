@@ -230,6 +230,7 @@ class AnalyticsService
         $totalChildren = $childVictims + $additionalChildren;
 
         $repeatCases   = $vawcCases->where('is_repeat_offense', true)->count();
+        $activeBpos    = DB::table('vawc_protection_orders')->whereIn('status', ['Issued', 'Served'])->count();
 
         // SLA Compliance: BPOs issued on the same day
         $totalBpos = DB::table('vawc_protection_orders')->where('type', 'BPO')->whereYear('created_at', $year)->count();
@@ -267,6 +268,7 @@ class AnalyticsService
             'total_cases'         => $totalCases,
             'total_children'      => $totalChildren,
             'repeat_cases'        => $repeatCases,
+            'active_bpos'         => $activeBpos,
             'status_distribution' => $status_distribution,
             'intake_distribution' => $intake_distribution,
             'abuse_distribution'  => $abuse_distribution,

@@ -18,7 +18,7 @@ class NotifyOnApplicationApproved
         $application = $event->application;
         $actionedBy = $application->approved_by ?? 'System';
 
-        /** @var \App\Models\User|null $user */
+        /** @var User|null $user */
         $user = Auth::user();
         if (!$user) {
             return;
@@ -28,8 +28,8 @@ class NotifyOnApplicationApproved
             $organizationId = $application->organization_id;
             if ($organizationId) {
                 $presidents = User::where('role', 'president')
-                                  ->where('organization_id', $organizationId)
-                                  ->get();
+                    ->where('organization_id', $organizationId)
+                    ->get();
                 if ($presidents->isNotEmpty()) {
                     Notification::send($presidents, new MembershipApplicationStatusChanged($application, 'Approved', $actionedBy));
                 }

@@ -31,6 +31,8 @@ class VawcCaseService
                 'victim_gender' => $data['victim']['gender'] ?? null,
                 'complainant_name' => $data['complainant']['name'] ?? $data['victim']['name'] ?? null,
                 'complainant_contact' => $data['complainant']['contact'] ?? null,
+                'relation_to_victim' => $data['complainant']['relation_to_victim'] ?? ($data['intake_type'] === 'Direct' ? 'Self (Victim)' : null),
+                'is_anonymous' => $data['is_anonymous'] ?? false,
                 'incident_date' => $data['incident_date'] ?? now(),
                 'incident_location' => $data['incident_location'] ?? 'Unknown',
                 'description' => $data['description'] ?? '',

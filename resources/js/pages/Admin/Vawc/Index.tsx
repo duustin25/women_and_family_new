@@ -188,61 +188,65 @@ export default function Index({ cases, filters }: Props) {
                                                         {vawc.involved_parties.find((p: any) => p.role === 'Victim')?.name || 'N/A'}
                                                     </span>
                                                     <div className="flex gap-1 mt-1">
-                                                        <span className="text-[9px] px-1.5 py-0.5 rounded-sm bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 font-bold uppercase tracking-tighter">Victim</span>
+                                                        <Badge variant="outline" className="text-xs font-bold uppercase py-0 px-2 bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300 border-blue-200">
+                                                            Victim
+                                                        </Badge>
                                                         {vawc.involved_parties.some((p: any) => p.role === 'Respondent') &&
-                                                            <span className="text-[9px] px-1.5 py-0.5 rounded-sm bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-400 font-bold uppercase tracking-tighter">Respondent</span>
+                                                            <Badge variant="outline" className="text-xs font-bold uppercase py-0 px-2 bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border-slate-300">
+                                                                Respondent
+                                                            </Badge>
                                                         }
                                                     </div>
-                                                    <span className="text-[10px] text-muted-foreground uppercase font-medium mt-1">{vawc.case_report.abuse_type?.name}</span>
+                                                    <span className="text-xs text-muted-foreground font-semibold uppercase mt-1">{vawc.case_report.abuse_type?.name}</span>
                                                 </div>
                                             </TableCell>
                                             <TableCell className="text-center">
-                                                <Badge variant={getStatusVariant(vawc.status)} className="text-[10px] uppercase font-bold tracking-wider h-6 px-3">
+                                                <Badge variant={getStatusVariant(vawc.status)} className="text-xs uppercase font-bold tracking-wider px-3 py-1">
                                                     {vawc.status}
                                                 </Badge>
                                             </TableCell>
                                             <TableCell className="text-center">
                                                 {vawc.assessment ? (
-                                                    <Badge className={`text-[9px] uppercase font-black tracking-widest px-2 ${riskClass}`}>
+                                                    <Badge className={`text-xs uppercase font-black tracking-wider px-2.5 py-1 ${riskClass}`}>
                                                         {vawc.assessment.risk_level}
                                                     </Badge>
                                                 ) : (
-                                                    <span className="text-[10px] text-muted-foreground italic">New / Pending</span>
+                                                    <span className="text-xs text-muted-foreground italic font-medium">New / Pending</span>
                                                 )}
                                             </TableCell>
                                             <TableCell>
-                                                <div className="flex flex-wrap gap-1 max-w-[200px]">
+                                                <div className="flex flex-wrap gap-1 max-w-[220px]">
                                                     {vawc.is_repeat_offense && (
-                                                        <Badge variant="outline" className="text-[8px] border-red-200 bg-red-50 text-red-700 dark:bg-red-950/20 dark:text-red-400 font-black">REPEATED ABUSE</Badge>
+                                                        <Badge variant="outline" className="text-xs border-red-200 bg-red-50 text-red-700 dark:bg-red-950/20 dark:text-red-400 font-bold">REPEATED ABUSE</Badge>
                                                     )}
                                                     {vawc.children_count > 0 && (
-                                                        <Badge variant="outline" className="text-[8px] border-indigo-200 bg-indigo-50 text-indigo-700 dark:bg-indigo-950/20 dark:text-indigo-400 font-black">CHILDREN AT RISK</Badge>
+                                                        <Badge variant="outline" className="text-xs border-indigo-200 bg-indigo-50 text-indigo-700 dark:bg-indigo-950/20 dark:text-indigo-400 font-bold">CHILDREN AT RISK</Badge>
                                                     )}
                                                     {vawc.status === 'Monitoring' && (
-                                                        <Badge variant="outline" className="text-[8px] border-emerald-200 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/20 dark:text-emerald-400 font-black whitespace-nowrap">BPO ACTIVE</Badge>
+                                                        <Badge variant="outline" className="text-xs border-emerald-200 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/20 dark:text-emerald-400 font-bold whitespace-nowrap">BPO ACTIVE</Badge>
                                                     )}
                                                     {vawc.assessment?.requires_alternative_housing && (
-                                                        <Badge variant="outline" className="text-[8px] border-blue-200 bg-blue-50 text-blue-700 dark:bg-blue-950/20 dark:text-blue-400 font-black">SHELTER REQ</Badge>
+                                                        <Badge variant="outline" className="text-xs border-blue-200 bg-blue-50 text-blue-700 dark:bg-blue-950/20 dark:text-blue-400 font-bold">SHELTER REQ</Badge>
                                                     )}
                                                     {!vawc.is_repeat_offense && vawc.children_count === 0 && vawc.status !== 'Monitoring' && !vawc.assessment?.requires_alternative_housing && (
-                                                        <span className="text-[10px] text-muted-foreground italic">No urgent flags</span>
+                                                        <span className="text-xs text-muted-foreground italic font-medium">No urgent flags</span>
                                                     )}
                                                 </div>
                                             </TableCell>
-                                            <TableCell className="text-muted-foreground text-[12px] font-medium leading-tight">
+                                            <TableCell className="text-muted-foreground text-xs font-semibold leading-tight">
                                                 <div className="flex flex-col">
                                                     <span>
                                                         {new Date(vawc.created_at).toLocaleDateString(undefined, {
                                                             year: 'numeric', month: 'short', day: 'numeric'
                                                         })}
                                                     </span>
-                                                    <span className="text-[10px] text-muted-foreground/70 uppercase">
+                                                    <span className="text-xs text-muted-foreground/70 font-mono">
                                                         {new Date(vawc.created_at).toLocaleTimeString(undefined, {
                                                             hour: '2-digit', minute: '2-digit'
                                                         })}
                                                     </span>
                                                     {Math.abs(new Date().getTime() - new Date(vawc.created_at).getTime()) < 600000 && (
-                                                        <Badge className="w-fit mt-1 bg-emerald-500 hover:bg-emerald-600 text-[8px] h-4 px-1 font-black">
+                                                        <Badge className="w-fit mt-1 bg-emerald-500 hover:bg-emerald-600 text-[9px] h-4 px-1.5 font-bold">
                                                             JUST ADDED
                                                         </Badge>
                                                     )}

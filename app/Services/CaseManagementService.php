@@ -12,10 +12,20 @@ class CaseManagementService
      */
     public function createCase(array $validatedData, string $type): CaseReport
     {
+        // Generate clean, sequential case number format (e.g. VAWC-2026-0044)
+        $year = now()->year;
+        $nextSeq = CaseReport::where('type', $type)->whereYear('created_at', $year)->count() + 1;
+        $caseNumber = sprintf('%s-%d-%04d', $type, $year, $nextSeq);
+
+        while (CaseReport::where('case_number', $caseNumber)->exists()) {
+            $nextSeq++;
+            $caseNumber = sprintf('%s-%d-%04d', $type, $year, $nextSeq);
+        }
+
         // Base Data Mapping matching the Unified CaseReport migration
         $reportData = [
             'type' => $type,
-            'case_number' => $type . '-' . date('Ymd') . '-' . rand(1000, 9999),
+            'case_number' => $caseNumber,
             'victim_name' => $validatedData['victim_name'] ?? null,
             'victim_age' => $validatedData['victim_age'] ?? null,
             'victim_gender' => $validatedData['victim_gender'] ?? null,

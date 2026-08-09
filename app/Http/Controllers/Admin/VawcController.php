@@ -117,6 +117,8 @@ class VawcController extends Controller
 
             'complainant.name' => 'nullable|string|max:255',
             'complainant.contact' => 'nullable|string',
+            'complainant.relation_to_victim' => 'nullable|string|max:255',
+            'is_anonymous' => 'boolean',
 
             'respondent.name' => 'nullable|string|max:255',
             'respondent.age' => 'nullable|integer',
@@ -401,15 +403,18 @@ class VawcController extends Controller
     {
         $currentYear = now()->year;
 
-        // 1. CRITICAL / HIGH Risk Queue — sorted by risk_score DESC
-        $criticalQueue = VawcCase::select('vawc_cases.*')
-            ->with(['caseReport.abuseType', 'involvedParties', 'assessment'])
+        // Base queries for total counts & capped priority queues
+        $criticalQuery = VawcCase::select('vawc_cases.*')
+            ->with(['caseReport.abuseType', 'assessment'])
             ->join('vawc_assessments', 'vawc_assessments.vawc_case_id', '=', 'vawc_cases.id')
             ->whereIn('vawc_assessments.risk_level', ['CRITICAL', 'HIGH'])
-            ->where('vawc_cases.status', '!=', 'Closed')
+            ->where('vawc_cases.status', '!=', 'Closed');
+
+        $criticalTotal = (clone $criticalQuery)->count();
+        $criticalQueue = (clone $criticalQuery)
             ->orderByDesc('vawc_assessments.risk_score')
             ->orderByDesc('vawc_cases.created_at')
-            ->take(20)
+            ->take(10)
             ->get()
             ->map(fn($c) => [
                 'id'            => $c->id,
@@ -421,17 +426,22 @@ class VawcController extends Controller
                 'abuse_type'    => $c->caseReport?->abuseType?->name ?? 'Unclassified',
                 'intake_date'   => $c->created_at->format('M d, Y'),
                 'is_repeat'     => $c->is_repeat_offense ?? false,
+                'has_weapon'    => $c->has_weapon_involved ?? false,
+                'children_count'=> $c->children_count ?? 0,
             ]);
 
         // 2. Moderate Risk Queue
-        $moderateQueue = VawcCase::select('vawc_cases.*')
+        $moderateQuery = VawcCase::select('vawc_cases.*')
             ->with(['caseReport.abuseType', 'assessment'])
             ->join('vawc_assessments', 'vawc_assessments.vawc_case_id', '=', 'vawc_cases.id')
             ->whereIn('vawc_assessments.risk_level', ['MODERATE'])
-            ->where('vawc_cases.status', '!=', 'Closed')
+            ->where('vawc_cases.status', '!=', 'Closed');
+
+        $moderateTotal = (clone $moderateQuery)->count();
+        $moderateQueue = (clone $moderateQuery)
             ->orderByDesc('vawc_assessments.risk_score')
             ->orderByDesc('vawc_cases.created_at')
-            ->take(20)
+            ->take(10)
             ->get()
             ->map(fn($c) => [
                 'id'            => $c->id,
@@ -443,17 +453,22 @@ class VawcController extends Controller
                 'abuse_type'    => $c->caseReport?->abuseType?->name ?? 'Unclassified',
                 'intake_date'   => $c->created_at->format('M d, Y'),
                 'is_repeat'     => $c->is_repeat_offense ?? false,
+                'has_weapon'    => $c->has_weapon_involved ?? false,
+                'children_count'=> $c->children_count ?? 0,
             ]);
 
         // 2.5. Low Risk Queue
-        $lowQueue = VawcCase::select('vawc_cases.*')
+        $lowQuery = VawcCase::select('vawc_cases.*')
             ->with(['caseReport.abuseType', 'assessment'])
             ->join('vawc_assessments', 'vawc_assessments.vawc_case_id', '=', 'vawc_cases.id')
             ->whereIn('vawc_assessments.risk_level', ['LOW'])
-            ->where('vawc_cases.status', '!=', 'Closed')
+            ->where('vawc_cases.status', '!=', 'Closed');
+
+        $lowTotal = (clone $lowQuery)->count();
+        $lowQueue = (clone $lowQuery)
             ->orderByDesc('vawc_assessments.risk_score')
             ->orderByDesc('vawc_cases.created_at')
-            ->take(20)
+            ->take(10)
             ->get()
             ->map(fn($c) => [
                 'id'            => $c->id,
@@ -465,12 +480,17 @@ class VawcController extends Controller
                 'abuse_type'    => $c->caseReport?->abuseType?->name ?? 'Unclassified',
                 'intake_date'   => $c->created_at->format('M d, Y'),
                 'is_repeat'     => $c->is_repeat_offense ?? false,
+                'has_weapon'    => $c->has_weapon_involved ?? false,
+                'children_count'=> $c->children_count ?? 0,
             ]);
 
         // 3. Active cases with no assessment yet (needs triage)
-        $unassessedQueue = VawcCase::with(['caseReport.abuseType'])
+        $unassessedQuery = VawcCase::with(['caseReport.abuseType'])
             ->doesntHave('assessment')
-            ->where('status', '!=', 'Closed')
+            ->where('status', '!=', 'Closed');
+
+        $unassessedTotal = (clone $unassessedQuery)->count();
+        $unassessedQueue = (clone $unassessedQuery)
             ->latest()
             ->take(10)
             ->get()
@@ -484,6 +504,8 @@ class VawcController extends Controller
                 'abuse_type'    => $c->caseReport?->abuseType?->name ?? 'Unclassified',
                 'intake_date'   => $c->created_at->format('M d, Y'),
                 'is_repeat'     => $c->is_repeat_offense ?? false,
+                'has_weapon'    => $c->has_weapon_involved ?? false,
+                'children_count'=> $c->children_count ?? 0,
             ]);
 
         // 4. KPI Metrics (lightweight)
@@ -491,9 +513,13 @@ class VawcController extends Controller
 
         return Inertia::render('Admin/Vawc/Dashboard', [
             'criticalQueue'   => $criticalQueue,
+            'criticalTotal'   => $criticalTotal,
             'moderateQueue'   => $moderateQueue,
+            'moderateTotal'   => $moderateTotal,
             'lowQueue'        => $lowQueue,
+            'lowTotal'        => $lowTotal,
             'unassessedQueue' => $unassessedQueue,
+            'unassessedTotal' => $unassessedTotal,
             'kpis'            => $kpis,
             'currentYear'     => $currentYear,
         ]);

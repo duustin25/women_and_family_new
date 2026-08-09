@@ -50,7 +50,7 @@ class ChatbotService
                         'How do I file a VAWC case?',
                         'Report child abuse',
                         'Latest Announcements',
-                        'Nuttritio',
+                        'Nutrition Program',
                         'Who are the officials?'
                     ];
                 }

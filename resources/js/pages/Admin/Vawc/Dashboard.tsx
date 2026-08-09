@@ -1,16 +1,15 @@
 import AppLayout from '@/layouts/app-layout';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import { route } from 'ziggy-js';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import {
     ShieldAlert, AlertTriangle, Siren, Eye, TrendingUp,
-    Clock, Users, RotateCcw, HelpCircle, CheckCircle2, ChartLine, Info,
-    Plus
+    Clock, Users, RotateCcw, HelpCircle, CheckCircle2,
+    Plus, ArrowRight, Crosshair, BarChart3, ShieldCheck
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { router } from '@inertiajs/react';
 
 interface CaseQueueItem {
     id: number;
@@ -22,31 +21,38 @@ interface CaseQueueItem {
     abuse_type: string;
     intake_date: string;
     is_repeat: boolean;
+    has_weapon?: boolean;
+    children_count?: number;
 }
 
 interface Kpis {
     total_cases: number;
     total_children: number;
     repeat_cases: number;
-    sla_compliance: { total: number; compliant: number; rate: number };
+    active_bpos?: number;
+    sla_compliance?: { total: number; compliant: number; rate: number };
 }
 
 interface Props {
     criticalQueue: CaseQueueItem[];
+    criticalTotal?: number;
     moderateQueue: CaseQueueItem[];
+    moderateTotal?: number;
     lowQueue: CaseQueueItem[];
+    lowTotal?: number;
     unassessedQueue: CaseQueueItem[];
+    unassessedTotal?: number;
     kpis: Kpis;
     currentYear: number;
 }
 
-const RISK_STYLES: Record<string, { badge: string; bar: string; label: string }> = {
-    CRITICAL: { badge: 'bg-red-600 text-white', bar: 'bg-red-600', label: 'CRITICAL' },
-    HIGH: { badge: 'bg-orange-500 text-white', bar: 'bg-orange-500', label: 'HIGH' },
-    MODERATE: { badge: 'bg-yellow-500 text-black', bar: 'bg-yellow-500', label: 'MODERATE' },
-    LOW: { badge: 'bg-blue-500 text-white', bar: 'bg-blue-500', label: 'LOW' },
-    PENDING: { badge: 'bg-slate-400 text-white', bar: 'bg-slate-400', label: 'PENDING TRIAGE' },
-    UNKNOWN: { badge: 'bg-slate-300 text-slate-700', bar: 'bg-slate-300', label: 'UNKNOWN' },
+const RISK_STYLES: Record<string, { bar: string; badgeBg: string }> = {
+    CRITICAL: { bar: 'bg-red-600', badgeBg: 'bg-red-600 text-white' },
+    HIGH: { bar: 'bg-orange-500', badgeBg: 'bg-orange-600 text-white' },
+    MODERATE: { bar: 'bg-yellow-500', badgeBg: 'bg-yellow-500 text-black font-bold' },
+    LOW: { bar: 'bg-blue-500', badgeBg: 'bg-blue-600 text-white' },
+    PENDING: { bar: 'bg-slate-400', badgeBg: 'bg-slate-500 text-white' },
+    UNKNOWN: { bar: 'bg-slate-300', badgeBg: 'bg-slate-400 text-white' },
 };
 
 function CaseQueueRow({ item }: { item: CaseQueueItem }) {
@@ -56,254 +62,348 @@ function CaseQueueRow({ item }: { item: CaseQueueItem }) {
 
     return (
         <div
-            className="flex items-center gap-4 px-4 py-3 border-b last:border-0 hover:bg-muted/40 transition-colors cursor-pointer"
+            className="p-4 border-b last:border-0 hover:bg-muted/40 transition-all cursor-pointer group space-y-2.5"
             onClick={() => router.visit(`/admin/vawc/cases/${item.id}`)}
         >
-            {/* Risk Score Bar */}
-            <div className="flex flex-col items-center gap-1 shrink-0 w-12">
-                <span className="text-[9px] font-black uppercase tracking-wider text-slate-400">Score</span>
-                <span className="text-lg font-black leading-none text-slate-900 dark:text-white">
-                    {item.risk_score !== null ? item.risk_score : '—'}
-                </span>
-                <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-1.5">
-                    <div
-                        className={cn("h-1.5 rounded-full transition-all", style.bar)}
-                        style={{ width: `${scorePercent}%` }}
-                    />
+            {/* Top Row: Score + Victim Name + Date & Status Pill */}
+            <div className="flex items-start justify-between gap-3">
+                <div className="flex items-start gap-3 min-w-0">
+                    {/* Score Indicator */}
+                    <div className="flex flex-col items-center shrink-0 w-12">
+                        <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">SCORE</span>
+                        <span className="text-2xl font-black font-mono leading-none text-foreground my-0.5">
+                            {item.risk_score !== null ? item.risk_score : '—'}
+                        </span>
+                        <div className="w-full bg-muted rounded-full h-1.5 overflow-hidden">
+                            <div
+                                className={cn("h-full rounded-full transition-all", style.bar)}
+                                style={{ width: `${scorePercent}%` }}
+                            />
+                        </div>
+                    </div>
+
+                    {/* Victim Name */}
+                    <div className="min-w-0">
+                        <h3 className="text-base font-extrabold text-foreground group-hover:text-primary transition-colors leading-snug break-words">
+                            {item.victim_name}
+                        </h3>
+                    </div>
+                </div>
+
+                {/* Date & Status Pill */}
+                <div className="flex flex-col items-end gap-1.5 shrink-0">
+                    <span className="text-[11px] font-semibold text-muted-foreground font-mono">
+                        {item.intake_date}
+                    </span>
+                    <Badge variant="outline" className="text-[10px] font-extrabold uppercase px-2 py-0.5 bg-card">
+                        {item.status}
+                    </Badge>
                 </div>
             </div>
 
-            {/* Case Info */}
-            <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-xs font-black uppercase tracking-tight text-slate-900 dark:text-white truncate">
-                        {item.victim_name}
+            {/* Middle Row: Case Number Badge & Abuse Category */}
+            <div className="flex items-center justify-between gap-2 pt-0.5">
+                <div className="flex items-center gap-2">
+                    <Badge variant="secondary" className="font-mono text-xs font-bold bg-muted text-foreground border border-border">
+                        {item.case_number}
+                    </Badge>
+                    <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                        {item.abuse_type}
                     </span>
+                </div>
+                <Eye className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
+            </div>
+
+            {/* Bottom Row: Threat Badges */}
+            {(item.is_repeat || item.has_weapon || (item.children_count && item.children_count > 0)) && (
+                <div className="flex items-center gap-1.5 flex-wrap pt-1 border-t border-border/40">
                     {item.is_repeat && (
-                        <span className="flex items-center gap-1 text-[8px] font-black uppercase tracking-widest text-red-600 bg-red-50 dark:bg-red-900/30 px-1.5 py-0.5 rounded">
-                            <RotateCcw className="w-2.5 h-2.5" />
-                            Repeat
-                        </span>
+                        <Badge variant="destructive" className="text-[10px] font-extrabold uppercase gap-1 py-0 px-2">
+                            <RotateCcw className="w-3 h-3" /> REPEAT
+                        </Badge>
+                    )}
+                    {item.has_weapon && (
+                        <Badge className="bg-amber-600 hover:bg-amber-700 text-white text-[10px] font-extrabold uppercase gap-1 py-0 px-2">
+                            <Crosshair className="w-3 h-3" /> WEAPON
+                        </Badge>
+                    )}
+                    {Boolean(item.children_count && item.children_count > 0) && (
+                        <Badge variant="secondary" className="text-[10px] font-extrabold uppercase gap-1 py-0 px-2 bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-300 border border-purple-300 dark:border-purple-800">
+                            <Users className="w-3 h-3" /> MINORS: {item.children_count}
+                        </Badge>
                     )}
                 </div>
-                <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400 mt-0.5">
-                    {item.case_number} · {item.abuse_type}
-                </p>
-            </div>
-
-            {/* Status + Risk */}
-            <div className="flex flex-col items-end gap-1.5 shrink-0">
-                <span className={cn("text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded", style.badge)}>
-                    {style.label}
-                </span>
-                <span className="text-[8px] font-bold uppercase tracking-widest text-slate-400">
-                    {item.status} · {item.intake_date}
-                </span>
-            </div>
-
-            <Eye className="w-4 h-4 text-slate-300 shrink-0" />
+            )}
         </div>
     );
 }
 
-export default function VawcDashboard({ criticalQueue, moderateQueue, lowQueue, unassessedQueue, kpis, currentYear }: Props) {
+export default function VawcDashboard({
+    criticalQueue,
+    criticalTotal = criticalQueue.length,
+    moderateQueue,
+    moderateTotal = moderateQueue.length,
+    lowQueue,
+    lowTotal = lowQueue.length,
+    unassessedQueue,
+    unassessedTotal = unassessedQueue.length,
+    kpis,
+    currentYear
+}: Props) {
     return (
         <AppLayout breadcrumbs={[
             { title: 'Dashboard', href: '/dashboard' },
             { title: 'Violence Against Women & Children', href: '/admin/vawc/cases' },
             { title: 'Triage & Action Center', href: '#' }
         ]}>
-            <Head title="Barangay VAWC Desk Triage & Action Center" />
+            <Head title="VAWC Risk Triage & Action Center" />
 
-            <div className="flex h-full flex-1 flex-col gap-6 p-6">
+            <div className="flex h-full flex-1 flex-col gap-6 p-6 max-w-8xl mx-auto">
 
-                {/* ── HEADER ── */}
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                    <div>
-                        <h1 className="text-2xl font-black uppercase tracking-tight text-neutral-900 dark:text-white flex items-center gap-2">
-                            <Siren className="w-6 h-6 text-[#ce1126]" />
-                            VAWC Desk Triage & Action Center
-                        </h1>
-                        <p className="text-muted-foreground text-[10px] font-black uppercase tracking-widest mt-1">
-                            [RA 9262] Case Triage & Incident Action Hub — Structured Triage Priority Index (1-12)
-                        </p>
+                {/* ── HEADER BAR ── */}
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-card rounded-xl shadow-xs gap-1">
+                    <div className="flex gap-4 items-center">
+                        <div>
+                            <div className="flex items-center gap-2">
+                                <h1 className="text-2xl font-black tracking-tight text-foreground uppercase">
+                                    VAWC Risk Triage & Action Center
+                                </h1>
+                                <Badge variant="destructive" className="font-bold text-xs">
+                                    RA 9262 Mandate
+                                </Badge>
+                            </div>
+                        </div>
                     </div>
-                    <div className="flex gap-2">
-                        <Button asChild size="sm" className="font-bold uppercase text-[10px] tracking-widest bg-[#ce1126] hover:bg-red-700">
-                            <a href={`/admin/analytics?year=${currentYear}`}>
-                                <ChartLine className="w-3 h-3 mr-1" />
-                                Strategic Analytics
-                            </a>
+                    <div className="flex flex-wrap gap-2">
+                        <Button asChild variant="outline" size="sm" className="font-bold text-xs">
+                            <Link href={`/admin/analytics?year=${currentYear}`} className="flex items-center gap-1.5">
+                                <BarChart3 className="w-4 h-4 text-primary" /> View Analytics
+                            </Link>
                         </Button>
-                        <Button asChild variant="outline" size="sm" className="font-bold uppercase text-[10px] tracking-widest border-2">
-                            <Link href={route('admin.vawc.index')}>View Full Registry</Link>
+                        <Button asChild variant="outline" size="sm" className="font-bold text-xs">
+                            <Link href={route('admin.vawc.index')} className="flex items-center gap-1.5">
+                                View Full Registry
+                            </Link>
                         </Button>
-                        <Button asChild size="sm" className="flex items-center gap-2">
-                            <Link href={route('admin.vawc.create')}>
-                                <Plus className="w-4 h-4" />
-                                New Intake
+                        <Button asChild size="sm" className="bg-[#ce1126] hover:bg-red-700 font-bold text-xs px-4">
+                            <Link href={route('admin.vawc.create')} className="flex items-center gap-1.5">
+                                <Plus className="w-4 h-4" /> New Intake
                             </Link>
                         </Button>
                     </div>
                 </div>
 
-                {/* ── KPI TILES ── */}
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                    <Card className="border shadow-sm">
-                        <CardHeader className="pb-2">
-                            <CardTitle className="text-[10px] font-black text-muted-foreground uppercase tracking-widest flex items-center gap-1">
-                                <ShieldAlert className="w-3 h-3" /> Total Cases
+                {/* ── 4 KPI TILES (PRESERVED & ENHANCED WITH SHADCN) ── */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    {/* 1. Critical Threats Active */}
+                    <Card className="shadow-sm border-red-600 bg-card">
+                        <CardHeader>
+                            <CardTitle className="text-xs font-black text-red-600 uppercase tracking-widest flex items-center gap-1.5">
+                                <Siren className="w-4 h-4 animate-pulse text-red-600" />
+                                Total Critical Cases
                             </CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <div className="text-4xl font-black tracking-tighter">{kpis.total_cases ?? 0}</div>
-                            <div className="text-[9px] mt-1 uppercase font-black text-slate-400">System Lifetime Registry</div>
+                            <div className="text-4xl font-black tracking-tight text-red-600 font-mono">
+                                {criticalTotal ?? 0}
+                            </div>
+                            <p className="text-xs text-muted-foreground font-semibold mt-1">High Rescue Priority</p>
                         </CardContent>
                     </Card>
 
-                    <Card className="border shadow-sm">
-                        <CardHeader className="pb-2">
-                            <CardTitle className="text-[10px] font-black text-muted-foreground uppercase tracking-widest flex items-center gap-1">
-                                <Clock className="w-3 h-3" /> BPO SLA Efficiency
+                    {/* 2. Pending Triage Queue */}
+                    <Card className="shadow-sm border-slate-500 bg-card">
+                        <CardHeader>
+                            <CardTitle className="text-xs font-black text-slate-600 dark:text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
+                                <Clock className="w-4 h-4 text-slate-500" />
+                                Total Case Pending
                             </CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <div className="text-4xl font-black tracking-tighter">{kpis.sla_compliance?.rate ?? 0}%</div>
-                            <div className="text-[9px] mt-1 uppercase font-black text-slate-400">{kpis.sla_compliance?.compliant ?? 0} Same-Day Issuances</div>
+                            <div className="text-4xl font-black tracking-tight text-foreground font-mono">
+                                {unassessedTotal ?? 0}
+                            </div>
+                            <p className="text-xs text-muted-foreground font-semibold mt-1">Awaiting Risk Score</p>
                         </CardContent>
                     </Card>
 
-                    <Card className="border shadow-sm">
-                        <CardHeader className="pb-2">
-                            <CardTitle className="text-[10px] font-black text-muted-foreground uppercase tracking-widest flex items-center gap-1">
-                                <RotateCcw className="w-3 h-3" /> Repeat Offense Alert
+                    {/* 3. Active Enforced BPOs */}
+                    <Card className="shadow-sm border-emerald-600 bg-card">
+                        <CardHeader>
+                            <CardTitle className="text-xs font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest flex items-center gap-1.5">
+                                <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                                Total BPO Monitoring
                             </CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <div className="text-4xl font-black tracking-tighter text-red-600">{kpis.repeat_cases ?? 0}</div>
-                            <div className="text-[9px] mt-1 uppercase font-black text-red-400">High Recurrence Risk</div>
+                            <div className="text-4xl font-black tracking-tight text-emerald-600 dark:text-emerald-400 font-mono">
+                                {kpis.active_bpos ?? 0}
+                            </div>
+                            <p className="text-xs text-muted-foreground font-semibold mt-1">Enforced 15-Day Orders</p>
                         </CardContent>
                     </Card>
 
-                    <Card className="border shadow-sm">
-                        <CardHeader className="pb-2">
-                            <CardTitle className="text-[10px] font-black text-muted-foreground uppercase tracking-widest flex items-center gap-1">
-                                <Users className="w-3 h-3" /> Children at Risk
+                    {/* 4. Repeat & Recurrence Alert */}
+                    <Card className="shadow-sm border-amber-500 bg-card">
+                        <CardHeader>
+                            <CardTitle className="text-xs font-black text-amber-600 dark:text-amber-400 uppercase tracking-widest flex items-center gap-1.5">
+                                <RotateCcw className="w-4 h-4 text-amber-600" />
+                                Total Repeat Offense
                             </CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <div className="text-4xl font-black tracking-tighter">{kpis.total_children ?? 0}</div>
-                            <div className="text-[9px] mt-1 uppercase font-black text-slate-400">Total Impacted Minors</div>
+                            <div className="text-4xl font-black tracking-tight text-amber-600 dark:text-amber-400 font-mono">
+                                {kpis.repeat_cases ?? 0}
+                            </div>
+                            <p className="text-xs text-muted-foreground font-semibold mt-1">History of Recurrence</p>
                         </CardContent>
                     </Card>
                 </div>
 
-                {/* ── PRIORITY QUEUES ── */}
+                {/* ── PRIORITY QUEUES (READABLE & BIG FONTS) ── */}
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
 
                     {/* CRITICAL / HIGH Queue */}
-                    <Card className="border-l-4 border-l-red-600 border-red-200 dark:border-red-900 shadow-sm col-span-1">
-                        <CardHeader className="pb-3 border-b bg-red-50/40 dark:bg-red-950/10">
-                            <CardTitle className="text-xs font-black uppercase tracking-widest flex items-center text-red-600">
-                                <AlertTriangle className="h-4 w-4 mr-2" />
-                                Critical / High Risk Queue
-                            </CardTitle>
-                            <CardDescription className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mt-1">
-                                {criticalQueue.length} case(s) · Triage Index ≥ 8
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent className="p-0">
-                            {criticalQueue.length === 0 ? (
-                                <div className="p-6 flex flex-col items-center justify-center text-center text-slate-400 gap-2">
-                                    <CheckCircle2 className="w-8 h-8 text-emerald-400" />
-                                    <p className="text-[10px] font-black uppercase tracking-widest">No critical or high-risk cases</p>
-                                </div>
-                            ) : (
-                                <div>{criticalQueue.map(item => <CaseQueueRow key={item.id} item={item} />)}</div>
-                            )}
-                        </CardContent>
+                    <Card className="border-t-4 border-t-red-600 shadow-sm flex flex-col justify-between">
+                        <div>
+                            <CardHeader className="py-3.5 px-4 border-b bg-red-50/50 dark:bg-red-950/20 flex flex-row items-center justify-between">
+                                <CardTitle className="text-sm font-extrabold uppercase tracking-wider text-red-600 flex items-center gap-1.5">
+                                    <AlertTriangle className="w-4 h-4" /> Critical / High Cases
+                                </CardTitle>
+                                <Badge variant="destructive" className="font-bold text-xs">
+                                    {criticalTotal}
+                                </Badge>
+                            </CardHeader>
+                            <CardContent className="p-0">
+                                {criticalQueue.length === 0 ? (
+                                    <div className="p-6 flex flex-col items-center justify-center text-center text-muted-foreground gap-2">
+                                        <CheckCircle2 className="w-8 h-8 text-emerald-500" />
+                                        <p className="text-xs font-bold uppercase">No critical or high-risk cases</p>
+                                    </div>
+                                ) : (
+                                    <div>{criticalQueue.map(item => <CaseQueueRow key={item.id} item={item} />)}</div>
+                                )}
+                            </CardContent>
+                        </div>
+                        {criticalTotal > criticalQueue.length && (
+                            <CardFooter className="p-2.5 border-t bg-muted/20">
+                                <Link
+                                    href={route('admin.vawc.index')}
+                                    className="w-full text-center text-xs font-bold text-red-600 hover:underline flex items-center justify-center gap-1 py-1"
+                                >
+                                    Showing top {criticalQueue.length} of {criticalTotal} · View All in Registry
+                                    <ArrowRight className="w-3.5 h-3.5" />
+                                </Link>
+                            </CardFooter>
+                        )}
                     </Card>
 
                     {/* MODERATE Queue */}
-                    <Card className="border-l-4 border-l-yellow-500 border-yellow-200 dark:border-yellow-900 shadow-sm col-span-1">
-                        <CardHeader className="pb-3 border-b bg-yellow-50/40 dark:bg-yellow-950/10">
-                            <CardTitle className="text-xs font-black uppercase tracking-widest flex items-center text-yellow-600">
-                                <TrendingUp className="h-4 w-4 mr-2" />
-                                Moderate Risk Queue
-                            </CardTitle>
-                            <CardDescription className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mt-1">
-                                {moderateQueue.length} case(s) · Triage Index 6–7
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent className="p-0">
-                            {moderateQueue.length === 0 ? (
-                                <div className="p-6 flex flex-col items-center justify-center text-center text-slate-400 gap-2">
-                                    <CheckCircle2 className="w-8 h-8 text-emerald-400" />
-                                    <p className="text-[10px] font-black uppercase tracking-widest">No moderate-risk cases</p>
-                                </div>
-                            ) : (
-                                <div>{moderateQueue.map(item => <CaseQueueRow key={item.id} item={item} />)}</div>
-                            )}
-                        </CardContent>
+                    <Card className="border-t-4 border-t-amber-500 shadow-sm flex flex-col justify-between">
+                        <div>
+                            <CardHeader className="py-3.5 px-4 border-b bg-amber-50/50 dark:bg-amber-950/20 flex flex-row items-center justify-between">
+                                <CardTitle className="text-sm font-extrabold uppercase tracking-wider text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
+                                    <AlertTriangle className="w-4 h-4" /> Moderate Risk Cases
+                                </CardTitle>
+                                <Badge className="bg-amber-500 text-black font-bold text-xs">
+                                    {moderateTotal}
+                                </Badge>
+                            </CardHeader>
+                            <CardContent className="p-0">
+                                {moderateQueue.length === 0 ? (
+                                    <div className="p-6 flex flex-col items-center justify-center text-center text-muted-foreground gap-2">
+                                        <CheckCircle2 className="w-8 h-8 text-emerald-500" />
+                                        <p className="text-xs font-bold uppercase">No moderate-risk cases</p>
+                                    </div>
+                                ) : (
+                                    <div>{moderateQueue.map(item => <CaseQueueRow key={item.id} item={item} />)}</div>
+                                )}
+                            </CardContent>
+                        </div>
+                        {moderateTotal > moderateQueue.length && (
+                            <CardFooter className="p-2.5 border-t bg-muted/20">
+                                <Link
+                                    href={route('admin.vawc.index')}
+                                    className="w-full text-center text-xs font-bold text-amber-600 dark:text-amber-400 hover:underline flex items-center justify-center gap-1 py-1"
+                                >
+                                    View All {moderateTotal} Moderate Cases
+                                    <ArrowRight className="w-3.5 h-3.5" />
+                                </Link>
+                            </CardFooter>
+                        )}
                     </Card>
 
                     {/* LOW RISK Queue */}
-                    <Card className="border-l-4 border-l-blue-600 border-blue-200 dark:border-blue-900 shadow-sm col-span-1">
-                        <CardHeader className="pb-3 border-b bg-blue-50/40 dark:bg-blue-950/10">
-                            <CardTitle className="text-xs font-black uppercase tracking-widest flex items-center text-blue-600">
-                                <Clock className="h-4 w-4 mr-2" />
-                                Low Risk Queue
-                            </CardTitle>
-                            <CardDescription className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mt-1">
-                                {lowQueue.length} case(s) · Triage Index 4–5
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent className="p-0">
-                            {lowQueue.length === 0 ? (
-                                <div className="p-6 flex flex-col items-center justify-center text-center text-slate-400 gap-2">
-                                    <CheckCircle2 className="w-8 h-8 text-emerald-400" />
-                                    <p className="text-[10px] font-black uppercase tracking-widest">No low-risk cases</p>
-                                </div>
-                            ) : (
-                                <div>{lowQueue.map(item => <CaseQueueRow key={item.id} item={item} />)}</div>
-                            )}
-                        </CardContent>
+                    <Card className="border-t-4 border-t-blue-500 shadow-sm flex flex-col justify-between">
+                        <div>
+                            <CardHeader className="py-3.5 px-4 border-b bg-blue-50/50 dark:bg-blue-950/20 flex flex-row items-center justify-between">
+                                <CardTitle className="text-sm font-extrabold uppercase tracking-wider text-blue-600 dark:text-blue-400 flex items-center gap-1.5">
+                                    <ShieldCheck className="w-4 h-4" /> Low Risk Cases
+                                </CardTitle>
+                                <Badge className="bg-blue-600 text-white font-bold text-xs">
+                                    {lowTotal}
+                                </Badge>
+                            </CardHeader>
+                            <CardContent className="p-0">
+                                {lowQueue.length === 0 ? (
+                                    <div className="p-6 flex flex-col items-center justify-center text-center text-muted-foreground gap-2">
+                                        <CheckCircle2 className="w-8 h-8 text-emerald-500" />
+                                        <p className="text-xs font-bold uppercase">No low-risk cases</p>
+                                    </div>
+                                ) : (
+                                    <div>{lowQueue.map(item => <CaseQueueRow key={item.id} item={item} />)}</div>
+                                )}
+                            </CardContent>
+                        </div>
+                        {lowTotal > lowQueue.length && (
+                            <CardFooter className="p-2.5 border-t bg-muted/20">
+                                <Link
+                                    href={route('admin.vawc.index')}
+                                    className="w-full text-center text-xs font-bold text-blue-600 hover:underline flex items-center justify-center gap-1 py-1"
+                                >
+                                    Showing top {lowQueue.length} of {lowTotal} · View All in Registry
+                                    <ArrowRight className="w-3.5 h-3.5" />
+                                </Link>
+                            </CardFooter>
+                        )}
                     </Card>
 
-                    {/* UNASSESSED / PENDING TRIAGE Queue */}
-                    <Card className="border-l-4 border-l-slate-400 shadow-sm col-span-1">
-                        <CardHeader className="pb-3 border-b bg-slate-50/40 dark:bg-slate-900/20">
-                            <CardTitle className="text-xs font-black uppercase tracking-widest flex items-center text-slate-600">
-                                <HelpCircle className="h-4 w-4 mr-2" />
-                                Pending Triage Queue
-                            </CardTitle>
-                            <CardDescription className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mt-1">
-                                {unassessedQueue.length} case(s) · Awaiting Assessment
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent className="p-0">
-                            {unassessedQueue.length === 0 ? (
-                                <div className="p-6 flex flex-col items-center justify-center text-center text-slate-400 gap-2">
-                                    <CheckCircle2 className="w-8 h-8 text-emerald-400" />
-                                    <p className="text-[10px] font-black uppercase tracking-widest">All cases have been assessed</p>
-                                </div>
-                            ) : (
-                                <div>{unassessedQueue.map(item => <CaseQueueRow key={item.id} item={item} />)}</div>
-                            )}
-                        </CardContent>
+                    {/* PENDING QUEUE */}
+                    <Card className="border-t-4 border-t-slate-500 shadow-sm flex flex-col justify-between">
+                        <div>
+                            <CardHeader className="py-3.5 px-4 border-b bg-slate-100/50 dark:bg-slate-900/50 flex flex-row items-center justify-between">
+                                <CardTitle className="text-sm font-extrabold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                                    <Clock className="w-4 h-4" /> Pending Cases
+                                </CardTitle>
+                                <Badge variant="outline" className="font-bold text-xs">
+                                    {unassessedTotal}
+                                </Badge>
+                            </CardHeader>
+                            <CardContent className="p-0">
+                                {unassessedQueue.length === 0 ? (
+                                    <div className="p-6 flex flex-col items-center justify-center text-center text-muted-foreground gap-2">
+                                        <CheckCircle2 className="w-8 h-8 text-emerald-500" />
+                                        <p className="text-xs font-bold uppercase">All cases have been assessed</p>
+                                    </div>
+                                ) : (
+                                    <div>{unassessedQueue.map(item => <CaseQueueRow key={item.id} item={item} />)}</div>
+                                )}
+                            </CardContent>
+                        </div>
+                        {unassessedTotal > unassessedQueue.length && (
+                            <CardFooter className="p-2.5 border-t bg-muted/20">
+                                <Link
+                                    href={route('admin.vawc.index')}
+                                    className="w-full text-center text-xs font-bold text-slate-700 dark:text-slate-300 hover:underline flex items-center justify-center gap-1 py-1"
+                                >
+                                    Showing top {unassessedQueue.length} of {unassessedTotal} · View All in Registry
+                                    <ArrowRight className="w-3.5 h-3.5" />
+                                </Link>
+                            </CardFooter>
+                        )}
                     </Card>
 
                 </div>
-
-                {/* Footer note */}
-                {/* <div className="pb-6 text-center">
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                        For longitudinal trends, BPO activity, zone hotspots, and demographic reports →{' '}
-                        <a href={`/admin/analytics?year=${currentYear}`} className="text-[#ce1126] hover:underline">
-                            View Official Strategic Analytics & Reports
-                        </a>
-                    </p>
-                </div> */}
 
             </div>
         </AppLayout>

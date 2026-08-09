@@ -16,7 +16,7 @@ class SettingsController extends Controller
         $abuseTypes = CaseAbuseType::where('category', 'VAWC')
             ->orderBy('name')
             ->get();
-        $zones = \App\Models\Zone::orderBy('name')->get();
+        $zones = Zone::orderBy('name')->get();
 
         return Inertia::render('Admin/Settings/Index', [
             'abuseTypes' => $abuseTypes,
