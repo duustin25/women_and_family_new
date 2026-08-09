@@ -14,6 +14,12 @@ class MembershipApplication extends Model
         'email',
         'form_data',
         'status',
+        'rejection_reason',
+        'rejected_at',
+        'appeal_reason',
+        'appeal_docs',
+        'appealed_at',
+        'approval_type',
         'recommended_by',
         'approved_by',
         'actioned_at'
@@ -21,6 +27,9 @@ class MembershipApplication extends Model
 
     protected $casts = [
         'form_data' => 'array',
+        'appeal_docs' => 'array',
+        'rejected_at' => 'datetime',
+        'appealed_at' => 'datetime',
         'actioned_at' => 'datetime',
     ];
 

@@ -122,6 +122,11 @@ const navGroups: NavGroup[] = [
                 icon: Logs,
             },
             {
+                title: 'Appeals Queue',
+                href: '/admin/applications/appeals',
+                icon: ShieldAlert,
+            },
+            {
                 title: 'Backup & Recovery',
                 href: '/admin/backup-recovery',
                 icon: Database,
@@ -165,6 +170,7 @@ export function AppSidebar() {
                     'System Users',
                     'Officials',
                     'Settings',
+                    'Appeals Queue',
                 ];
                 if (hiddenFromPresident.includes(item.title)) return false;
             }

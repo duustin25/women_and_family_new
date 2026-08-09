@@ -84,6 +84,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::resource('announcements', AnnouncementController::class);
         Route::get('organizations/{organization:slug}/members', [OrganizationController::class, 'members'])->name('organizations.members');
         Route::get('organizations/{organization:slug}/members/export', [OrganizationController::class, 'exportMembers'])->name('organizations.members.export');
+        Route::get('organizations/{organization:slug}/sample-csv', [\App\Http\Controllers\Admin\OrganizationImportController::class, 'downloadSample'])->name('organizations.sample-csv');
+        Route::post('organizations/{organization:slug}/import-csv', [\App\Http\Controllers\Admin\OrganizationImportController::class, 'import'])->name('organizations.import-csv');
         Route::resource('organizations', OrganizationController::class);
 
 
@@ -98,10 +100,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // Static routes (create) MUST come before wildcard routes ({application})
         Route::get('applications', [MembershipApplicationController::class, 'index'])->name('applications.index');
         Route::get('applications/create', [MembershipApplicationController::class, 'create'])->name('applications.create');
+        Route::get('applications/appeals', [MembershipApplicationController::class, 'appeals'])->name('applications.appeals');
         Route::get('applications/encode/{organization:slug}', [MembershipApplicationController::class, 'encode'])->name('applications.encode'); // NEW: Admin-specific intake URL
         Route::get('applications/{application}/print', [MembershipApplicationController::class, 'print'])->name('applications.print');
         Route::get('applications/{application}', [MembershipApplicationController::class, 'show'])->name('applications.show');
         Route::patch('applications/{application}/status', [MembershipApplicationController::class, 'updateStatus'])->name('applications.update-status');
+        Route::post('applications/{application}/reject', [MembershipApplicationController::class, 'reject'])->name('applications.reject');
+        Route::post('applications/{application}/appeal', [MembershipApplicationController::class, 'appeal'])->name('applications.appeal');
+        Route::post('applications/{application}/overrule', [MembershipApplicationController::class, 'overrule'])->name('applications.overrule');
         Route::get('applications/{application}/edit', [MembershipApplicationController::class, 'edit'])->name('applications.edit');
         Route::put('applications/{application}', [MembershipApplicationController::class, 'update'])->name('applications.update');
 

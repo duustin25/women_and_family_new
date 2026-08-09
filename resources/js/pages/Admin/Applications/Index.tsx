@@ -190,12 +190,21 @@ export default function Index({ applications, filters, organizations, incomes }:
                                                 </div>
                                             </TableCell>
                                             <TableCell>
-                                                <Badge variant="outline" className={`h-6 text-[10px] font-bold uppercase tracking-wider ${app.status === 'Approved' ? 'text-emerald-600 border-emerald-200 bg-emerald-50' :
-                                                        app.status === 'Pending' ? 'text-amber-600 border-amber-200 bg-amber-50' :
-                                                            'text-red-600 border-red-200 bg-red-50'
-                                                    }`}>
-                                                    {app.status}
-                                                </Badge>
+                                                {(() => {
+                                                    const s = (app.status || '').toLowerCase();
+                                                    const colorClass = s === 'approved' 
+                                                        ? 'text-emerald-600 border-emerald-200 bg-emerald-50' 
+                                                        : s === 'pending' 
+                                                            ? 'text-amber-700 border-amber-300 bg-amber-50 font-black' 
+                                                            : s === 'appealed'
+                                                                ? 'text-blue-600 border-blue-200 bg-blue-50 font-black'
+                                                                : 'text-rose-600 border-rose-200 bg-rose-50 font-black';
+                                                    return (
+                                                        <Badge variant="outline" className={`h-6 text-[10px] font-bold uppercase tracking-wider ${colorClass}`}>
+                                                            {app.status}
+                                                        </Badge>
+                                                    );
+                                                })()}
                                             </TableCell>
                                             <TableCell className="text-right pr-6">
                                                 <Button variant="outline" size="sm" asChild className="h-8 text-[10px] font-bold uppercase tracking-wider">

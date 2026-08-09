@@ -210,4 +210,68 @@ class MembershipApplicationController extends Controller
         return redirect()->route('admin.applications.show', $application->id)
             ->with('success', 'Application details updated successfully.');
     }
+
+    /**
+     * Reject application with a mandatory rejection reason.
+     */
+    public function reject(Request $request, $id, \App\Services\OrganizationGovernanceService $service)
+    {
+        $request->validate([
+            'reason' => 'required|string|min:5',
+        ]);
+
+        $application = MembershipApplication::findOrFail($id);
+        $service->rejectApplication($application, $request->input('reason'), $request->user()->name);
+
+        return redirect()->back()->with('success', "Application rejected with documented reason.");
+    }
+
+    /**
+     * Resident submits an appeal against rejection.
+     */
+    public function appeal(Request $request, $id, \App\Services\OrganizationGovernanceService $service)
+    {
+        $request->validate([
+            'appeal_reason' => 'required|string|min:10',
+        ]);
+
+        $application = MembershipApplication::findOrFail($id);
+        $service->submitAppeal($application, $request->input('appeal_reason'));
+
+        return redirect()->back()->with('success', "Appeal submitted successfully! Escalated to Barangay Admin Command Center.");
+    }
+
+    /**
+     * Barangay Admin overrules rejection and force-approves application.
+     */
+    public function overrule(Request $request, $id, \App\Services\OrganizationGovernanceService $service)
+    {
+        if ($request->user()->isPresident()) {
+            abort(403, 'Unauthorized. Only Barangay Administrators can overrule organization rejections.');
+        }
+
+        $application = MembershipApplication::findOrFail($id);
+        $service->overruleAndApprove($application, $request->user()->name);
+
+        return redirect()->back()->with('success', "Barangay Admin overruled rejection and approved the application.");
+    }
+
+    /**
+     * Display Appeals Queue for Barangay Admin.
+     */
+    public function appeals(Request $request)
+    {
+        if ($request->user()->isPresident()) {
+            abort(403, 'Unauthorized. Governance Appeals Queue is strictly managed by Barangay Administrators.');
+        }
+
+        $appeals = MembershipApplication::with('organization')
+            ->whereIn('status', ['appealed', 'rejected'])
+            ->latest()
+            ->paginate(10);
+
+        return Inertia::render('Admin/Applications/AppealsIndex', [
+            'appeals' => $appeals,
+        ]);
+    }
 }

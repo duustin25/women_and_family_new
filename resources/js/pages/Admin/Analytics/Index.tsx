@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useState } from 'react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
     TrendingUp, Users, Activity, FileText, Baby,
     ShieldAlert, CheckCircle, Clock, Gavel, BarChart3,
@@ -217,10 +218,25 @@ export default function Index({
                 </div>
 
                 {/* ══════════════════════════════════════════════════════ */}
-                {/* SECTION 1 & 2: VAWC & BCPC (Admin/Head Only)          */}
+                {/* DOMAIN SEGREGATED TABS (IT Expert Recommendation)     */}
                 {/* ══════════════════════════════════════════════════════ */}
-                {!isPresident && (
-                    <>
+                <Tabs defaultValue="vawc" className="w-full space-y-6">
+                    <TabsList className="grid grid-cols-3 max-w-2xl bg-slate-100 dark:bg-slate-800 p-1.5 rounded-xl border">
+                        <TabsTrigger value="vawc" className="gap-2 font-black text-xs uppercase tracking-wider data-[state=active]:bg-white dark:data-[state=active]:bg-slate-900 data-[state=active]:text-[#ce1126]">
+                            <ShieldAlert className="w-4 h-4 text-[#ce1126]" /> VAWC Case Analytics
+                        </TabsTrigger>
+                        <TabsTrigger value="bcpc" className="gap-2 font-black text-xs uppercase tracking-wider data-[state=active]:bg-white dark:data-[state=active]:bg-slate-900 data-[state=active]:text-emerald-600">
+                            <Baby className="w-4 h-4 text-emerald-600" /> BCPC Child Welfare
+                        </TabsTrigger>
+                        <TabsTrigger value="gad_orgs" className="gap-2 font-black text-xs uppercase tracking-wider data-[state=active]:bg-white dark:data-[state=active]:bg-slate-900 data-[state=active]:text-purple-600">
+                            <Users className="w-4 h-4 text-purple-600" /> GAD & Organizations
+                        </TabsTrigger>
+                    </TabsList>
+
+                    {/* TAB 1: VAWC DOMAIN ANALYTICS */}
+                    <TabsContent value="vawc" className="space-y-6 mt-4">
+                        {!isPresident ? (
+                            <>
                         {/* SECTION 1: VAWC CASE TRIAGE & ACTION ANALYSIS */}
                         <div className="space-y-6">
                             <h2 className="text-base font-black tracking-tight flex items-center gap-2 py-3 mb-2 border-b uppercase text-[#ce1126] dark:text-red-400">
@@ -346,13 +362,23 @@ export default function Index({
                                 </CardContent>
                             </Card>
                         </div>
+                        </>
+                        ) : (
+                            <div className="p-8 text-center bg-slate-50 dark:bg-slate-900 rounded-xl border">
+                                <ShieldAlert className="w-8 h-8 text-slate-400 mx-auto mb-2" />
+                                <p className="text-sm font-bold text-slate-600 dark:text-slate-300">VAWC Case Analytics are scoped to Barangay Administrators and VAWC Desk Officers.</p>
+                            </div>
+                        )}
+                    </TabsContent>
 
-                        {/* SECTION 2: BCPC CHILD HEALTH & NUTRITION TRIAGE */}
-                        <div className="space-y-6">
-                            <h2 className="text-base font-black tracking-tight flex items-center gap-2 py-3 mb-2 border-b uppercase text-teal-600 dark:text-teal-400">
-                                <Baby className="w-4 h-4" />
-                                BCPC Child Health & Nutrition Triage (RA 11037)
-                            </h2>
+                    {/* TAB 2: BCPC CHILD WELFARE ANALYTICS */}
+                    <TabsContent value="bcpc" className="space-y-6 mt-4">
+                        {!isPresident ? (
+                            <div className="space-y-6">
+                                <h2 className="text-base font-black tracking-tight flex items-center gap-2 py-3 mb-2 border-b uppercase text-teal-600 dark:text-teal-400">
+                                    <Baby className="w-4 h-4" />
+                                    BCPC Child Health & Nutrition Triage (RA 11037)
+                                </h2>
 
                             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                                 {/* Nutrition Prevalence Radar */}
@@ -490,18 +516,22 @@ export default function Index({
                                 </Card>
                             </div>
                         </div>
-                    </>
-                )}
+                        ) : (
+                            <div className="p-8 text-center bg-slate-50 dark:bg-slate-900 rounded-xl border">
+                                <Baby className="w-8 h-8 text-slate-400 mx-auto mb-2" />
+                                <p className="text-sm font-bold text-slate-600 dark:text-slate-300">BCPC Child Health & Nutrition Analytics are scoped to Barangay Administrators and BCPC Officers.</p>
+                            </div>
+                        )}
+                    </TabsContent>
 
-                {/* ══════════════════════════════════════════════════════ */}
-                {/* UPGRADED SECTION: ORG & MEMBER INTELLIGENCE            */}
-                {/* ══════════════════════════════════════════════════════ */}
-                <div className="space-y-6">
-                    <div className="flex flex-col md:flex-row md:items-center justify-between py-3 mb-2 border-b gap-4">
-                        <h2 className="text-base font-black tracking-tight flex items-center gap-2 uppercase text-emerald-600 dark:text-emerald-400 border-none py-0 mb-0">
-                            <Users className="w-4 h-4" />
-                            Organization & Member Intelligence (GAD Registry)
-                        </h2>
+                    {/* TAB 3: GAD & ORGANIZATION ANALYTICS */}
+                    <TabsContent value="gad_orgs" className="space-y-6 mt-4">
+                        <div className="space-y-6">
+                            <div className="flex flex-col md:flex-row md:items-center justify-between py-3 mb-2 border-b gap-4">
+                                <h2 className="text-base font-black tracking-tight flex items-center gap-2 uppercase text-purple-600 dark:text-purple-400 border-none py-0 mb-0">
+                                    <Users className="w-4 h-4" />
+                                    Organization & Member Intelligence (GAD Registry)
+                                </h2>
                         
                         {/* Admin-only Organization Filter Dropdown */}
                         {!isPresident && orgAnalytics?.organizations_list && (
@@ -771,8 +801,9 @@ export default function Index({
                         </div>
                     </div>
                 )}
-
-            </div>
+                </TabsContent>
+            </Tabs>
+        </div>
         </AppLayout>
     );
 }

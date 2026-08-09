@@ -199,3 +199,28 @@ The backup snapshot includes **all relational database entities**:
 > 
 > Department Heads (VAWC/BCPC) and Committee Members handle day-to-day operational case intake. Allowing non-IT roles to export raw database snapshots or execute database restorations introduces severe risks of **data exfiltration** (exporting confidential victim files to personal flash drives) and **accidental database overwrites** (erasing active case files)."*
 
+---
+
+## 10. Secondary IT Expert Recommendations Defense Q&A & Scripts
+
+### Q8: How does your system handle digitizing physical logbooks for accredited organizations with different custom fields?
+> **Answer**:
+> *"We implemented a **Dynamic CSV Bulk Importer** using the **Strategy and Factory Pattern**. 
+> 
+> Because organizations in Barangay 183 have different dynamic JSON custom fields (e.g. Senior Citizens have `osca_id`, PWDs have `pwd_id`, Solo Parents have `solo_parent_id`), our system dynamically generates a **Custom Sample CSV Template** for each organization matching its specific schema. The importer validates duplicate records and maps base fields plus custom JSON fields automatically into the database."*
+
+### Q9: Why did you separate the analytics dashboard into dedicated domain tabs instead of showing all charts together?
+> **Answer**:
+> *"To ensure usability for non-technical department heads, we applied the **Facade Pattern & Separation of Concerns**. 
+> 
+> VAWC, BCPC, and GAD/Organization analytics are segregated into focused Shadcn UI Tabs (`vawc`, `bcpc`, `gad_orgs`). A VAWC Desk Head sees strictly RA 9262 abuse rates and legal threat radars, a BCPC Officer sees WHO e-OPT Plus child malnutrition trends, and GAD Officers analyze organization demographics."*
+
+### Q10: How do you prevent Organization Presidents from rejecting resident applications out of personal bias or grudges?
+> **Answer**:
+> *"We implemented a 4-tier **Governance & Appeals System**:
+> 1. **Mandatory Rejection Reason**: Presidents clicking 'Disapprove' must document a clear, non-arbitrary justification.
+> 2. **Resident Appeals Engine**: Rejected residents receive a notification email with a direct link to submit an **Appeal Statement**.
+> 3. **Barangay Admin Command Center Overrule**: Appealed applications escalate to the **Admin Appeals Queue** (`/admin/applications/appeals`), allowing the Barangay Admin to investigate and **Overrule & Force Approve** unfairly rejected residents.
+> 4. **Automated 14-Day SLA Auto-Approval**: Scheduled task `php artisan orgs:auto-approve` (running daily at 01:00) automatically approves applications neglected in pending status for over 14 days."*
+
+

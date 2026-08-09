@@ -5,10 +5,19 @@ import { ArrowLeft, Printer, CheckCircle, XCircle, Building2, Edit, FileText, Us
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
+import { useState } from 'react';
+import RejectionReasonModal from './Partials/RejectionReasonModal';
+import AppealModal from './Partials/AppealModal';
+import { route } from 'ziggy-js';
+import { toast } from 'sonner';
+
 export default function ReviewData({ application, organization }: { application: any, organization: any }) {
     const confirm = useConfirm();
     const record = application.data;
     const { processing } = useForm();
+
+    const [rejectModalOpen, setRejectModalOpen] = useState(false);
+    const [appealModalOpen, setAppealModalOpen] = useState(false);
 
     let formData = typeof record.form_data === 'string'
         ? JSON.parse(record.form_data)
@@ -320,25 +329,88 @@ export default function ReviewData({ application, organization }: { application:
                 </div>
 
                 {/* BOTTOM ACTION BAR (Sticky) */}
-                {record.status === 'Pending' && (
-                    <div className="fixed bottom-0 left-0 lg:left-64 right-0 p-4 bg-white/80 dark:bg-neutral-900/80 backdrop-blur-md border-t border-neutral-200 dark:border-neutral-800 shadow-[0_-4px_20px_-10px_rgba(0,0,0,0.1)] flex justify-end gap-3 z-40">
-                        <Button
-                            onClick={() => handleAction('Disapproved')}
-                            disabled={processing}
-                            variant="destructive"
-                            className="uppercase font-black tracking-widest text-[10px] h-10 px-6"
-                        >
-                            <XCircle className="w-4 h-4 mr-2" /> Disapprove
-                        </Button>
-                        <Button
-                            onClick={() => handleAction('Approved')}
-                            disabled={processing}
-                            className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-600/20 uppercase font-black tracking-widest text-[10px] h-10 px-6 border border-emerald-500"
-                        >
-                            <CheckCircle className="w-4 h-4 mr-2" /> Approve Application
-                        </Button>
-                    </div>
-                )}
+                {(() => {
+                    const statusLower = (record.status || '').toLowerCase();
+
+                    if (statusLower === 'pending') {
+                        return (
+                            <div className="fixed bottom-0 left-0 lg:left-64 right-0 p-4 bg-white/80 dark:bg-neutral-900/80 backdrop-blur-md border-t border-neutral-200 dark:border-neutral-800 shadow-[0_-4px_20px_-10px_rgba(0,0,0,0.1)] flex justify-end gap-3 z-40">
+                                <Button
+                                    type="button"
+                                    onClick={() => setRejectModalOpen(true)}
+                                    disabled={processing}
+                                    variant="destructive"
+                                    className="uppercase font-black tracking-widest text-[10px] h-10 px-6"
+                                >
+                                    <XCircle className="w-4 h-4 mr-2" /> Disapprove / Reject
+                                </Button>
+                                <Button
+                                    type="button"
+                                    onClick={() => handleAction('Approved')}
+                                    disabled={processing}
+                                    className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-600/20 uppercase font-black tracking-widest text-[10px] h-10 px-6 border border-emerald-500"
+                                >
+                                    <CheckCircle className="w-4 h-4 mr-2" /> Approve Application
+                                </Button>
+                            </div>
+                        );
+                    }
+
+                    if (statusLower === 'rejected' || statusLower === 'disapproved') {
+                        return (
+                            <div className="fixed bottom-0 left-0 lg:left-64 right-0 p-4 bg-white/80 dark:bg-neutral-900/80 backdrop-blur-md border-t border-neutral-200 dark:border-neutral-800 shadow-[0_-4px_20px_-10px_rgba(0,0,0,0.1)] flex items-center justify-between gap-3 z-40">
+                                <div className="text-xs font-semibold text-rose-600 dark:text-rose-400">
+                                    <span className="font-black uppercase">Rejection Justification:</span> "{record.rejection_reason || 'Documented by Organization President'}"
+                                </div>
+                                <Button
+                                    type="button"
+                                    onClick={() => setAppealModalOpen(true)}
+                                    className="bg-amber-600 hover:bg-amber-700 text-white uppercase font-black tracking-widest text-[10px] h-10 px-6"
+                                >
+                                    Submit Resident Appeal
+                                </Button>
+                            </div>
+                        );
+                    }
+
+                    if (statusLower === 'appealed') {
+                        return (
+                            <div className="fixed bottom-0 left-0 lg:left-64 right-0 p-4 bg-white/80 dark:bg-neutral-900/80 backdrop-blur-md border-t border-neutral-200 dark:border-neutral-800 shadow-[0_-4px_20px_-10px_rgba(0,0,0,0.1)] flex items-center justify-between gap-3 z-40">
+                                <div className="text-xs font-semibold text-amber-700 dark:text-amber-300">
+                                    <span className="font-black uppercase">Resident Appeal Statement:</span> "{record.appeal_reason || 'Escalated to Barangay Admin'}"
+                                </div>
+                                <Button
+                                    type="button"
+                                    onClick={() => {
+                                        if (window.confirm(`Overrule president's rejection and approve '${record.fullname}'?`)) {
+                                            router.post(route('admin.applications.overrule', { application: record.id }), {}, {
+                                                onSuccess: () => toast.success(`Rejection overruled! Application approved.`),
+                                            });
+                                        }
+                                    }}
+                                    className="bg-emerald-600 hover:bg-emerald-700 text-white uppercase font-black tracking-widest text-[10px] h-10 px-6"
+                                >
+                                    <CheckCircle className="w-4 h-4 mr-2" /> Admin Overrule & Approve
+                                </Button>
+                            </div>
+                        );
+                    }
+
+                    return null;
+                })()}
+
+                {/* MODALS */}
+                <RejectionReasonModal
+                    open={rejectModalOpen}
+                    onOpenChange={setRejectModalOpen}
+                    application={record}
+                />
+
+                <AppealModal
+                    open={appealModalOpen}
+                    onOpenChange={setAppealModalOpen}
+                    application={record}
+                />
             </div>
         </AppLayout>
     );
