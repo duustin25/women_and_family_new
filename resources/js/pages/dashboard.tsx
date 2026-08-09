@@ -121,9 +121,6 @@ export default function Dashboard({
                         <h1 className="text-2xl font-black uppercase tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
                             Dashboard Overview
                         </h1>
-                        <p className="text-sm text-slate-500 dark:text-slate-400 font-bold tracking-widest uppercase">
-                            System Overview Summary
-                        </p>
                     </div>
                 </div>
 
@@ -154,12 +151,7 @@ export default function Dashboard({
 
                         {/* VAWC Signal Card */}
                         <Card
-                            className={cn(
-                                "border cursor-pointer hover:shadow-md transition-shadow h-full",
-                                vawcSignal.needs_attention
-                                    ? ""
-                                    : ""
-                            )}
+                            className="border cursor-pointer hover:shadow-md transition-shadow h-full"
                             onClick={() => router.visit('/admin/vawc/dashboard')}
                         >
                             <CardHeader className="pb-2">
@@ -185,21 +177,13 @@ export default function Dashboard({
                                             <p className="text-lg font-black leading-none">{vawcSignal.critical_high}</p>
                                         </div>
                                     </div>
-                                    <p className="text-[9px] font-bold text-slate-400 uppercase text-right leading-tight max-w-[150px]">
-                                        {vawcSignal.needs_attention ? 'Critical flags detected.' : 'Current operations stable.'}
-                                    </p>
                                 </div>
                             </CardContent>
                         </Card>
 
                         {/* BCPC Signal Card */}
                         <Card
-                            className={cn(
-                                "border cursor-pointer hover:shadow-md transition-shadow h-full",
-                                bcpcSignal.needs_attention
-                                    ? ""
-                                    : ""
-                            )}
+                            className="border cursor-pointer hover:shadow-md transition-shadow h-full"
                             onClick={() => router.visit('/admin/bcpc/dashboard')}
                         >
                             <CardHeader className="pb-2">
@@ -232,9 +216,6 @@ export default function Dashboard({
                                             )}
                                         </div>
                                     </div>
-                                    <p className="text-[9px] font-bold text-slate-400 uppercase text-right leading-tight max-w-[150px]">
-                                        {bcpcSignal.needs_attention ? 'Nutrition flags active.' : 'Health monitors optimal.'}
-                                    </p>
                                 </div>
                             </CardContent>
                         </Card>
@@ -244,7 +225,7 @@ export default function Dashboard({
                 {/* ── STRATEGIC ACTIVITY & SUMMARIZATION ── */}
                 <div className="grid gap-6 lg:grid-cols-5">
 
-                    {/* Left: Recent Case Reports (Activity Feed) */}
+                    {/* Left: Recent Operational Activity */}
                     <div className="lg:col-span-3 border rounded-xl shadow-sm overflow-hidden bg-white dark:bg-slate-900 flex flex-col">
                         <div className="p-5 border-b flex justify-between items-center bg-slate-50/30 dark:bg-slate-800/20">
                             <h3 className="font-black uppercase text-xs tracking-widest flex items-center gap-2 text-slate-900 dark:text-white">
@@ -261,7 +242,7 @@ export default function Dashboard({
                                         <th className="px-5 py-3">Case ID</th>
                                         <th className="px-5 py-3">Classification</th>
                                         <th className="px-5 py-3 text-center">Status</th>
-                                        <th className="px-5 py-3 text-right">Date</th>
+                                        <th className="px-5 py-3 text-right">Activity Time</th>
                                     </tr>
                                 </thead>
                                 <tbody className="text-[11px] font-bold uppercase text-slate-700 dark:text-neutral-300">
@@ -292,9 +273,6 @@ export default function Dashboard({
                                     <CardTitle className="text-xs font-black uppercase tracking-widest text-purple-700 dark:text-purple-400 flex items-center gap-2">
                                         <Users className="w-4 h-4" /> Community & GAD Snapshot
                                     </CardTitle>
-                                    <CardDescription className="text-[9px] font-bold uppercase text-slate-400">
-                                        Active Sectors & Program Engagement
-                                    </CardDescription>
                                 </CardHeader>
                                 <CardContent className="flex-1 flex flex-col justify-between p-6 gap-6">
                                     {/* Member Growth Indicator */}

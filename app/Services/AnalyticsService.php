@@ -7,6 +7,7 @@ use App\Models\VawcCase;
 use App\Models\MembershipApplication;
 use App\Models\Zone;
 use App\Models\BcpcChild;
+use App\Models\BcpcAssessment;
 use App\Models\Announcement;
 use App\Models\User;
 use App\Models\GadEvent;
@@ -66,7 +67,7 @@ class AnalyticsService
     /**
      * Get high-level system counts for the general dashboard.
      */
-    public function getSystemStats(?\App\Models\User $user = null): array
+    public function getSystemStats(?User $user = null): array
     {
         // 1. Calculations for Admin/Head
         $year = now()->year;
@@ -79,7 +80,7 @@ class AnalyticsService
             'totalVawcActive'     => VawcCase::where('status', '!=', 'Closed')->count(),
             'totalBcpcChildren'   => BcpcChild::count(),
             'pendingApps'         => MembershipApplication::where('status', 'Pending')->count(),
-            'totalOrgs'           => \App\Models\Organization::count(),
+            'totalOrgs'           => Organization::count(),
             'totalGadEvents'      => $gadEvents->count(),
             'gadApprovedCount'    => $gadEvents->where('status', 'approved')->count(),
             'totalSystemUsers'    => User::count(),
@@ -91,10 +92,10 @@ class AnalyticsService
             return [
                 'totalCases'        => 0,
                 'totalOrgs'         => 1,
-                'totalUsers'        => \App\Models\User::where('organization_id', $user->organization_id)->count(),
+                'totalUsers'        => User::where('organization_id', $user->organization_id)->count(),
                 'pendingApps'       => MembershipApplication::where('organization_id', $user->organization_id)
                     ->where('status', 'Pending')->count(),
-                'verifiedMembers'   => \App\Models\User::where('organization_id', $user->organization_id)
+                'verifiedMembers'   => User::where('organization_id', $user->organization_id)
                     ->whereNotNull('email_verified_at')->count(),
                 'recentActivity'    => DB::table('audit_logs')->where('user_id', $user->id)->where('created_at', '>=', now()->subDays(7))->count(),
             ];
@@ -106,7 +107,7 @@ class AnalyticsService
     /**
      * Get recent case reports.
      */
-    public function getRecentCases(int $limit = 5, ?\App\Models\User $user = null): Collection
+    public function getRecentCases(int $limit = 5, ?User $user = null): Collection
     {
         // RBAC: Org Presidents don't see cases
         if ($user && $user->isPresident()) {
@@ -114,23 +115,23 @@ class AnalyticsService
         }
 
         return CaseReport::with(['abuseType', 'vawcCase'])
-            ->orderByDesc('created_at')
+            ->latest()
             ->take($limit)
             ->get()
             ->map(fn($case) => [
                 'id'          => $case->id,
                 'case_number' => $case->case_number,
                 'type'        => $case->type,
-                'subType'     => $case->abuseType ? $case->abuseType->name : 'N/A',
+                'subType'     => $case->abuseType ? $case->abuseType->name : 'General Intake',
                 'status'      => $case->vawcCase ? $case->vawcCase->status : ($case->lifecycle_status ?: 'New'),
-                'date'        => $case->incident_date ? $case->incident_date->format('M d, Y') : $case->created_at->format('M d, Y'),
+                'date'        => $case->created_at ? $case->created_at->diffForHumans() : 'Just now',
             ]);
     }
 
     /**
      * Get recent membership applications.
      */
-    public function getRecentApplications(int $limit = 5, ?\App\Models\User $user = null): Collection
+    public function getRecentApplications(int $limit = 5, ?User $user = null): Collection
     {
         $query = MembershipApplication::with(['organization']);
 
@@ -174,7 +175,7 @@ class AnalyticsService
     /**
      * Get distribution of case resolution statuses.
      */
-    public function getCaseResolutionStats(int $year, ?\App\Models\User $user = null): array
+    public function getCaseResolutionStats(int $year, ?User $user = null): array
     {
         // RBAC: Org Presidents don't see case stats
         if ($user && $user->isPresident()) {
@@ -527,7 +528,7 @@ class AnalyticsService
     /**
      * Get membership application growth trends.
      */
-    public function getMembershipTrends(int $year, ?\App\Models\User $user = null): array
+    public function getMembershipTrends(int $year, ?User $user = null): array
     {
         $query = MembershipApplication::where('status', 'Approved')
             ->whereYear('created_at', $year);
@@ -573,10 +574,10 @@ class AnalyticsService
      */
     public function getBcpcNutritionSummary(): array
     {
-        $total = \App\Models\BcpcChild::count();
+        $total = BcpcChild::count();
 
         // Get the latest assessment for each child
-        $latestAssessments = \App\Models\BcpcAssessment::whereIn('id', function ($query) {
+        $latestAssessments = BcpcAssessment::whereIn('id', function ($query) {
             $query->select(DB::raw('MAX(id)'))
                 ->from('bcpc_assessments')
                 ->groupBy('bcpc_child_id');
@@ -593,18 +594,18 @@ class AnalyticsService
 
         // SFP Breakdown
         $sfpBreakdown = [
-            'Enrolled'   => \App\Models\BcpcChild::where('sfp_status', 'Enrolled')->count(),
-            'Graduated'  => \App\Models\BcpcChild::where('sfp_status', 'Graduated')->count(),
-            'Completed'  => \App\Models\BcpcChild::where('sfp_status', 'Completed')->count(),
-            'Terminated' => \App\Models\BcpcChild::where('sfp_status', 'Terminated')->count(),
-            'None'       => \App\Models\BcpcChild::where('sfp_status', 'None')->count(),
+            'Enrolled'   => BcpcChild::where('sfp_status', 'Enrolled')->count(),
+            'Graduated'  => BcpcChild::where('sfp_status', 'Graduated')->count(),
+            'Completed'  => BcpcChild::where('sfp_status', 'Completed')->count(),
+            'Terminated' => BcpcChild::where('sfp_status', 'Terminated')->count(),
+            'None'       => BcpcChild::where('sfp_status', 'None')->count(),
         ];
 
         // Zones Breakdown for Malnutrition Hotspots
-        $zones = \App\Models\Zone::all();
+        $zones = Zone::all();
         $zonesBreakdown = [];
         foreach ($zones as $zone) {
-            $zoneChildrenIds = \App\Models\BcpcChild::where('zone_id', $zone->id)->pluck('id');
+            $zoneChildrenIds = BcpcChild::where('zone_id', $zone->id)->pluck('id');
             $zoneTotal = $zoneChildrenIds->count();
 
             $zoneLatest = $latestAssessments->whereIn('bcpc_child_id', $zoneChildrenIds);
@@ -735,23 +736,37 @@ class AnalyticsService
      */
     public function getOrganizationAnalytics(int $year, ?int $orgId = null): array
     {
-        // Get organizations or a specific one
-        $orgQuery = Organization::query();
-        if ($orgId) {
-            $orgQuery->where('id', $orgId);
-        }
-        $organizations = $orgQuery->get();
+        $demographics = $this->extractMemberDemographics($orgId);
 
-        // 1. Members stats
+        return [
+            'total_members'             => $demographics['total'],
+            'age_distribution'          => $demographics['age'],
+            'gender_distribution'       => $demographics['gender'],
+            'civil_status_distribution' => $demographics['civil_status'],
+            'purok_distribution'        => $demographics['purok'],
+            'applications'              => $this->getApplicationsAnalytics($year, $orgId),
+            'gad'                       => $this->getGadEventsAnalytics($year, $orgId),
+            'communications'           => $this->getCommunicationsAnalytics($year, $orgId),
+            'organizations_list'        => Organization::all()->map(fn($o) => [
+                'id' => $o->id,
+                'name' => $o->name,
+                'slug' => $o->slug,
+                'members_count' => $o->membershipApplications()->where('status', 'Approved')->count()
+            ])->toArray(),
+        ];
+    }
+
+    /**
+     * Extract age, gender, civil status, and purok demographic profiles from members metadata.
+     */
+    private function extractMemberDemographics(?int $orgId = null): array
+    {
         $membersQuery = Member::query()->where('status', 'active');
         if ($orgId) {
             $membersQuery->where('organization_id', $orgId);
         }
         $members = $membersQuery->with(['organization', 'application'])->get();
 
-        $totalMembers = $members->count();
-
-        // Demographics mapping
         $ageCategories = [
             'Under 18 (Youth)' => 0,
             '18-30 (Young Adult)' => 0,
@@ -815,7 +830,6 @@ class AnalyticsService
                     break;
                 }
             }
-            // Smart fallbacks based on organization slug
             if (!$gender && $member->organization) {
                 $orgSlug = $member->organization->slug;
                 if (str_contains($orgSlug, 'erpat') || str_contains($orgSlug, 'father')) {
@@ -860,7 +874,6 @@ class AnalyticsService
             }
             $address = $meta['address'] ?? ($member->application->address ?? null);
             if (!$purok && $address) {
-                // Try to extract "Purok X" or "Zone X" from address
                 if (preg_match('/(Purok\s*\d+|Zone\s*\d+)/i', $address, $matches)) {
                     $purok = ucwords(strtolower($matches[0]));
                 }
@@ -871,15 +884,12 @@ class AnalyticsService
             $purokDistribution[$purok] = ($purokDistribution[$purok] ?? 0) + 1;
         }
 
-        // Format Purok distribution for Recharts
         $purokData = [];
         foreach ($purokDistribution as $purokName => $count) {
             $purokData[] = ['name' => $purokName, 'count' => $count];
         }
-        // Sort by count descending
         usort($purokData, fn($a, $b) => $b['count'] <=> $a['count']);
 
-        // Format age and gender categories
         $ageData = [];
         foreach ($ageCategories as $name => $count) {
             if ($count > 0 || $name === 'Unknown') {
@@ -897,19 +907,26 @@ class AnalyticsService
             }
         }
 
-        // 2. Applications stats
+        return [
+            'total' => $members->count(),
+            'age' => $ageData,
+            'gender' => $genderData,
+            'civil_status' => $civilStatusData,
+            'purok' => $purokData,
+        ];
+    }
+
+    /**
+     * Get monthly membership applications metrics.
+     */
+    private function getApplicationsAnalytics(int $year, ?int $orgId = null): array
+    {
         $appsQuery = MembershipApplication::whereYear('created_at', $year);
         if ($orgId) {
             $appsQuery->where('organization_id', $orgId);
         }
         $apps = $appsQuery->get();
 
-        $totalApps = $apps->count();
-        $approvedApps = $apps->where('status', 'Approved')->count();
-        $pendingApps = $apps->where('status', 'Pending')->count();
-        $disapprovedApps = $apps->where('status', 'Disapproved')->count();
-
-        // Monthly application trend
         $months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
         $monthlyApps = [];
         $appsByMonth = $apps->groupBy(fn($a) => Carbon::parse($a->created_at)->month);
@@ -924,18 +941,27 @@ class AnalyticsService
             ];
         }
 
-        // 3. GAD Events Stats (scoped to organization if president)
+        return [
+            'total' => $apps->count(),
+            'approved' => $apps->where('status', 'Approved')->count(),
+            'pending' => $apps->where('status', 'Pending')->count(),
+            'disapproved' => $apps->where('status', 'Disapproved')->count(),
+            'monthly_trend' => $monthlyApps,
+        ];
+    }
+
+    /**
+     * Get GAD events proposal metrics.
+     */
+    private function getGadEventsAnalytics(int $year, ?int $orgId = null): array
+    {
         $gadQuery = GadEvent::whereYear('event_date', $year);
         if ($orgId) {
             $gadQuery->where('organization_id', $orgId);
         }
         $gadEvents = $gadQuery->get();
-        $totalGad = $gadEvents->count();
-        $approvedGad = $gadEvents->where('status', 'approved')->count();
-        $pendingGad = $gadEvents->where('status', 'pending')->count();
-        $rejectedGad = $gadEvents->where('status', 'rejected')->count();
 
-        // Monthly GAD event proposals
+        $months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
         $monthlyGad = [];
         $gadByMonth = $gadEvents->groupBy(fn($e) => Carbon::parse($e->event_date)->month);
         foreach ($months as $idx => $mName) {
@@ -948,7 +974,20 @@ class AnalyticsService
             ];
         }
 
-        // 4. Messaging & Communication Analytics
+        return [
+            'total' => $gadEvents->count(),
+            'approved' => $gadEvents->where('status', 'approved')->count(),
+            'pending' => $gadEvents->where('status', 'pending')->count(),
+            'rejected' => $gadEvents->where('status', 'rejected')->count(),
+            'monthly_trend' => $monthlyGad,
+        ];
+    }
+
+    /**
+     * Get member communications messaging metrics.
+     */
+    private function getCommunicationsAnalytics(int $year, ?int $orgId = null): array
+    {
         $commQuery = MemberCommunication::query()
             ->join('members', 'member_communications.member_id', '=', 'members.id')
             ->whereYear('member_communications.created_at', $year);
@@ -958,10 +997,7 @@ class AnalyticsService
         $commQuery->select('member_communications.*');
         $comms = $commQuery->get();
 
-        $totalComms = $comms->count();
-        $sentComms = $comms->where('status', 'Sent')->count();
-        $failedComms = $comms->where('status', 'Failed')->count();
-
+        $months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
         $monthlyComms = [];
         $commsByMonth = $comms->groupBy(fn($c) => Carbon::parse($c->created_at)->month);
         foreach ($months as $idx => $mName) {
@@ -973,41 +1009,11 @@ class AnalyticsService
             ];
         }
 
-        // List of organizations (for Admin filter/overview)
-        $orgList = Organization::all()->map(fn($o) => [
-            'id' => $o->id,
-            'name' => $o->name,
-            'slug' => $o->slug,
-            'members_count' => $o->membershipApplications()->where('status', 'Approved')->count()
-        ])->toArray();
-
         return [
-            'total_members' => $totalMembers,
-            'age_distribution' => $ageData,
-            'gender_distribution' => $genderData,
-            'civil_status_distribution' => $civilStatusData,
-            'purok_distribution' => $purokData,
-            'applications' => [
-                'total' => $totalApps,
-                'approved' => $approvedApps,
-                'pending' => $pendingApps,
-                'disapproved' => $disapprovedApps,
-                'monthly_trend' => $monthlyApps,
-            ],
-            'gad' => [
-                'total' => $totalGad,
-                'approved' => $approvedGad,
-                'pending' => $pendingGad,
-                'rejected' => $rejectedGad,
-                'monthly_trend' => $monthlyGad,
-            ],
-            'communications' => [
-                'total' => $totalComms,
-                'sent' => $sentComms,
-                'failed' => $failedComms,
-                'monthly_trend' => $monthlyComms,
-            ],
-            'organizations_list' => $orgList,
+            'total' => $comms->count(),
+            'sent' => $comms->where('status', 'Sent')->count(),
+            'failed' => $comms->where('status', 'Failed')->count(),
+            'monthly_trend' => $monthlyComms,
         ];
     }
 

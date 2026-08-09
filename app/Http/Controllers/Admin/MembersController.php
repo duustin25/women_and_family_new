@@ -24,7 +24,7 @@ class MembersController extends Controller
      */
     public function index(Request $request)
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = Auth::user();
         $query = Member::with(['organization', 'application', 'communications', 'dispatches'])->latest();
 
@@ -76,7 +76,7 @@ class MembersController extends Controller
         ]);
 
         // RBAC: President can only message their own organization's members
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = Auth::user();
         if ($user->isPresident() && $user->organization_id !== $member->organization_id) {
             abort(403, 'Unauthorized. Access Denied.');
@@ -119,7 +119,7 @@ class MembersController extends Controller
             'recipient_group'  => 'required|string',
         ]);
 
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = Auth::user();
 
         // Resolve the recipient group into an organization_id for the job.
@@ -156,7 +156,7 @@ class MembersController extends Controller
     public function tagBeneficiary(Request $request, Member $member)
     {
         // RBAC: President check
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = Auth::user();
         if ($user->isPresident() && $user->organization_id !== $member->organization_id) {
             abort(403, 'Unauthorized to tag this member.');
@@ -210,7 +210,7 @@ class MembersController extends Controller
     public function claimDispatch(Request $request, Member $member, BeneficiaryDispatch $dispatch)
     {
         // RBAC: President can only manage their org's members
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = Auth::user();
         if ($user->isPresident() && $user->organization_id !== $member->organization_id) {
             abort(403, 'Unauthorized.');

@@ -157,7 +157,7 @@ class SystemUserController extends Controller
         ]);
     }
 
-    public function restore($id)
+    public function restore(int $id)
     {
         $user = User::onlyTrashed()->findOrFail($id);
         $user->restore();

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\CaseAbuseType;
 use App\Models\Agency;
+use App\Models\Zone;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -39,7 +40,7 @@ class SettingsController extends Controller
         return back()->with('success', 'Abuse Type added successfully.');
     }
 
-    public function updateAbuseType(Request $request, $id)
+    public function updateAbuseType(Request $request, int $id)
     {
         $type = CaseAbuseType::findOrFail($id);
 
@@ -64,14 +65,14 @@ class SettingsController extends Controller
             'name' => 'required|string|unique:zones,name',
         ]);
 
-        \App\Models\Zone::create($validated);
+        Zone::create($validated);
 
         return back()->with('success', 'Zone added successfully.');
     }
 
-    public function updateZone(Request $request, $id)
+    public function updateZone(Request $request, int $id)
     {
-        $zone = \App\Models\Zone::findOrFail($id);
+        $zone = Zone::findOrFail($id);
 
         $validated = $request->validate([
             'name' => 'sometimes|required|string|unique:zones,name,' . $id,
