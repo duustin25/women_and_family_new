@@ -190,4 +190,58 @@ class MembershipController extends Controller
             'application' => new \App\Http\Resources\MembershipApplicationResource($application),
         ]);
     }
+
+    /**
+     * Display Public Application Status Lookup and Appeal Page.
+     */
+    public function statusPage(Request $request)
+    {
+        $search = trim($request->input('search', ''));
+        $application = null;
+
+        if (!empty($search)) {
+            $application = MembershipApplication::with('organization')
+                ->where(function ($q) use ($search) {
+                    if (is_numeric($search)) {
+                        $q->where('id', $search);
+                    } else {
+                        $q->where('email', $search)
+                          ->orWhere('fullname', 'LIKE', "%{$search}%");
+                    }
+                })
+                ->latest()
+                ->first();
+        }
+
+        return Inertia::render('Public/Applications/Status', [
+            'search' => $search,
+            'application' => $application,
+        ]);
+    }
+
+    /**
+     * Submit an Appeal Statement for a rejected application.
+     */
+    public function submitPublicAppeal(Request $request, MembershipApplication $application, \App\Services\OrganizationGovernanceService $service)
+    {
+        $validated = $request->validate([
+            'appeal_reason' => 'required|string|min:10|max:1000',
+            'appeal_docs' => 'nullable|array',
+            'appeal_docs.*' => 'file|mimes:jpg,jpeg,png,pdf|max:5120',
+        ]);
+
+        $uploadedDocs = [];
+        if ($request->hasFile('appeal_docs')) {
+            foreach ($request->file('appeal_docs') as $file) {
+                if ($file->isValid()) {
+                    $uploadedDocs[] = $file->store('uploads/appeals', 'public');
+                }
+            }
+        }
+
+        $service->submitAppeal($application, $validated['appeal_reason'], $uploadedDocs);
+
+        return redirect()->route('public.applications.status', ['search' => $application->email ?? $application->id])
+            ->with('success', 'Your appeal statement has been successfully submitted and escalated to the Barangay Administrator Appeals Command Center.');
+    }
 }

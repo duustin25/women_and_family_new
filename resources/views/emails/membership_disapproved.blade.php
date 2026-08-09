@@ -1,30 +1,36 @@
 <x-mail::message>
-    {{-- ═══════════════════ HEADER ═══════════════════ --}}
-    <div style="border-bottom: 3px solid #6b7280; padding-bottom: 12px; margin-bottom: 20px;">
+# 📄 Notice of Application Status — Disapproved
 
-        # 📄 Membership Application Update
+**Barangay 183 — Women & Family Protection System**
 
-        **Barangay 183 — Women & Family Protection System**
+---
 
-    </div>
+Dear **{{ $application->fullname }}**,
 
-    ---
+We are writing to inform you regarding your membership application for **{{ $application->organization->name ?? 'Barangay 183 Organization' }}**.
 
-    Dear **{{ $application->fullname }}**,
+After officer evaluation, your application was **disapproved** at this time.
 
-    Thank you for your interest in joining **{{ $application->organization->name ?? 'Barangay 183' }}**.
+<x-mail::panel>
+### 📌 Documented Reason for Disapproval
+*"{{ $application->rejection_reason ?? 'Reason documented during officer review.' }}"*
+</x-mail::panel>
 
-    After careful review of your application by our Administrative Team, we regret to inform you that we are unable to approve your membership request at this time.
+### ⚖️ Right to Appeal (Barangay Governance Protection)
+Under Barangay 183 Governance guidelines, you have the right to **contest this decision** if you believe it was made in error or if you have additional supporting documents.
 
-    If this is an error or if you have any questions or require further clarification regarding this decision, please feel free to reach out to the organization's administration at the Barangay hall.
+Your appeal will be escalated directly to the **Barangay Administrator Appeals Command Center** for an independent, impartial review and potential overrule.
 
-    ---
+<x-mail::button :url="route('public.applications.status', ['search' => $application->email ?? $application->id])" color="error">
+⚖️ Submit Appeal to Barangay Admin
+</x-mail::button>
 
-    📌 **Data Privacy Notice**
-    Your information is protected under Republic Act 10173 (Data Privacy Act of 2012). Any submitted requirements will be disposed of securely in accordance with data privacy guidelines.
+<x-mail::subcopy>
+**Data Privacy Notice (Republic Act 10173):** This email notification was issued by the official Barangay 183 Women & Family Protection System. Your personal data is protected and kept strictly confidential.
+</x-mail::subcopy>
 
-    Respectfully,
-    **{{ $application->organization->name ?? 'Barangay 183' }} Administrative Team**
-    *Women & Family Protection Information System*
-    📍 Barangay 183, Pasay City
+Respectfully,  
+**{{ $application->organization->name ?? 'Barangay 183' }} Administration**  
+*Women & Family Protection Information System*  
+📍 Barangay 183, Pasay City
 </x-mail::message>

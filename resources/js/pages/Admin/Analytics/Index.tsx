@@ -667,14 +667,15 @@ export default function Index({
                     </div>
 
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
                         {/* Chart 3: Member Purok / Geographical Distribution */}
-                        <Card className="shadow-sm border flex flex-col justify-between">
+                        <Card className={cn("shadow-sm border flex flex-col justify-between", isPresident ? "lg:col-span-3" : "lg:col-span-2")}>
                             <CardHeader className="border-b bg-gray-50/50 dark:bg-slate-900/50 pb-3">
                                 <CardTitle className="uppercase tracking-widest text-xs font-black text-purple-700 flex items-center gap-2">
                                     <Map className="w-4 h-4 text-purple-600" /> Member Purok Distribution
                                 </CardTitle>
                                 <CardDescription className="text-[10px] font-bold uppercase text-slate-400">
-                                    Geographical distribution of verified members
+                                    Geographical distribution of verified members across puroks
                                 </CardDescription>
                             </CardHeader>
                             <CardContent className="h-[220px] p-6">
@@ -696,57 +697,16 @@ export default function Index({
                             </CardContent>
                         </Card>
 
-                        {/* Chart 4: Communications Delivery Status & Outreach Volume */}
-                        <Card className="lg:col-span-2 shadow-sm border overflow-hidden">
-                            <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between border-b bg-gray-50/50 dark:bg-slate-900/50">
-                                <div>
-                                    <CardTitle className="font-black uppercase text-xs tracking-widest text-teal-700 flex items-center gap-2">
-                                        <Mail className="w-4 h-4 text-teal-600" /> GAD Outreach Communications
-                                    </CardTitle>
-                                    <CardDescription className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mt-1">
-                                        Monthly outreach volume and messaging delivery metrics
-                                    </CardDescription>
-                                </div>
-                                <div className="flex gap-2 mt-2 sm:mt-0 text-[9px] font-bold uppercase text-slate-500">
-                                    <span className="text-emerald-600">Sent: {orgAnalytics.communications.sent}</span>
-                                    <span className="text-rose-600">Failed: {orgAnalytics.communications.failed}</span>
-                                </div>
-                            </CardHeader>
-                            <CardContent className="p-6 h-[220px]">
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <BarChart data={orgAnalytics.communications.monthly_trend} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                                        <XAxis dataKey="month" tickLine={false} axisLine={false} tick={{ fontSize: 9, fontWeight: 'bold' }} />
-                                        <YAxis tickLine={false} axisLine={false} tick={{ fontSize: 9 }} />
-                                        <Tooltip />
-                                        <Bar dataKey="sent" fill="#0d9488" radius={[4, 4, 0, 0]} label={{ position: 'top', fontSize: 9, fontWeight: 'black' }} />
-                                    </BarChart>
-                                </ResponsiveContainer>
-                            </CardContent>
-                        </Card>
-                    </div>
-                </div>
-
-                {/* ══════════════════════════════════════════════════════ */}
-                {/* SECTION 3: GAD CALENDAR & SECTOR PROFILE (Admin Only)  */}
-                {/* ══════════════════════════════════════════════════════ */}
-                {!isPresident && (
-                    <div className="space-y-6 pb-12">
-                        <h2 className="text-base font-black tracking-tight flex items-center gap-2 py-3 mb-2 border-b uppercase text-indigo-600 dark:text-indigo-400">
-                            <Building className="w-4 h-4" />
-                            GAD Programs & Community Snapshots
-                        </h2>
-
-                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                            {/* GAD Activity Status Chart */}
-                            <Card className="border-indigo-100 bg-indigo-50/5">
-                                <CardHeader>
+                        {/* Chart 4: GAD Approved Activity Radar (Admin/Head Only) */}
+                        {!isPresident && (
+                            <Card className="border-indigo-100 bg-indigo-50/5 flex flex-col justify-between">
+                                <CardHeader className="pb-2">
                                     <CardTitle className="uppercase tracking-widest text-xs font-black text-indigo-700 flex items-center gap-2">
                                         <Calendar className="w-4 h-4" /> GAD Approved Activity Radar
                                     </CardTitle>
                                     <CardDescription className="text-[10px] font-bold uppercase text-slate-400">Advocacy Event Status Distribution</CardDescription>
                                 </CardHeader>
-                                <CardContent className="flex items-center justify-between h-[180px]">
+                                <CardContent className="flex items-center justify-between h-[180px] pt-0">
                                     <div className="space-y-2 flex-1">
                                         <div className="bg-white dark:bg-slate-900 border rounded-xl px-4 py-2 shadow-sm">
                                             <p className="text-[8px] uppercase font-black text-slate-400">Total GAD Projects</p>
@@ -777,33 +737,12 @@ export default function Index({
                                     </div>
                                 </CardContent>
                             </Card>
-
-                            {/* Org Sector Density Analysis */}
-                            <Card className="lg:col-span-2">
-                                <CardHeader>
-                                    <CardTitle className="uppercase tracking-widest text-xs font-black text-slate-700 flex items-center gap-2">
-                                        <Users className="w-4 h-4 text-slate-600" /> Accredited Org Sector Density
-                                    </CardTitle>
-                                    <CardDescription className="text-[10px] font-bold uppercase text-slate-400">Distribution of partner organizations by category</CardDescription>
-                                </CardHeader>
-                                <CardContent className="h-[200px]">
-                                    <ResponsiveContainer width="100%" height="100%">
-                                        <BarChart data={orgSectorAnalysis} margin={{ top: 20, right: 30, left: -20, bottom: 0 }}>
-                                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                                            <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 9, fontWeight: 'bold' }} />
-                                            <YAxis tickLine={false} axisLine={false} tick={{ fontSize: 9 }} width={25} />
-                                            <Tooltip />
-                                            <Bar dataKey="value" fill="#6366f1" radius={[4, 4, 0, 0]} label={{ position: 'top', fontSize: 10, fontWeight: 'black' }} />
-                                        </BarChart>
-                                    </ResponsiveContainer>
-                                </CardContent>
-                            </Card>
-                        </div>
+                        )}
                     </div>
-                )}
-                </TabsContent>
-            </Tabs>
-        </div>
-        </AppLayout>
-    );
+                </div>
+            </TabsContent>
+        </Tabs>
+    </div>
+    </AppLayout>
+);
 }

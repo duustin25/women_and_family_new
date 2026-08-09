@@ -4,7 +4,7 @@ namespace App\Services;
 
 use App\Models\CaseAbuseType;
 use App\Models\VawcCase;
-use App\Models\VawcBpo;
+use App\Models\VawcProtectionOrder;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
@@ -60,14 +60,14 @@ class VawcAnalyticsService
      */
     public function getBpoMetrics(int $year): array
     {
-        $totalBpos = VawcBpo::whereYear('issued_at', $year)->count();
-        $activeBpos = VawcBpo::whereYear('issued_at', $year)
-            ->where('status', 'active')
-            ->where('expires_at', '>=', now())
+        $totalBpos = VawcProtectionOrder::whereYear('issued_datetime', $year)->count();
+        $activeBpos = VawcProtectionOrder::whereYear('issued_datetime', $year)
+            ->where('status', 'Active')
+            ->where('expiration_date', '>=', now())
             ->count();
-        $expiredBpos = VawcBpo::whereYear('issued_at', $year)
+        $expiredBpos = VawcProtectionOrder::whereYear('issued_datetime', $year)
             ->where(function ($q) {
-                $q->where('status', 'expired')->orWhere('expires_at', '<', now());
+                $q->where('status', 'Expired')->orWhere('expiration_date', '<', now());
             })
             ->count();
 

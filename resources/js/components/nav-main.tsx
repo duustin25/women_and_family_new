@@ -16,7 +16,7 @@ export function NavMain({ title, items = [] }: { title: string; items: NavItem[]
 
     return (
         <SidebarGroup className="px-2 py-1">
-            <SidebarGroupLabel className="text-[10px] font-black uppercase tracking-wider text-slate-400/80 dark:text-slate-500">{title}</SidebarGroupLabel>
+            <SidebarGroupLabel className="text-xs font-black uppercase tracking-widest text-slate-500/90 dark:text-slate-400">{title}</SidebarGroupLabel>
             <SidebarMenu>
                 {items.map((item) => (
                     <SidebarMenuItem key={item.title}>

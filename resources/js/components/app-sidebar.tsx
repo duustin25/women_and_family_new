@@ -52,7 +52,7 @@ const navGroups: NavGroup[] = [
                 icon: Wallpaper,
             },
             {
-                title: 'Data Analytics & Official Reports',
+                title: 'Analytics & Reports',
                 href: '/admin/analytics',
                 icon: ChartLine,
             },
@@ -62,17 +62,17 @@ const navGroups: NavGroup[] = [
         title: 'Social Service Modules',
         items: [
             {
-                title: 'VAWC Case Protection Registry',
+                title: 'VAWC Cases',
                 href: '/admin/vawc/dashboard',
                 icon: ShieldAlert,
             },
             {
-                title: 'BCPC Nutritional Status Monitoring',
+                title: 'BCPC Nutrition',
                 href: '/admin/bcpc/dashboard',
                 icon: Activity,
             },
             {
-                title: 'GAD Programs Calendar of Events',
+                title: 'GAD Events',
                 href: '/admin/gad/events',
                 icon: CalendarRange,
             },
@@ -87,7 +87,7 @@ const navGroups: NavGroup[] = [
                 icon: Building2,
             },
             {
-                title: 'Membership Applications',
+                title: 'Applications',
                 href: '/admin/applications',
                 icon: FileSearch,
             },
@@ -127,7 +127,7 @@ const navGroups: NavGroup[] = [
                 icon: ShieldAlert,
             },
             {
-                title: 'Backup & Recovery',
+                title: 'System Backup',
                 href: '/admin/backup-recovery',
                 icon: Database,
             },
@@ -149,8 +149,8 @@ export function AppSidebar() {
     // Filter dynamic groups based on roles
     const filteredGroups = navGroups.map((group) => {
         const filteredItems = group.items.filter((item) => {
-            // Settings & Backup & Recovery are strictly Admin ONLY
-            if ((item.title === 'Settings' || item.title === 'Backup & Recovery') && role !== 'admin') {
+            // Settings & System Backup are strictly Admin ONLY
+            if ((item.title === 'Settings' || item.title === 'System Backup') && role !== 'admin') {
                 return false;
             }
 
@@ -164,9 +164,9 @@ export function AppSidebar() {
 
             if (role === 'president') {
                 const hiddenFromPresident = [
-                    'VAWC Case Protection Registry',
-                    'BCPC Nutritional Status Monitoring',
-                    'GAD Programs Calendar of Events',
+                    'VAWC Cases',
+                    'BCPC Nutrition',
+                    'GAD Events',
                     'System Users',
                     'Officials',
                     'Settings',

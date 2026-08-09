@@ -9,9 +9,8 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 
-class SendMembershipDisapprovedEmail implements ShouldQueue
+class SendMembershipDisapprovedEmail
 {
-    use InteractsWithQueue;
 
     /**
      * Handle the event.

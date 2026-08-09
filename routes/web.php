@@ -56,6 +56,10 @@ Route::prefix('organizations')->group(function () {
         ->name('public.organizations.print');
 });
 
+// Public Application Status Lookup & Appeal Engine
+Route::get('applications/status', [MembershipController::class, 'statusPage'])->name('public.applications.status');
+Route::post('applications/{application}/public-appeal', [MembershipController::class, 'submitPublicAppeal'])->name('public.applications.appeal');
+
 
 
 
@@ -108,6 +112,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('applications/{application}/reject', [MembershipApplicationController::class, 'reject'])->name('applications.reject');
         Route::post('applications/{application}/appeal', [MembershipApplicationController::class, 'appeal'])->name('applications.appeal');
         Route::post('applications/{application}/overrule', [MembershipApplicationController::class, 'overrule'])->name('applications.overrule');
+        Route::post('applications/{application}/sustain', [MembershipApplicationController::class, 'sustain'])->name('applications.sustain');
         Route::get('applications/{application}/edit', [MembershipApplicationController::class, 'edit'])->name('applications.edit');
         Route::put('applications/{application}', [MembershipApplicationController::class, 'update'])->name('applications.update');
 

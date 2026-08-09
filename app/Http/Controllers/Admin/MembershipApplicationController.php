@@ -257,6 +257,21 @@ class MembershipApplicationController extends Controller
     }
 
     /**
+     * Barangay Admin sustains officer rejection decision after reviewing resident appeal.
+     */
+    public function sustain(Request $request, $id, \App\Services\OrganizationGovernanceService $service)
+    {
+        if ($request->user()->isPresident()) {
+            abort(403, 'Unauthorized. Only Barangay Administrators can action appeals.');
+        }
+
+        $application = MembershipApplication::findOrFail($id);
+        $service->sustainDisapproval($application, $request->user()->name);
+
+        return redirect()->back()->with('success', "Disapproval sustained. Resident appeal resolved and closed.");
+    }
+
+    /**
      * Display Appeals Queue for Barangay Admin.
      */
     public function appeals(Request $request)
@@ -265,13 +280,24 @@ class MembershipApplicationController extends Controller
             abort(403, 'Unauthorized. Governance Appeals Queue is strictly managed by Barangay Administrators.');
         }
 
-        $appeals = MembershipApplication::with('organization')
-            ->whereIn('status', ['appealed', 'rejected'])
-            ->latest()
-            ->paginate(10);
+        $tab = $request->input('tab', 'active');
+
+        $query = MembershipApplication::with('organization');
+
+        if ($tab === 'history') {
+            // Appeals history (Overruled or Sustained)
+            $query->whereIn('approval_type', ['admin_overrule', 'admin_sustained'])
+                  ->orWhere('status', 'final_disapproved');
+        } else {
+            // Active appeals queue (Pending admin review)
+            $query->whereIn('status', ['appealed', 'rejected']);
+        }
+
+        $appeals = $query->latest('updated_at')->paginate(10)->withQueryString();
 
         return Inertia::render('Admin/Applications/AppealsIndex', [
             'appeals' => $appeals,
+            'tab' => $tab,
         ]);
     }
 }

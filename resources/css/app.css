@@ -134,7 +134,7 @@
 
 @layer base {
     html {
-        font-size: 17.5px;
+        font-size: 18px; /* Scaled up root size for comfortable reading */
         overflow-x: hidden;
         max-width: 100vw;
     }
@@ -143,10 +143,83 @@
         @apply bg-background text-foreground;
         overflow-x: hidden;
         max-width: 100vw;
+        font-size: 0.95rem; /* Highly legible body text scale */
+        line-height: 1.6;
     }
 
     * {
         @apply border-border;
+    }
+
+    /* UI Golden Rule: Typographic hierarchy scaling */
+    h1 {
+        @apply font-black tracking-tight;
+        font-size: 2.25rem;
+    }
+    
+    h2 {
+        @apply font-extrabold tracking-tight;
+        font-size: 1.75rem;
+    }
+    
+    h3 {
+        @apply font-bold tracking-tight;
+        font-size: 1.35rem;
+    }
+
+    /* Enforce legible table layout */
+    table th {
+        font-size: 0.8125rem !important; /* ~14.6px - readable headers */
+        letter-spacing: 0.05em !important;
+        text-transform: uppercase !important;
+        font-weight: 700 !important;
+    }
+
+    table td {
+        font-size: 0.875rem !important; /* ~15.7px - highly visible rows */
+        line-height: 1.5 !important;
+    }
+
+    /* Form element visibility */
+    label, .label {
+        font-size: 0.8125rem !important; /* ~14.6px - no micro labels */
+        font-weight: 600 !important;
+        letter-spacing: 0.025em !important;
+    }
+
+    input, select, textarea {
+        font-size: 0.9rem !important; /* ~16.2px - prevents auto-zoom on mobile and looks neat */
+    }
+
+    /* Small UI element indicators */
+    .badge, [class*="badge"] {
+        font-size: 0.75rem !important; /* ~13.5px */
+        font-weight: 600 !important;
+        padding-top: 0.25rem !important;
+        padding-bottom: 0.25rem !important;
+    }
+
+    /* Cards typography */
+    [data-slot="card-title"] {
+        font-size: 1.15rem !important;
+        font-weight: 700 !important;
+    }
+
+    [data-slot="card-description"] {
+        font-size: 0.875rem !important;
+    }
+
+    /* Sidebar sizing adjustments */
+    [data-sidebar="menu-button"] {
+        font-size: 0.9rem !important; /* Balanced sidebar link font size */
+        height: auto !important;
+        padding-top: 0.5rem !important;
+        padding-bottom: 0.5rem !important;
+    }
+
+    [data-sidebar="group-label"] {
+        font-size: 0.75rem !important; /* ~13.5px */
+        font-weight: 800 !important;
     }
 }
 

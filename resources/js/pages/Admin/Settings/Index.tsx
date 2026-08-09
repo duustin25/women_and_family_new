@@ -33,7 +33,7 @@ export default function Index({ abuseTypes, referralPartners, caseStatuses, zone
         ]}>
             <Head title="System Settings" />
 
-            <div className="p-6 max-w-7xl mx-auto space-y-8">
+            <div className="flex h-full flex-1 flex-col gap-6 p-6">
                 <div>
                     <h1 className="text-2xl font-black tracking-tight flex items-center gap-2">
                         <Settings className="w-6 h-6" />
@@ -44,7 +44,7 @@ export default function Index({ abuseTypes, referralPartners, caseStatuses, zone
 
                 <div className="w-full">
                     {/* Tab Navigation */}
-                    <div className="inline-flex h-10 items-center justify-center rounded-md p-1 border w-full max-w-3xl">
+                    <div className="inline-flex h-10 items-center justify-center rounded-md p-1 border w-full max-w-4xl">
                         {tabs.map((tab) => (
                             <button
                                 key={tab.id}

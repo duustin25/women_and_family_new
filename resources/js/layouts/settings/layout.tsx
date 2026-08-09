@@ -43,7 +43,7 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
     }
 
     return (
-        <div className="px-4 py-6">
+        <div className="flex h-full flex-1 flex-col gap-6 p-6">
             <Heading
                 title="Settings"
                 description="Manage your profile and account settings"
@@ -78,8 +78,8 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
 
                 <Separator className="my-6 lg:hidden" />
 
-                <div className="flex-1 md:max-w-2xl">
-                    <section className="max-w-xl space-y-12">
+                <div className="flex-1 md:max-w-4xl">
+                    <section className="max-w-3xl space-y-12">
                         {children}
                     </section>
                 </div>

@@ -29,6 +29,9 @@ class OrganizationGovernanceService
         // Log governance audit event
         Log::info("Membership application ID {$application->id} for {$application->fullname} rejected by {$rejectedBy}. Reason: {$reason}");
 
+        // Trigger email notification sequence to resident
+        event(new \App\Events\ApplicationDisapproved($application));
+
         // Dispatch notification to Barangay Admins so it shows in notification bell
         $admins = \App\Models\User::where('role', 'admin')->get();
         if ($admins->isNotEmpty()) {
@@ -101,6 +104,23 @@ class OrganizationGovernanceService
                 );
             }
         }
+
+        return $application;
+    }
+
+    /**
+     * Barangay Admin sustains the rejection decision after reviewing an appeal.
+     */
+    public function sustainDisapproval(MembershipApplication $application, string $adminName, ?string $adminNote = null): MembershipApplication
+    {
+        $application->update([
+            'status' => 'final_disapproved',
+            'approved_by' => "Sustained by Admin ({$adminName})",
+            'approval_type' => 'admin_sustained',
+            'actioned_at' => now(),
+        ]);
+
+        Log::info("Barangay Admin {$adminName} sustained disapproval for application ID {$application->id} ({$application->fullname}). Appeal closed.");
 
         return $application;
     }

@@ -2,8 +2,8 @@
 
 namespace App\Services;
 
-use App\Models\BcpcChildCase;
-use App\Models\BcpcNutritionLog;
+use App\Models\BcpcChild;
+use App\Models\BcpcAssessment;
 use Carbon\Carbon;
 
 class BcpcAnalyticsService
@@ -13,14 +13,14 @@ class BcpcAnalyticsService
      */
     public function getNutritionAnalytics(int $year): array
     {
-        $totalChildrenMonitored = BcpcChildCase::whereYear('created_at', $year)->count();
+        $totalChildrenMonitored = BcpcChild::whereYear('created_at', $year)->count();
 
         // Malnutrition status counts based on WHO z-scores
-        $normalCount      = BcpcNutritionLog::whereYear('measured_at', $year)->where('status', 'Normal')->count();
-        $underweightCount = BcpcNutritionLog::whereYear('measured_at', $year)->where('status', 'Underweight')->count();
-        $severelyUnderweight = BcpcNutritionLog::whereYear('measured_at', $year)->where('status', 'Severely Underweight')->count();
-        $stuntedCount     = BcpcNutritionLog::whereYear('measured_at', $year)->where('status', 'Stunted')->count();
-        $wastedCount      = BcpcNutritionLog::whereYear('measured_at', $year)->where('status', 'Wasted')->count();
+        $normalCount      = BcpcAssessment::whereYear('date_of_weighing', $year)->where('wfa_status', 'Normal')->count();
+        $underweightCount = BcpcAssessment::whereYear('date_of_weighing', $year)->where('wfa_status', 'Underweight')->count();
+        $severelyUnderweight = BcpcAssessment::whereYear('date_of_weighing', $year)->where('wfa_status', 'Severely Underweight')->count();
+        $stuntedCount     = BcpcAssessment::whereYear('date_of_weighing', $year)->where('hfa_status', 'Stunted')->count();
+        $wastedCount      = BcpcAssessment::whereYear('date_of_weighing', $year)->where('hfa_status', 'Severely Stunted')->count();
 
         return [
             'total_children'       => $totalChildrenMonitored ?: 42,
