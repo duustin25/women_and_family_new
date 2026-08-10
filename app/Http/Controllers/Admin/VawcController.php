@@ -41,7 +41,7 @@ class VawcController extends Controller
      */
     public function index(Request $request)
     {
-        $query = VawcCase::with(['caseReport.abuseType', 'involvedParties', 'assessment']);
+        $query = VawcCase::with(['caseReport.abuseType', 'involvedParties', 'assessment', 'protectionOrders']);
 
         // Filter by Search (Case Number or Victim Name)
         if ($request->filled('search')) {
@@ -58,7 +58,13 @@ class VawcController extends Controller
 
         // Filter by Status (If an exact sub-status is chosen)
         if ($request->filled('status') && $request->status !== 'all') {
-            $query->where('status', $request->status);
+            $statusFilter = $request->status;
+            $query->where(function ($q) use ($statusFilter) {
+                $q->where('vawc_cases.status', $statusFilter)
+                  ->orWhereHas('protectionOrders', function ($poq) use ($statusFilter) {
+                      $poq->where('status', $statusFilter);
+                  });
+            });
         }
 
         // The "Archived vs Active" Strategy Pattern Separation
@@ -414,7 +420,7 @@ class VawcController extends Controller
         $criticalQueue = (clone $criticalQuery)
             ->orderByDesc('vawc_assessments.risk_score')
             ->orderByDesc('vawc_cases.created_at')
-            ->take(10)
+            ->take(7)
             ->get()
             ->map(fn($c) => [
                 'id'            => $c->id,
@@ -427,7 +433,7 @@ class VawcController extends Controller
                 'intake_date'   => $c->created_at->format('M d, Y'),
                 'is_repeat'     => $c->is_repeat_offense ?? false,
                 'has_weapon'    => $c->has_weapon_involved ?? false,
-                'children_count'=> $c->children_count ?? 0,
+                'children_count' => $c->children_count ?? 0,
             ]);
 
         // 2. Moderate Risk Queue
@@ -441,7 +447,7 @@ class VawcController extends Controller
         $moderateQueue = (clone $moderateQuery)
             ->orderByDesc('vawc_assessments.risk_score')
             ->orderByDesc('vawc_cases.created_at')
-            ->take(10)
+            ->take(7)
             ->get()
             ->map(fn($c) => [
                 'id'            => $c->id,
@@ -454,7 +460,7 @@ class VawcController extends Controller
                 'intake_date'   => $c->created_at->format('M d, Y'),
                 'is_repeat'     => $c->is_repeat_offense ?? false,
                 'has_weapon'    => $c->has_weapon_involved ?? false,
-                'children_count'=> $c->children_count ?? 0,
+                'children_count' => $c->children_count ?? 0,
             ]);
 
         // 2.5. Low Risk Queue
@@ -468,7 +474,7 @@ class VawcController extends Controller
         $lowQueue = (clone $lowQuery)
             ->orderByDesc('vawc_assessments.risk_score')
             ->orderByDesc('vawc_cases.created_at')
-            ->take(10)
+            ->take(7)
             ->get()
             ->map(fn($c) => [
                 'id'            => $c->id,
@@ -481,7 +487,7 @@ class VawcController extends Controller
                 'intake_date'   => $c->created_at->format('M d, Y'),
                 'is_repeat'     => $c->is_repeat_offense ?? false,
                 'has_weapon'    => $c->has_weapon_involved ?? false,
-                'children_count'=> $c->children_count ?? 0,
+                'children_count' => $c->children_count ?? 0,
             ]);
 
         // 3. Active cases with no assessment yet (needs triage)
@@ -492,7 +498,7 @@ class VawcController extends Controller
         $unassessedTotal = (clone $unassessedQuery)->count();
         $unassessedQueue = (clone $unassessedQuery)
             ->latest()
-            ->take(10)
+            ->take(7)
             ->get()
             ->map(fn($c) => [
                 'id'            => $c->id,
@@ -505,7 +511,7 @@ class VawcController extends Controller
                 'intake_date'   => $c->created_at->format('M d, Y'),
                 'is_repeat'     => $c->is_repeat_offense ?? false,
                 'has_weapon'    => $c->has_weapon_involved ?? false,
-                'children_count'=> $c->children_count ?? 0,
+                'children_count' => $c->children_count ?? 0,
             ]);
 
         // 4. KPI Metrics (lightweight)

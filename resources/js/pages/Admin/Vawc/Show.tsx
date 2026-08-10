@@ -973,6 +973,137 @@ export default function Show({ case: vawcCase }: Props) {
                     </CardContent>
                 </Card>
 
+                {/* OFFICIAL RA 9262 CASE AUDIT TRAIL & HISTORY TIMELINE CARD */}
+                <Card className="border shadow-xs">
+                    <CardHeader className="py-4 px-6 border-b bg-muted/20">
+                        <CardTitle className="text-base font-extrabold uppercase tracking-wider text-foreground flex items-center gap-2">
+                            <ClipboardList className="w-5 h-5 text-primary" /> Official Statutory Audit Trail & Processing History Log
+                        </CardTitle>
+                        <CardDescription className="text-xs font-semibold text-muted-foreground">
+                            Chronological audit log of all case workflow milestones, BPO issuance timestamps, service dates, and compliance check-ins.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent className="p-6">
+                        <div className="relative pl-6 border-l-2 border-primary/30 space-y-6">
+                            
+                            {/* 1. Intake Logged */}
+                            <div className="relative group">
+                                <span className="absolute -left-[31px] top-0.5 flex h-4 w-4 rounded-full bg-primary ring-4 ring-background" />
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                                    <h4 className="text-sm font-extrabold text-foreground">Step 1: Case Intake Disclosed & Registered</h4>
+                                    <span className="text-xs font-mono font-bold text-muted-foreground">
+                                        {new Date(vawcCase.created_at).toLocaleString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                    </span>
+                                </div>
+                                <p className="text-xs text-muted-foreground mt-1">
+                                    Direct intake recorded under Case Number <strong className="text-foreground">{vawcCase.case_report?.case_number}</strong>. Incident reported at {vawcCase.case_report?.incident_location}.
+                                </p>
+                            </div>
+
+                            {/* 2. Risk Triage Calculated */}
+                            {vawcCase.assessment && (
+                                <div className="relative group">
+                                    <span className="absolute -left-[31px] top-0.5 flex h-4 w-4 rounded-full bg-amber-500 ring-4 ring-background" />
+                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                                        <h4 className="text-sm font-extrabold text-foreground">Step 2: VAWC-RAVE Risk Triage Score Calculated</h4>
+                                        <span className="text-xs font-mono font-bold text-muted-foreground">
+                                            {new Date(vawcCase.assessment.updated_at || vawcCase.assessment.created_at).toLocaleString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                        </span>
+                                    </div>
+                                    <p className="text-xs text-muted-foreground mt-1">
+                                        Automated algorithm evaluated risk score at <strong className="text-foreground">{vawcCase.assessment.risk_score} / 12</strong> ({vawcCase.assessment.risk_level} Priority Queue).
+                                    </p>
+                                </div>
+                            )}
+
+                            {/* 3. BPO Application & Issuance */}
+                            {vawcCase.protection_orders?.map((po: any, idx: number) => (
+                                <React.Fragment key={po.id || idx}>
+                                    {po.application_datetime && (
+                                        <div className="relative group">
+                                            <span className="absolute -left-[31px] top-0.5 flex h-4 w-4 rounded-full bg-blue-500 ring-4 ring-background" />
+                                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                                                <h4 className="text-sm font-extrabold text-foreground">Step 3: Barangay Protection Order (BPO) Application Logged</h4>
+                                                <span className="text-xs font-mono font-bold text-muted-foreground">
+                                                    {new Date(po.application_datetime).toLocaleString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                                </span>
+                                            </div>
+                                            <p className="text-xs text-muted-foreground mt-1">
+                                                BPO Application filed under RA 9262 Section 14. Same-Day SLA timer initialized.
+                                            </p>
+                                        </div>
+                                    )}
+
+                                    {/* BPO Issued */}
+                                    {po.issued_datetime && (
+                                        <div className="relative group">
+                                            <span className="absolute -left-[31px] top-0.5 flex h-4 w-4 rounded-full bg-emerald-500 ring-4 ring-background" />
+                                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                                                <h4 className="text-sm font-extrabold text-emerald-700 dark:text-emerald-400">Step 4: BPO Officially Issued & Signed</h4>
+                                                <span className="text-xs font-mono font-bold text-muted-foreground">
+                                                    {new Date(po.issued_datetime).toLocaleString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                                </span>
+                                            </div>
+                                            <p className="text-xs text-muted-foreground mt-1">
+                                                Signed by Punong Barangay. Valid for 15 days until {po.expiration_date ? new Date(po.expiration_date).toLocaleDateString() : 'N/A'}. SLA Status: <strong className={po.is_sla_breached ? 'text-red-600 font-bold' : 'text-emerald-600 font-bold'}>{po.is_sla_breached ? 'SLA Breached' : 'Same-Day SLA Compliant'}</strong>.
+                                            </p>
+                                        </div>
+                                    )}
+                                </React.Fragment>
+                            ))}
+
+                            {/* 4. Compliance Logs */}
+                            {vawcCase.compliance_logs?.map((log: any) => (
+                                <div key={log.id} className="relative group">
+                                    <span className="absolute -left-[31px] top-0.5 flex h-4 w-4 rounded-full bg-purple-500 ring-4 ring-background" />
+                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                                        <h4 className="text-sm font-extrabold text-foreground">Step 5: Compliance Monitoring Check-In Session Logged</h4>
+                                        <span className="text-xs font-mono font-bold text-muted-foreground">
+                                            {new Date(log.monitor_date || log.created_at).toLocaleString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                        </span>
+                                    </div>
+                                    <p className="text-xs text-muted-foreground mt-1">
+                                        Officer Check-in Status: <strong className={log.is_compliant ? 'text-emerald-600 font-bold' : 'text-red-600 font-bold'}>{log.is_compliant ? 'Compliant' : 'Violation Observed'}</strong>. Notes: "{log.notes || 'Routine check-in completed.'}" {log.referral_type && `· Referred to ${log.referral_type}`}.
+                                    </p>
+                                </div>
+                            ))}
+
+                            {/* 5. Escalations */}
+                            {vawcCase.escalations?.map((esc: any) => (
+                                <div key={esc.id} className="relative group">
+                                    <span className="absolute -left-[31px] top-0.5 flex h-4 w-4 rounded-full bg-red-600 ring-4 ring-background" />
+                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                                        <h4 className="text-sm font-extrabold text-red-600">Step 6: Transmittal & Legal Escalation to Law Enforcement</h4>
+                                        <span className="text-xs font-mono font-bold text-muted-foreground">
+                                            {new Date(esc.escalated_at || esc.created_at).toLocaleString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                        </span>
+                                    </div>
+                                    <p className="text-xs text-muted-foreground mt-1">
+                                        Referred to <strong className="text-foreground">{esc.referral_target || 'PNP WCPD'}</strong>. Reason: "{esc.violation_description || 'Protection order breach reported.'}".
+                                    </p>
+                                </div>
+                            ))}
+
+                            {/* 6. Case Archival / Closed */}
+                            {vawcCase.status === 'Closed' && (
+                                <div className="relative group">
+                                    <span className="absolute -left-[31px] top-0.5 flex h-4 w-4 rounded-full bg-slate-700 ring-4 ring-background" />
+                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                                        <h4 className="text-sm font-extrabold text-slate-800 dark:text-slate-200">Step 7: Case Officially Closed & Archived</h4>
+                                        <span className="text-xs font-mono font-bold text-muted-foreground">
+                                            {vawcCase.closed_at ? new Date(vawcCase.closed_at).toLocaleString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : new Date(vawcCase.updated_at).toLocaleString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                        </span>
+                                    </div>
+                                    <p className="text-xs text-muted-foreground mt-1">
+                                        Legal Conclusion Reason: <strong className="text-foreground">{vawcCase.closure_reason || 'Case Archived'}</strong>. {vawcCase.closure_remarks && `Remarks: "${vawcCase.closure_remarks}"`}
+                                    </p>
+                                </div>
+                            )}
+
+                        </div>
+                    </CardContent>
+                </Card>
+
                 {/* ── CASE ARCHIVAL / CLOSURE SHADCN DIALOG ── */}
                 <Dialog open={showCloseModal} onOpenChange={setShowCloseModal}>
                     <DialogContent className="sm:max-w-md">

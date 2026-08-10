@@ -54,12 +54,11 @@ class VawcBpoService
                 'status' => 'Issued',
                 'issued_datetime' => $issuedAt,
                 'is_sla_breached' => $isBreached,
-                // BPO is valid for 15 days if not extended by court (Step 9 monitoring context)
                 'expiration_date' => $issuedAt->copy()->addDays(15), 
                 'issued_by_id' => Auth::id(),
             ]);
 
-            // Update the parent case status
+            // Update parent case status (valid ENUM value)
             $order->vawcCase->update(['status' => 'BPO Processing']);
 
             return $order;
@@ -82,7 +81,7 @@ class VawcBpoService
 
             $order->update(['status' => 'Served']);
             
-            // Advance parent case to Monitoring Phase
+            // Advance parent case status to Monitoring Phase (valid ENUM value)
             $order->vawcCase->update(['status' => 'Monitoring']);
 
             return $record;

@@ -117,19 +117,19 @@ function CaseQueueRow({ item }: { item: CaseQueueItem }) {
             {/* Bottom Row: Threat Badges */}
             {(item.is_repeat || item.has_weapon || (item.children_count && item.children_count > 0)) && (
                 <div className="flex items-center gap-1.5 flex-wrap pt-1 border-t border-border/40">
-                    {item.is_repeat && (
-                        <Badge variant="destructive" className="text-[10px] font-extrabold uppercase gap-1 py-0 px-2">
-                            <RotateCcw className="w-3 h-3" /> REPEAT
+                    {item.has_weapon && (
+                        <Badge className="bg-red-600 hover:bg-red-700 text-white text-[10px] font-extrabold uppercase gap-1 py-0 px-2">
+                            WEAPON
                         </Badge>
                     )}
-                    {item.has_weapon && (
-                        <Badge className="bg-amber-600 hover:bg-amber-700 text-white text-[10px] font-extrabold uppercase gap-1 py-0 px-2">
-                            <Crosshair className="w-3 h-3" /> WEAPON
+                    {item.is_repeat && (
+                        <Badge className="bg-amber-600 hover:bg-amber-700 text-[10px] font-extrabold uppercase gap-1 py-0 px-2">
+                            REPEAT
                         </Badge>
                     )}
                     {Boolean(item.children_count && item.children_count > 0) && (
-                        <Badge variant="secondary" className="text-[10px] font-extrabold uppercase gap-1 py-0 px-2 bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-300 border border-purple-300 dark:border-purple-800">
-                            <Users className="w-3 h-3" /> MINORS: {item.children_count}
+                        <Badge variant="secondary" className="text-[10px] font-extrabold uppercase gap-1 py-0 px-2 bg-purple-600 hover:bg-purple-700 text-white border border-purple-300">
+                            MINORS: {item.children_count}
                         </Badge>
                     )}
                 </div>
@@ -161,7 +161,7 @@ export default function VawcDashboard({
             <div className="flex h-full flex-1 flex-col gap-6 p-6 max-w-8xl mx-auto">
 
                 {/* ── HEADER BAR ── */}
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-card rounded-xl shadow-xs gap-1">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-1">
                     <div className="flex gap-4 items-center">
                         <div>
                             <div className="flex items-center gap-2">
@@ -196,10 +196,9 @@ export default function VawcDashboard({
                 {/* ── 4 KPI TILES (PRESERVED & ENHANCED WITH SHADCN) ── */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     {/* 1. Critical Threats Active */}
-                    <Card className="shadow-sm border-red-600 bg-card">
+                    <Card className="shadow-sm bg-card">
                         <CardHeader>
                             <CardTitle className="text-xs font-black text-red-600 uppercase tracking-widest flex items-center gap-1.5">
-                                <Siren className="w-4 h-4 animate-pulse text-red-600" />
                                 Total Critical Cases
                             </CardTitle>
                         </CardHeader>
@@ -207,15 +206,13 @@ export default function VawcDashboard({
                             <div className="text-4xl font-black tracking-tight text-red-600 font-mono">
                                 {criticalTotal ?? 0}
                             </div>
-                            <p className="text-xs text-muted-foreground font-semibold mt-1">High Rescue Priority</p>
                         </CardContent>
                     </Card>
 
                     {/* 2. Pending Triage Queue */}
-                    <Card className="shadow-sm border-slate-500 bg-card">
+                    <Card className="shadow-sm bg-card">
                         <CardHeader>
                             <CardTitle className="text-xs font-black text-slate-600 dark:text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
-                                <Clock className="w-4 h-4 text-slate-500" />
                                 Total Case Pending
                             </CardTitle>
                         </CardHeader>
@@ -223,15 +220,13 @@ export default function VawcDashboard({
                             <div className="text-4xl font-black tracking-tight text-foreground font-mono">
                                 {unassessedTotal ?? 0}
                             </div>
-                            <p className="text-xs text-muted-foreground font-semibold mt-1">Awaiting Risk Score</p>
                         </CardContent>
                     </Card>
 
                     {/* 3. Active Enforced BPOs */}
-                    <Card className="shadow-sm border-emerald-600 bg-card">
+                    <Card className="shadow-sm bg-card">
                         <CardHeader>
                             <CardTitle className="text-xs font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest flex items-center gap-1.5">
-                                <ShieldCheck className="w-4 h-4 text-emerald-600" />
                                 Total BPO Monitoring
                             </CardTitle>
                         </CardHeader>
@@ -239,15 +234,13 @@ export default function VawcDashboard({
                             <div className="text-4xl font-black tracking-tight text-emerald-600 dark:text-emerald-400 font-mono">
                                 {kpis.active_bpos ?? 0}
                             </div>
-                            <p className="text-xs text-muted-foreground font-semibold mt-1">Enforced 15-Day Orders</p>
                         </CardContent>
                     </Card>
 
                     {/* 4. Repeat & Recurrence Alert */}
-                    <Card className="shadow-sm border-amber-500 bg-card">
+                    <Card className="shadow-sm bg-card">
                         <CardHeader>
                             <CardTitle className="text-xs font-black text-amber-600 dark:text-amber-400 uppercase tracking-widest flex items-center gap-1.5">
-                                <RotateCcw className="w-4 h-4 text-amber-600" />
                                 Total Repeat Offense
                             </CardTitle>
                         </CardHeader>
@@ -255,20 +248,19 @@ export default function VawcDashboard({
                             <div className="text-4xl font-black tracking-tight text-amber-600 dark:text-amber-400 font-mono">
                                 {kpis.repeat_cases ?? 0}
                             </div>
-                            <p className="text-xs text-muted-foreground font-semibold mt-1">History of Recurrence</p>
                         </CardContent>
                     </Card>
                 </div>
 
                 {/* ── PRIORITY QUEUES (READABLE & BIG FONTS) ── */}
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
 
                     {/* CRITICAL / HIGH Queue */}
-                    <Card className="border-t-4 border-t-red-600 shadow-sm flex flex-col justify-between">
+                    <Card className="border shadow-sm flex flex-col justify-between">
                         <div>
-                            <CardHeader className="py-3.5 px-4 border-b bg-red-50/50 dark:bg-red-950/20 flex flex-row items-center justify-between">
+                            <CardHeader className="py-3.5 border-b px-4 bg-red-50/50  dark:bg-red-950/20 flex flex-row items-center justify-between">
                                 <CardTitle className="text-sm font-extrabold uppercase tracking-wider text-red-600 flex items-center gap-1.5">
-                                    <AlertTriangle className="w-4 h-4" /> Critical / High Cases
+                                    Critical / High Cases
                                 </CardTitle>
                                 <Badge variant="destructive" className="font-bold text-xs">
                                     {criticalTotal}
@@ -299,13 +291,13 @@ export default function VawcDashboard({
                     </Card>
 
                     {/* MODERATE Queue */}
-                    <Card className="border-t-4 border-t-amber-500 shadow-sm flex flex-col justify-between">
+                    <Card className="border shadow-sm flex flex-col justify-between">
                         <div>
                             <CardHeader className="py-3.5 px-4 border-b bg-amber-50/50 dark:bg-amber-950/20 flex flex-row items-center justify-between">
                                 <CardTitle className="text-sm font-extrabold uppercase tracking-wider text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
-                                    <AlertTriangle className="w-4 h-4" /> Moderate Risk Cases
+                                    Moderate Risk Cases
                                 </CardTitle>
-                                <Badge className="bg-amber-500 text-black font-bold text-xs">
+                                <Badge className="bg-amber-500 text-white font-bold text-xs">
                                     {moderateTotal}
                                 </Badge>
                             </CardHeader>
@@ -334,11 +326,11 @@ export default function VawcDashboard({
                     </Card>
 
                     {/* LOW RISK Queue */}
-                    <Card className="border-t-4 border-t-blue-500 shadow-sm flex flex-col justify-between">
+                    <Card className="border shadow-sm flex flex-col justify-between">
                         <div>
                             <CardHeader className="py-3.5 px-4 border-b bg-blue-50/50 dark:bg-blue-950/20 flex flex-row items-center justify-between">
                                 <CardTitle className="text-sm font-extrabold uppercase tracking-wider text-blue-600 dark:text-blue-400 flex items-center gap-1.5">
-                                    <ShieldCheck className="w-4 h-4" /> Low Risk Cases
+                                    Low Risk Cases
                                 </CardTitle>
                                 <Badge className="bg-blue-600 text-white font-bold text-xs">
                                     {lowTotal}
@@ -369,13 +361,13 @@ export default function VawcDashboard({
                     </Card>
 
                     {/* PENDING QUEUE */}
-                    <Card className="border-t-4 border-t-slate-500 shadow-sm flex flex-col justify-between">
+                    <Card className="border shadow-sm flex flex-col justify-between">
                         <div>
                             <CardHeader className="py-3.5 px-4 border-b bg-slate-100/50 dark:bg-slate-900/50 flex flex-row items-center justify-between">
                                 <CardTitle className="text-sm font-extrabold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-                                    <Clock className="w-4 h-4" /> Pending Cases
+                                    Pending Cases
                                 </CardTitle>
-                                <Badge variant="outline" className="font-bold text-xs">
+                                <Badge variant="outline" className="bg-slate-500 text-white text-xs">
                                     {unassessedTotal}
                                 </Badge>
                             </CardHeader>
