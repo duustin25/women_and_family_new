@@ -43,18 +43,18 @@ export default function AnalyticsChart({ data, config }: Props) {
                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#64748b" />
                         <XAxis
                             dataKey="month"
-                            tick={{ fontSize: 15, fill: '#64748b', fontWeight: 'bold' }}
+                            tick={{ fontSize: 15, fill: 'gray', fontWeight: 'bold' }}
                             axisLine={false}
                             tickLine={false}
                         />
                         <YAxis
-                            tick={{ fontSize: 15, fill: '#64748b' }}
+                            tick={{ fontSize: 15, fill: 'gray' }}
                             axisLine={false}
                             tickLine={false}
                         />
                         <Tooltip
                             contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                            cursor={{ fill: '#525252 ' }}
+                            cursor={{ fill: 'gray ' }}
                         />
                         <Legend iconType="circle" wrapperStyle={{ fontSize: '18px', fontWeight: 'black', paddingTop: '20px' }} />
 

@@ -1,6 +1,5 @@
 import { Head, usePage, router } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
-import AnalyticsChart from '@/components/Admin/AnalyticsChart';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -18,6 +17,17 @@ import {
     BarChart, Bar, AreaChart, Area, Legend
 } from 'recharts';
 import { cn } from '@/lib/utils';
+
+// Modular Analytics Chart Components
+import VawcMonthlyAbuseChart from '@/components/Admin/Analytics/Vawc/VawcMonthlyAbuseChart';
+import VawcGeographicalDensityChart from '@/components/Admin/Analytics/Vawc/VawcGeographicalDensityChart';
+import VawcThreatIndicatorsChart from '@/components/Admin/Analytics/Vawc/VawcThreatIndicatorsChart';
+import VawcVictimDemographicsChart from '@/components/Admin/Analytics/Vawc/VawcVictimDemographicsChart';
+import BcpcNutritionalRadarChart from '@/components/Admin/Analytics/Bcpc/BcpcNutritionalRadarChart';
+import BcpcSfpOutcomesChart from '@/components/Admin/Analytics/Bcpc/BcpcSfpOutcomesChart';
+import GadMembershipTrendsChart from '@/components/Admin/Analytics/Gad/GadMembershipTrendsChart';
+import GadMemberDemographicsChart from '@/components/Admin/Analytics/Gad/GadMemberDemographicsChart';
+import OrganizationSectorBreakdown from '@/components/Admin/Analytics/Gad/OrganizationSectorBreakdown';
 
 interface Stats {
     total_vawc: number;
@@ -166,7 +176,7 @@ export default function Index({
                         <p className="text-sm text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest">
                             {isPresident
                                 ? 'Scoped Member Demographics & GAD Outreach Statistics'
-                                : 'Strategic Problem-Solving Console & Integrated Statistics'}
+                                : ''}
                         </p>
                     </div>
 
@@ -245,99 +255,13 @@ export default function Index({
                                     </h2>
 
                                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                                        {/* CLIENT REQUIREMENT: Monthly Abuse Rates */}
-                                        <Card className="lg:col-span-2 shadow-sm border">
-                                            <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between">
-                                                <div>
-                                                    <CardTitle className="font-black uppercase text-sm tracking-widest text-[#ce1126]">
-                                                        Women and Children Abuse by Month
-                                                    </CardTitle>
-                                                </div>
-                                            </CardHeader>
-                                            <CardContent className="p-6">
-                                                <AnalyticsChart data={vawcData} config={vawcChartConfig} />
-                                            </CardContent>
-                                        </Card>
-
-                                        {/* Operational Density: Cases by Zone */}
-                                        <Card className="shadow-sm border">
-                                            <CardHeader>
-                                                <CardTitle className="uppercase tracking-widest text-xs font-black text-orange-600 flex items-center gap-2">
-                                                    Cases Count per Zone
-                                                </CardTitle>
-                                            </CardHeader>
-                                            <CardContent className="h-[350px]">
-                                                <ResponsiveContainer width="100%" height="100%">
-                                                    <BarChart data={zoneDistribution} layout="vertical" margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-                                                        {/* <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} /> */}
-                                                        <XAxis type="number" hide />
-                                                        <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fontSize: 15, fontWeight: 'bold' }} width={80} />
-                                                        <Tooltip />
-                                                        <Bar dataKey="count" fill="#f97316" radius={[0, 4, 4, 0]} label={{ position: 'right', fontSize: 15, fontWeight: 'black' }} />
-                                                    </BarChart>
-                                                </ResponsiveContainer>
-                                            </CardContent>
-                                        </Card>
+                                        <VawcMonthlyAbuseChart data={vawcData} config={vawcChartConfig} />
+                                        <VawcGeographicalDensityChart data={zoneDistribution} />
                                     </div>
 
                                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                        {/* Algorithmic Insights: Threat Patterns */}
-                                        <Card className="shadow-sm border">
-                                            <CardHeader>
-                                                <CardTitle className="uppercase tracking-widest text-xs font-black text-[#ce1126] flex items-center gap-2">
-                                                    Threat Indicators
-                                                </CardTitle>
-                                            </CardHeader>
-                                            <CardContent className="h-[240px]">
-                                                <ResponsiveContainer width="100%" height="100%">
-                                                    <BarChart data={threatPatterns} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
-                                                        <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 15, fontWeight: 'black' }} />
-                                                        <YAxis hide />
-                                                        <Tooltip />
-                                                        <Bar dataKey="value" radius={[4, 4, 0, 0]} label={{ position: 'top', fontSize: 15, fontWeight: 'black' }}>
-                                                            {threatPatterns.map((entry, index) => (
-                                                                <Cell key={`cell-${index}`} fill={entry.color} />
-                                                            ))}
-                                                        </Bar>
-                                                    </BarChart>
-                                                </ResponsiveContainer>
-                                            </CardContent>
-                                        </Card>
-
-                                        {/* Affected Demographics: Donut / Pie Chart (Replaces Priority Intervention Gaps) */}
-                                        <Card className="shadow-sm border">
-                                            <CardHeader>
-                                                <CardTitle className="uppercase tracking-widest text-xs font-black text-purple-600 flex items-center gap-2">
-                                                    Affected Victim Demographics
-                                                </CardTitle>
-                                            </CardHeader>
-                                            <CardContent className="h-[240px]">
-                                                <ResponsiveContainer width="100%" height="100%">
-                                                    <PieChart>
-                                                        <Pie
-                                                            data={ageDemographics}
-                                                            cx="38%"
-                                                            cy="50%"
-                                                            innerRadius={50}
-                                                            outerRadius={80}
-                                                            paddingAngle={4}
-                                                            dataKey="count"
-                                                        >
-                                                            {ageDemographics.map((entry: any, index: number) => (
-                                                                <Cell key={`cell-${index}`} fill={DEMO_COLORS[index % DEMO_COLORS.length]} />
-                                                            ))}
-                                                        </Pie>
-                                                        <Tooltip formatter={(value: any) => [`${value} Victims`, 'Total']} />
-                                                        <Legend
-                                                            verticalAlign="middle"
-                                                            align="right"
-                                                            layout="vertical"
-                                                            wrapperStyle={{ fontSize: '18px', fontWeight: 'bold' }}
-                                                        />
-                                                    </PieChart>
-                                                </ResponsiveContainer>
-                                            </CardContent>
-                                        </Card>
+                                        <VawcThreatIndicatorsChart data={threatPatterns} />
+                                        <VawcVictimDemographicsChart data={ageDemographics} colors={DEMO_COLORS} />
                                     </div>
                                 </div>
                             </>
@@ -359,102 +283,8 @@ export default function Index({
                                 </h2>
 
                                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                                    {/* Nutrition Prevalence Radar */}
-                                    <Card className="border-teal-100 bg-teal-50/5 flex flex-col justify-between">
-                                        <CardHeader>
-                                            <CardTitle className="uppercase tracking-widest text-xs font-black text-teal-700 flex items-center gap-2">
-                                                <Activity className="w-4 h-4" /> Nutritional Classification Radar
-                                            </CardTitle>
-                                            <CardDescription className="text-[10px] font-bold uppercase text-slate-400">Weight (WFA) & Height (HFA) Severity</CardDescription>
-                                        </CardHeader>
-                                        <CardContent className="space-y-6 pt-2">
-                                            <div className="grid grid-cols-2 gap-3 text-center">
-                                                <div className="p-3 bg-white dark:bg-slate-900 border rounded-xl shadow-sm">
-                                                    <p className="text-[9px] uppercase font-black text-slate-400 tracking-widest">Malnutrition Prevalence</p>
-                                                    <p className="text-2xl font-black text-teal-600 mt-1">{bcpcSummary?.malnutrition_rate}%</p>
-                                                </div>
-                                                <div className="p-3 bg-white dark:bg-slate-900 border rounded-xl shadow-sm">
-                                                    <p className="text-[9px] uppercase font-black text-slate-400 tracking-widest">Total Children</p>
-                                                    <p className="text-2xl font-black text-slate-900 dark:text-white mt-1">{bcpcSummary?.total}</p>
-                                                </div>
-                                            </div>
-
-                                            <div className="grid grid-cols-2 gap-4 h-[180px]">
-                                                <div className="flex flex-col items-center justify-center">
-                                                    <p className="text-[9px] font-black uppercase text-slate-400 tracking-widest mb-1">Weight (WFA)</p>
-                                                    <ResponsiveContainer width="100%" height="80%">
-                                                        <PieChart>
-                                                            <Pie
-                                                                data={bcpcSummary?.distribution.filter(d => d.value > 0)}
-                                                                cx="50%" cy="50%"
-                                                                innerRadius={28} outerRadius={45}
-                                                                paddingAngle={2} dataKey="value"
-                                                            >
-                                                                {bcpcSummary?.distribution.map((entry, index) => (
-                                                                    <Cell key={`wfa-cell-${index}`} fill={entry.fill} />
-                                                                ))}
-                                                            </Pie>
-                                                            <Tooltip />
-                                                        </PieChart>
-                                                    </ResponsiveContainer>
-                                                    <div className="flex flex-wrap gap-x-2 gap-y-0.5 justify-center text-[7px] font-bold uppercase text-slate-400 mt-1">
-                                                        <span>Normal: {bcpcSummary?.normal}</span>
-                                                        <span>MAM: {bcpcSummary?.mam}</span>
-                                                        <span>SAM: {bcpcSummary?.sam}</span>
-                                                    </div>
-                                                </div>
-
-                                                <div className="flex flex-col items-center justify-center">
-                                                    <p className="text-[9px] font-black uppercase text-slate-400 tracking-widest mb-1">Height (HFA)</p>
-                                                    <ResponsiveContainer width="100%" height="80%">
-                                                        <PieChart>
-                                                            <Pie
-                                                                data={bcpcSummary?.height_distribution.filter(d => d.value > 0)}
-                                                                cx="50%" cy="50%"
-                                                                innerRadius={28} outerRadius={45}
-                                                                paddingAngle={2} dataKey="value"
-                                                            >
-                                                                {bcpcSummary?.height_distribution.map((entry, index) => (
-                                                                    <Cell key={`hfa-cell-${index}`} fill={entry.fill} />
-                                                                ))}
-                                                            </Pie>
-                                                            <Tooltip />
-                                                        </PieChart>
-                                                    </ResponsiveContainer>
-                                                    <div className="flex flex-wrap gap-x-2 gap-y-0.5 justify-center text-[7px] font-bold uppercase text-slate-400 mt-1">
-                                                        <span>Normal: {bcpcSummary?.normal_height}</span>
-                                                        <span>Stunted: {bcpcSummary?.stunted}</span>
-                                                        <span>Sev. Stunted: {bcpcSummary?.severely_stunted}</span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </CardContent>
-                                    </Card>
-
-                                    {/* SFP Outcomes Breakdown */}
-                                    <Card className="flex flex-col justify-between">
-                                        <CardHeader>
-                                            <CardTitle className="uppercase tracking-widest text-xs font-black text-emerald-700 flex items-center gap-2">
-                                                <Heart className="w-4 h-4 text-emerald-600" /> SFP Feeding Program Outcomes
-                                            </CardTitle>
-                                            <CardDescription className="text-[10px] font-bold uppercase text-slate-400">Nutritional Rehabilitation Progress</CardDescription>
-                                        </CardHeader>
-                                        <CardContent className="h-[260px] flex flex-col justify-center">
-                                            <ResponsiveContainer width="100%" height="90%">
-                                                <BarChart data={[
-                                                    { name: 'Active SFP', value: bcpcSummary?.sfp_breakdown.Enrolled || 0, fill: '#10b981' },
-                                                    { name: 'Graduated', value: bcpcSummary?.sfp_breakdown.Graduated || 0, fill: '#06b6d4' },
-                                                    { name: 'Completed', value: bcpcSummary?.sfp_breakdown.Completed || 0, fill: '#3b82f6' },
-                                                    { name: 'Terminated', value: bcpcSummary?.sfp_breakdown.Terminated || 0, fill: '#ef4444' }
-                                                ]} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                                                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 8, fontWeight: 'bold' }} />
-                                                    <YAxis tickLine={false} axisLine={false} tick={{ fontSize: 9 }} width={25} />
-                                                    <Tooltip />
-                                                    <Bar dataKey="value" radius={[4, 4, 0, 0]} label={{ position: 'top', fontSize: 10, fontWeight: 'black' }} />
-                                                </BarChart>
-                                            </ResponsiveContainer>
-                                        </CardContent>
-                                    </Card>
+                                    <BcpcNutritionalRadarChart bcpcSummary={bcpcSummary} />
+                                    <BcpcSfpOutcomesChart bcpcSummary={bcpcSummary} />
 
                                     {/* Purok Malnutrition Hotspots table */}
                                     <Card className="flex flex-col justify-between">
@@ -530,118 +360,12 @@ export default function Index({
                             </div>
 
                             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-                                {/* Chart 1: Membership Applications Growth Trend */}
-                                <Card className="lg:col-span-2 shadow-sm border overflow-hidden">
-                                    <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between border-b bg-gray-50/50 dark:bg-slate-900/50">
-                                        <div>
-                                            <CardTitle className="font-black uppercase text-xs tracking-widest text-emerald-700">
-                                                Membership Application Trends
-                                            </CardTitle>
-                                            <CardDescription className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mt-1">
-                                                Monthly submitted vs approved registration activity
-                                            </CardDescription>
-                                        </div>
-                                        <Badge variant="secondary" className="bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 w-fit text-[9px] font-bold uppercase tracking-widest">
-                                            App Trends
-                                        </Badge>
-                                    </CardHeader>
-                                    <CardContent className="p-6 h-[280px]">
-                                        <ResponsiveContainer width="100%" height="100%">
-                                            <AreaChart data={orgAnalytics.applications.monthly_trend} margin={{ top: 10, right: 30, left: -20, bottom: 0 }}>
-                                                <defs>
-                                                    <linearGradient id="colorSubmitted" x1="0" y1="0" x2="0" y2="1">
-                                                        <stop offset="5%" stopColor="#6366f1" stopOpacity={0.2} />
-                                                        <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
-                                                    </linearGradient>
-                                                    <linearGradient id="colorApproved" x1="0" y1="0" x2="0" y2="1">
-                                                        <stop offset="5%" stopColor="#10b981" stopOpacity={0.2} />
-                                                        <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
-                                                    </linearGradient>
-                                                </defs>
-                                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                                                <XAxis dataKey="month" tickLine={false} axisLine={false} tick={{ fontSize: 9, fontWeight: 'bold' }} />
-                                                <YAxis tickLine={false} axisLine={false} tick={{ fontSize: 9 }} />
-                                                <Tooltip />
-                                                <Legend verticalAlign="top" height={36} iconType="circle" wrapperStyle={{ fontSize: '10px', fontWeight: 'bold', textTransform: 'uppercase' }} />
-                                                <Area type="monotone" name="Submitted Applications" dataKey="submitted" stroke="#6366f1" strokeWidth={2} fillOpacity={1} fill="url(#colorSubmitted)" />
-                                                <Area type="monotone" name="Approved Memberships" dataKey="approved" stroke="#10b981" strokeWidth={2} fillOpacity={1} fill="url(#colorApproved)" />
-                                            </AreaChart>
-                                        </ResponsiveContainer>
-                                    </CardContent>
-                                </Card>
-
-                                {/* Chart 2: Interactive Member Demographics */}
-                                <Card className="shadow-sm border flex flex-col justify-between">
-                                    <CardHeader className="border-b bg-gray-50/50 dark:bg-slate-900/50 pb-3">
-                                        <CardTitle className="uppercase tracking-widest text-xs font-black text-indigo-700 flex items-center justify-between">
-                                            <span>Member Demographics</span>
-                                            <div className="flex gap-1 bg-slate-200/60 p-0.5 rounded-md dark:bg-slate-800">
-                                                {(['age', 'gender', 'civil'] as const).map((tab) => (
-                                                    <button
-                                                        key={tab}
-                                                        onClick={() => setDemoTab(tab)}
-                                                        className={cn(
-                                                            "text-[8px] font-black uppercase px-2 py-0.5 rounded transition-all",
-                                                            demoTab === tab
-                                                                ? "bg-white text-indigo-700 shadow-sm dark:bg-slate-700 dark:text-white"
-                                                                : "text-slate-500 hover:text-slate-800"
-                                                        )}
-                                                    >
-                                                        {tab}
-                                                    </button>
-                                                ))}
-                                            </div>
-                                        </CardTitle>
-                                        <CardDescription className="text-[10px] font-bold uppercase text-slate-400">
-                                            {demoTab === 'age' && 'Age Classification Profile'}
-                                            {demoTab === 'gender' && 'Gender & Sex Distribution'}
-                                            {demoTab === 'civil' && 'Civil / Marital Status'}
-                                        </CardDescription>
-                                    </CardHeader>
-                                    <CardContent className="h-[240px] flex flex-col items-center justify-center p-6">
-                                        {(() => {
-                                            const data =
-                                                demoTab === 'age' ? orgAnalytics.age_distribution :
-                                                    demoTab === 'gender' ? orgAnalytics.gender_distribution :
-                                                        orgAnalytics.civil_status_distribution;
-
-                                            if (!data || data.length === 0 || data.every((d: any) => d.value === 0)) {
-                                                return <p className="text-xs text-slate-400 italic">No demographic records available.</p>;
-                                            }
-
-                                            return (
-                                                <>
-                                                    <div className="h-[140px] w-full">
-                                                        <ResponsiveContainer width="100%" height="100%">
-                                                            <PieChart>
-                                                                <Pie
-                                                                    data={data.filter((d: any) => d.value > 0)}
-                                                                    cx="50%" cy="50%"
-                                                                    innerRadius={45} outerRadius={60}
-                                                                    paddingAngle={3} dataKey="value"
-                                                                >
-                                                                    {data.map((entry: any, index: number) => (
-                                                                        <Cell key={`demo-cell-${index}`} fill={DEMO_COLORS[index % DEMO_COLORS.length]} />
-                                                                    ))}
-                                                                </Pie>
-                                                                <Tooltip />
-                                                            </PieChart>
-                                                        </ResponsiveContainer>
-                                                    </div>
-                                                    <div className="flex flex-wrap gap-x-3 gap-y-1 justify-center text-[8px] font-black uppercase text-slate-400 mt-4 max-h-[60px] overflow-y-auto w-full">
-                                                        {data.map((item: any, index: number) => (
-                                                            <div key={index} className="flex items-center gap-1">
-                                                                <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: DEMO_COLORS[index % DEMO_COLORS.length] }} />
-                                                                <span>{item.name}: {item.value}</span>
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                </>
-                                            );
-                                        })()}
-                                    </CardContent>
-                                </Card>
+                                <GadMembershipTrendsChart data={orgAnalytics.applications.monthly_trend} />
+                                <GadMemberDemographicsChart demographics={{
+                                    age_groups: orgAnalytics.age_distribution?.map((d: any) => ({ name: d.name, count: d.value })),
+                                    gender_distribution: orgAnalytics.gender_distribution?.map((d: any) => ({ name: d.name, count: d.value })),
+                                    civil_status: orgAnalytics.civil_status_distribution?.map((d: any) => ({ name: d.name, count: d.value }))
+                                }} colors={DEMO_COLORS} />
                             </div>
 
                             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
