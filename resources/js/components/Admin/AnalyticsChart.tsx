@@ -28,7 +28,7 @@ export default function AnalyticsChart({ data, config }: Props) {
     const activeConfig = config || defaultConfig;
 
     return (
-        <div className="p-4 rounded-lg">
+        <div className="rounded-lg">
             <div className="h-[300px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
                     <BarChart
@@ -43,12 +43,12 @@ export default function AnalyticsChart({ data, config }: Props) {
                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#64748b" />
                         <XAxis
                             dataKey="month"
-                            tick={{ fontSize: 10, fill: '#64748b', fontWeight: 'bold' }}
+                            tick={{ fontSize: 15, fill: '#64748b', fontWeight: 'bold' }}
                             axisLine={false}
                             tickLine={false}
                         />
                         <YAxis
-                            tick={{ fontSize: 10, fill: '#64748b' }}
+                            tick={{ fontSize: 15, fill: '#64748b' }}
                             axisLine={false}
                             tickLine={false}
                         />
@@ -56,10 +56,10 @@ export default function AnalyticsChart({ data, config }: Props) {
                             contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                             cursor={{ fill: '#525252 ' }}
                         />
-                        <Legend iconType="circle" wrapperStyle={{ fontSize: '11px', fontWeight: 'bold', paddingTop: '20px' }} />
+                        <Legend iconType="circle" wrapperStyle={{ fontSize: '18px', fontWeight: 'black', paddingTop: '20px' }} />
 
                         {/* Dynamically render Bars based on Config */}
-                        { (activeConfig || []).map((item) => (
+                        {(activeConfig || []).map((item) => (
                             <Bar
                                 key={item.key}
                                 dataKey={item.key}
