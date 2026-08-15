@@ -24,6 +24,9 @@ interface BcpcSummary {
     normal: number;
     sam: number;
     mam: number;
+    double_burden?: number;
+    obese?: number;
+    overweight?: number;
     stunted: number;
     severely_stunted: number;
     normal_height: number;
@@ -38,6 +41,9 @@ interface BcpcSummary {
     zones_breakdown: {
         name: string;
         total: number;
+        sam?: number;
+        mam?: number;
+        double_burden?: number;
         malnourished: number;
         stunted: number;
         rate: number;
@@ -432,16 +438,17 @@ export default function Print({
                                 <span>V. BCPC Child Nutrition Triage & SFP Outcomes (RA 11037)</span>
                                 <span className="text-[8px] text-slate-400">Barangay 183 Nutrition Registry</span>
                             </h3>
-                            <div className="grid grid-cols-4 gap-3 mb-4">
+                            <div className="grid grid-cols-5 gap-2 mb-4">
                                 {[
-                                    { label: 'Total Children Registered', value: bcpcSummary.total },
-                                    { label: 'Malnutrition Prevalence Rate', value: `${bcpcSummary.malnutrition_rate}%` },
-                                    { label: 'SAM (Severe Acute Malnutrition)', value: bcpcSummary.sam },
-                                    { label: 'MAM (Moderate Underweight)', value: bcpcSummary.mam },
+                                    { label: 'Monitored Children', value: bcpcSummary.total },
+                                    { label: 'Prevalence Rate', value: `${bcpcSummary.malnutrition_rate}%` },
+                                    { label: 'SAM (Urgent RUTF)', value: bcpcSummary.sam },
+                                    { label: 'MAM (SFP Priority)', value: bcpcSummary.mam },
+                                    { label: 'Double Burden (DB)', value: bcpcSummary.double_burden || 0 },
                                 ].map((kpi, i) => (
-                                    <div key={i} className="border border-slate-300 rounded p-2 text-center bg-slate-50/50">
-                                        <p className="text-[8px] font-black uppercase text-slate-500 tracking-widest mb-1">{kpi.label}</p>
-                                        <p className="text-sm font-black text-slate-900">{kpi.value}</p>
+                                    <div key={i} className="border border-slate-300 rounded p-1.5 text-center bg-slate-50/50">
+                                        <p className="text-[7.5px] font-black uppercase text-slate-500 tracking-wider mb-0.5">{kpi.label}</p>
+                                        <p className="text-xs font-black text-slate-900">{kpi.value}</p>
                                     </div>
                                 ))}
                             </div>
@@ -472,7 +479,7 @@ export default function Print({
                                 </div>
 
                                 <div>
-                                    <h4 className="text-[9px] font-black uppercase text-slate-500 mb-2">V-B. 90-Day Supplemental Feeding Program (SFP) Outcomes</h4>
+                                    <h4 className="text-[9px] font-black uppercase text-slate-500 mb-2">V-B. 120-Day Supplemental Feeding Program (SFP) Outcomes (RA 11037)</h4>
                                     <table className="w-full text-[8px] border border-slate-300">
                                         <thead className="bg-slate-50">
                                             <tr className="border-b border-slate-300">
@@ -484,7 +491,7 @@ export default function Print({
                                             {[
                                                 { label: 'Active Supplemental Feeding (Enrolled)', value: bcpcSummary.sfp_breakdown?.Enrolled || 0 },
                                                 { label: 'Successfully Rehabilitated (Graduated)', value: bcpcSummary.sfp_breakdown?.Graduated || 0 },
-                                                { label: 'Completed 90-Day Cycle (Ongoing)', value: bcpcSummary.sfp_breakdown?.Completed || 0 },
+                                                { label: 'Completed 120-Day Cycle (Ongoing)', value: bcpcSummary.sfp_breakdown?.Completed || 0 },
                                                 { label: 'Discharged / Non-Enrolled', value: bcpcSummary.sfp_breakdown?.None || 0 },
                                             ].map((sfp, i) => (
                                                 <tr key={i} className="border-t border-slate-200">

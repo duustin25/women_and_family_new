@@ -52,14 +52,13 @@ class BcpcMonitoringController extends Controller
         $query = BcpcChild::with(['latestAssessment', 'zone', 'member']);
 
         // Registry Status Filter (Active 0-59m vs Aged Out / Archived for COA Audit)
-        if ($request->has('registry_status') && $request->registry_status !== 'all') {
-            $query->where('status', $request->registry_status);
-        } elseif (!$request->has('registry_status') || $request->registry_status === 'Active') {
-            $query->where('status', 'Active');
+        $registryStatus = $request->input('registry_status', 'Active');
+        if ($registryStatus !== 'all') {
+            $query->where('status', $registryStatus);
         }
 
         // 1. Apply Search Filter (Child, Guardian, or BNS Name)
-        if ($request->has('search') && $request->search !== '') {
+        if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('child_first_name', 'like', "%{$search}%")
@@ -69,50 +68,130 @@ class BcpcMonitoringController extends Controller
             });
         }
 
-        // 2. Apply Status Filter (Targeting Latest Assessment WFA / WFLH)
-        if ($request->has('status') && $request->status !== 'all') {
-            $query->whereHas('latestAssessment', function ($q) use ($request) {
-                $q->where('wfa_status', $request->status)
-                  ->orWhere('wflh_status', $request->status);
-            });
+        // 2. Apply Zone Filter
+        if ($request->filled('zone_id') && $request->zone_id !== 'all') {
+            $query->where('zone_id', $request->zone_id);
         }
 
         // 3. Apply SFP Status Filter
-        if ($request->has('sfp_status') && $request->sfp_status !== 'all') {
+        if ($request->filled('sfp_status') && $request->sfp_status !== 'all') {
             $query->where('sfp_status', $request->sfp_status);
         }
 
-        $children = $query->get()->sortByDesc(function ($child) {
+        $allChildrenInRegistry = $query->get();
+
+        // 4. Apply Triage Filter in Memory for Clinical Precision
+        $triageFilter = $request->input('triage', 'all');
+        $filteredChildren = $allChildrenInRegistry->filter(function ($child) use ($triageFilter) {
+            if ($triageFilter === 'all') return true;
+
+            $latest = $child->latestAssessment;
+            if (!$latest) return $triageFilter === 'normal';
+
+            $wfa = $latest->wfa_status ?? 'Normal';
+            $hfa = $latest->hfa_status ?? 'Normal';
+            $wflh = $latest->wflh_status ?? 'Normal';
+            $logs = $latest->intervention_logs ?? [];
+            $hasOedema = in_array('Bilateral Oedema (Fluid Retention) [SAM PIMAM]', $logs);
+
+            $isOverweight = ($wflh === 'Overweight' || $wfa === 'Overweight');
+            $isObese = ($wflh === 'Obese');
+            $isElevatedBodyMass = $isOverweight || $isObese;
+            $isStunted = in_array($hfa, ['Stunted', 'Severely Stunted']);
+
+            $isSAM = !$isElevatedBodyMass && ($hasOedema || $wfa === 'Severely Underweight' || $wflh === 'Severely Wasted');
+            $isMAM = !$isSAM && !$isElevatedBodyMass && ($wfa === 'Underweight' || $wflh === 'Wasted');
+            $isDoubleBurden = $isStunted && $isElevatedBodyMass;
+
+            switch ($triageFilter) {
+                case 'sam':
+                    return $isSAM;
+                case 'mam':
+                    return $isMAM;
+                case 'double_burden':
+                    return $isDoubleBurden;
+                case 'stunted':
+                    return $isStunted && !$isElevatedBodyMass;
+                case 'overweight_obese':
+                    return $isElevatedBodyMass && !$isStunted;
+                case 'overdue':
+                    $isAtRisk = $isSAM || $isMAM || $isDoubleBurden || $isStunted || $child->sfp_status === 'Enrolled';
+                    if (!$isAtRisk) return false;
+                    return Carbon::parse($latest->date_of_weighing)->diffInDays(Carbon::now()) > 30;
+                case 'normal':
+                    return !$isSAM && !$isMAM && !$isDoubleBurden && !$isStunted && !$isElevatedBodyMass;
+                default:
+                    return true;
+            }
+        })->sortByDesc(function ($child) {
             return $child->latestAssessment ? $child->latestAssessment->date_of_weighing : $child->created_at;
         })->values();
 
+        // Calculate synchronized metrics
+        $allActive = BcpcChild::with('latestAssessment')->where('status', 'Active')->get();
+        $samTotal = 0;
+        $mamTotal = 0;
+        $dbTotal = 0;
+        $stuntedTotal = 0;
+        $overweightTotal = 0;
+        $obeseTotal = 0;
+        $overdueTotal = 0;
+
+        foreach ($allActive as $c) {
+            $l = $c->latestAssessment;
+            if (!$l) continue;
+            $wfa = $l->wfa_status ?? 'Normal';
+            $hfa = $l->hfa_status ?? 'Normal';
+            $wflh = $l->wflh_status ?? 'Normal';
+            $logs = $l->intervention_logs ?? [];
+            $hasOedema = in_array('Bilateral Oedema (Fluid Retention) [SAM PIMAM]', $logs);
+            $isOw = ($wflh === 'Overweight' || $wfa === 'Overweight');
+            $isOb = ($wflh === 'Obese');
+            $isElev = $isOw || $isOb;
+            $isSt = in_array($hfa, ['Stunted', 'Severely Stunted']);
+
+            $isS = !$isElev && ($hasOedema || $wfa === 'Severely Underweight' || $wflh === 'Severely Wasted');
+            $isM = !$isS && !$isElev && ($wfa === 'Underweight' || $wflh === 'Wasted');
+            $isDb = $isSt && $isElev;
+
+            if ($isS) $samTotal++;
+            elseif ($isDb) $dbTotal++;
+            elseif ($isM) $mamTotal++;
+            elseif ($isOb && !$isSt) $obeseTotal++;
+            elseif ($isOw && !$isSt) $overweightTotal++;
+            elseif ($isSt && !$isElev) $stuntedTotal++;
+
+            $isAtRisk = $isS || $isM || $isDb || $isSt || $c->sfp_status === 'Enrolled';
+            if ($isAtRisk && Carbon::parse($l->date_of_weighing)->diffInDays(Carbon::now()) > 30) {
+                $overdueTotal++;
+            }
+        }
+
         return Inertia::render('Admin/Bcpc/Index', [
-            'monitoredChildren' => $children,
-            'filters' => $request->only(['search', 'status', 'sfp_status', 'registry_status']),
+            'monitoredChildren' => $filteredChildren,
+            'zones' => Zone::all(),
+            'filters' => [
+                'search' => $request->input('search', ''),
+                'triage' => $triageFilter,
+                'zone_id' => $request->input('zone_id', 'all'),
+                'sfp_status' => $request->input('sfp_status', 'all'),
+                'registry_status' => $registryStatus,
+            ],
             'metrics' => [
-                'total_monitored' => BcpcChild::where('status', 'Active')->count(),
-                'active_sfp' => BcpcChild::where('status', 'Active')->where('sfp_status', 'Enrolled')->count(),
+                'total_monitored' => $allActive->count(),
+                'active_sfp' => $allActive->where('sfp_status', 'Enrolled')->count(),
+                'graduated_sfp' => BcpcChild::where('sfp_status', 'Graduated')->count(),
+                'completed_sfp' => BcpcChild::where('sfp_status', 'Completed')->count(),
                 'archived_count' => BcpcChild::where('status', 'Aged Out')->count(),
-                'severely_underweight' => BcpcAssessment::whereIn('id', function ($query) {
-                    $query->select(DB::raw('max(id)'))
-                        ->from('bcpc_assessments')
-                        ->groupBy('bcpc_child_id');
-                })->whereHas('child', function ($q) {
-                    $q->where('status', 'Active');
-                })->where(function ($q) {
-                    $q->where('wfa_status', 'Severely Underweight')
-                      ->orWhere('wflh_status', 'Severely Wasted');
-                })->count(),
-                'underweight' => BcpcAssessment::whereIn('id', function ($query) {
-                    $query->select(DB::raw('max(id)'))
-                        ->from('bcpc_assessments')
-                        ->groupBy('bcpc_child_id');
-                })->whereHas('child', function ($q) {
-                    $q->where('status', 'Active');
-                })->where(function ($q) {
-                    $q->where('wfa_status', 'Underweight')
-                      ->orWhere('wflh_status', 'Wasted');
-                })->count(),
+                'sam_cases' => $samTotal,
+                'mam_cases' => $mamTotal,
+                'double_burden_cases' => $dbTotal,
+                'stunted_cases' => $stuntedTotal,
+                'overweight_cases' => $overweightTotal,
+                'obese_cases' => $obeseTotal,
+                'overdue_count' => $overdueTotal,
+                'severely_underweight' => $samTotal,
+                'underweight' => $mamTotal,
             ]
         ]);
     }
@@ -133,47 +212,79 @@ class BcpcMonitoringController extends Controller
         $topPriority = $children->filter(function ($child) {
             $latest = $child->latestAssessment;
             if (!$latest) return false;
-            return in_array($latest->wfa_status, ['Severely Underweight']) 
+            $isObese = in_array($latest->wflh_status ?? '', ['Overweight', 'Obese']);
+            if ($isObese) return false;
+            $hasOedema = in_array('Bilateral Oedema (Fluid Retention) [SAM PIMAM]', $latest->intervention_logs ?? []);
+            return $hasOedema 
+                || in_array($latest->wfa_status, ['Severely Underweight']) 
                 || in_array($latest->wflh_status ?? '', ['Severely Wasted']);
         })->values();
 
-        // 2. Second Priority (MAM / Moderate Malnutrition)
+        // 2. Second Priority (MAM / Moderate Acute Malnutrition)
         $secondPriority = $children->filter(function ($child) {
             $latest = $child->latestAssessment;
             if (!$latest) return false;
+            $isObese = in_array($latest->wflh_status ?? '', ['Overweight', 'Obese']);
+            if ($isObese) return false;
             $isSam = in_array($latest->wfa_status, ['Severely Underweight']) || in_array($latest->wflh_status ?? '', ['Severely Wasted']);
             if ($isSam) return false;
             return in_array($latest->wfa_status, ['Underweight']) || in_array($latest->wflh_status ?? '', ['Wasted']);
         })->values();
 
-        // 3. Third Priority (Stunted / Height Focus)
+        // 3. Double Burden of Malnutrition Priority (Stunted + Overweight/Obese)
+        $doubleBurden = $children->filter(function ($child) {
+            $latest = $child->latestAssessment;
+            if (!$latest) return false;
+            $isStunted = in_array($latest->hfa_status, ['Stunted', 'Severely Stunted']);
+            $isObese = in_array($latest->wflh_status ?? '', ['Overweight', 'Obese']);
+            return $isStunted && $isObese;
+        })->values();
+
+        // 4. Stunted Priority (Height Focus without Double Burden)
         $thirdPriority = $children->filter(function ($child) {
             $latest = $child->latestAssessment;
             if (!$latest) return false;
-            return in_array($latest->hfa_status, ['Stunted', 'Severely Stunted']);
+            $isStunted = in_array($latest->hfa_status, ['Stunted', 'Severely Stunted']);
+            $isObese = in_array($latest->wflh_status ?? '', ['Overweight', 'Obese']);
+            return $isStunted && !$isObese;
         })->values();
 
-        // 4. Active Supplemental Feeding Program (SFP) Roster
+        // 5. Active Supplemental Feeding Program (SFP) Roster
         $activeSfp = $children->filter(function ($child) {
             return $child->sfp_status === 'Enrolled';
         })->values();
 
-        // 5. Overdue Re-Weighing Check-ins (> 30 Days)
+        // 6. Overdue Re-Weighing Check-ins (> 30 Days) with Assigned Scholar Details
         $overdueWeighings = $children->filter(function ($child) {
             $latest = $child->latestAssessment;
             if (!$latest) return false;
 
-            $isAtRisk = in_array($latest->wfa_status, ['Underweight', 'Severely Underweight'])
-                || in_array($latest->hfa_status, ['Stunted', 'Severely Stunted'])
-                || in_array($latest->wflh_status ?? '', ['Wasted', 'Severely Wasted'])
-                || $child->sfp_status === 'Enrolled';
+            $wfa = $latest->wfa_status ?? 'Normal';
+            $hfa = $latest->hfa_status ?? 'Normal';
+            $wflh = $latest->wflh_status ?? 'Normal';
+            $logs = $latest->intervention_logs ?? [];
+            $hasOedema = in_array('Bilateral Oedema (Fluid Retention) [SAM PIMAM]', $logs);
+
+            $isOw = ($wflh === 'Overweight' || $wfa === 'Overweight');
+            $isOb = ($wflh === 'Obese');
+            $isElev = $isOw || $isOb;
+            $isSt = in_array($hfa, ['Stunted', 'Severely Stunted']);
+
+            $isSAM = !$isElev && ($hasOedema || $wfa === 'Severely Underweight' || $wflh === 'Severely Wasted');
+            $isMAM = !$isSAM && !$isElev && ($wfa === 'Underweight' || $wflh === 'Wasted');
+            $isDoubleBurden = $isSt && $isElev;
+
+            $isAtRisk = $isSAM || $isMAM || $isDoubleBurden || $isSt || $child->sfp_status === 'Enrolled';
 
             if (!$isAtRisk) return false;
 
             return Carbon::parse($latest->date_of_weighing)->diffInDays(Carbon::now()) > 30;
+        })->sortByDesc(function ($child) {
+            $latest = $child->latestAssessment;
+            return $latest ? Carbon::parse($latest->date_of_weighing)->timestamp : 0;
         })->values();
 
-        // 6. Upcoming Birthdays (Next 30 Days)
+        // 7. Upcoming Birthdays (Next 30 Days)
         $today = Carbon::now();
         $upcomingBirthdays = $children->filter(function ($child) use ($today) {
             if (!$child->date_of_birth) return false;
@@ -190,11 +301,13 @@ class BcpcMonitoringController extends Controller
             return $birthdayThisYear->timestamp;
         })->values();
 
-        // 7. Zone Malnutrition Breakdown (Purok Malnutrition Hotspots in Barangay 183)
+        // 8. Zone Malnutrition Breakdown (Purok Malnutrition Hotspots in Barangay 183)
         $zonesBreakdown = Zone::query()->get()->map(function ($zone) use ($children) {
             $zoneChildren = $children->filter(function ($c) use ($zone) {
                 return $c->zone_id === $zone->id;
             });
+
+            $totalMonitored = $zoneChildren->count();
 
             $samCount = $zoneChildren->filter(function ($c) {
                 $l = $c->latestAssessment;
@@ -206,33 +319,93 @@ class BcpcMonitoringController extends Controller
                 return $l && ($l->wfa_status === 'Underweight' || ($l->wflh_status ?? '') === 'Wasted');
             })->count();
 
+            $doubleBurdenCount = $zoneChildren->filter(function ($c) {
+                $l = $c->latestAssessment;
+                return $l && in_array($l->hfa_status, ['Stunted', 'Severely Stunted']) && in_array($l->wflh_status ?? '', ['Overweight', 'Obese']);
+            })->count();
+
+            $stuntedCount = $zoneChildren->filter(function ($c) {
+                $l = $c->latestAssessment;
+                return $l && in_array($l->hfa_status, ['Stunted', 'Severely Stunted']);
+            })->count();
+
+            $totalMalnourished = $samCount + $mamCount + $doubleBurdenCount;
+            $prevalenceRate = $totalMonitored > 0 ? round(($totalMalnourished / $totalMonitored) * 100, 1) : 0;
+
             return [
                 'id' => $zone->id,
                 'name' => $zone->name,
                 'sam' => $samCount,
                 'mam' => $mamCount,
-                'total_malnourished' => $samCount + $mamCount,
-                'total_monitored' => $zoneChildren->count(),
+                'double_burden' => $doubleBurdenCount,
+                'stunted' => $stuntedCount,
+                'total_malnourished' => $totalMalnourished,
+                'total_monitored' => $totalMonitored,
+                'prevalence_rate' => $prevalenceRate,
             ];
         })->sortByDesc('total_malnourished')->values();
+
+        // 9. Multi-Axis WHO Distributions for Analytics
+        $wfaDistribution = [
+            'Normal' => $children->filter(fn($c) => ($c->latestAssessment->wfa_status ?? 'Normal') === 'Normal')->count(),
+            'Underweight' => $children->filter(fn($c) => ($c->latestAssessment->wfa_status ?? '') === 'Underweight')->count(),
+            'Severely Underweight' => $children->filter(fn($c) => ($c->latestAssessment->wfa_status ?? '') === 'Severely Underweight')->count(),
+            'Overweight' => $children->filter(fn($c) => ($c->latestAssessment->wfa_status ?? '') === 'Overweight')->count(),
+        ];
+
+        $hfaDistribution = [
+            'Normal' => $children->filter(fn($c) => ($c->latestAssessment->hfa_status ?? 'Normal') === 'Normal')->count(),
+            'Stunted' => $children->filter(fn($c) => ($c->latestAssessment->hfa_status ?? '') === 'Stunted')->count(),
+            'Severely Stunted' => $children->filter(fn($c) => ($c->latestAssessment->hfa_status ?? '') === 'Severely Stunted')->count(),
+            'Tall' => $children->filter(fn($c) => ($c->latestAssessment->hfa_status ?? '') === 'Tall')->count(),
+        ];
+
+        $wflhDistribution = [
+            'Normal' => $children->filter(fn($c) => ($c->latestAssessment->wflh_status ?? 'Normal') === 'Normal')->count(),
+            'Wasted' => $children->filter(fn($c) => ($c->latestAssessment->wflh_status ?? '') === 'Wasted')->count(),
+            'Severely Wasted' => $children->filter(fn($c) => ($c->latestAssessment->wflh_status ?? '') === 'Severely Wasted')->count(),
+            'Overweight' => $children->filter(fn($c) => ($c->latestAssessment->wflh_status ?? '') === 'Overweight')->count(),
+            'Obese' => $children->filter(fn($c) => ($c->latestAssessment->wflh_status ?? '') === 'Obese')->count(),
+        ];
+
+        $sfpDistribution = [
+            'Enrolled' => $activeSfp->count(),
+            'Graduated' => BcpcChild::where('sfp_status', 'Graduated')->count(),
+            'Completed' => BcpcChild::where('sfp_status', 'Completed')->count(),
+            'None' => $children->where('sfp_status', 'None')->count(),
+        ];
 
         return Inertia::render('Admin/Bcpc/Dashboard', [
             'monitoredChildren' => $children,
             'topPriority' => $topPriority,
             'secondPriority' => $secondPriority,
             'thirdPriority' => $thirdPriority,
+            'doubleBurden' => $doubleBurden,
             'activeSfp' => $activeSfp,
             'overdueWeighings' => $overdueWeighings,
             'upcomingBirthdays' => $upcomingBirthdays,
             'zonesBreakdown' => $zonesBreakdown,
+            'distributions' => [
+                'wfa' => $wfaDistribution,
+                'hfa' => $hfaDistribution,
+                'wflh' => $wflhDistribution,
+                'sfp' => $sfpDistribution,
+            ],
             'metrics' => [
                 'total_monitored' => $children->count(),
                 'active_sfp' => $activeSfp->count(),
                 'graduated_sfp' => BcpcChild::where('sfp_status', 'Graduated')->count(),
+                'completed_sfp' => BcpcChild::where('sfp_status', 'Completed')->count(),
                 'overdue_weighing' => $overdueWeighings->count(),
+                'sam_cases' => $topPriority->count(),
+                'mam_cases' => $secondPriority->count(),
+                'double_burden_cases' => $doubleBurden->count(),
+                'stunted_cases' => $thirdPriority->count(),
+                'obese_cases' => $children->filter(fn($c) => in_array($c->latestAssessment->wflh_status ?? '', ['Overweight', 'Obese']))->count(),
                 'severely_underweight' => $topPriority->count(),
                 'underweight' => $secondPriority->count(),
-                'stunted' => $thirdPriority->count()
+                'stunted' => $thirdPriority->count(),
+                'double_burden' => $doubleBurden->count(),
             ]
         ]);
     }

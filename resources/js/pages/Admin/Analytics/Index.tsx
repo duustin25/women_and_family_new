@@ -54,6 +54,9 @@ interface BcpcSummary {
     normal: number;
     sam: number;
     mam: number;
+    double_burden?: number;
+    obese?: number;
+    overweight?: number;
     stunted: number;
     severely_stunted: number;
     normal_height: number;
@@ -68,6 +71,9 @@ interface BcpcSummary {
     zones_breakdown: {
         name: string;
         total: number;
+        sam?: number;
+        mam?: number;
+        double_burden?: number;
         malnourished: number;
         stunted: number;
         rate: number;
