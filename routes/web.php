@@ -170,6 +170,7 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.', 'middleware' => ['auth', 'v
     // ------------------------------------------------------------
 
     // BCPC Nutrition Monitoring (e-OPT Plus)
+    Route::get('bcpc/print', [\App\Http\Controllers\Admin\BcpcMonitoringController::class, 'print'])->name('bcpc.print');
     Route::get('bcpc/cases/create', [\App\Http\Controllers\Admin\BcpcMonitoringController::class, 'create'])->name('bcpc.create');
     Route::post('bcpc/cases', [\App\Http\Controllers\Admin\BcpcMonitoringController::class, 'store'])->name('bcpc.store');
     Route::get('bcpc/cases', [\App\Http\Controllers\Admin\BcpcMonitoringController::class, 'index'])->name('bcpc.index');

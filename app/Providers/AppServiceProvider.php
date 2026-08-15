@@ -25,13 +25,14 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->configureDefaults();
 
-        // Register Observers for Audit Logging
+        // Register Observers for Audit Logging and Member Synchronization
         \App\Models\CaseReport::observe(\App\Observers\AuditObserver::class);
         \App\Models\User::observe(\App\Observers\AuditObserver::class);
         \App\Models\Announcement::observe(\App\Observers\AuditObserver::class);
         \App\Models\Organization::observe(\App\Observers\AuditObserver::class);
         \App\Models\BcpcChild::observe(\App\Observers\AuditObserver::class);
         \App\Models\BcpcAssessment::observe(\App\Observers\AuditObserver::class);
+        \App\Models\MembershipApplication::observe(\App\Observers\MembershipApplicationObserver::class);
 
         // Resolve polymorphic relation for custom non-model types
         \Illuminate\Database\Eloquent\Relations\Relation::morphMap([

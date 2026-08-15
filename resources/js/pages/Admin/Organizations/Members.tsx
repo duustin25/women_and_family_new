@@ -310,7 +310,7 @@ export default function Members({ organization, members, filters }: PageProps) {
                                                     <span className="opacity-80">{member.actioned_at || '—'}</span>
                                                 </td>
                                                 <td className={tdClasses}>
-                                                    <Badge variant="outline" className={`px-1.5 py-0 uppercase text-[9px] tracking-widest font-bold border-transparent ${member.status === 'Approved' ? 'text-emerald-700 bg-emerald-100/50 dark:text-emerald-400 dark:bg-emerald-900/20' : 'text-neutral-500 bg-neutral-100 dark:bg-neutral-800'}`}>
+                                                    <Badge variant="outline" className={`px-1.5 py-0 uppercase text-[9px] tracking-widest font-bold border-transparent ${member.status?.toLowerCase() === 'approved' ? 'text-emerald-700 bg-emerald-100/50 dark:text-emerald-400 dark:bg-emerald-900/20' : 'text-neutral-500 bg-neutral-100 dark:bg-neutral-800'}`}>
                                                         {member.status}
                                                     </Badge>
                                                 </td>

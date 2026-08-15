@@ -26,11 +26,17 @@ class MembersController extends Controller
     {
         /** @var User $user */
         $user = Auth::user();
-        $query = Member::with(['organization', 'application', 'communications', 'dispatches'])->latest();
+        $query = Member::active()->with(['organization', 'application', 'communications', 'dispatches'])->latest();
 
         // RBAC: President sees only their organization's members
         if ($user->isPresident()) {
             $query->where('organization_id', $user->organization_id);
+            $organizations = Organization::where('id', $user->organization_id)->get();
+        } else {
+            $organizations = Organization::orderBy('name')->get();
+            if ($request->filled('organization_id') && strtolower((string)$request->organization_id) !== 'all') {
+                $query->where('organization_id', $request->organization_id);
+            }
         }
 
         // Filters
@@ -45,10 +51,6 @@ class MembersController extends Controller
             });
         }
 
-        if ($request->filled('organization_id') && $request->organization_id !== 'all') {
-            $query->where('organization_id', $request->organization_id);
-        }
-
         if ($request->input('pending_claims') === '1') {
             $query->whereHas('dispatches', function ($dq) {
                 $dq->where('status', 'Pending');
@@ -56,7 +58,6 @@ class MembersController extends Controller
         }
 
         $members = $query->paginate(15)->withQueryString();
-        $organizations = Organization::orderBy('name')->get();
 
         return Inertia::render('Admin/Members/Index', [
             'members' => $members,
@@ -82,13 +83,15 @@ class MembersController extends Controller
             abort(403, 'Unauthorized. Access Denied.');
         }
 
-        if (!$member->email) {
+        $email = $member->email ?? ($member->member_meta['email'] ?? null);
+
+        if (!$email) {
             return back()->with('error', 'Member does not have a recorded email address.');
         }
 
         try {
             // Send Professional Email
-            Mail::to($member->email)->send(new GeneralMessage($validated['subject'], $validated['body']));
+            Mail::to($email)->send(new GeneralMessage($validated['subject'], $validated['body']));
 
             // Log the communication to the audit trail
             MemberCommunication::create([

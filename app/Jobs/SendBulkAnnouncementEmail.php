@@ -49,7 +49,7 @@ class SendBulkAnnouncementEmail implements ShouldQueue
      */
     public function handle(): void
     {
-        $query = Member::where('status', 'Active')
+        $query = Member::active()
             ->whereNotNull('email')
             ->select(['id', 'email', 'fullname', 'organization_id']);
 

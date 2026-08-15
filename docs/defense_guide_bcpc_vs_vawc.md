@@ -1,6 +1,6 @@
 # ⚖️ Capstone Defense Guide: BCPC vs. VAWC Legal & Operational Scope
 
-This document provides the official system design justification and a verbal defense script to explain the transition of the **BCPC module from child case filing to Child Nutrition Monitoring**, and how the system legally separates child protection cases under **RA 9262 (VAWC)** and **RA 7610 (Child Abuse)**.
+This document provides the official system design justification and a verbal defense script to explain the transition of the **BCPC module from child case filing to Child Nutrition Monitoring**, and how the system legally separates child protection cases under **RA 9262 (VAWC)** and **RA 7610 (Child Abuse)**, fully compliant with **RA 11037 (Masustansyang Pagkain para sa Batang Pilipino Act)** and **National Nutrition Council (NNC) Operation Timbang (OPT) Plus guidelines**.
 
 ---
 
@@ -46,15 +46,17 @@ Here is the operational reality of how child abuse and welfare are handled at th
 
 ---
 
-## 🍎 2. Why the BCPC Module Focuses on Child Nutrition Monitoring
+## 🍎 2. Why the BCPC Module Focuses on Child Nutrition Monitoring (NNC e-OPT Plus & RA 11037)
 
 If the Barangay immediately turns over criminal child abuse cases to the PNP and DSWD, what is the daily operational role of the **BCPC**?
 
 *   **Primary Active Mandate:** The BCPC's most active, data-driven grass-roots operations focus on tracking child development, health, and nutrition.
-*   **e-OPT Plus (Electronic Operation Timbang Plus):** Barangay Nutrition Scholars (BNS) under the BCPC conduct regular weighing and height checks of all children in the community.
-*   **WHO Standards:** The system integrates WHO Child Growth Standards (Z-scores for Weight-for-Age and Height-for-Age) to automatically classify children as Normal, Underweight, or Severely Underweight.
-*   **Supplemental Feeding Program (SFP):** Malnourished children are automatically enrolled in the 90-day Supplemental Feeding Program.
-*   **Defense Argument:** By focusing the BCPC module on **Nutrition Monitoring**, the system supports the actual daily operations of the BCPC sub-committee, while legal child abuse cases are securely filed under the VAWC module (if domestic) or referred directly to the police.
+*   **e-OPT Plus (Electronic Operation Timbang Plus):** Barangay Nutrition Scholars (BNS) under the BCPC conduct regular weighing and height checks of all preschoolers aged **0 to 59 months** in the community.
+*   **0-59 Months Lockout Rule**: In accordance with NNC guidelines, children aged 60 months (5 years) or older automatically age out of the barangay e-OPT Plus program, with a UI notice redirecting their monitoring to the school sector, while permanently preserving records for COA auditing.
+*   **WHO Standards & Linear Interpolation:** The system integrates WHO Child Growth Standards (Z-scores for Weight-for-Age, Height-for-Age, and Weight-for-Length/Height) with precision linear interpolation to eliminate false diagnoses.
+*   **Double Burden of Malnutrition & SFP Guardrail:** Accurately diagnoses chronic stunting alongside elevated body mass, locking out high-calorie Supplemental Feeding (SFP) for overweight/obese children while prescribing Micronutrient Powder (MNP).
+*   **120-Day Supplemental Feeding Program (SFP) & Relapse Engine:** Malnourished children (SAM/MAM/Wasted) are automatically enrolled in the **120-Day SFP** (RA 11037) with automated milestone tracking at Day 1, 30, 60, 90, and 120. If a graduated child relapses, the system initiates Cycle 2 on their single master profile.
+*   **Data Entry Sanity Checks**: Includes biological boundary models ($1.5-35\text{ kg}$, $40-125\text{ cm}$) and extreme Z-score outlier prompts ($\pm 5\text{ SD}$) to prevent human data entry typos.
 
 ---
 
@@ -71,7 +73,7 @@ Copy this script and use it if a panelist asks about the missing child abuse cas
 > *   *If a child is abused in a domestic setup (e.g. by a father or stepfather), this falls under **RA 9262 (Anti-VAWC Act)**. The Barangay Captain has the legal authority to issue a **Barangay Protection Order (BPO)**. These cases are fully processed, scored via our VAWC-RAVE engine, and monitored under our **VAWC Case Management Module**.*
 > *   *If a child is abused by a stranger, neighbor, or employer (child labor/neglect) under **RA 7610**, the Barangay Captain **cannot** issue a protection order, and mediation is legally prohibited. By DILG mandate, the Barangay's only role is to immediately refer the child to the **PNP Women and Children Protection Desk (WCPD)** and the **Department of Social Welfare and Development (DSWD)**. Since the Barangay does not manage ongoing criminal trials for child abuse, there is no case processing database for it.*
 > 
-> *Instead, the **BCPC's** primary daily operational mandate at the barangay level is child health and welfare. Our system digitizes this critical mandate through the **BCPC Nutrition Monitoring Module (e-OPT Plus)**. We calculate WHO Z-scores to automatically identify malnourished children and enroll them in the **90-Day Supplemental Feeding Program (SFP)**.*
+> *Instead, the **BCPC's** primary daily operational mandate at the barangay level is child health and welfare under **RA 11037** and **NNC Operation Timbang (OPT) Plus guidelines**. Our system digitizes this critical mandate through the **BCPC Nutrition Monitoring Module (e-OPT Plus)**. We calculate WHO 3-axis Z-scores with precision linear interpolation to automatically identify malnourished children, enforce **0-59 months age lockout**, run **data entry sanity checks**, dynamically lockout caloric feeding for **Double Burden of Malnutrition** cases, and manage the **120-Day Supplemental Feeding Program (SFP)** with milestone tracking and an automated **Single Master Profile Relapse Engine**.*
 > 
 > *This design ensures that sensitive criminal child abuse records are kept strictly confidential and referred immediately to law enforcement, while routine community health tracking remains active, data-driven, and managed by Barangay Nutrition Scholars (BNS)."*
 

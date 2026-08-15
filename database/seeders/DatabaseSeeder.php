@@ -527,142 +527,14 @@ class DatabaseSeeder extends Seeder
                         'phone' => $formData['vco_guardian_phone'] ?? ($formData['erpat_phone'] ?? ($formData['kalipi_cellphone'] ?? ($formData['solo_phone'] ?? ($formData['kabahagi_phone'] ?? $faker->phoneNumber())))),
                         'secure_token' => Str::random(32),
                         'member_meta' => $formData,
-                        'status' => 'active',
+                        'status' => Member::STATUS_ACTIVE,
                     ]);
                 }
             }
         }
 
-        // 8. Seed 20 Children for BCPC Nutrition Monitoring with Structured Scenarios
-        $nutritionService = new \App\Services\NutritionCalculatorService();
-        for ($i = 0; $i < 20; $i++) {
-            $sex = $i % 2 === 0 ? 'Male' : 'Female';
-            
-            // Define scenarios to guarantee all KPIs are hit:
-            // 0-4: Active SAM/MAM (Supplemental Feeding Program - SFP active)
-            // 5-8: Graduated SFP (Started malnourished, now normal)
-            // 9-12: Overdue Check-ins (Enrolled in SFP, last check >30 days ago)
-            // 13-16: Chronic Stunting (Normal weight, but Stunted/Severely Stunted height)
-            // 17-19: Normal Healthy Child
-            
-            if ($i <= 4) {
-                $dob = now()->subMonths(rand(6, 24)); 
-                $profile = 'malnourished_active';
-            } elseif ($i <= 8) {
-                $dob = now()->subMonths(rand(12, 36));
-                $profile = 'graduated';
-            } elseif ($i <= 12) {
-                $dob = now()->subMonths(rand(12, 30));
-                $profile = 'overdue';
-            } elseif ($i <= 16) {
-                $dob = now()->subMonths(rand(24, 60));
-                $profile = 'stunted_only';
-            } else {
-                $dob = now()->subMonths(rand(6, 48));
-                $profile = 'normal_healthy';
-            }
-
-            $child = BcpcChild::create([
-                'zone_id' => $faker->randomElement($zones)->id,
-                'guardian_name' => $faker->name(),
-                'address' => $faker->streetAddress() . ', Purok ' . rand(1, 8),
-                'contact_number' => $faker->phoneNumber(),
-                'bns_name' => 'BNS Maria Cruz',
-                'child_first_name' => $faker->firstName($sex === 'Male' ? 'male' : 'female'),
-                'child_last_name' => $faker->lastName(),
-                'child_middle_name' => $faker->lastName(),
-                'date_of_birth' => $dob,
-                'sex' => $sex,
-                'status' => 'Active',
-                'sfp_status' => 'None',
-            ]);
-
-            // Assessments timeline creation
-            $assessmentsCount = $profile === 'graduated' ? 4 : rand(1, 3);
-            $latestWfa = 'Normal';
-            $latestWeighingDate = null;
-
-            for ($j = 0; $j < $assessmentsCount; $j++) {
-                if ($profile === 'overdue') {
-                    $weighingDate = now()->subDays(35 + ($assessmentsCount - 1 - $j) * 30);
-                } else {
-                    $weighingDate = (clone $dob)->addMonths(($j + 1) * 2 + rand(0, 1));
-                    if ($weighingDate->isFuture() || $weighingDate->gt(now())) {
-                        $weighingDate = now()->subDays(($assessmentsCount - 1 - $j) * 20);
-                    }
-                }
-                
-                $ageInMonths = $nutritionService->calculateAgeInMonths($dob->toDateString(), $weighingDate->toDateString());
-                $medianWeight = 3.3 + ($ageInMonths * 0.26);
-                $medianHeight = 50 + ($ageInMonths * 0.78);
-
-                if ($profile === 'malnourished_active' || $profile === 'overdue') {
-                    $weight = $medianWeight - 2.8;
-                    $height = $medianHeight + 1.0;
-                } elseif ($profile === 'graduated') {
-                    if ($j === 0) {
-                        $weight = $medianWeight - 3.0; 
-                    } elseif ($j === 1) {
-                        $weight = $medianWeight - 2.0;
-                    } elseif ($j === 2) {
-                        $weight = $medianWeight - 1.2;
-                    } else {
-                        $weight = $medianWeight + 0.5;
-                    }
-                    $height = $medianHeight;
-                } elseif ($profile === 'stunted_only') {
-                    $weight = $medianWeight + 0.2;
-                    $height = $medianHeight - 12.0; 
-                } else {
-                    $weight = $medianWeight + 0.8;
-                    $height = $medianHeight + 2.0;
-                }
-
-                $weight = max(2.5, min(40.0, round($weight, 2)));
-                $height = max(45.0, min(120.0, round($height, 1)));
-
-                $wfa = $nutritionService->evaluateWeightForAge($ageInMonths, $sex, $weight);
-                $hfa = $nutritionService->evaluateHeightForAge($ageInMonths, $sex, $height);
-
-                $latestWfa = $wfa;
-                $latestWeighingDate = $weighingDate;
-
-                BcpcAssessment::create([
-                    'bcpc_child_id' => $child->id,
-                    'user_id' => $admin->id,
-                    'date_of_weighing' => $weighingDate,
-                    'weight_kg' => $weight,
-                    'height_cm' => $height,
-                    'wfa_status' => $wfa,
-                    'hfa_status' => $hfa,
-                    'remarks' => $wfa === 'Normal' && $hfa === 'Normal' ? 'Excellent biological progress.' : 'Requires clinical feeding follow-ups.',
-                    'intervention_logs' => in_array($wfa, ['Underweight', 'Severely Underweight']) ? ['Supplemental Feeding (SFP)', 'Vitamin A Supplementation'] : [],
-                    'bns_assessor' => 'BNS Maria Cruz',
-                    'sfp_day_number' => ($profile === 'graduated' || $profile === 'overdue' || $profile === 'malnourished_active') ? ($j * 30 + 1) : null,
-                ]);
-            }
-
-            // Sync SFP Status and Cycle dates
-            $sfpStatus = 'None';
-            $sfpStartDate = null;
-            $sfpEndDate = null;
-            if (in_array($latestWfa, ['Underweight', 'Severely Underweight'])) {
-                $sfpStatus = 'Enrolled';
-                $sfpStartDate = $latestWeighingDate->toDateString();
-            } else {
-                if ($profile === 'graduated') {
-                    $sfpStatus = 'Graduated';
-                    $sfpStartDate = (clone $dob)->addMonths(2)->toDateString();
-                    $sfpEndDate = $latestWeighingDate->toDateString();
-                }
-            }
-
-            $child->update([
-                'sfp_status' => $sfpStatus,
-                'sfp_start_date' => $sfpStartDate,
-                'sfp_end_date' => $sfpEndDate,
-            ]);
-        }
+        // 8. Seed 50 Children for BCPC Nutrition Monitoring (Clean 120-Day SFP Milestones)
+        $this->call(\Database\Seeders\BcpcSeeder::class);
 
         // 9. Seed 50 VAWC Case Reports and secure risk assessments
         for ($i = 0; $i < 50; $i++) {

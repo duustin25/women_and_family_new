@@ -79,7 +79,7 @@ class AnalyticsService
         $baseStats = [
             'totalVawcActive'     => VawcCase::where('status', '!=', 'Closed')->count(),
             'totalBcpcChildren'   => BcpcChild::count(),
-            'pendingApps'         => MembershipApplication::where('status', 'Pending')->count(),
+            'pendingApps'         => MembershipApplication::pending()->count(),
             'totalOrgs'           => Organization::count(),
             'totalGadEvents'      => $gadEvents->count(),
             'gadApprovedCount'    => $gadEvents->where('status', 'approved')->count(),
@@ -532,7 +532,7 @@ class AnalyticsService
      */
     public function getMembershipTrends(int $year, ?User $user = null): array
     {
-        $query = MembershipApplication::where('status', 'Approved')
+        $query = MembershipApplication::approved()
             ->whereYear('created_at', $year);
 
         // RBAC: Scope for Presidents
@@ -553,8 +553,8 @@ class AnalyticsService
             ];
         }
 
-        $totalThisYear = MembershipApplication::where('status', 'Approved')->whereYear('created_at', $year)->count();
-        $totalLastYear = MembershipApplication::where('status', 'Approved')->whereYear('created_at', $year - 1)->count();
+        $totalThisYear = MembershipApplication::approved()->whereYear('created_at', $year)->count();
+        $totalLastYear = MembershipApplication::approved()->whereYear('created_at', $year - 1)->count();
 
         $growth = '+0%';
         if ($totalLastYear > 0) {
@@ -753,7 +753,7 @@ class AnalyticsService
                 'id' => $o->id,
                 'name' => $o->name,
                 'slug' => $o->slug,
-                'members_count' => $o->membershipApplications()->where('status', 'Approved')->count()
+                'members_count' => $o->membershipApplications()->approved()->count()
             ])->toArray(),
         ];
     }
@@ -763,7 +763,7 @@ class AnalyticsService
      */
     private function extractMemberDemographics(?int $orgId = null): array
     {
-        $membersQuery = Member::query()->where('status', 'active');
+        $membersQuery = Member::active();
         if ($orgId) {
             $membersQuery->where('organization_id', $orgId);
         }

@@ -116,18 +116,22 @@ After approval, members are stored in the secure **Members Directory**:
 
 ---
 
-## 8. BCPC Child Nutrition Monitoring
+## 8. BCPC Child Nutrition Monitoring (NNC e-OPT Plus & RA 11037)
 
-The BCPC (Barangay Council for the Protection of Children) panel monitors toddler health and supplementary feeding programs (SFP).
+The BCPC (Barangay Council for the Protection of Children) panel monitors preschooler health, WHO z-scores, and the **120-Day Supplemental Feeding Program (SFP)** under **RA 11037** and **National Nutrition Council (NNC) Operation Timbang (OPT) Plus guidelines**.
 
-1. Navigate to **BCPC Monitoring** in the Admin Sidebar.
-2. Click **Add Child** to register a new minor.
-3. Select their Purok zone, gender, birthdate, and guardian info.
-4. Click **New Assessment** to enter weight (kg) and height (cm) readings.
-5. The system automatically computes and categorizes nutritional indices:
-   - **WFA (Weight-for-Age)**: *Normal, Underweight, Severely Underweight*
-   - **HFA (Height-for-Age)**: *Normal, Stunted, Severely Stunted*
-6. Monitor feeding program enrolment histories over time.
+1. Navigate to **BCPC Nutrition Monitoring** in the Admin Sidebar.
+2. Click **Register Child** to enroll a preschooler aged **0 to 59 months**.
+   - *Age-Out Lockout Rule*: Children aged 60 months (5 years) or older automatically age out of the barangay program, with a UI notice redirecting monitoring to the school sector.
+3. Select their Purok zone, gender, birthdate, and guardian info (*with 1-click resident parent auto-fill*).
+4. Click **Record New Measurement** to enter weight ($1.5-35.0\text{ kg}$) and height ($40.0-125.0\text{ cm}$) readings.
+   - *Data Entry Sanity Check*: If an extreme biological outlier (beyond WHO $\pm 5\text{ SD}$) is entered, a confirmation prompt opens to request typo verification before saving.
+5. The system automatically computes 3-axis WHO growth classifications with precision linear interpolation:
+   - **WFA (Weight-for-Age)**: *Normal, Underweight, Severely Underweight (SAM), Overweight*
+   - **HFA (Height-for-Age)**: *Normal, Stunted, Severely Stunted, Tall*
+   - **WFL/H (Weight-for-Length/Height)**: *Normal, Wasted (MAM), Severely Wasted (SAM), Overweight, Obese*
+6. **120-Day Supplemental Feeding Program (SFP)**: Malnourished children (SAM/MAM/Wasted) are automatically enrolled in the 120-day cycle with automated progress tracking at **Day 1**, **Day 30**, **Day 60**, **Day 90**, and **Day 120 (Final Graduation)**.
+7. Click **Print OPT+ Masterlist** to generate official printable DOH/NNC masterlists and executive summary reports.
 
 ---
 

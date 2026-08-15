@@ -193,13 +193,13 @@ class OrganizationMemberImportService
                 $formData['imported_via'] = 'bulk_csv';
                 $formData['imported_at'] = now()->toDateTimeString();
 
-                MembershipApplication::create([
+                $app = MembershipApplication::create([
                     'organization_id' => $organization->id,
                     'fullname'        => $fullname,
                     'email'           => $email ?: strtolower(str_replace(' ', '', $fullname)) . '.' . rand(100, 999) . '@brgy183.temp',
                     'address'         => $address,
                     'form_data'       => $formData,
-                    'status'          => 'approved',
+                    'status'          => MembershipApplication::STATUS_APPROVED,
                     'approved_by'     => 'Bulk CSV Import',
                     'actioned_at'     => now(),
                 ]);

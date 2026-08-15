@@ -22,6 +22,7 @@ class BcpcAssessment extends Model
         'height_cm',
         'wfa_status',
         'hfa_status',
+        'wflh_status',
         'intervention_logs',
         'remarks',
         'bns_assessor',

@@ -84,11 +84,14 @@ class OrganizationGovernanceService
     public function overruleAndApprove(MembershipApplication $application, string $adminName): MembershipApplication
     {
         $application->update([
-            'status' => 'approved',
+            'status' => MembershipApplication::STATUS_APPROVED,
             'approved_by' => "Admin Overrule ({$adminName})",
             'approval_type' => 'admin_overrule',
             'actioned_at' => now(),
         ]);
+
+        // Explicitly trigger ApplicationApproved event to send welcome emails & sync member
+        event(new \App\Events\ApplicationApproved($application));
 
         Log::info("Barangay Admin {$adminName} overruled rejection for application ID {$application->id} ({$application->fullname}).");
 
@@ -114,7 +117,7 @@ class OrganizationGovernanceService
     public function sustainDisapproval(MembershipApplication $application, string $adminName, ?string $adminNote = null): MembershipApplication
     {
         $application->update([
-            'status' => 'final_disapproved',
+            'status' => MembershipApplication::STATUS_FINAL_DISAPPROVED,
             'approved_by' => "Sustained by Admin ({$adminName})",
             'approval_type' => 'admin_sustained',
             'actioned_at' => now(),
@@ -132,7 +135,7 @@ class OrganizationGovernanceService
     {
         $cutoff = Carbon::now()->subDays($daysLimit);
 
-        $pendingApps = MembershipApplication::where('status', 'pending')
+        $pendingApps = MembershipApplication::pending()
             ->where('created_at', '<=', $cutoff)
             ->get();
 
@@ -140,11 +143,13 @@ class OrganizationGovernanceService
 
         foreach ($pendingApps as $app) {
             $app->update([
-                'status' => 'approved',
+                'status' => MembershipApplication::STATUS_APPROVED,
                 'approved_by' => "Automated {$daysLimit}-Day SLA System",
                 'approval_type' => 'auto_sla',
                 'actioned_at' => now(),
             ]);
+
+            event(new \App\Events\ApplicationApproved($app));
 
             Log::info("Application ID {$app->id} ({$app->fullname}) automatically approved due to {$daysLimit}-day SLA expiration.");
             $autoApprovedCount++;

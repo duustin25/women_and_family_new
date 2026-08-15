@@ -47,6 +47,8 @@ interface IndexProps {
 export default function MembersIndex({ members, organizations, filters }: IndexProps) {
     const { props } = usePage<any>();
     const flash = props.flash as { success?: string; error?: string } | undefined;
+    const authUser = props.auth?.user;
+    const isPresident = authUser?.role === 'president';
 
     const [selectedMember, setSelectedMember] = useState<Member | null>(null);
     const [individualModalOpen, setIndividualModalOpen] = useState(false);
@@ -55,9 +57,9 @@ export default function MembersIndex({ members, organizations, filters }: IndexP
     const [historyModalOpen, setHistoryModalOpen] = useState(false);
 
     const [searchQuery, setSearchQuery] = useState(filters.search || '');
-    const [orgFilter, setOrgFilter] = useState(filters.organization_id || 'All');
+    const [orgFilter, setOrgFilter] = useState(filters.organization_id || (isPresident && organizations[0] ? String(organizations[0].id) : 'All'));
     const [pendingClaimsFilter, setPendingClaimsFilter] = useState(filters.pending_claims === '1');
-    const [formData, setFormData] = useState({ subject: '', body: '', recipient_group: 'all', benefit_name: '', instructions: '' });
+    const [formData, setFormData] = useState({ subject: '', body: '', recipient_group: isPresident && organizations[0] ? String(organizations[0].id) : 'all', benefit_name: '', instructions: '' });
 
     const handleFilter = (key: string, value: string) => {
         const newFilters = { ...filters, [key]: value };
@@ -175,12 +177,12 @@ export default function MembersIndex({ members, organizations, filters }: IndexP
                                     <CreditCard className="w-4 h-4" /> Pending Claims Only
                                 </Button>
 
-                                <Select value={orgFilter} onValueChange={(val) => { setOrgFilter(val); handleFilter('organization_id', val); }}>
+                                <Select value={orgFilter} onValueChange={(val) => { setOrgFilter(val); handleFilter('organization_id', val); }} disabled={isPresident}>
                                     <SelectTrigger className="h-9 w-full sm:w-[220px]">
                                         <SelectValue placeholder="Organization" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="All">All Organizations</SelectItem>
+                                        {!isPresident && <SelectItem value="All">All Organizations</SelectItem>}
                                         {organizations.map(org => (
                                             <SelectItem key={org.id} value={String(org.id)}>{org.name}</SelectItem>
                                         ))}
@@ -243,7 +245,7 @@ export default function MembersIndex({ members, organizations, filters }: IndexP
                                                         </div>
                                                         <span className="text-[10px] text-muted-foreground font-medium flex items-center gap-1 uppercase tracking-wide truncate mt-0.5">
                                                             <MapPin className="h-3 w-3 text-muted-foreground/70" />
-                                                            {member.application?.address ?? 'No address on record'}
+                                                            {member.application?.address ?? (member as any).member_meta?.address ?? 'No address on record'}
                                                         </span>
                                                     </div>
                                                 </div>
@@ -390,12 +392,12 @@ export default function MembersIndex({ members, organizations, filters }: IndexP
                     <form onSubmit={submitBulk} className="space-y-4 pt-2">
                         <div className="space-y-2">
                             <Label>Recipient Group</Label>
-                            <Select value={formData.recipient_group} onValueChange={v => setFormData({ ...formData, recipient_group: v })}>
+                            <Select value={isPresident && organizations[0] ? String(organizations[0].id) : formData.recipient_group} onValueChange={v => setFormData({ ...formData, recipient_group: v })} disabled={isPresident}>
                                 <SelectTrigger className="h-9">
                                     <SelectValue placeholder="Select recipients..." />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="all">All Members (All Organizations)</SelectItem>
+                                    {!isPresident && <SelectItem value="all">All Members (All Organizations)</SelectItem>}
                                     {organizations.map(org => (
                                         <SelectItem key={org.id} value={String(org.id)}>{org.name} — Members Only</SelectItem>
                                     ))}

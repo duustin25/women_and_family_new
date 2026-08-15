@@ -243,9 +243,9 @@ class OrganizationController extends Controller
             abort(403, 'You can only view members of your own organization.');
         }
 
-        $query = \App\Models\MembershipApplication::with('organization')
-            ->where('organization_id', $organization->id)
-            ->where('status', 'Approved');
+        $query = \App\Models\MembershipApplication::approved()
+            ->with('organization')
+            ->where('organization_id', $organization->id);
 
         if ($request->filled('search')) {
             $searchTerm = $request->input('search');
@@ -289,8 +289,8 @@ class OrganizationController extends Controller
             abort(403, 'You can only view members of your own organization.');
         }
 
-        $query = \App\Models\MembershipApplication::where('organization_id', $organization->id)
-            ->where('status', 'Approved');
+        $query = \App\Models\MembershipApplication::approved()
+            ->where('organization_id', $organization->id);
 
         if ($request->filled('search')) {
             $searchTerm = $request->input('search');
