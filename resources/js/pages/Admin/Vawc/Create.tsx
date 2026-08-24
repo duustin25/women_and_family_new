@@ -549,11 +549,13 @@ export default function Create({ abuseTypes, zones }: Props) {
                                                 <SelectItem value="Ex-Partner">Ex-Partner</SelectItem>
                                                 <SelectItem value="Father of Child">Father of Child</SelectItem>
                                                 <SelectItem value="Dating Partner">Dating Partner</SelectItem>
-                                                <SelectItem value="Other Family">Other Family</SelectItem>
-                                                <SelectItem value="Acquaintance">Acquaintance</SelectItem>
-                                                <SelectItem value="Stranger">Stranger</SelectItem>
+                                                <SelectItem value="Other Household Relative">Other Household Relative</SelectItem>
+                                                <SelectItem value="Unidentified Intimate Partner (John Doe)">Unidentified Intimate Partner (John Doe)</SelectItem>
                                             </SelectContent>
                                         </Select>
+                                        <p className="text-[10px] text-muted-foreground mt-1 font-medium">
+                                            <span className="font-bold text-amber-600 dark:text-amber-400">RA 9262 Statutory Note:</span> Per RA 9262 Sec. 3, respondents must be an intimate, marital, dating partner, or child's parent. Stranger/Acquaintance offenses fall under RPC / Safe Spaces Act (RA 11313).
+                                        </p>
                                     </div>
                                 </div>
 

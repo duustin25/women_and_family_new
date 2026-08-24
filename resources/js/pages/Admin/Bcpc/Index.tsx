@@ -4,12 +4,12 @@ import { Head, Link, router } from '@inertiajs/react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
-    Plus, BarChart3, ChevronRight, Search, Filter, Activity, Baby, Award, Heart, ShieldAlert,
+    Plus, BarChart3, ChevronRight, ChevronLeft, Search, Filter, Activity, Baby, Award, Heart, ShieldAlert,
     CheckCircle2, Printer, Info, UserCheck, AlertTriangle, Sparkles, Clock, MapPin, RotateCcw
 } from 'lucide-react';
 import { useDebounce } from '@/hooks/use-debounce';
@@ -48,6 +48,8 @@ export default function Index({ monitoredChildren = [], zones = [], filters, met
     const [zoneId, setZoneId] = useState(filters?.zone_id || 'all');
     const [sfpStatus, setSfpStatus] = useState(filters?.sfp_status || 'all');
     const [registryStatus, setRegistryStatus] = useState(filters?.registry_status || 'Active');
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 8;
     const debouncedSearch = useDebounce(search, 300);
 
     // Apply filters via Inertia router
@@ -62,6 +64,7 @@ export default function Index({ monitoredChildren = [], zones = [], filters, met
             preserveState: true,
             replace: true
         });
+        setCurrentPage(1);
     }, [debouncedSearch, triage, zoneId, sfpStatus, registryStatus]);
 
     const calculateAge = (dobString: string) => {
@@ -86,7 +89,12 @@ export default function Index({ monitoredChildren = [], zones = [], filters, met
         setZoneId('all');
         setSfpStatus('all');
         setRegistryStatus('Active');
+        setCurrentPage(1);
     };
+
+    // Client-side pagination calculations
+    const totalPages = Math.max(1, Math.ceil(monitoredChildren.length / itemsPerPage));
+    const paginatedChildren = monitoredChildren.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
     return (
         <AppLayout breadcrumbs={[{ title: 'Dashboard', href: '/admin/dashboard' }, { title: 'Child Health Registry', href: '#' }]}>
@@ -104,10 +112,10 @@ export default function Index({ monitoredChildren = [], zones = [], filters, met
                             </span>
                         </div>
                         <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white uppercase flex items-center gap-2">
-                            BCPC Child Health & Nutrition Master Registry
+                            Child Health & Nutrition Master Registry
                         </h1>
                         <p className="text-emerald-100/80 text-xs sm:text-sm font-medium">
-                            Barangay 183 e-OPT Plus Complete Longitudinal Health Records, WHO 3-Axis Triage & Feeding Rosters.
+                            Barangay 183 e-OPT Plus Longitudinal Records, Growth Diagnostics & Feeding Rosters.
                         </p>
                     </div>
 
@@ -115,7 +123,7 @@ export default function Index({ monitoredChildren = [], zones = [], filters, met
                         <Button asChild variant="outline" size="sm" className="bg-white/10 hover:bg-white/20 text-white border-white/20 font-bold uppercase text-[11px] rounded-xl h-10 px-4">
                             <Link href="/admin/bcpc/dashboard">
                                 <BarChart3 className="w-4 h-4 mr-1.5 text-emerald-300" />
-                                Analytics Dashboard
+                                Action Dashboard
                             </Link>
                         </Button>
                         <Button asChild variant="outline" size="sm" className="bg-white/10 hover:bg-white/20 text-white border-white/20 font-bold uppercase text-[11px] rounded-xl h-10 px-4">
@@ -127,7 +135,7 @@ export default function Index({ monitoredChildren = [], zones = [], filters, met
                         <Button asChild size="sm" className="bg-emerald-500 hover:bg-emerald-600 text-white font-black uppercase text-[11px] tracking-wider rounded-xl h-10 px-5 shadow-lg shadow-emerald-900/40">
                             <Link href="/admin/bcpc/cases/create">
                                 <Plus className="w-4 h-4 mr-1.5" />
-                                Register New Child
+                                Register Child
                             </Link>
                         </Button>
                     </div>
@@ -235,17 +243,17 @@ export default function Index({ monitoredChildren = [], zones = [], filters, met
                         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                             <div>
                                 <CardTitle className="text-base font-black text-foreground uppercase tracking-tight flex items-center gap-2">
-                                    Child Growth & Registry Records
+                                    Child Registry Records
                                     <Badge variant="secondary" className="bg-emerald-500/10 text-emerald-600 font-black text-xs px-2.5 py-0.5 rounded-lg border border-emerald-500/20">
-                                        {monitoredChildren.length} Children Filtered
+                                        {monitoredChildren.length} Records Found
                                     </Badge>
                                 </CardTitle>
                                 <CardDescription className="text-xs text-muted-foreground mt-0.5">
-                                    Search, filter by Purok Zone, SFP Stage, or Clinical Triage status.
+                                    Search by Child, Parent, Scholar, or filter by Purok Zone and Feeding Stage.
                                 </CardDescription>
                             </div>
 
-                            {/* 🏛️ Registry Scope Tabs (0-59m vs Aged Out for COA Audit) */}
+                            {/* 🏛️ Registry Scope Tabs */}
                             <div className="flex items-center bg-muted/60 p-1 rounded-xl border border-border self-start lg:self-auto">
                                 <button
                                     type="button"
@@ -358,7 +366,7 @@ export default function Index({ monitoredChildren = [], zones = [], filters, met
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {monitoredChildren.length === 0 && (
+                                {paginatedChildren.length === 0 && (
                                     <TableRow>
                                         <TableCell colSpan={6} className="h-48 text-center text-muted-foreground italic font-medium">
                                             <div className="flex flex-col items-center justify-center space-y-2">
@@ -372,7 +380,7 @@ export default function Index({ monitoredChildren = [], zones = [], filters, met
                                     </TableRow>
                                 )}
 
-                                {monitoredChildren.map((child: any) => {
+                                {paginatedChildren.map((child: any) => {
                                     const latest = child.latest_assessment;
                                     const wfa = latest?.wfa_status ?? 'Normal';
                                     const hfa = latest?.hfa_status ?? 'Normal';
@@ -402,22 +410,22 @@ export default function Index({ monitoredChildren = [], zones = [], filters, met
                                         <TableRow key={child.id} className={`transition-all hover:bg-muted/40 ${isSAM ? 'bg-red-500/5 hover:bg-red-500/10' : isDoubleBurden ? 'bg-purple-500/5 hover:bg-purple-500/10' : ''}`}>
                                             
                                             {/* Child & Parent */}
-                                            <TableCell className="pl-6 py-4">
+                                            <TableCell className="pl-6 py-3.5">
                                                 <div className="flex items-center gap-3">
-                                                    <Avatar className={`h-10 w-10 border-2 ${isSAM ? 'border-red-400' : isDoubleBurden ? 'border-purple-400' : 'border-emerald-300'}`}>
-                                                        <AvatarFallback className={`font-bold ${isSAM ? 'bg-red-100 text-red-600' : isDoubleBurden ? 'bg-purple-100 text-purple-600' : 'bg-emerald-100 text-emerald-700'}`}>
+                                                    <Avatar className={`h-9 w-9 border-2 ${isSAM ? 'border-red-400' : isDoubleBurden ? 'border-purple-400' : 'border-emerald-300'}`}>
+                                                        <AvatarFallback className={`font-bold text-xs ${isSAM ? 'bg-red-100 text-red-600' : isDoubleBurden ? 'bg-purple-100 text-purple-600' : 'bg-emerald-100 text-emerald-700'}`}>
                                                             {child.child_first_name[0]}
                                                         </AvatarFallback>
                                                     </Avatar>
                                                     <div className="flex flex-col">
                                                         <div className="flex items-center gap-2">
-                                                            {isSAM && <span className="h-2.5 w-2.5 rounded-full bg-red-600 animate-pulse shrink-0" title="SAM Urgent Alert" />}
-                                                            {isDoubleBurden && <span className="h-2.5 w-2.5 rounded-full bg-purple-600 shrink-0" title="Double Burden Alert" />}
-                                                            <span className="font-bold text-sm text-foreground group-hover:text-emerald-600 transition-colors">
+                                                            {isSAM && <span className="h-2 w-2 rounded-full bg-red-600 animate-pulse shrink-0" title="SAM Urgent Alert" />}
+                                                            {isDoubleBurden && <span className="h-2 w-2 rounded-full bg-purple-600 shrink-0" title="Double Burden Alert" />}
+                                                            <span className="font-bold text-xs sm:text-sm text-foreground group-hover:text-emerald-600 transition-colors">
                                                                 {child.child_first_name} {child.child_last_name}
                                                             </span>
                                                         </div>
-                                                        <span className="text-xs text-muted-foreground font-medium mt-0.5">
+                                                        <span className="text-[11px] text-muted-foreground font-medium mt-0.5">
                                                             Guardian: <strong className="text-foreground font-bold">{child.guardian_name}</strong>
                                                         </span>
                                                         {child.bns_name && (
@@ -431,7 +439,7 @@ export default function Index({ monitoredChildren = [], zones = [], filters, met
                                             </TableCell>
 
                                             {/* Age & Zone */}
-                                            <TableCell className="py-4">
+                                            <TableCell className="py-3.5">
                                                 <div className="flex flex-col gap-1">
                                                     <div className="flex items-center gap-1.5 text-xs font-bold text-foreground">
                                                         <span>{child.sex}</span>
@@ -447,7 +455,7 @@ export default function Index({ monitoredChildren = [], zones = [], filters, met
                                             </TableCell>
 
                                             {/* WHO 3-Axis Diagnostics */}
-                                            <TableCell className="py-4 text-center">
+                                            <TableCell className="py-3.5 text-center">
                                                 <div className="flex flex-col items-center gap-1">
                                                     
                                                     {/* Primary Triage Badge */}
@@ -481,14 +489,14 @@ export default function Index({ monitoredChildren = [], zones = [], filters, met
                                             </TableCell>
 
                                             {/* 120-Day SFP Progress */}
-                                            <TableCell className="py-4 min-w-[170px]">
+                                            <TableCell className="py-3.5 min-w-[160px]">
                                                 {child.sfp_status === 'Enrolled' ? (
-                                                    <div className="space-y-1.5 max-w-[160px]">
+                                                    <div className="space-y-1.5 max-w-[150px]">
                                                         <div className="flex justify-between items-center text-[10px] font-black uppercase text-emerald-600">
                                                             <span>Active Feeding</span>
                                                             <span>Day {daysElapsed}/120</span>
                                                         </div>
-                                                        <div className="w-full bg-slate-200 dark:bg-slate-800 rounded-full h-2 overflow-hidden">
+                                                        <div className="w-full bg-slate-200 dark:bg-slate-800 rounded-full h-1.5 overflow-hidden">
                                                             <div className="bg-emerald-500 h-full rounded-full transition-all duration-500" style={{ width: `${percent}%` }} />
                                                         </div>
                                                     </div>
@@ -510,7 +518,7 @@ export default function Index({ monitoredChildren = [], zones = [], filters, met
                                             </TableCell>
 
                                             {/* Last Checked */}
-                                            <TableCell className="text-xs font-semibold py-4">
+                                            <TableCell className="text-xs font-semibold py-3.5">
                                                 <div className="flex flex-col">
                                                     <span className="text-foreground">
                                                         {lastDate ? lastDate.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : 'No record'}
@@ -524,10 +532,10 @@ export default function Index({ monitoredChildren = [], zones = [], filters, met
                                             </TableCell>
 
                                             {/* Action Button */}
-                                            <TableCell className="text-right pr-6 py-4">
-                                                <Button variant="outline" size="sm" asChild className="font-bold text-xs hover:bg-emerald-500/10 hover:text-emerald-600 border-2 rounded-xl">
+                                            <TableCell className="text-right pr-6 py-3.5">
+                                                <Button variant="outline" size="sm" asChild className="font-bold text-xs hover:bg-emerald-500/10 hover:text-emerald-600 border-2 rounded-xl h-8 px-3">
                                                     <Link href={`/admin/bcpc/cases/${child.id}`}>
-                                                        View Profile <ChevronRight className="w-4 h-4 ml-1" />
+                                                        Profile <ChevronRight className="w-3.5 h-3.5 ml-1" />
                                                     </Link>
                                                 </Button>
                                             </TableCell>
@@ -537,6 +545,60 @@ export default function Index({ monitoredChildren = [], zones = [], filters, met
                             </TableBody>
                         </Table>
                     </CardContent>
+
+                    {/* Master Registry Table Pagination Footer */}
+                    {monitoredChildren.length > itemsPerPage && (
+                        <CardFooter className="p-3.5 border-t bg-muted/20 flex flex-col sm:flex-row items-center justify-between gap-3">
+                            <span className="text-xs text-muted-foreground font-medium">
+                                Showing <strong className="text-foreground">{(currentPage - 1) * itemsPerPage + 1}</strong> to <strong className="text-foreground">{Math.min(currentPage * itemsPerPage, monitoredChildren.length)}</strong> of <strong className="text-foreground">{monitoredChildren.length}</strong> children
+                            </span>
+                            
+                            <div className="flex items-center gap-1.5">
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                    disabled={currentPage === 1}
+                                    className="h-8 px-3 rounded-xl text-xs font-bold"
+                                >
+                                    <ChevronLeft className="w-3.5 h-3.5 mr-1" /> Prev
+                                </Button>
+
+                                <div className="flex items-center gap-1 px-1">
+                                    {Array.from({ length: totalPages }, (_, i) => i + 1)
+                                        .filter(p => p === 1 || p === totalPages || Math.abs(p - currentPage) <= 1)
+                                        .map((p, idx, arr) => {
+                                            const showEllipsis = idx > 0 && p - arr[idx - 1] > 1;
+                                            return (
+                                                <React.Fragment key={p}>
+                                                    {showEllipsis && <span className="text-muted-foreground text-xs px-1">...</span>}
+                                                    <Button
+                                                        variant={currentPage === p ? "default" : "outline"}
+                                                        size="sm"
+                                                        onClick={() => setCurrentPage(p)}
+                                                        className={`h-8 w-8 p-0 rounded-xl text-xs font-black ${
+                                                            currentPage === p ? 'bg-emerald-600 text-white' : ''
+                                                        }`}
+                                                    >
+                                                        {p}
+                                                    </Button>
+                                                </React.Fragment>
+                                            );
+                                        })}
+                                </div>
+
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                    disabled={currentPage === totalPages}
+                                    className="h-8 px-3 rounded-xl text-xs font-bold"
+                                >
+                                    Next <ChevronRight className="w-3.5 h-3.5 ml-1" />
+                                </Button>
+                            </div>
+                        </CardFooter>
+                    )}
                 </Card>
             </div>
         </AppLayout>

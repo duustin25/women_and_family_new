@@ -1,12 +1,12 @@
 import AppLayout from '@/layouts/app-layout';
 import React, { useState } from 'react';
 import { Head, Link } from '@inertiajs/react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
     AlertCircle, UserPlus, FileText, Cake, Activity,
-    ChevronRight, Scale, Clock, ShieldAlert, HeartHandshake, MapPin, Users, Printer, CheckCircle2, ArrowRight,
+    ChevronRight, ChevronLeft, Scale, Clock, ShieldAlert, HeartHandshake, MapPin, Users, Printer, CheckCircle2, ArrowRight,
     TrendingUp, BarChart3, Info, Sparkles, Layers, UserCheck
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -25,6 +25,9 @@ export default function BcpcDashboard({
     metrics = {}
 }: any) {
     const [activeQueueTab, setActiveQueueTab] = useState<'sam' | 'mam' | 'double_burden' | 'stunted' | 'overdue'>('sam');
+    const [queuePage, setQueuePage] = useState(1);
+    const [sfpPage, setSfpPage] = useState(1);
+    const itemsPerPage = 6;
 
     // Helper for calculating percentage
     const getPercent = (value: number, total: number) => {
@@ -34,9 +37,33 @@ export default function BcpcDashboard({
 
     const totalChildren = metrics?.total_monitored || monitoredChildren.length || 0;
 
+    // Determine current active list
+    const getActiveList = () => {
+        switch (activeQueueTab) {
+            case 'sam': return topPriority;
+            case 'mam': return secondPriority;
+            case 'double_burden': return doubleBurden;
+            case 'stunted': return thirdPriority;
+            case 'overdue': return overdueWeighings;
+            default: return topPriority;
+        }
+    };
+
+    const currentQueueList = getActiveList();
+    const totalQueuePages = Math.max(1, Math.ceil(currentQueueList.length / itemsPerPage));
+    const paginatedQueue = currentQueueList.slice((queuePage - 1) * itemsPerPage, queuePage * itemsPerPage);
+
+    const totalSfpPages = Math.max(1, Math.ceil(activeSfp.length / itemsPerPage));
+    const paginatedSfp = activeSfp.slice((sfpPage - 1) * itemsPerPage, sfpPage * itemsPerPage);
+
+    const handleTabChange = (tab: 'sam' | 'mam' | 'double_burden' | 'stunted' | 'overdue') => {
+        setActiveQueueTab(tab);
+        setQueuePage(1);
+    };
+
     return (
-        <AppLayout breadcrumbs={[{ title: 'Dashboard', href: '/admin/dashboard' }, { title: 'BCPC Nutrition Dashboard', href: '/admin/bcpc/dashboard' }]}>
-            <Head title="BCPC Nutrition Analytics Dashboard" />
+        <AppLayout breadcrumbs={[{ title: 'Dashboard', href: '/admin/dashboard' }, { title: 'BCPC Nutrition Action Center', href: '/admin/bcpc/dashboard' }]}>
+            <Head title="BCPC Nutrition Action Center" />
             <div className="flex h-full w-full flex-1 flex-col gap-6 p-4 md:p-6 max-w-7xl mx-auto">
 
                 {/* 🌟 Header Banner */}
@@ -45,14 +72,14 @@ export default function BcpcDashboard({
                     <div className="z-10 space-y-1">
                         <div className="flex items-center gap-2">
                             <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 px-3 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider flex items-center gap-1.5">
-                                <Activity className="w-3.5 h-3.5 text-emerald-300 animate-pulse" /> BNC Growth Action Center
+                                <Activity className="w-3.5 h-3.5 text-emerald-300 animate-pulse" /> Nutrition Operations Center
                             </span>
                         </div>
                         <h1 className="text-2xl md:text-3xl font-black uppercase tracking-tight text-white flex items-center gap-2">
-                            BCPC Child Nutrition & Feeding Dashboard
+                            Child Nutrition & Feeding Action Center
                         </h1>
                         <p className="text-emerald-100/80 text-xs md:text-sm font-medium">
-                            Barangay 183 e-OPT Plus Malnutrition Tracking, 120-Day Supplemental Feeding Center & HMIS Analytics.
+                            Barangay 183 Child Growth Monitoring, 120-Day Feeding Roster & Community Malnutrition Action Center.
                         </p>
                     </div>
 
@@ -66,7 +93,7 @@ export default function BcpcDashboard({
                         <Button asChild variant="outline" size="sm" className="bg-white/10 hover:bg-white/20 text-white border-white/20 font-bold uppercase text-[11px] rounded-xl h-10 px-4">
                             <Link href="/admin/bcpc/cases">
                                 <FileText className="w-4 h-4 mr-1.5 text-emerald-300" />
-                                Full Health Registry
+                                Master Registry Table
                             </Link>
                         </Button>
                         <Button asChild size="sm" className="bg-emerald-500 hover:bg-emerald-600 text-white font-black uppercase text-[11px] tracking-wider rounded-xl h-10 px-5 shadow-lg shadow-emerald-900/40">
@@ -78,11 +105,11 @@ export default function BcpcDashboard({
                     </div>
                 </div>
 
-                {/* 📊 Visual Key Stat Cards (Executive KPI Strip) */}
+                {/* 📊 Executive 6-KPI Summary Strip */}
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4">
 
-                    {/* KPI 1: Total Monitored */}
-                    <Card className="border-border shadow-sm hover:shadow-md transition-all rounded-2xl overflow-hidden relative">
+                    {/* KPI 1: Monitored */}
+                    <Card className="border-border shadow-xs hover:shadow-md transition-all rounded-2xl overflow-hidden relative">
                         <CardHeader className="pb-1 p-3.5">
                             <CardTitle className="text-[10px] font-black text-muted-foreground uppercase tracking-wider flex items-center gap-1">
                                 <Users className="w-3.5 h-3.5 text-slate-500" />
@@ -99,12 +126,12 @@ export default function BcpcDashboard({
                         </CardContent>
                     </Card>
 
-                    {/* KPI 2: SAM (Severe Acute Malnutrition) */}
-                    <Card className="border-red-500/30 bg-red-500/5 shadow-sm hover:shadow-md transition-all rounded-2xl overflow-hidden relative cursor-pointer" onClick={() => setActiveQueueTab('sam')}>
+                    {/* KPI 2: SAM */}
+                    <Card className="border-red-500/30 bg-red-500/5 shadow-xs hover:shadow-md transition-all rounded-2xl overflow-hidden relative cursor-pointer" onClick={() => handleTabChange('sam')}>
                         <CardHeader className="pb-1 p-3.5">
                             <CardTitle className="text-[10px] font-black text-red-600 dark:text-red-400 uppercase tracking-wider flex items-center gap-1">
                                 <ShieldAlert className="w-3.5 h-3.5 text-red-500 animate-pulse" />
-                                SAM Priority
+                                Severe Malnutrition
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="p-3.5 pt-0">
@@ -112,17 +139,17 @@ export default function BcpcDashboard({
                                 {metrics?.sam_cases ?? topPriority.length}
                             </div>
                             <div className="text-[10px] font-bold text-red-600/80 mt-0.5">
-                                Urgent RUTF Referral
+                                Urgent Medical Action
                             </div>
                         </CardContent>
                     </Card>
 
-                    {/* KPI 3: MAM (Moderate Acute Malnutrition) */}
-                    <Card className="border-amber-500/30 bg-amber-500/5 shadow-sm hover:shadow-md transition-all rounded-2xl overflow-hidden relative cursor-pointer" onClick={() => setActiveQueueTab('mam')}>
+                    {/* KPI 3: MAM */}
+                    <Card className="border-amber-500/30 bg-amber-500/5 shadow-xs hover:shadow-md transition-all rounded-2xl overflow-hidden relative cursor-pointer" onClick={() => handleTabChange('mam')}>
                         <CardHeader className="pb-1 p-3.5">
                             <CardTitle className="text-[10px] font-black text-amber-600 dark:text-amber-400 uppercase tracking-wider flex items-center gap-1">
                                 <AlertCircle className="w-3.5 h-3.5 text-amber-500" />
-                                MAM Priority
+                                Moderate (MAM)
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="p-3.5 pt-0">
@@ -130,13 +157,13 @@ export default function BcpcDashboard({
                                 {metrics?.mam_cases ?? secondPriority.length}
                             </div>
                             <div className="text-[10px] font-bold text-amber-600/80 mt-0.5">
-                                120-Day SFP Intake
+                                Feeding Program Queue
                             </div>
                         </CardContent>
                     </Card>
 
-                    {/* KPI 4: Double Burden of Malnutrition */}
-                    <Card className="border-purple-500/30 bg-purple-500/5 shadow-sm hover:shadow-md transition-all rounded-2xl overflow-hidden relative cursor-pointer" onClick={() => setActiveQueueTab('double_burden')}>
+                    {/* KPI 4: Double Burden */}
+                    <Card className="border-purple-500/30 bg-purple-500/5 shadow-xs hover:shadow-md transition-all rounded-2xl overflow-hidden relative cursor-pointer" onClick={() => handleTabChange('double_burden')}>
                         <CardHeader className="pb-1 p-3.5">
                             <CardTitle className="text-[10px] font-black text-purple-600 dark:text-purple-400 uppercase tracking-wider flex items-center gap-1">
                                 <Sparkles className="w-3.5 h-3.5 text-purple-500" />
@@ -148,17 +175,17 @@ export default function BcpcDashboard({
                                 {metrics?.double_burden_cases ?? doubleBurden.length}
                             </div>
                             <div className="text-[10px] font-bold text-purple-600/80 mt-0.5">
-                                Stunted + Overweight
+                                Stunted + Heavy Mass
                             </div>
                         </CardContent>
                     </Card>
 
-                    {/* KPI 5: Active SFP Enrollees */}
-                    <Card className="border-emerald-500/30 bg-emerald-500/5 shadow-sm hover:shadow-md transition-all rounded-2xl overflow-hidden relative">
+                    {/* KPI 5: Active Feeding */}
+                    <Card className="border-emerald-500/30 bg-emerald-500/5 shadow-xs hover:shadow-md transition-all rounded-2xl overflow-hidden relative">
                         <CardHeader className="pb-1 p-3.5">
                             <CardTitle className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-wider flex items-center gap-1">
                                 <HeartHandshake className="w-3.5 h-3.5 text-emerald-500" />
-                                Active SFP Roster
+                                Feeding Program
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="p-3.5 pt-0">
@@ -166,22 +193,22 @@ export default function BcpcDashboard({
                                 {metrics?.active_sfp ?? activeSfp.length}
                             </div>
                             <div className="text-[10px] font-bold text-emerald-600/80 mt-0.5">
-                                {metrics?.graduated_sfp || 0} Recovered (Grad)
+                                {metrics?.graduated_sfp || 0} Recovered
                             </div>
                         </CardContent>
                     </Card>
 
-                    {/* KPI 6: Overdue Check-ins */}
-                    <Card className="border-rose-500/30 bg-rose-500/5 shadow-sm hover:shadow-md transition-all rounded-2xl overflow-hidden relative cursor-pointer" onClick={() => setActiveQueueTab('overdue')}>
+                    {/* KPI 6: Overdue */}
+                    <Card className="border-rose-500/30 bg-rose-500/5 shadow-xs hover:shadow-md transition-all rounded-2xl overflow-hidden relative cursor-pointer" onClick={() => handleTabChange('overdue')}>
                         <CardHeader className="pb-1 p-3.5">
                             <CardTitle className="text-[10px] font-black text-rose-600 dark:text-rose-400 uppercase tracking-wider flex items-center gap-1">
                                 <Clock className="w-3.5 h-3.5 text-rose-500" />
-                                Overdue Check-Ins
+                                Overdue Check-ins
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="p-3.5 pt-0">
                             <div className="text-2xl md:text-3xl font-black text-rose-600 dark:text-rose-400">
-                                {metrics?.overdue_weighing ?? overdueWeighings.length}
+                                {metrics?.overdue_count ?? overdueWeighings.length}
                             </div>
                             <div className="text-[10px] font-bold text-rose-600/80 mt-0.5">
                                 Needs Weighing (&gt;30d)
@@ -190,276 +217,377 @@ export default function BcpcDashboard({
                     </Card>
                 </div>
 
-                {/* 🧩 Main Command & Operational Section */}
+                {/* 🧩 Main Operational Section */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
                     {/* Left 2-Columns: Dynamic Action Queues & SFP Progress */}
                     <div className="lg:col-span-2 flex flex-col gap-6">
 
-                        {/* 🎯 Interactive Clinical Triage Queue & Compliance Action Center */}
-                        <Card className="border-border shadow-md rounded-2xl overflow-hidden">
-                            <CardHeader className="pb-3 border-b bg-muted/30">
-                                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-                                    <div>
-                                        <CardTitle className="text-sm font-black uppercase tracking-tight flex items-center gap-2">
-                                            <Activity className="h-4 w-4 text-emerald-600" />
-                                            Clinical Triage & BNS Compliance Action Queues
-                                        </CardTitle>
-                                        <CardDescription className="text-xs font-medium text-muted-foreground mt-0.5">
-                                            Prioritized clinical interventions based on official WHO 3-axis diagnostics.
-                                        </CardDescription>
+                        {/* 🎯 Interactive Clinical Action Queue */}
+                        <Card className="border-border shadow-sm rounded-2xl overflow-hidden flex flex-col justify-between">
+                            <div>
+                                <CardHeader className="pb-3 border-b bg-muted/20">
+                                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                                        <div>
+                                            <CardTitle className="text-sm font-black uppercase tracking-tight flex items-center gap-2">
+                                                <Activity className="h-4 w-4 text-emerald-600" />
+                                                Clinical Action Queue
+                                            </CardTitle>
+                                            <CardDescription className="text-xs text-muted-foreground mt-0.5">
+                                                Children requiring immediate medical referral, feeding intake, or check-in.
+                                            </CardDescription>
+                                        </div>
+
+                                        {/* Queue Tab Selectors */}
+                                        <div className="flex flex-wrap gap-1 bg-muted/60 p-1 rounded-xl border">
+                                            <button
+                                                onClick={() => handleTabChange('sam')}
+                                                className={`px-2.5 py-1 rounded-lg text-xs font-black uppercase transition-all ${activeQueueTab === 'sam'
+                                                        ? 'bg-red-600 text-white shadow-xs'
+                                                        : 'text-muted-foreground hover:text-foreground'
+                                                    }`}
+                                            >
+                                                SAM ({topPriority.length})
+                                            </button>
+                                            <button
+                                                onClick={() => handleTabChange('mam')}
+                                                className={`px-2.5 py-1 rounded-lg text-xs font-black uppercase transition-all ${activeQueueTab === 'mam'
+                                                        ? 'bg-amber-500 text-white shadow-xs'
+                                                        : 'text-muted-foreground hover:text-foreground'
+                                                    }`}
+                                            >
+                                                MAM ({secondPriority.length})
+                                            </button>
+                                            <button
+                                                onClick={() => handleTabChange('double_burden')}
+                                                className={`px-2.5 py-1 rounded-lg text-xs font-black uppercase transition-all ${activeQueueTab === 'double_burden'
+                                                        ? 'bg-purple-600 text-white shadow-xs'
+                                                        : 'text-muted-foreground hover:text-foreground'
+                                                    }`}
+                                            >
+                                                Double Burden ({doubleBurden.length})
+                                            </button>
+                                            <button
+                                                onClick={() => handleTabChange('stunted')}
+                                                className={`px-2.5 py-1 rounded-lg text-xs font-black uppercase transition-all ${activeQueueTab === 'stunted'
+                                                        ? 'bg-cyan-600 text-white shadow-xs'
+                                                        : 'text-muted-foreground hover:text-foreground'
+                                                    }`}
+                                            >
+                                                Stunted ({thirdPriority.length})
+                                            </button>
+                                            <button
+                                                onClick={() => handleTabChange('overdue')}
+                                                className={`px-2.5 py-1 rounded-lg text-xs font-black uppercase transition-all ${activeQueueTab === 'overdue'
+                                                        ? 'bg-rose-600 text-white shadow-xs'
+                                                        : 'text-muted-foreground hover:text-foreground'
+                                                    }`}
+                                            >
+                                                Overdue ({overdueWeighings.length})
+                                            </button>
+                                        </div>
                                     </div>
+                                </CardHeader>
 
-                                    {/* Queue Tab Selectors */}
-                                    <div className="flex flex-wrap gap-1 bg-muted/60 p-1 rounded-xl border">
-                                        <button
-                                            onClick={() => setActiveQueueTab('sam')}
-                                            className={`px-2.5 py-1 rounded-lg text-xs font-black uppercase transition-all ${activeQueueTab === 'sam'
-                                                    ? 'bg-red-600 text-white shadow-sm'
-                                                    : 'text-muted-foreground hover:text-foreground'
-                                                }`}
-                                        >
-                                            SAM ({topPriority.length})
-                                        </button>
-                                        <button
-                                            onClick={() => setActiveQueueTab('mam')}
-                                            className={`px-2.5 py-1 rounded-lg text-xs font-black uppercase transition-all ${activeQueueTab === 'mam'
-                                                    ? 'bg-amber-500 text-white shadow-sm'
-                                                    : 'text-muted-foreground hover:text-foreground'
-                                                }`}
-                                        >
-                                            MAM ({secondPriority.length})
-                                        </button>
-                                        <button
-                                            onClick={() => setActiveQueueTab('double_burden')}
-                                            className={`px-2.5 py-1 rounded-lg text-xs font-black uppercase transition-all ${activeQueueTab === 'double_burden'
-                                                    ? 'bg-purple-600 text-white shadow-sm'
-                                                    : 'text-muted-foreground hover:text-foreground'
-                                                }`}
-                                        >
-                                            Double Burden ({doubleBurden.length})
-                                        </button>
-                                        <button
-                                            onClick={() => setActiveQueueTab('stunted')}
-                                            className={`px-2.5 py-1 rounded-lg text-xs font-black uppercase transition-all ${activeQueueTab === 'stunted'
-                                                    ? 'bg-cyan-600 text-white shadow-sm'
-                                                    : 'text-muted-foreground hover:text-foreground'
-                                                }`}
-                                        >
-                                            Stunted ({thirdPriority.length})
-                                        </button>
-                                        <button
-                                            onClick={() => setActiveQueueTab('overdue')}
-                                            className={`px-2.5 py-1 rounded-lg text-xs font-black uppercase transition-all ${activeQueueTab === 'overdue'
-                                                    ? 'bg-rose-600 text-white shadow-sm'
-                                                    : 'text-muted-foreground hover:text-foreground'
-                                                }`}
-                                        >
-                                            Overdue ({overdueWeighings.length})
-                                        </button>
-                                    </div>
-                                </div>
-                            </CardHeader>
-
-                            <CardContent className="p-0">
-                                {/* TAB 1: SAM Priority */}
-                                {activeQueueTab === 'sam' && (
-                                    topPriority.length === 0 ? (
-                                        <div className="p-8 text-center text-muted-foreground text-xs font-semibold">
-                                            🎉 No critical Severe Acute Malnutrition (SAM) cases detected. All monitored children are in safe range!
-                                        </div>
-                                    ) : (
-                                        <div className="divide-y divide-border">
-                                            {topPriority.map((child: any) => (
-                                                <div key={child.id} className="p-4 flex items-center justify-between hover:bg-red-500/5 transition-colors">
-                                                    <div className="flex items-center gap-3">
-                                                        <Avatar className="h-10 w-10 border-2 border-red-400">
-                                                            <AvatarFallback className="bg-red-100 text-red-600 font-bold">{child.child_first_name[0]}</AvatarFallback>
-                                                        </Avatar>
-                                                        <div>
-                                                            <p className="font-bold text-sm text-foreground">{child.child_first_name} {child.child_last_name}</p>
-                                                            <p className="text-xs text-muted-foreground font-medium">
-                                                                Guardian: <strong className="text-foreground">{child.guardian_name}</strong> {child.zone ? `| ${child.zone.name}` : ''}
-                                                            </p>
-                                                            {child.bns_name && (
-                                                                <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold">
-                                                                    Assigned Scholar: {child.bns_name}
-                                                                </p>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                    <div className="flex items-center gap-3">
-                                                        <Badge variant="destructive" className="font-black text-[10px] uppercase px-2.5 py-1 rounded-md animate-pulse">
-                                                            {child.latest_assessment?.wflh_status === 'Severely Wasted' ? 'Severely Wasted' : (child.latest_assessment?.wfa_status || 'SAM Alert')}
-                                                        </Badge>
-                                                        <Link href={`/admin/bcpc/cases/${child.id}`}>
-                                                            <Button variant="outline" size="sm" className="font-bold text-xs border-red-500/40 hover:bg-red-500/10 text-red-600 rounded-xl">
-                                                                Triage & Refer <ChevronRight className="h-4 w-4 ml-1" />
-                                                            </Button>
-                                                        </Link>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )
-                                )}
-
-                                {/* TAB 2: MAM Priority */}
-                                {activeQueueTab === 'mam' && (
-                                    secondPriority.length === 0 ? (
-                                        <div className="p-8 text-center text-muted-foreground text-xs font-semibold">
-                                            No Moderate Acute Malnutrition (MAM) cases in queue.
-                                        </div>
-                                    ) : (
-                                        <div className="divide-y divide-border">
-                                            {secondPriority.map((child: any) => (
-                                                <div key={child.id} className="p-4 flex items-center justify-between hover:bg-amber-500/5 transition-colors">
-                                                    <div className="flex items-center gap-3">
-                                                        <Avatar className="h-10 w-10 border-2 border-amber-300">
-                                                            <AvatarFallback className="bg-amber-100 text-amber-600 font-bold">{child.child_first_name[0]}</AvatarFallback>
-                                                        </Avatar>
-                                                        <div>
-                                                            <p className="font-bold text-sm text-foreground">{child.child_first_name} {child.child_last_name}</p>
-                                                            <p className="text-xs text-muted-foreground font-medium">
-                                                                Guardian: <strong className="text-foreground">{child.guardian_name}</strong> {child.zone ? `| ${child.zone.name}` : ''}
-                                                            </p>
-                                                            {child.bns_name && (
-                                                                <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold">
-                                                                    Assigned Scholar: {child.bns_name}
-                                                                </p>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                    <div className="flex items-center gap-3">
-                                                        <Badge className="bg-amber-500 text-white font-black text-[10px] uppercase px-2.5 py-1 rounded-md">
-                                                            {child.latest_assessment?.wflh_status === 'Wasted' ? 'Wasted (MAM)' : (child.latest_assessment?.wfa_status || 'MAM Notice')}
-                                                        </Badge>
-                                                        <Link href={`/admin/bcpc/cases/${child.id}`}>
-                                                            <Button variant="outline" size="sm" className="font-bold text-xs border-amber-500/40 hover:bg-amber-500/10 text-amber-700 dark:text-amber-300 rounded-xl">
-                                                                Feeding Intake <ChevronRight className="h-4 w-4 ml-1" />
-                                                            </Button>
-                                                        </Link>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )
-                                )}
-
-                                {/* TAB 3: Double Burden */}
-                                {activeQueueTab === 'double_burden' && (
-                                    doubleBurden.length === 0 ? (
-                                        <div className="p-8 text-center text-muted-foreground text-xs font-semibold">
-                                            No Double Burden of Malnutrition cases (Stunting + Elevated Body Mass) active.
-                                        </div>
-                                    ) : (
-                                        <div className="divide-y divide-border">
-                                            {doubleBurden.map((child: any) => (
-                                                <div key={child.id} className="p-4 flex items-center justify-between hover:bg-purple-500/5 transition-colors">
-                                                    <div className="flex items-center gap-3">
-                                                        <Avatar className="h-10 w-10 border-2 border-purple-400">
-                                                            <AvatarFallback className="bg-purple-100 text-purple-600 font-bold">{child.child_first_name[0]}</AvatarFallback>
-                                                        </Avatar>
-                                                        <div>
-                                                            <p className="font-bold text-sm text-foreground">{child.child_first_name} {child.child_last_name}</p>
-                                                            <p className="text-xs text-muted-foreground font-medium">
-                                                                HFA: <strong className="text-amber-600">{child.latest_assessment?.hfa_status}</strong> • WFL/H: <strong className="text-rose-600">{child.latest_assessment?.wflh_status}</strong>
-                                                            </p>
-                                                            <span className="text-[10px] text-purple-600 dark:text-purple-400 font-bold block mt-0.5">
-                                                                💡 Protocol: Lock SFP. Administer MNP & Portion Guidance.
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                    <div className="flex items-center gap-3">
-                                                        <Badge variant="outline" className="border-purple-400 bg-purple-50 text-purple-700 font-black text-[10px] uppercase px-2 py-0.5 rounded-md">
-                                                            Double Burden
-                                                        </Badge>
-                                                        <Link href={`/admin/bcpc/cases/${child.id}`}>
-                                                            <Button variant="outline" size="sm" className="font-bold text-xs border-purple-500/40 hover:bg-purple-500/10 text-purple-700 dark:text-purple-300 rounded-xl">
-                                                                MNP Protocol <ChevronRight className="h-4 w-4 ml-1" />
-                                                            </Button>
-                                                        </Link>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )
-                                )}
-
-                                {/* TAB 4: Stunting */}
-                                {activeQueueTab === 'stunted' && (
-                                    thirdPriority.length === 0 ? (
-                                        <div className="p-8 text-center text-muted-foreground text-xs font-semibold">
-                                            No chronic linear stunting cases currently recorded.
-                                        </div>
-                                    ) : (
-                                        <div className="divide-y divide-border">
-                                            {thirdPriority.map((child: any) => (
-                                                <div key={child.id} className="p-4 flex items-center justify-between hover:bg-cyan-500/5 transition-colors">
-                                                    <div className="flex items-center gap-3">
-                                                        <Avatar className="h-10 w-10 border-2 border-cyan-400">
-                                                            <AvatarFallback className="bg-cyan-100 text-cyan-700 font-bold">{child.child_first_name[0]}</AvatarFallback>
-                                                        </Avatar>
-                                                        <div>
-                                                            <p className="font-bold text-sm text-foreground">{child.child_first_name} {child.child_last_name}</p>
-                                                            <p className="text-xs text-muted-foreground font-medium">
-                                                                Height: {child.latest_assessment?.height_cm} cm (HFA: {child.latest_assessment?.hfa_status})
-                                                            </p>
-                                                        </div>
-                                                    </div>
-                                                    <div className="flex items-center gap-3">
-                                                        <Badge variant="outline" className="border-cyan-400 bg-cyan-50 text-cyan-800 font-black text-[10px] uppercase px-2 py-0.5 rounded-md">
-                                                            {child.latest_assessment?.hfa_status}
-                                                        </Badge>
-                                                        <Link href={`/admin/bcpc/cases/${child.id}`}>
-                                                            <Button variant="outline" size="sm" className="font-bold text-xs border-cyan-500/40 hover:bg-cyan-500/10 text-cyan-700 dark:text-cyan-300 rounded-xl">
-                                                                Profile <ChevronRight className="h-4 w-4 ml-1" />
-                                                            </Button>
-                                                        </Link>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )
-                                )}
-
-                                {/* TAB 5: Overdue Check-ins (Personnel Compliance) */}
-                                {activeQueueTab === 'overdue' && (
-                                    overdueWeighings.length === 0 ? (
-                                        <div className="p-8 text-center text-muted-foreground text-xs font-semibold">
-                                            🎉 100% Personnel Compliance! All child health check-ins are up to date within the past 30 days.
-                                        </div>
-                                    ) : (
-                                        <div className="divide-y divide-border">
-                                            {overdueWeighings.map((child: any) => {
-                                                const lastDate = child.latest_assessment ? new Date(child.latest_assessment.date_of_weighing) : null;
-                                                const daysOverdue = lastDate ? Math.floor((new Date().getTime() - lastDate.getTime()) / (1000 * 3600 * 24)) : 0;
-                                                return (
-                                                    <div key={child.id} className="p-4 flex items-center justify-between hover:bg-rose-500/5 transition-colors">
+                                <CardContent className="p-0">
+                                    {/* TAB 1: SAM Priority */}
+                                    {activeQueueTab === 'sam' && (
+                                        topPriority.length === 0 ? (
+                                            <div className="p-8 text-center text-muted-foreground text-xs font-semibold">
+                                                🎉 No critical Severe Acute Malnutrition (SAM) cases detected. All monitored children are in safe range!
+                                            </div>
+                                        ) : (
+                                            <div className="divide-y divide-border">
+                                                {paginatedQueue.map((child: any) => (
+                                                    <div key={child.id} className="p-3.5 flex items-center justify-between hover:bg-red-500/5 transition-colors">
                                                         <div className="flex items-center gap-3">
-                                                            <Avatar className="h-10 w-10 border-2 border-rose-300">
-                                                                <AvatarFallback className="bg-rose-100 text-rose-600 font-bold">{child.child_first_name[0]}</AvatarFallback>
+                                                            <Avatar className="h-9 w-9 border-2 border-red-400">
+                                                                <AvatarFallback className="bg-red-100 text-red-600 font-bold text-xs">{child.child_first_name[0]}</AvatarFallback>
                                                             </Avatar>
                                                             <div>
-                                                                <p className="font-bold text-sm text-foreground">{child.child_first_name} {child.child_last_name}</p>
-                                                                <p className="text-xs text-muted-foreground font-medium">
-                                                                    Last Checked: {lastDate ? lastDate.toLocaleDateString() : 'N/A'} {child.zone ? `| ${child.zone.name}` : ''}
+                                                                <p className="font-bold text-xs sm:text-sm text-foreground">{child.child_first_name} {child.child_last_name}</p>
+                                                                <p className="text-[11px] text-muted-foreground font-medium">
+                                                                    Guardian: <strong className="text-foreground">{child.guardian_name}</strong> {child.zone ? `| ${child.zone.name}` : ''}
                                                                 </p>
-                                                                <div className="flex items-center gap-1.5 mt-0.5">
-                                                                    <UserCheck className="w-3.5 h-3.5 text-emerald-600" />
-                                                                    <span className="text-[11px] font-bold text-foreground">
-                                                                        Assigned BNS: <strong className="text-emerald-700 dark:text-emerald-300">{child.bns_name || 'Unassigned'}</strong>
-                                                                    </span>
-                                                                </div>
+                                                                {child.bns_name && (
+                                                                    <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold">
+                                                                        Scholar: {child.bns_name}
+                                                                    </p>
+                                                                )}
                                                             </div>
                                                         </div>
-                                                        <div className="flex items-center gap-3">
-                                                            <Badge variant="outline" className="text-rose-700 border-rose-400 bg-rose-50 font-black text-xs px-2.5 py-0.5 rounded-md">
-                                                                {daysOverdue}d Overdue
+                                                        <div className="flex items-center gap-2.5">
+                                                            <Badge variant="destructive" className="font-black text-[9px] uppercase px-2 py-0.5 rounded-md animate-pulse">
+                                                                {child.latest_assessment?.wflh_status === 'Severely Wasted' ? 'Severely Wasted' : (child.latest_assessment?.wfa_status || 'SAM Alert')}
                                                             </Badge>
                                                             <Link href={`/admin/bcpc/cases/${child.id}`}>
-                                                                <Button variant="outline" size="sm" className="font-bold text-xs border-emerald-600 text-emerald-700 hover:bg-emerald-500/10 rounded-xl">
-                                                                    Record Measurement <ChevronRight className="h-4 w-4 ml-1" />
+                                                                <Button variant="outline" size="sm" className="font-bold text-xs border-red-500/40 hover:bg-red-500/10 text-red-600 rounded-xl h-8 px-3">
+                                                                    Triage & Refer <ChevronRight className="h-3.5 w-3.5 ml-1" />
+                                                                </Button>
+                                                            </Link>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )
+                                    )}
+
+                                    {/* TAB 2: MAM Priority */}
+                                    {activeQueueTab === 'mam' && (
+                                        secondPriority.length === 0 ? (
+                                            <div className="p-8 text-center text-muted-foreground text-xs font-semibold">
+                                                No Moderate Acute Malnutrition (MAM) cases in queue.
+                                            </div>
+                                        ) : (
+                                            <div className="divide-y divide-border">
+                                                {paginatedQueue.map((child: any) => (
+                                                    <div key={child.id} className="p-3.5 flex items-center justify-between hover:bg-amber-500/5 transition-colors">
+                                                        <div className="flex items-center gap-3">
+                                                            <Avatar className="h-9 w-9 border-2 border-amber-300">
+                                                                <AvatarFallback className="bg-amber-100 text-amber-600 font-bold text-xs">{child.child_first_name[0]}</AvatarFallback>
+                                                            </Avatar>
+                                                            <div>
+                                                                <p className="font-bold text-xs sm:text-sm text-foreground">{child.child_first_name} {child.child_last_name}</p>
+                                                                <p className="text-[11px] text-muted-foreground font-medium">
+                                                                    Guardian: <strong className="text-foreground">{child.guardian_name}</strong> {child.zone ? `| ${child.zone.name}` : ''}
+                                                                </p>
+                                                                {child.bns_name && (
+                                                                    <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold">
+                                                                        Scholar: {child.bns_name}
+                                                                    </p>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                        <div className="flex items-center gap-2.5">
+                                                            <Badge className="bg-amber-500 text-white font-black text-[9px] uppercase px-2 py-0.5 rounded-md">
+                                                                {child.latest_assessment?.wflh_status === 'Wasted' ? 'Wasted (MAM)' : (child.latest_assessment?.wfa_status || 'MAM Notice')}
+                                                            </Badge>
+                                                            <Link href={`/admin/bcpc/cases/${child.id}`}>
+                                                                <Button variant="outline" size="sm" className="font-bold text-xs border-amber-500/40 hover:bg-amber-500/10 text-amber-700 dark:text-amber-300 rounded-xl h-8 px-3">
+                                                                    Feeding Intake <ChevronRight className="h-3.5 w-3.5 ml-1" />
+                                                                </Button>
+                                                            </Link>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )
+                                    )}
+
+                                    {/* TAB 3: Double Burden */}
+                                    {activeQueueTab === 'double_burden' && (
+                                        doubleBurden.length === 0 ? (
+                                            <div className="p-8 text-center text-muted-foreground text-xs font-semibold">
+                                                No Double Burden cases (Stunted + Heavy Body Mass) recorded.
+                                            </div>
+                                        ) : (
+                                            <div className="divide-y divide-border">
+                                                {paginatedQueue.map((child: any) => (
+                                                    <div key={child.id} className="p-3.5 flex items-center justify-between hover:bg-purple-500/5 transition-colors">
+                                                        <div className="flex items-center gap-3">
+                                                            <Avatar className="h-9 w-9 border-2 border-purple-400">
+                                                                <AvatarFallback className="bg-purple-100 text-purple-600 font-bold text-xs">{child.child_first_name[0]}</AvatarFallback>
+                                                            </Avatar>
+                                                            <div>
+                                                                <p className="font-bold text-xs sm:text-sm text-foreground">{child.child_first_name} {child.child_last_name}</p>
+                                                                <p className="text-[11px] text-muted-foreground font-medium">
+                                                                    Height: <strong className="text-amber-600">{child.latest_assessment?.hfa_status}</strong> • Weight: <strong className="text-rose-600">{child.latest_assessment?.wflh_status}</strong>
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                        <div className="flex items-center gap-2.5">
+                                                            <Badge variant="outline" className="border-purple-400 bg-purple-50 text-purple-700 font-black text-[9px] uppercase px-2 py-0.5 rounded-md">
+                                                                Double Burden
+                                                            </Badge>
+                                                            <Link href={`/admin/bcpc/cases/${child.id}`}>
+                                                                <Button variant="outline" size="sm" className="font-bold text-xs border-purple-500/40 hover:bg-purple-500/10 text-purple-700 dark:text-purple-300 rounded-xl h-8 px-3">
+                                                                    MNP Protocol <ChevronRight className="h-3.5 w-3.5 ml-1" />
+                                                                </Button>
+                                                            </Link>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )
+                                    )}
+
+                                    {/* TAB 4: Stunting */}
+                                    {activeQueueTab === 'stunted' && (
+                                        thirdPriority.length === 0 ? (
+                                            <div className="p-8 text-center text-muted-foreground text-xs font-semibold">
+                                                No chronic stunting cases recorded.
+                                            </div>
+                                        ) : (
+                                            <div className="divide-y divide-border">
+                                                {paginatedQueue.map((child: any) => (
+                                                    <div key={child.id} className="p-3.5 flex items-center justify-between hover:bg-cyan-500/5 transition-colors">
+                                                        <div className="flex items-center gap-3">
+                                                            <Avatar className="h-9 w-9 border-2 border-cyan-400">
+                                                                <AvatarFallback className="bg-cyan-100 text-cyan-700 font-bold text-xs">{child.child_first_name[0]}</AvatarFallback>
+                                                            </Avatar>
+                                                            <div>
+                                                                <p className="font-bold text-xs sm:text-sm text-foreground">{child.child_first_name} {child.child_last_name}</p>
+                                                                <p className="text-[11px] text-muted-foreground font-medium">
+                                                                    Height: {child.latest_assessment?.height_cm} cm ({child.latest_assessment?.hfa_status})
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                        <div className="flex items-center gap-2.5">
+                                                            <Badge variant="outline" className="border-cyan-400 bg-cyan-50 text-cyan-800 font-black text-[9px] uppercase px-2 py-0.5 rounded-md">
+                                                                {child.latest_assessment?.hfa_status}
+                                                            </Badge>
+                                                            <Link href={`/admin/bcpc/cases/${child.id}`}>
+                                                                <Button variant="outline" size="sm" className="font-bold text-xs border-cyan-500/40 hover:bg-cyan-500/10 text-cyan-700 dark:text-cyan-300 rounded-xl h-8 px-3">
+                                                                    Profile <ChevronRight className="h-3.5 w-3.5 ml-1" />
+                                                                </Button>
+                                                            </Link>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )
+                                    )}
+
+                                    {/* TAB 5: Overdue */}
+                                    {activeQueueTab === 'overdue' && (
+                                        overdueWeighings.length === 0 ? (
+                                            <div className="p-8 text-center text-muted-foreground text-xs font-semibold">
+                                                🎉 All child health check-ins are up to date within the past 30 days!
+                                            </div>
+                                        ) : (
+                                            <div className="divide-y divide-border">
+                                                {paginatedQueue.map((child: any) => {
+                                                    const lastDate = child.latest_assessment ? new Date(child.latest_assessment.date_of_weighing) : null;
+                                                    const daysOverdue = lastDate ? Math.floor((new Date().getTime() - lastDate.getTime()) / (1000 * 3600 * 24)) : 0;
+                                                    return (
+                                                        <div key={child.id} className="p-3.5 flex items-center justify-between hover:bg-rose-500/5 transition-colors">
+                                                            <div className="flex items-center gap-3">
+                                                                <Avatar className="h-9 w-9 border-2 border-rose-300">
+                                                                    <AvatarFallback className="bg-rose-100 text-rose-600 font-bold text-xs">{child.child_first_name[0]}</AvatarFallback>
+                                                                </Avatar>
+                                                                <div>
+                                                                    <p className="font-bold text-xs sm:text-sm text-foreground">{child.child_first_name} {child.child_last_name}</p>
+                                                                    <p className="text-[11px] text-muted-foreground font-medium">
+                                                                        Last Checked: {lastDate ? lastDate.toLocaleDateString() : 'N/A'} {child.zone ? `| ${child.zone.name}` : ''}
+                                                                    </p>
+                                                                    <div className="flex items-center gap-1 mt-0.5">
+                                                                        <UserCheck className="w-3 h-3 text-emerald-600" />
+                                                                        <span className="text-[10px] font-bold text-foreground">
+                                                                            Scholar: <strong className="text-emerald-700 dark:text-emerald-300">{child.bns_name || 'Unassigned'}</strong>
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            <div className="flex items-center gap-2.5">
+                                                                <Badge variant="outline" className="text-rose-700 border-rose-400 bg-rose-50 font-black text-[9px] px-2 py-0.5 rounded-md">
+                                                                    {daysOverdue}d Overdue
+                                                                </Badge>
+                                                                <Link href={`/admin/bcpc/cases/${child.id}`}>
+                                                                    <Button variant="outline" size="sm" className="font-bold text-xs border-emerald-600 text-emerald-700 hover:bg-emerald-500/10 rounded-xl h-8 px-3">
+                                                                        Check In <ChevronRight className="h-3.5 w-3.5 ml-1" />
+                                                                    </Button>
+                                                                </Link>
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        )
+                                    )}
+                                </CardContent>
+                            </div>
+
+                            {/* Pagination Controls for Queue */}
+                            {currentQueueList.length > itemsPerPage && (
+                                <CardFooter className="p-3 border-t bg-muted/20 flex items-center justify-between">
+                                    <span className="text-xs text-muted-foreground font-medium">
+                                        Showing {(queuePage - 1) * itemsPerPage + 1}–{Math.min(queuePage * itemsPerPage, currentQueueList.length)} of {currentQueueList.length}
+                                    </span>
+                                    <div className="flex items-center gap-2">
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => setQueuePage(p => Math.max(1, p - 1))}
+                                            disabled={queuePage === 1}
+                                            className="h-8 px-2.5 rounded-lg text-xs font-bold"
+                                        >
+                                            <ChevronLeft className="w-3.5 h-3.5 mr-1" /> Prev
+                                        </Button>
+                                        <span className="text-xs font-black text-foreground px-2">
+                                            {queuePage} / {totalQueuePages}
+                                        </span>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => setQueuePage(p => Math.min(totalQueuePages, p + 1))}
+                                            disabled={queuePage === totalQueuePages}
+                                            className="h-8 px-2.5 rounded-lg text-xs font-bold"
+                                        >
+                                            Next <ChevronRight className="w-3.5 h-3.5 ml-1" />
+                                        </Button>
+                                    </div>
+                                </CardFooter>
+                            )}
+                        </Card>
+
+                        {/* 🥣 Active 120-Day Feeding Roster */}
+                        <Card className="border-l-4 border-l-emerald-500 shadow-sm rounded-2xl overflow-hidden flex flex-col justify-between">
+                            <div>
+                                <CardHeader className="pb-3 border-b bg-emerald-500/10">
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <CardTitle className="text-sm font-black uppercase text-emerald-800 dark:text-emerald-300 flex items-center gap-2">
+                                                <HeartHandshake className="h-4 w-4 text-emerald-600" />
+                                                Active 120-Day Feeding Program
+                                            </CardTitle>
+                                            <CardDescription className="text-xs text-muted-foreground mt-0.5">
+                                                Daily caloric monitoring & recovery progress (RA 11037).
+                                            </CardDescription>
+                                        </div>
+                                        <Badge className="bg-emerald-600 text-white font-bold text-xs">
+                                            {activeSfp.length} Enrolled
+                                        </Badge>
+                                    </div>
+                                </CardHeader>
+                                <CardContent className="p-0">
+                                    {activeSfp.length === 0 ? (
+                                        <div className="p-6 text-center text-muted-foreground text-xs font-semibold">
+                                            No children currently enrolled in the Supplemental Feeding Program.
+                                        </div>
+                                    ) : (
+                                        <div className="divide-y divide-border">
+                                            {paginatedSfp.map((child: any) => {
+                                                const daysElapsed = child.sfp_start_date ? Math.min(120, Math.floor((new Date().getTime() - new Date(child.sfp_start_date).getTime()) / (1000 * 60 * 60 * 24))) : 0;
+                                                const percent = Math.min(100, Math.max(0, (daysElapsed / 120) * 100));
+
+                                                return (
+                                                    <div key={child.id} className="p-3.5 flex items-center justify-between hover:bg-muted/40 transition-colors">
+                                                        <div className="flex items-center gap-3">
+                                                            <Avatar className="h-9 w-9 border-2 border-emerald-300">
+                                                                <AvatarFallback className="bg-emerald-100 text-emerald-600 font-bold text-xs">{child.child_first_name[0]}</AvatarFallback>
+                                                            </Avatar>
+                                                            <div>
+                                                                <p className="font-bold text-xs sm:text-sm text-foreground">{child.child_first_name} {child.child_last_name}</p>
+                                                                <p className="text-[11px] text-muted-foreground font-medium">
+                                                                    Started: {child.sfp_start_date ? new Date(child.sfp_start_date).toLocaleDateString() : 'N/A'} {child.bns_name ? `| Scholar: ${child.bns_name}` : ''}
+                                                                </p>
+                                                            </div>
+                                                        </div>
+
+                                                        <div className="flex items-center gap-4">
+                                                            <div className="w-28 text-right hidden sm:block">
+                                                                <div className="flex justify-between items-center text-[9px] font-black uppercase text-emerald-600 mb-1">
+                                                                    <span>Progress</span>
+                                                                    <span>Day {daysElapsed}/120</span>
+                                                                </div>
+                                                                <div className="w-full bg-slate-200 dark:bg-slate-800 rounded-full h-1.5 overflow-hidden">
+                                                                    <div className="bg-emerald-500 h-full rounded-full transition-all duration-500" style={{ width: `${percent}%` }}></div>
+                                                                </div>
+                                                            </div>
+
+                                                            <Link href={`/admin/bcpc/cases/${child.id}`}>
+                                                                <Button variant="outline" size="sm" className="font-bold text-xs border-2 hover:bg-emerald-500/10 rounded-xl h-8 px-3">
+                                                                    Velocity <ChevronRight className="h-3.5 w-3.5 ml-1 text-emerald-600" />
                                                                 </Button>
                                                             </Link>
                                                         </div>
@@ -467,77 +595,41 @@ export default function BcpcDashboard({
                                                 );
                                             })}
                                         </div>
-                                    )
-                                )}
-                            </CardContent>
-                        </Card>
+                                    )}
+                                </CardContent>
+                            </div>
 
-                        {/* 🥣 Active Supplemental Feeding Progress (RA 11037) */}
-                        <Card className="border-l-4 border-l-emerald-500 shadow-md rounded-2xl overflow-hidden">
-                            <CardHeader className="pb-3 border-b bg-emerald-500/10">
-                                <div className="flex items-center justify-between">
-                                    <div>
-                                        <CardTitle className="text-sm font-black uppercase text-emerald-800 dark:text-emerald-300 flex items-center gap-2">
-                                            <HeartHandshake className="h-4 w-4 text-emerald-600" />
-                                            Active 120-Day Supplemental Feeding Roster (RA 11037)
-                                        </CardTitle>
-                                        <CardDescription className="text-xs font-medium text-muted-foreground mt-0.5">
-                                            Enrolled malnourished children receiving daily caloric feeding rations.
-                                        </CardDescription>
+                            {/* Pagination Controls for SFP */}
+                            {activeSfp.length > itemsPerPage && (
+                                <CardFooter className="p-3 border-t bg-muted/20 flex items-center justify-between">
+                                    <span className="text-xs text-muted-foreground font-medium">
+                                        Showing {(sfpPage - 1) * itemsPerPage + 1}–{Math.min(sfpPage * itemsPerPage, activeSfp.length)} of {activeSfp.length}
+                                    </span>
+                                    <div className="flex items-center gap-2">
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => setSfpPage(p => Math.max(1, p - 1))}
+                                            disabled={sfpPage === 1}
+                                            className="h-8 px-2.5 rounded-lg text-xs font-bold"
+                                        >
+                                            <ChevronLeft className="w-3.5 h-3.5 mr-1" /> Prev
+                                        </Button>
+                                        <span className="text-xs font-black text-foreground px-2">
+                                            {sfpPage} / {totalSfpPages}
+                                        </span>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => setSfpPage(p => Math.min(totalSfpPages, p + 1))}
+                                            disabled={sfpPage === totalSfpPages}
+                                            className="h-8 px-2.5 rounded-lg text-xs font-bold"
+                                        >
+                                            Next <ChevronRight className="w-3.5 h-3.5 ml-1" />
+                                        </Button>
                                     </div>
-                                    <Badge className="bg-emerald-600 text-white font-bold text-xs">
-                                        {activeSfp.length} Active Feeding Enrollees
-                                    </Badge>
-                                </div>
-                            </CardHeader>
-                            <CardContent className="p-0">
-                                {activeSfp.length === 0 ? (
-                                    <div className="p-6 text-center text-muted-foreground text-xs font-semibold">
-                                        No children currently enrolled in the Supplemental Feeding Program.
-                                    </div>
-                                ) : (
-                                    <div className="divide-y divide-border">
-                                        {activeSfp.map((child: any) => {
-                                            const daysElapsed = child.sfp_start_date ? Math.min(120, Math.floor((new Date().getTime() - new Date(child.sfp_start_date).getTime()) / (1000 * 60 * 60 * 24))) : 0;
-                                            const percent = Math.min(100, Math.max(0, (daysElapsed / 120) * 100));
-
-                                            return (
-                                                <div key={child.id} className="p-4 flex items-center justify-between hover:bg-muted/40 transition-colors">
-                                                    <div className="flex items-center gap-3">
-                                                        <Avatar className="h-10 w-10 border-2 border-emerald-300">
-                                                            <AvatarFallback className="bg-emerald-100 text-emerald-600 font-bold">{child.child_first_name[0]}</AvatarFallback>
-                                                        </Avatar>
-                                                        <div>
-                                                            <p className="font-bold text-sm text-foreground">{child.child_first_name} {child.child_last_name}</p>
-                                                            <p className="text-xs text-muted-foreground font-medium">
-                                                                Started: {child.sfp_start_date ? new Date(child.sfp_start_date).toLocaleDateString() : 'N/A'} {child.bns_name ? `| Scholar: ${child.bns_name}` : ''}
-                                                            </p>
-                                                        </div>
-                                                    </div>
-
-                                                    <div className="flex items-center gap-4">
-                                                        <div className="w-32 text-right hidden sm:block">
-                                                            <div className="flex justify-between items-center text-[10px] font-black uppercase text-emerald-600 mb-1">
-                                                                <span>Progress</span>
-                                                                <span>Day {daysElapsed}/120</span>
-                                                            </div>
-                                                            <div className="w-full bg-slate-200 dark:bg-slate-800 rounded-full h-2 overflow-hidden">
-                                                                <div className="bg-emerald-500 h-full rounded-full transition-all duration-500" style={{ width: `${percent}%` }}></div>
-                                                            </div>
-                                                        </div>
-
-                                                        <Link href={`/admin/bcpc/cases/${child.id}`}>
-                                                            <Button variant="outline" size="sm" className="font-bold text-xs border-2 hover:bg-emerald-500/10 rounded-xl">
-                                                                View Velocity <ChevronRight className="h-4 w-4 ml-1 text-emerald-600" />
-                                                            </Button>
-                                                        </Link>
-                                                    </div>
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-                                )}
-                            </CardContent>
+                                </CardFooter>
+                            )}
                         </Card>
 
                     </div>
@@ -546,17 +638,17 @@ export default function BcpcDashboard({
                     <div className="flex flex-col gap-6">
 
                         {/* 📍 Spatial Intelligence: Purok Malnutrition Hotspots */}
-                        <Card className="border-border shadow-md rounded-2xl overflow-hidden">
-                            <CardHeader className="pb-3 border-b bg-muted/30">
+                        <Card className="border-border shadow-sm rounded-2xl overflow-hidden">
+                            <CardHeader className="pb-3 border-b bg-muted/20">
                                 <div className="flex items-center justify-between">
                                     <CardTitle className="text-sm font-black uppercase tracking-tight flex items-center gap-2">
                                         <MapPin className="h-4 w-4 text-emerald-600" />
-                                        Purok Malnutrition Hotspots
+                                        Purok Hotspots
                                     </CardTitle>
                                     <span className="text-[10px] font-bold text-muted-foreground uppercase">Barangay 183</span>
                                 </div>
-                                <CardDescription className="text-xs font-medium text-muted-foreground mt-0.5">
-                                    Geographical distribution & prevalence rate across purok zones.
+                                <CardDescription className="text-xs text-muted-foreground mt-0.5">
+                                    Malnutrition concentration by purok zone.
                                 </CardDescription>
                             </CardHeader>
                             <CardContent className="p-0">
@@ -576,7 +668,7 @@ export default function BcpcDashboard({
                                                         )}
                                                     </p>
                                                     <p className="text-[11px] text-muted-foreground font-medium">
-                                                        Total Checked: <strong className="text-foreground">{zone.total_monitored}</strong> | Malnourished: <strong className="text-red-600">{zone.total_malnourished}</strong>
+                                                        Total: <strong className="text-foreground">{zone.total_monitored}</strong> | Malnourished: <strong className="text-red-600">{zone.total_malnourished}</strong>
                                                     </p>
                                                 </div>
                                                 <div className="flex flex-col items-end gap-1">
@@ -602,14 +694,14 @@ export default function BcpcDashboard({
                         </Card>
 
                         {/* 📊 Multi-Axis WHO Diagnostic Distributions */}
-                        <Card className="border-border shadow-md rounded-2xl overflow-hidden">
-                            <CardHeader className="pb-3 border-b bg-muted/30">
+                        <Card className="border-border shadow-sm rounded-2xl overflow-hidden">
+                            <CardHeader className="pb-3 border-b bg-muted/20">
                                 <CardTitle className="text-sm font-black uppercase tracking-tight flex items-center gap-2">
                                     <BarChart3 className="h-4 w-4 text-emerald-600" />
-                                    Multi-Axis Growth Breakdown
+                                    Population Health Status
                                 </CardTitle>
-                                <CardDescription className="text-xs font-medium text-muted-foreground mt-0.5">
-                                    WHO 3-axis population health indicators.
+                                <CardDescription className="text-xs text-muted-foreground mt-0.5">
+                                    WHO standard growth distribution across 3 axes.
                                 </CardDescription>
                             </CardHeader>
                             <CardContent className="p-4 space-y-4 text-xs font-semibold">
@@ -620,7 +712,7 @@ export default function BcpcDashboard({
                                         <span className="font-bold text-foreground">Weight-for-Age (WFA)</span>
                                         <span className="text-muted-foreground">{getPercent(distributions?.wfa?.Normal || 0, totalChildren)}% Normal</span>
                                     </div>
-                                    <div className="h-2.5 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden flex">
+                                    <div className="h-2 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden flex">
                                         <div style={{ width: `${getPercent(distributions?.wfa?.Normal || 0, totalChildren)}%` }} className="bg-emerald-500 h-full" title="Normal" />
                                         <div style={{ width: `${getPercent(distributions?.wfa?.Underweight || 0, totalChildren)}%` }} className="bg-amber-500 h-full" title="Underweight" />
                                         <div style={{ width: `${getPercent(distributions?.wfa?.['Severely Underweight'] || 0, totalChildren)}%` }} className="bg-red-600 h-full" title="Severely Underweight" />
@@ -640,7 +732,7 @@ export default function BcpcDashboard({
                                         <span className="font-bold text-foreground">Height-for-Age (Stunting)</span>
                                         <span className="text-muted-foreground">{getPercent(distributions?.hfa?.Normal || 0, totalChildren)}% Normal</span>
                                     </div>
-                                    <div className="h-2.5 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden flex">
+                                    <div className="h-2 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden flex">
                                         <div style={{ width: `${getPercent(distributions?.hfa?.Normal || 0, totalChildren)}%` }} className="bg-emerald-500 h-full" title="Normal" />
                                         <div style={{ width: `${getPercent(distributions?.hfa?.Stunted || 0, totalChildren)}%` }} className="bg-cyan-600 h-full" title="Stunted" />
                                         <div style={{ width: `${getPercent(distributions?.hfa?.['Severely Stunted'] || 0, totalChildren)}%` }} className="bg-purple-600 h-full" title="Severely Stunted" />
@@ -658,7 +750,7 @@ export default function BcpcDashboard({
                                         <span className="font-bold text-foreground">Weight-for-Length/Height (WFL/H)</span>
                                         <span className="text-muted-foreground">{getPercent(distributions?.wflh?.Normal || 0, totalChildren)}% Normal</span>
                                     </div>
-                                    <div className="h-2.5 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden flex">
+                                    <div className="h-2 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden flex">
                                         <div style={{ width: `${getPercent(distributions?.wflh?.Normal || 0, totalChildren)}%` }} className="bg-emerald-500 h-full" title="Normal" />
                                         <div style={{ width: `${getPercent(distributions?.wflh?.Wasted || 0, totalChildren)}%` }} className="bg-amber-500 h-full" title="Wasted" />
                                         <div style={{ width: `${getPercent(distributions?.wflh?.['Severely Wasted'] || 0, totalChildren)}%` }} className="bg-red-600 h-full" title="Severely Wasted" />
@@ -675,14 +767,14 @@ export default function BcpcDashboard({
                         </Card>
 
                         {/* 🎂 Birthdays Widget */}
-                        <Card className="border-border shadow-md rounded-2xl overflow-hidden">
-                            <CardHeader className="pb-3 border-b bg-muted/30">
+                        <Card className="border-border shadow-sm rounded-2xl overflow-hidden">
+                            <CardHeader className="pb-3 border-b bg-muted/20">
                                 <CardTitle className="text-sm font-black uppercase tracking-tight flex items-center gap-2">
                                     <Cake className="h-4 w-4 text-emerald-600" />
                                     Upcoming Birthdays
                                 </CardTitle>
-                                <CardDescription className="text-xs font-medium text-muted-foreground mt-0.5">
-                                    Next 30 Days Birthday Celebrations
+                                <CardDescription className="text-xs text-muted-foreground mt-0.5">
+                                    Next 30 days birthday celebrations.
                                 </CardDescription>
                             </CardHeader>
                             <CardContent className="p-0">
@@ -694,8 +786,8 @@ export default function BcpcDashboard({
                                     <div className="divide-y divide-border">
                                         {upcomingBirthdays.slice(0, 5).map((child: any) => (
                                             <div key={child.id} className="p-3.5 flex items-center gap-3 hover:bg-emerald-500/10 transition-colors">
-                                                <div className="h-9 w-9 rounded-full bg-emerald-500/10 border border-emerald-500/30 flex flex-col items-center justify-center text-emerald-700 dark:text-emerald-300 font-bold shrink-0">
-                                                    <span className="text-[8px] leading-none uppercase">{new Date(child.date_of_birth).toLocaleString('default', { month: 'short' })}</span>
+                                                <div className="h-8 w-8 rounded-full bg-emerald-500/10 border border-emerald-500/30 flex flex-col items-center justify-center text-emerald-700 dark:text-emerald-300 font-bold shrink-0">
+                                                    <span className="text-[7.5px] leading-none uppercase">{new Date(child.date_of_birth).toLocaleString('default', { month: 'short' })}</span>
                                                     <span className="text-xs leading-none mt-0.5">{new Date(child.date_of_birth).getDate()}</span>
                                                 </div>
                                                 <div className="flex-1">
