@@ -15,6 +15,9 @@ class VawcCase extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
+        'dossier_id',
+        'incident_sequence',
+        'sub_case_number',
         'case_report_id',
         'intake_type',
         'children_count',
@@ -34,6 +37,7 @@ class VawcCase extends Model
     ];
 
     protected $casts = [
+        'incident_sequence' => 'integer',
         'is_repeat_offense' => 'boolean',
         'has_weapon_involved' => 'boolean',
         'incident_veracity' => 'boolean',
@@ -42,6 +46,14 @@ class VawcCase extends Model
         'weapons_confiscated' => 'boolean',
         'closed_at' => 'datetime',
     ];
+
+    /**
+     * The Master Dossier this VAWC incident belongs to.
+     */
+    public function dossier(): BelongsTo
+    {
+        return $this->belongsTo(VawcDossier::class, 'dossier_id');
+    }
 
     /**
      * The core CaseReport this VAWC case belongs to.

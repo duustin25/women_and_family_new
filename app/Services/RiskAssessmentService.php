@@ -70,9 +70,26 @@ class RiskAssessmentService
             $assessment->weapon_access = 1;
         }
 
-        // 2. FREQUENCY / HISTORY:
-        if ($case->is_repeat_offense) {
-            $assessment->abuse_frequency = 3;
+        // 2. FREQUENCY / HISTORY (Intra-dossier + Cross-dossier Serial History):
+        $respParty = $case->involvedParties->firstWhere('role', 'Respondent');
+        $respName = $respParty?->name ?? $case->dossier?->respondent_name;
+
+        $crossIncidentsCount = 0;
+        if ($respName) {
+            $otherDossiers = \App\Models\VawcDossier::where('respondent_name', 'LIKE', $respName)
+                ->where('id', '!=', $case->dossier_id)
+                ->get();
+            $crossIncidentsCount = (int) $otherDossiers->sum('incident_count');
+        }
+
+        $isRecidivist = $case->is_repeat_offense 
+            || $crossIncidentsCount > 0 
+            || ($case->incident_sequence ?? 1) > 1;
+
+        if ($isRecidivist || $crossIncidentsCount >= 2) {
+            $assessment->abuse_frequency = 3; // Maximum score: established recidivist / serial abuser
+        } elseif ($crossIncidentsCount === 1) {
+            $assessment->abuse_frequency = 2; // Moderate prior history
         } else {
             $assessment->abuse_frequency = 1;
         }
@@ -86,11 +103,33 @@ class RiskAssessmentService
             $assessment->abuse_severity = 1; // Unverified or Minor
         }
 
-        // 4. LETHALITY / THREAT:
-        if ($case->warrantless_arrest_made) {
+        // 4. LETHALITY / THREAT & COMPOUND DOMESTIC RISK EVALUATION:
+        $victimParty = $case->involvedParties->firstWhere('role', 'Victim');
+        $victimName = $victimParty?->name ?? $case->dossier?->survivor_name;
+        $victimAddress = strtolower(trim($victimParty?->address ?? $case->dossier?->survivor_demographics['address'] ?? ''));
+        $respAddress = strtolower(trim($respParty?->address ?? $case->dossier?->respondent_demographics['address'] ?? ''));
+
+        $isSameHousehold = !empty($victimAddress) && !empty($respAddress) && (
+            $victimAddress === $respAddress || 
+            str_contains($victimAddress, $respAddress) || 
+            str_contains($respAddress, $victimAddress)
+        );
+
+        $survivorOtherDossiersCount = 0;
+        if ($victimName) {
+            $survivorOtherDossiersCount = \App\Models\VawcDossier::where('survivor_name', 'LIKE', $victimName)
+                ->where('id', '!=', $case->dossier_id)
+                ->count();
+        }
+
+        // If survivor has multiple active perpetrator dossiers in the same domestic/household environment:
+        if ($survivorOtherDossiersCount > 0 && $isSameHousehold) {
+            $assessment->requires_alternative_housing = true;
+            $assessment->life_threat_level = 3; // Critical: multi-perpetrator domestic environment requires mandatory emergency shelter escalation
+        } elseif ($case->warrantless_arrest_made) {
             $assessment->life_threat_level = 3; // Extreme threat justifying warrantless arrest
-        } elseif ($case->children_count > 0 || $assessment->requires_alternative_housing) {
-            $assessment->life_threat_level = 2; // Medium threat, children at risk or displaced
+        } elseif ($case->children_count > 0 || $assessment->requires_alternative_housing || $survivorOtherDossiersCount > 0) {
+            $assessment->life_threat_level = 2; // Medium threat, children at risk, displaced, or multiple perpetrators
         } else {
             $assessment->life_threat_level = 1; // Baseline verbal/minor threat
         }

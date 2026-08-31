@@ -536,74 +536,7 @@ class DatabaseSeeder extends Seeder
         // 8. Seed 50 Children for BCPC Nutrition Monitoring (Clean 120-Day SFP Milestones)
         $this->call(\Database\Seeders\BcpcSeeder::class);
 
-        // 9. Seed 50 VAWC Case Reports and secure risk assessments
-        for ($i = 0; $i < 50; $i++) {
-            $incidentZone = $faker->randomElement($zones);
-            $incidentType = $faker->randomElement($vawcAbuseTypes);
-
-            $caseNumber = 'VAWC-' . now()->year . '-' . str_pad($i + 1, 4, '0', STR_PAD_LEFT);
-
-            $caseReport = CaseReport::create([
-                'user_id' => $admin->id,
-                'zone_id' => $incidentZone->id,
-                'abuse_type_id' => $incidentType->id,
-                'type' => 'VAWC',
-                'case_number' => $caseNumber,
-                'victim_name' => $faker->name('female'),
-                'victim_age' => rand(18, 55),
-                'victim_gender' => 'Female',
-                'complainant_name' => $faker->name(),
-                'complainant_contact' => $faker->phoneNumber(),
-                'relation_to_victim' => $faker->randomElement(['Self', 'Neighbor', 'Relative', 'Kagawad']),
-                'incident_date' => now()->subDays(rand(1, 120)),
-                'incident_location' => $faker->streetAddress() . ', Purok ' . rand(1, 8),
-                'description' => $faker->paragraph(),
-                'is_anonymous' => $faker->boolean(20),
-                'lifecycle_status' => $faker->randomElement(['Investigation', 'Action Plan', 'Closed']),
-                'handled_by_id' => $vawcOfficer->id,
-            ]);
-
-            // Create VAWC Case
-            $vawcCase = VawcCase::create([
-                'case_report_id' => $caseReport->id,
-                'intake_type' => $faker->randomElement(['Direct', 'Third-Party']),
-                'children_count' => rand(0, 4),
-                'is_repeat_offense' => $faker->boolean(15),
-                'has_weapon_involved' => $faker->boolean(25),
-                'incident_veracity' => true,
-                'perpetrator_present' => $faker->boolean(30),
-                'warrantless_arrest_made' => $faker->boolean(10),
-                'weapons_confiscated' => $faker->boolean(10),
-                'status' => $faker->randomElement(['Intake', 'Assessment', 'Alternative Housing', 'BPO Processing', 'Monitoring', 'Escalated', 'Closed']),
-                'referral_status' => $faker->randomElement(['Handled Internally', 'Referred to PNP', 'Referred to DSWD']),
-            ]);
-
-            // Add involved parties (Perpetrator)
-            VawcInvolvedParty::create([
-                'vawc_case_id' => $vawcCase->id,
-                'role' => 'Respondent',
-                'name' => $faker->name('male'),
-                'age' => rand(20, 60),
-                'gender' => 'Male',
-                'relationship_to_victim' => $faker->randomElement(['Husband', 'Partner', 'Father', 'Brother']),
-                'contact_number' => $faker->phoneNumber(),
-                'address' => $faker->address(),
-            ]);
-
-            // Seed Safety Assessment (Risk level will be automatically evaluated via model boot static saving hook)
-            VawcAssessment::create([
-                'vawc_case_id' => $vawcCase->id,
-                'requires_medical' => $faker->boolean(30),
-                'medical_notes' => $faker->boolean(30) ? 'Emergency checkup performed.' : null,
-                'requires_alternative_housing' => $faker->boolean(15),
-                'housing_notes' => $faker->boolean(15) ? 'Shelter arrangement completed.' : null,
-                'lswo_referral_made' => $faker->boolean(20),
-                'dswd_referral_made' => $faker->boolean(25),
-                'abuse_frequency' => rand(1, 3),
-                'abuse_severity' => rand(1, 3),
-                'weapon_access' => rand(1, 3),
-                'life_threat_level' => rand(1, 3),
-            ]);
-        }
+        // 9. Seed VAWC Master Dossiers & Sub-Cases
+        $this->call(\Database\Seeders\VawcSeeder::class);
     }
 }

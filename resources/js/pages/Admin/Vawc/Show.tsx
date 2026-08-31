@@ -17,18 +17,63 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import {
     CheckCircle2, Gavel, Printer, Search, ShieldCheck, MapPin, ClipboardList,
-    Info, ArchiveX, Lock, AlertTriangle, Activity, HelpCircle, ArrowLeft, ShieldAlert, Save
+    Info, ArchiveX, Lock, AlertTriangle, Activity, HelpCircle, ArrowLeft, ShieldAlert, Save,
+    Folder, FolderOpen, Layers, Plus, Clock, Calendar, ExternalLink, ChevronRight, Eye, EyeOff
 } from 'lucide-react';
 
 interface Props {
     case: any;
+    crossStats?: {
+        has_other_dossiers: boolean;
+        other_dossiers_count: number;
+        total_linked_dossiers: number;
+        other_incidents_count: number;
+        total_perpetrator_incidents: number;
+        is_serial_recidivist: boolean;
+        linked_dossier_numbers: string[];
+        linked_survivor_count: number;
+    };
+    survivorStats?: {
+        has_other_dossiers: boolean;
+        other_dossiers_count: number;
+        total_active_dossiers: number;
+        is_compound_victimization: boolean;
+        other_dossiers: Array<{
+            id: number;
+            dossier_number: string;
+            respondent_name: string;
+            relationship_type: string;
+            highest_threat_level: string;
+            latest_case_id?: number;
+        }>;
+    };
 }
 
-export default function Show({ case: vawcCase }: Props) {
+export default function Show({ case: vawcCase, crossStats, survivorStats }: Props) {
     const confirm = useConfirm();
+    const [isRedacted, setIsRedacted] = React.useState(false);
     const victim = vawcCase.involved_parties.find((p: any) => p.role === 'Victim');
     const respondent = vawcCase.involved_parties.find((p: any) => p.role === 'Respondent');
     const activeBpo = vawcCase.protection_orders.find((o: any) => ['Applied', 'Issued', 'Served'].includes(o.status));
+
+    const redactName = (name?: string) => {
+        if (!name) return 'Unspecified';
+        if (!isRedacted) return name;
+        const parts = name.trim().split(/\s+/);
+        return parts.map(p => p.length <= 2 ? p[0] + '*' : p[0] + '*'.repeat(p.length - 2) + p[p.length - 1]).join(' ');
+    };
+
+    const redactAddress = (addr?: string) => {
+        if (!addr) return 'Unspecified';
+        if (!isRedacted) return addr;
+        return 'CONFIDENTIAL (Sec. 44 Masked)';
+    };
+
+    const redactContact = (cnt?: string) => {
+        if (!cnt) return 'N/A';
+        if (!isRedacted) return cnt;
+        return '09XX-XXX-XXXX (Redacted)';
+    };
 
     const calculateDaysRemaining = () => {
         if (!activeBpo?.expiration_date) return null;
@@ -46,14 +91,48 @@ export default function Show({ case: vawcCase }: Props) {
         return new Date(now.getTime() - offset).toISOString().slice(0, 16);
     };
 
+    const formatDateTime = (dateVal: string | Date | null | undefined) => {
+        if (!dateVal) return 'N/A';
+        const d = new Date(dateVal);
+        if (isNaN(d.getTime())) return 'N/A';
+        return d.toLocaleString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true,
+        });
+    };
+
+    const formatDateOnly = (dateVal: string | Date | null | undefined) => {
+        if (!dateVal) return 'N/A';
+        const d = new Date(dateVal);
+        if (isNaN(d.getTime())) return 'N/A';
+        return d.toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric',
+        });
+    };
+
+    const incidentDateISO = vawcCase.case_report?.incident_date
+        ? new Date(vawcCase.case_report.incident_date).toISOString().slice(0, 16)
+        : getNowLocalISO();
+
     const daysRemaining = calculateDaysRemaining();
 
     // Form Hooks
-    const bpoForm = useForm<any>({ type: 'BPO' });
-    const issuanceForm = useForm<any>({});
+    const bpoForm = useForm<any>({
+        type: 'BPO',
+        application_datetime: incidentDateISO,
+    });
+    const issuanceForm = useForm<any>({
+        issued_datetime: incidentDateISO,
+    });
     const serviceForm = useForm<any>({
         service_method: 'Personally Received',
-        served_datetime: getNowLocalISO(),
+        served_datetime: incidentDateISO,
         receiver_name: ''
     });
 
@@ -91,7 +170,11 @@ export default function Show({ case: vawcCase }: Props) {
     const [showCloseModal, setShowCloseModal] = React.useState(false);
 
     // Handlers
-    const handleApplyBpo = () => {
+    const handleApplyBpo = (e?: React.FormEvent | React.MouseEvent) => {
+        if (e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
         confirm({
             title: "File BPO Application",
             message: "Are you sure you want to file an official application for BPO?",
@@ -104,7 +187,11 @@ export default function Show({ case: vawcCase }: Props) {
         });
     };
 
-    const handleIssueBpo = () => {
+    const handleIssueBpo = (e?: React.FormEvent | React.MouseEvent) => {
+        if (e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
         confirm({
             title: "Confirm BPO Issuance",
             message: "Are you sure you want to confirm official BPO Issuance? (RA 9262 Mandate)",
@@ -185,6 +272,52 @@ export default function Show({ case: vawcCase }: Props) {
             <Head title={`Case Workflow: ${vawcCase.case_report.case_number}`} />
 
             <div className="p-6 space-y-6 max-w-7xl mx-auto">
+                {/* ── MASTER DOSSIER COMMAND BAR ── */}
+                {vawcCase.dossier && (
+                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-gradient-to-r from-primary/10 via-card to-card p-4 rounded-2xl border border-primary/20 shadow-xs gap-3">
+                        <div className="flex items-center gap-3">
+                            <div className="p-2.5 rounded-xl bg-primary text-primary-foreground shadow-xs">
+                                <Folder className="w-5 h-5" />
+                            </div>
+                            <div className="space-y-0.5">
+                                <div className="flex flex-wrap items-center gap-2">
+                                    <span className="font-mono font-black text-xs text-primary">
+                                        MASTER FOLDER: {vawcCase.dossier.dossier_number}
+                                    </span>
+                                    <Badge variant="secondary" className="text-[10px] font-extrabold uppercase">
+                                        Incident #{vawcCase.incident_sequence || 1} of {vawcCase.dossier.incident_count || 1}
+                                    </Badge>
+                                    <Badge variant="outline" className="text-[10px] font-bold">
+                                        {vawcCase.dossier.current_lifecycle}
+                                    </Badge>
+                                </div>
+                                <p className="text-xs text-muted-foreground font-semibold">
+                                    Survivor: <strong className="text-foreground">{redactName(vawcCase.dossier.survivor_name)}</strong> vs <strong className="text-foreground">{redactName(vawcCase.dossier.respondent_name)}</strong> ({vawcCase.dossier.relationship_type || 'Intimate Partner'})
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-2 w-full md:w-auto justify-end">
+                            {daysRemaining !== null && (
+                                daysRemaining >= 0 ? (
+                                    <Badge className="bg-emerald-600 hover:bg-emerald-700 text-white font-mono text-xs px-2.5 py-1">
+                                        <Clock className="w-3.5 h-3.5 mr-1" /> {daysRemaining} Days Remaining (15-Day BPO)
+                                    </Badge>
+                                ) : (
+                                    <Badge variant="secondary" className="bg-slate-200 dark:bg-slate-800 text-muted-foreground font-mono text-xs px-2.5 py-1 border">
+                                        <Clock className="w-3.5 h-3.5 mr-1" /> 15-Day BPO Lapsed ({new Date(activeBpo.expiration_date).toLocaleDateString()})
+                                    </Badge>
+                                )
+                            )}
+                            <Button asChild size="sm" className="bg-[#ce1126] hover:bg-red-700 font-bold text-xs">
+                                <Link href={route('admin.vawc.create', { dossier_id: vawcCase.dossier_id })}>
+                                    <Plus className="w-3.5 h-3.5 mr-1" /> Log Subsequent Incident
+                                </Link>
+                            </Button>
+                        </div>
+                    </div>
+                )}
+
                 {/* ── TOP HEADER BAR ── */}
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-card p-6 rounded-2xl border border-border shadow-xs">
                     <div className="flex gap-4 items-center">
@@ -194,7 +327,7 @@ export default function Show({ case: vawcCase }: Props) {
                         <div>
                             <div className="flex items-center gap-2">
                                 <h1 className="text-2xl font-bold tracking-tight text-foreground">
-                                    {vawcCase.case_report.case_number}
+                                    {vawcCase.sub_case_number || vawcCase.case_report.case_number}
                                 </h1>
                                 <Badge variant="outline" className="font-mono text-md">
                                     {vawcCase.intake_type || 'Direct Intake'}
@@ -210,10 +343,22 @@ export default function Show({ case: vawcCase }: Props) {
                             </p>
                         </div>
                     </div>
-                    <div className="flex gap-2 mt-4 sm:mt-0">
-                        <Button variant="outline" size="lg" asChild>
-                            <Link href={route('admin.vawc.index')} className="flex gap-1.5 items-center font-bold text-md">
-                                <ArrowLeft className="w-8 h-8" /> Back to Cases
+                    <div className="flex flex-wrap items-center gap-2 mt-4 sm:mt-0">
+                        <Button
+                            variant={isRedacted ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => setIsRedacted(!isRedacted)}
+                            className={`text-xs font-bold transition-all ${isRedacted ? 'bg-amber-600 hover:bg-amber-700 text-white' : 'border-amber-500/40 text-amber-700 dark:text-amber-300'}`}
+                        >
+                            {isRedacted ? (
+                                <><EyeOff className="w-3.5 h-3.5 mr-1.5" /> Identities Redacted (Sec. 44)</>
+                            ) : (
+                                <><Eye className="w-3.5 h-3.5 mr-1.5" /> Redact Identities (Sec. 44)</>
+                            )}
+                        </Button>
+                        <Button variant="outline" size="sm" asChild>
+                            <Link href={route('admin.vawc.index')} className="flex gap-1.5 items-center font-bold text-xs">
+                                <ArrowLeft className="w-4 h-4" /> Back to Registry
                             </Link>
                         </Button>
                     </div>
@@ -464,29 +609,69 @@ export default function Show({ case: vawcCase }: Props) {
 
                         {/* STEP 2: APPLY BPO */}
                         {stepNum === 2 && (
-                            <div className="flex flex-col items-center justify-center py-8 gap-4">
-                                <ShieldCheck className="w-16 h-16 text-primary/30" />
-                                <Button size="lg" onClick={handleApplyBpo} disabled={bpoForm.processing} className="bg-[#ce1126] hover:bg-red-700 font-bold text-sm px-8 shadow-md">
-                                    File Official Protection Order Application
-                                </Button>
-                                <p className="text-xs text-muted-foreground font-semibold">Republic Act 9262 - Section 14 Mandate</p>
-                            </div>
+                            <form onSubmit={handleApplyBpo} className="max-w-xl mx-auto py-4 space-y-4">
+                                <div className="p-4 rounded-xl border bg-muted/20 space-y-3">
+                                    <div className="flex items-center gap-2">
+                                        <ShieldCheck className="w-5 h-5 text-primary" />
+                                        <h4 className="text-xs font-bold uppercase tracking-wider text-foreground">
+                                            BPO Application Filing Date & Time
+                                        </h4>
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <Label className="text-xs font-semibold">Application Date & Time</Label>
+                                        <Input
+                                            type="datetime-local"
+                                            value={bpoForm.data.application_datetime}
+                                            onChange={e => bpoForm.setData('application_datetime', e.target.value)}
+                                            className="text-xs"
+                                        />
+                                        <p className="text-[11px] text-muted-foreground">
+                                            Defaults to incident timestamp for historical encoding, or current time for live desk intake.
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="text-center pt-2">
+                                    <Button type="submit" size="lg" disabled={bpoForm.processing} className="bg-[#ce1126] hover:bg-red-700 font-bold text-sm px-8 shadow-md">
+                                        File Official Protection Order Application
+                                    </Button>
+                                    <p className="text-xs text-muted-foreground font-semibold mt-2">Republic Act 9262 - Section 14 Mandate</p>
+                                </div>
+                            </form>
                         )}
 
                         {/* STEP 3: ISSUE BPO */}
                         {stepNum === 3 && (
-                            <div className="space-y-4 text-center py-6">
-                                <Alert className="max-w-xl mx-auto border-amber-300 bg-amber-50 dark:bg-amber-950/20 text-amber-800 dark:text-amber-300">
+                            <form onSubmit={handleIssueBpo} className="max-w-xl mx-auto py-4 space-y-4">
+                                <Alert className="border-amber-300 bg-amber-50 dark:bg-amber-950/20 text-amber-800 dark:text-amber-300">
                                     <Info className="w-4 h-4" />
                                     <AlertTitle className="text-xs font-bold uppercase">Action Required from Punong Barangay</AlertTitle>
                                     <AlertDescription className="text-xs mt-1">
-                                        Protection Order must be reviewed and officially issued within 24 hours of filing.
+                                        Protection Order must be reviewed and officially issued within same-day SLA of filing.
                                     </AlertDescription>
                                 </Alert>
-                                <Button size="lg" onClick={handleIssueBpo} disabled={issuanceForm.processing} className="bg-[#ce1126] hover:bg-red-700 font-bold text-sm px-8">
-                                    Confirm Protection Order Issuance
-                                </Button>
-                            </div>
+
+                                <div className="p-4 rounded-xl border bg-muted/20 space-y-3">
+                                    <div className="space-y-1.5">
+                                        <Label className="text-xs font-semibold">Official Issuance Date & Time</Label>
+                                        <Input
+                                            type="datetime-local"
+                                            value={issuanceForm.data.issued_datetime}
+                                            onChange={e => issuanceForm.setData('issued_datetime', e.target.value)}
+                                            className="text-xs"
+                                        />
+                                        <p className="text-[11px] text-muted-foreground">
+                                            Specify when the Punong Barangay signed and issued the order.
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="text-center pt-2">
+                                    <Button type="submit" size="lg" disabled={issuanceForm.processing} className="bg-[#ce1126] hover:bg-red-700 font-bold text-sm px-8 shadow-md">
+                                        Confirm Protection Order Issuance
+                                    </Button>
+                                </div>
+                            </form>
                         )}
 
                         {/* STEP 4: SERVE BPO */}
@@ -669,7 +854,7 @@ export default function Show({ case: vawcCase }: Props) {
                                                 <Badge variant={log.is_compliant ? "outline" : "destructive"} className="text-xs uppercase font-bold">
                                                     {log.is_compliant ? "Compliant" : "VIOLATION LOGGED"}
                                                 </Badge>
-                                                <span className="text-xs text-muted-foreground font-mono">{new Date(log.monitor_date).toLocaleDateString()}</span>
+                                                <span className="text-xs text-muted-foreground font-mono">{formatDateTime(log.monitor_date)}</span>
                                             </div>
                                             <p className="text-muted-foreground italic font-medium">"{log.notes}"</p>
                                         </div>
@@ -742,7 +927,7 @@ export default function Show({ case: vawcCase }: Props) {
                                 </Badge>
                             )}
                             <Badge variant="outline" className="font-mono text-xs">
-                                {vawcCase.case_report.case_number}
+                                {vawcCase.sub_case_number || vawcCase.case_report.case_number}
                             </Badge>
                         </div>
                     </CardHeader>
@@ -758,11 +943,43 @@ export default function Show({ case: vawcCase }: Props) {
                                 <div className="space-y-3 p-4 rounded-xl border bg-card text-xs">
                                     <div>
                                         <p className="text-[11px] font-bold text-muted-foreground uppercase">Survivor Full Name</p>
-                                        <p className="font-bold text-sm text-foreground">{victim?.name || 'Unspecified'}</p>
-                                        <p className="text-muted-foreground font-semibold mt-0.5">{victim?.age || '?'} Yrs / {victim?.gender || 'Female'}</p>
+                                        <p className="font-bold text-sm text-foreground">{redactName(victim?.name)}</p>
+
+                                        {/* Multi-Dossier Compound Victimization Alert */}
+                                        {survivorStats?.has_other_dossiers && (
+                                            <div className="mt-2 p-2.5 rounded-lg border border-amber-500/40 bg-amber-500/10 text-xs space-y-1.5">
+                                                <div className="flex items-center gap-1.5 font-extrabold text-[10px] text-amber-700 dark:text-amber-300 uppercase tracking-wide">
+                                                    <AlertTriangle className="w-3.5 h-3.5 shrink-0 text-amber-600" /> Compound Domestic Risk
+                                                </div>
+                                                <p className="text-[11px] text-muted-foreground font-medium leading-tight">
+                                                    Survivor is protected under <strong>{survivorStats.other_dossiers_count} other active Master Dossier(s)</strong>:
+                                                </p>
+                                                <div className="space-y-1 pt-1">
+                                                    {survivorStats.other_dossiers.map(od => (
+                                                        <div key={od.id} className="flex items-center justify-between text-[11px] bg-background/80 p-1.5 rounded border">
+                                                            <span className="font-semibold text-foreground truncate mr-2">
+                                                                vs. {redactName(od.respondent_name)} ({od.relationship_type})
+                                                            </span>
+                                                            {od.latest_case_id ? (
+                                                                <Link 
+                                                                    href={route('admin.vawc.show', od.latest_case_id)} 
+                                                                    className="font-mono text-[10px] font-bold text-primary hover:underline flex items-center gap-0.5 shrink-0"
+                                                                >
+                                                                    {od.dossier_number} <ExternalLink className="w-2.5 h-2.5" />
+                                                                </Link>
+                                                            ) : (
+                                                                <span className="font-mono text-[10px] font-bold shrink-0">{od.dossier_number}</span>
+                                                            )}
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        <p className="text-muted-foreground font-semibold mt-1">{victim?.age || '?'} Yrs / {victim?.gender || 'Female'}</p>
                                         <p className="text-muted-foreground">Civil Status: {victim?.civil_status || 'Single'}</p>
-                                        {victim?.address && <p className="text-muted-foreground mt-1">Address: {victim.address}</p>}
-                                        {victim?.contact && <p className="text-muted-foreground font-mono">Contact: {victim.contact}</p>}
+                                        {victim?.address && <p className="text-muted-foreground mt-1">Address: {redactAddress(victim.address)}</p>}
+                                        {victim?.contact && <p className="text-muted-foreground font-mono">Contact: {redactContact(victim.contact)}</p>}
                                         {(victim?.educational_attainment || victim?.occupation) && (
                                             <p className="text-muted-foreground pt-1 border-t mt-1 font-medium">
                                                 Ed: {victim?.educational_attainment || 'N/A'} | Job: {victim?.occupation || 'N/A'}
@@ -774,12 +991,12 @@ export default function Show({ case: vawcCase }: Props) {
 
                                     <div>
                                         <p className="text-[11px] font-bold text-muted-foreground uppercase">Complainant / Reporter</p>
-                                        <p className="font-bold text-foreground">{vawcCase.case_report.complainant_name || victim?.name || 'Self (Victim)'}</p>
+                                        <p className="font-bold text-foreground">{redactName(vawcCase.case_report.complainant_name || victim?.name || 'Self (Victim)')}</p>
                                         <Badge variant="outline" className="text-[11px] font-bold mt-1">
                                             Relation: {vawcCase.case_report.relation_to_victim || (vawcCase.intake_type === 'Direct' ? 'Self (Victim)' : 'Reporter')}
                                         </Badge>
                                         {vawcCase.case_report.complainant_contact && (
-                                            <p className="text-muted-foreground font-mono text-[11px] mt-1">Contact: {vawcCase.case_report.complainant_contact}</p>
+                                            <p className="text-muted-foreground font-mono text-[11px] mt-1">Contact: {redactContact(vawcCase.case_report.complainant_contact)}</p>
                                         )}
                                     </div>
                                 </div>
@@ -792,19 +1009,27 @@ export default function Show({ case: vawcCase }: Props) {
                                 </Label>
                                 <div className="space-y-3 p-4 rounded-xl border bg-card text-xs">
                                     <div>
-                                        {respondent?.name === 'John Doe (Unknown)' && (
-                                            <Badge variant="secondary" className="text-xs font-bold bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 mb-1">
-                                                John Doe Protocol
-                                            </Badge>
-                                        )}
-                                        <p className={`font-bold text-sm ${respondent?.name === 'John Doe (Unknown)' ? 'text-indigo-600 dark:text-indigo-400 italic' : 'text-foreground'}`}>
-                                            {respondent?.name || 'Unknown'}
+                                        <p className="font-bold text-sm text-foreground">
+                                            {redactName(respondent?.name)}
                                         </p>
                                         {respondent?.relationship_to_victim && (
                                             <Badge variant="outline" className="text-xs border-red-300 text-red-600 dark:text-red-400 font-bold uppercase mt-1">
                                                 Rel to Victim: {respondent.relationship_to_victim}
                                             </Badge>
                                         )}
+
+                                        {/* Cross-Dossier Serial Perpetrator Indicator */}
+                                        {crossStats?.has_other_dossiers && (
+                                            <div className="mt-2 p-2.5 rounded-lg border border-red-500/30 bg-red-500/10 text-xs space-y-1">
+                                                <div className="flex items-center gap-1.5 font-extrabold text-[10px] text-red-600 dark:text-red-400 uppercase tracking-wide">
+                                                    <ShieldAlert className="w-3.5 h-3.5 shrink-0" /> Cross-Dossier Serial Perpetrator
+                                                </div>
+                                                <p className="text-[11px] text-muted-foreground font-medium leading-tight">
+                                                    Linked to <strong>{crossStats.total_linked_dossiers} Master Dossiers</strong> ({crossStats.total_perpetrator_incidents} Total Incidents recorded across {crossStats.linked_survivor_count} survivors).
+                                                </p>
+                                            </div>
+                                        )}
+
                                         <p className="text-muted-foreground font-semibold mt-1">
                                             {respondent?.age ? `${respondent.age} Yrs` : 'Age N/A'} / {respondent?.gender || 'Male'}
                                         </p>
@@ -973,6 +1198,102 @@ export default function Show({ case: vawcCase }: Props) {
                     </CardContent>
                 </Card>
 
+                {/* MASTER DOSSIER INCIDENT HISTORY & ESCALATION TIMELINE CARD */}
+                {vawcCase.dossier && vawcCase.dossier.cases && vawcCase.dossier.cases.length > 0 && (
+                    <Card className="border-2 border-primary/20 shadow-xs overflow-hidden">
+                        <CardHeader className="py-4 px-6 border-b bg-muted/20 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                            <div>
+                                <CardTitle className="text-base font-extrabold uppercase tracking-wider text-foreground flex items-center gap-2">
+                                    <FolderOpen className="w-5 h-5 text-primary" /> Master Dossier Incident Escalation Timeline
+                                </CardTitle>
+                                <CardDescription className="text-xs font-medium text-muted-foreground mt-0.5">
+                                    Complete chronological legal relationship history ({vawcCase.dossier.incident_count} Incidents recorded under {vawcCase.dossier.dossier_number})
+                                </CardDescription>
+                            </div>
+                            <Button asChild size="sm" className="bg-[#ce1126] hover:bg-red-700 font-bold text-xs">
+                                <Link href={route('admin.vawc.create', { dossier_id: vawcCase.dossier_id })}>
+                                    <Plus className="w-3.5 h-3.5 mr-1" /> Log Subsequent Incident
+                                </Link>
+                            </Button>
+                        </CardHeader>
+                        <CardContent className="p-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                {vawcCase.dossier.cases.map((siblingCase: any) => {
+                                    const isCurrent = siblingCase.id === vawcCase.id;
+                                    const siblingBpo = siblingCase.protection_orders?.[0] || siblingCase.protectionOrders?.[0];
+                                    const riskLevel = siblingCase.assessment?.risk_level || 'PENDING';
+
+                                    return (
+                                        <div
+                                            key={siblingCase.id}
+                                            className={`p-4 rounded-xl border transition-all flex flex-col justify-between gap-3 ${isCurrent
+                                                ? 'border-primary bg-primary/5 ring-2 ring-primary/20 shadow-xs'
+                                                : 'bg-card hover:bg-muted/20'
+                                                }`}
+                                        >
+                                            <div className="space-y-2">
+                                                <div className="flex items-center justify-between">
+                                                    <div className="flex items-center gap-1.5">
+                                                        <Badge variant={isCurrent ? 'default' : 'secondary'} className="text-[10px] font-mono font-bold">
+                                                            Incident #{siblingCase.incident_sequence || 1}
+                                                        </Badge>
+                                                        {isCurrent && (
+                                                            <span className="text-[10px] font-black uppercase text-primary tracking-wider">
+                                                                (Viewing Now)
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    <Badge variant="outline" className="text-[10px] font-bold">
+                                                        {siblingCase.status}
+                                                    </Badge>
+                                                </div>
+
+                                                <div>
+                                                    <p className="font-mono font-bold text-xs text-foreground">
+                                                        {siblingCase.sub_case_number || siblingCase.case_report?.case_number}
+                                                    </p>
+                                                    <p className="text-xs text-muted-foreground mt-0.5">
+                                                        {formatDateOnly(siblingCase.case_report?.incident_date || siblingCase.created_at)}
+                                                        {' · '}
+                                                        <span className="font-bold text-foreground">
+                                                            {siblingCase.case_report?.abuse_type?.name || 'VAWC'}
+                                                        </span>
+                                                    </p>
+                                                </div>
+
+                                                <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                                                    {siblingCase.assessment && (
+                                                        <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-muted font-mono">
+                                                            Score: {siblingCase.assessment.risk_score}/12 ({riskLevel})
+                                                        </span>
+                                                    )}
+                                                    {siblingBpo && (
+                                                        <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 font-mono">
+                                                            {siblingBpo.order_number || `BPO ${siblingBpo.status}`}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            {!isCurrent ? (
+                                                <Button asChild variant="outline" size="sm" className="w-full text-xs font-bold mt-2">
+                                                    <Link href={route('admin.vawc.show', siblingCase.id)}>
+                                                        Inspect Incident #{siblingCase.incident_sequence} <ChevronRight className="w-3.5 h-3.5 ml-1" />
+                                                    </Link>
+                                                </Button>
+                                            ) : (
+                                                <div className="text-center py-1 text-[11px] font-bold text-primary">
+                                                    Currently Viewing Active Room
+                                                </div>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </CardContent>
+                    </Card>
+                )}
+
                 {/* OFFICIAL RA 9262 CASE AUDIT TRAIL & HISTORY TIMELINE CARD */}
                 <Card className="border shadow-xs">
                     <CardHeader className="py-4 px-6 border-b bg-muted/20">
@@ -985,18 +1306,18 @@ export default function Show({ case: vawcCase }: Props) {
                     </CardHeader>
                     <CardContent className="p-6">
                         <div className="relative pl-6 border-l-2 border-primary/30 space-y-6">
-                            
+
                             {/* 1. Intake Logged */}
                             <div className="relative group">
                                 <span className="absolute -left-[31px] top-0.5 flex h-4 w-4 rounded-full bg-primary ring-4 ring-background" />
                                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
                                     <h4 className="text-sm font-extrabold text-foreground">Step 1: Case Intake Disclosed & Registered</h4>
                                     <span className="text-xs font-mono font-bold text-muted-foreground">
-                                        {new Date(vawcCase.created_at).toLocaleString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                        {formatDateTime(vawcCase.case_report?.incident_date || vawcCase.created_at)}
                                     </span>
                                 </div>
                                 <p className="text-xs text-muted-foreground mt-1">
-                                    Direct intake recorded under Case Number <strong className="text-foreground">{vawcCase.case_report?.case_number}</strong>. Incident reported at {vawcCase.case_report?.incident_location}.
+                                    Direct intake recorded under Docket Number <strong className="text-foreground">{vawcCase.sub_case_number || vawcCase.case_report?.case_number}</strong>. Incident reported at {vawcCase.case_report?.incident_location}.
                                 </p>
                             </div>
 
@@ -1007,7 +1328,7 @@ export default function Show({ case: vawcCase }: Props) {
                                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
                                         <h4 className="text-sm font-extrabold text-foreground">Step 2: VAWC-RAVE Risk Triage Score Calculated</h4>
                                         <span className="text-xs font-mono font-bold text-muted-foreground">
-                                            {new Date(vawcCase.assessment.updated_at || vawcCase.assessment.created_at).toLocaleString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                            {formatDateTime(vawcCase.assessment.updated_at || vawcCase.assessment.created_at)}
                                         </span>
                                     </div>
                                     <p className="text-xs text-muted-foreground mt-1">
@@ -1025,11 +1346,11 @@ export default function Show({ case: vawcCase }: Props) {
                                             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
                                                 <h4 className="text-sm font-extrabold text-foreground">Step 3: Barangay Protection Order (BPO) Application Logged</h4>
                                                 <span className="text-xs font-mono font-bold text-muted-foreground">
-                                                    {new Date(po.application_datetime).toLocaleString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                                    {formatDateTime(po.application_datetime)}
                                                 </span>
                                             </div>
                                             <p className="text-xs text-muted-foreground mt-1">
-                                                BPO Application filed under RA 9262 Section 14. Same-Day SLA timer initialized.
+                                                BPO Application filed under RA 9262 Section 14 ({po.order_number ? <strong className="text-foreground font-mono">{po.order_number}</strong> : 'BPO Order'}). Same-Day SLA timer initialized.
                                             </p>
                                         </div>
                                     )}
@@ -1041,11 +1362,11 @@ export default function Show({ case: vawcCase }: Props) {
                                             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
                                                 <h4 className="text-sm font-extrabold text-emerald-700 dark:text-emerald-400">Step 4: BPO Officially Issued & Signed</h4>
                                                 <span className="text-xs font-mono font-bold text-muted-foreground">
-                                                    {new Date(po.issued_datetime).toLocaleString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                                    {formatDateTime(po.issued_datetime)}
                                                 </span>
                                             </div>
                                             <p className="text-xs text-muted-foreground mt-1">
-                                                Signed by Punong Barangay. Valid for 15 days until {po.expiration_date ? new Date(po.expiration_date).toLocaleDateString() : 'N/A'}. SLA Status: <strong className={po.is_sla_breached ? 'text-red-600 font-bold' : 'text-emerald-600 font-bold'}>{po.is_sla_breached ? 'SLA Breached' : 'Same-Day SLA Compliant'}</strong>.
+                                                Signed by Punong Barangay ({po.order_number ? <span className="font-mono font-bold text-foreground">{po.order_number}</span> : 'Official BPO Document'}). Valid for 15 days until {formatDateOnly(po.expiration_date)}. SLA Status: <strong className={po.is_sla_breached ? 'text-red-600 font-bold' : 'text-emerald-600 font-bold'}>{po.is_sla_breached ? 'SLA Breached' : 'Same-Day SLA Compliant'}</strong>.
                                             </p>
                                         </div>
                                     )}
@@ -1059,7 +1380,7 @@ export default function Show({ case: vawcCase }: Props) {
                                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
                                         <h4 className="text-sm font-extrabold text-foreground">Step 5: Compliance Monitoring Check-In Session Logged</h4>
                                         <span className="text-xs font-mono font-bold text-muted-foreground">
-                                            {new Date(log.monitor_date || log.created_at).toLocaleString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                            {formatDateTime(log.monitor_date || log.created_at)}
                                         </span>
                                     </div>
                                     <p className="text-xs text-muted-foreground mt-1">
@@ -1075,7 +1396,7 @@ export default function Show({ case: vawcCase }: Props) {
                                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
                                         <h4 className="text-sm font-extrabold text-red-600">Step 6: Transmittal & Legal Escalation to Law Enforcement</h4>
                                         <span className="text-xs font-mono font-bold text-muted-foreground">
-                                            {new Date(esc.escalated_at || esc.created_at).toLocaleString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                            {formatDateTime(esc.escalated_at || esc.created_at)}
                                         </span>
                                     </div>
                                     <p className="text-xs text-muted-foreground mt-1">
@@ -1091,7 +1412,7 @@ export default function Show({ case: vawcCase }: Props) {
                                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
                                         <h4 className="text-sm font-extrabold text-slate-800 dark:text-slate-200">Step 7: Case Officially Closed & Archived</h4>
                                         <span className="text-xs font-mono font-bold text-muted-foreground">
-                                            {vawcCase.closed_at ? new Date(vawcCase.closed_at).toLocaleString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : new Date(vawcCase.updated_at).toLocaleString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                            {formatDateTime(vawcCase.closed_at || vawcCase.updated_at)}
                                         </span>
                                     </div>
                                     <p className="text-xs text-muted-foreground mt-1">

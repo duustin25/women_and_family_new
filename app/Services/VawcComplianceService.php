@@ -30,9 +30,13 @@ class VawcComplianceService
                 }
             }
 
+            $monitorDate = !empty($data['monitor_date']) 
+                ? \Carbon\Carbon::parse($data['monitor_date']) 
+                : now();
+
             return VawcComplianceLog::create([
                 'vawc_case_id' => $case->id,
-                'monitor_date' => now(),
+                'monitor_date' => $monitorDate,
                 'is_compliant' => $isCompliant,
                 'notes' => $data['notes'],
                 'referral_type' => $referralType ?? $data['referral_type'] ?? null,

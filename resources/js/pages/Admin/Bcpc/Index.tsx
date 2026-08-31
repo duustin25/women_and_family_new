@@ -101,7 +101,7 @@ export default function Index({ monitoredChildren = [], zones = [], filters, met
             <Head title="BCPC Child Nutrition Registry" />
 
             <div className="p-4 md:p-6 space-y-6 max-w-7xl mx-auto w-full">
-                
+
                 {/* 🌟 Header Banner */}
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-gradient-to-r from-emerald-950 via-teal-900 to-emerald-900 p-6 rounded-2xl text-white shadow-xl relative overflow-hidden">
                     <div className="absolute top-0 right-0 w-80 h-80 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
@@ -143,15 +143,14 @@ export default function Index({ monitoredChildren = [], zones = [], filters, met
 
                 {/* 🟢 Synchronized Executive KPI Triage Strip (Interactive Filters) */}
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4">
-                    
+
                     {/* Filter 1: All Active Records */}
                     <button
                         onClick={() => { setTriage('all'); setSfpStatus('all'); }}
-                        className={`p-3.5 rounded-2xl border text-left transition-all duration-200 shadow-xs relative overflow-hidden ${
-                            triage === 'all' && sfpStatus === 'all'
+                        className={`p-3.5 rounded-2xl border text-left transition-all duration-200 shadow-xs relative overflow-hidden ${triage === 'all' && sfpStatus === 'all'
                                 ? 'border-emerald-500 bg-emerald-500/10 ring-2 ring-emerald-500 dark:bg-emerald-950/30'
                                 : 'border-border bg-card hover:bg-muted/40'
-                        }`}
+                            }`}
                     >
                         <span className="text-[10px] font-black uppercase tracking-wider text-muted-foreground block">All Monitored</span>
                         <span className="text-2xl font-black text-foreground block mt-0.5">{metrics?.total_monitored || 0}</span>
@@ -161,11 +160,10 @@ export default function Index({ monitoredChildren = [], zones = [], filters, met
                     {/* Filter 2: SAM (Severe Acute Malnutrition) */}
                     <button
                         onClick={() => setTriage(triage === 'sam' ? 'all' : 'sam')}
-                        className={`p-3.5 rounded-2xl border text-left transition-all duration-200 shadow-xs relative overflow-hidden ${
-                            triage === 'sam'
+                        className={`p-3.5 rounded-2xl border text-left transition-all duration-200 shadow-xs relative overflow-hidden ${triage === 'sam'
                                 ? 'border-red-500 bg-red-500/10 ring-2 ring-red-500 dark:bg-red-950/30'
                                 : 'border-border bg-card hover:bg-muted/40'
-                        }`}
+                            }`}
                     >
                         <span className="text-[10px] font-black uppercase tracking-wider text-red-600 flex items-center gap-1">
                             <ShieldAlert className="w-3.5 h-3.5 text-red-500 animate-pulse" /> SAM Priority
@@ -177,11 +175,10 @@ export default function Index({ monitoredChildren = [], zones = [], filters, met
                     {/* Filter 3: MAM (Moderate Acute Malnutrition) */}
                     <button
                         onClick={() => setTriage(triage === 'mam' ? 'all' : 'mam')}
-                        className={`p-3.5 rounded-2xl border text-left transition-all duration-200 shadow-xs relative overflow-hidden ${
-                            triage === 'mam'
+                        className={`p-3.5 rounded-2xl border text-left transition-all duration-200 shadow-xs relative overflow-hidden ${triage === 'mam'
                                 ? 'border-amber-500 bg-amber-500/10 ring-2 ring-amber-500 dark:bg-amber-950/30'
                                 : 'border-border bg-card hover:bg-muted/40'
-                        }`}
+                            }`}
                     >
                         <span className="text-[10px] font-black uppercase tracking-wider text-amber-600 block">MAM Priority</span>
                         <span className="text-2xl font-black text-amber-600 block mt-0.5">{metrics?.mam_cases || 0}</span>
@@ -191,11 +188,10 @@ export default function Index({ monitoredChildren = [], zones = [], filters, met
                     {/* Filter 4: Double Burden */}
                     <button
                         onClick={() => setTriage(triage === 'double_burden' ? 'all' : 'double_burden')}
-                        className={`p-3.5 rounded-2xl border text-left transition-all duration-200 shadow-xs relative overflow-hidden ${
-                            triage === 'double_burden'
+                        className={`p-3.5 rounded-2xl border text-left transition-all duration-200 shadow-xs relative overflow-hidden ${triage === 'double_burden'
                                 ? 'border-purple-500 bg-purple-500/10 ring-2 ring-purple-500 dark:bg-purple-950/30'
                                 : 'border-border bg-card hover:bg-muted/40'
-                        }`}
+                            }`}
                     >
                         <span className="text-[10px] font-black uppercase tracking-wider text-purple-600 flex items-center gap-1">
                             <Sparkles className="w-3.5 h-3.5" /> Double Burden
@@ -207,11 +203,10 @@ export default function Index({ monitoredChildren = [], zones = [], filters, met
                     {/* Filter 5: Active SFP Feeding */}
                     <button
                         onClick={() => setSfpStatus(sfpStatus === 'Enrolled' ? 'all' : 'Enrolled')}
-                        className={`p-3.5 rounded-2xl border text-left transition-all duration-200 shadow-xs relative overflow-hidden ${
-                            sfpStatus === 'Enrolled'
+                        className={`p-3.5 rounded-2xl border text-left transition-all duration-200 shadow-xs relative overflow-hidden ${sfpStatus === 'Enrolled'
                                 ? 'border-emerald-500 bg-emerald-500/10 ring-2 ring-emerald-500 dark:bg-emerald-950/30'
                                 : 'border-border bg-card hover:bg-muted/40'
-                        }`}
+                            }`}
                     >
                         <span className="text-[10px] font-black uppercase tracking-wider text-emerald-600 block flex items-center gap-1">
                             <Heart className="w-3.5 h-3.5 fill-emerald-600/20" /> Active SFP
@@ -223,11 +218,10 @@ export default function Index({ monitoredChildren = [], zones = [], filters, met
                     {/* Filter 6: Overdue Check-ins */}
                     <button
                         onClick={() => setTriage(triage === 'overdue' ? 'all' : 'overdue')}
-                        className={`p-3.5 rounded-2xl border text-left transition-all duration-200 shadow-xs relative overflow-hidden ${
-                            triage === 'overdue'
+                        className={`p-3.5 rounded-2xl border text-left transition-all duration-200 shadow-xs relative overflow-hidden ${triage === 'overdue'
                                 ? 'border-rose-500 bg-rose-500/10 ring-2 ring-rose-500 dark:bg-rose-950/30'
                                 : 'border-border bg-card hover:bg-muted/40'
-                        }`}
+                            }`}
                     >
                         <span className="text-[10px] font-black uppercase tracking-wider text-rose-600 flex items-center gap-1">
                             <Clock className="w-3.5 h-3.5" /> Overdue Check-ins
@@ -258,22 +252,20 @@ export default function Index({ monitoredChildren = [], zones = [], filters, met
                                 <button
                                     type="button"
                                     onClick={() => setRegistryStatus('Active')}
-                                    className={`px-3 py-1.5 rounded-lg text-xs font-extrabold uppercase transition-all ${
-                                        registryStatus === 'Active'
+                                    className={`px-3 py-1.5 rounded-lg text-xs font-extrabold uppercase transition-all ${registryStatus === 'Active'
                                             ? 'bg-emerald-600 text-white shadow-sm'
                                             : 'text-muted-foreground hover:text-foreground'
-                                    }`}
+                                        }`}
                                 >
                                     Active (0-59m)
                                 </button>
                                 <button
                                     type="button"
                                     onClick={() => setRegistryStatus('Aged Out')}
-                                    className={`px-3 py-1.5 rounded-lg text-xs font-extrabold uppercase transition-all flex items-center gap-1 ${
-                                        registryStatus === 'Aged Out'
+                                    className={`px-3 py-1.5 rounded-lg text-xs font-extrabold uppercase transition-all flex items-center gap-1 ${registryStatus === 'Aged Out'
                                             ? 'bg-amber-600 text-white shadow-sm'
                                             : 'text-muted-foreground hover:text-foreground'
-                                    }`}
+                                        }`}
                                 >
                                     <ShieldAlert className="w-3.5 h-3.5" />
                                     Archived (60m+ COA)
@@ -281,11 +273,10 @@ export default function Index({ monitoredChildren = [], zones = [], filters, met
                                 <button
                                     type="button"
                                     onClick={() => setRegistryStatus('all')}
-                                    className={`px-3 py-1.5 rounded-lg text-xs font-extrabold uppercase transition-all ${
-                                        registryStatus === 'all'
+                                    className={`px-3 py-1.5 rounded-lg text-xs font-extrabold uppercase transition-all ${registryStatus === 'all'
                                             ? 'bg-primary text-primary-foreground shadow-sm'
                                             : 'text-muted-foreground hover:text-foreground'
-                                    }`}
+                                        }`}
                                 >
                                     All Records
                                 </button>
@@ -294,7 +285,7 @@ export default function Index({ monitoredChildren = [], zones = [], filters, met
 
                         {/* Search & Filter Dropdown Bar */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-3">
-                            
+
                             {/* Instant Search Bar */}
                             <div className="relative">
                                 <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -408,7 +399,7 @@ export default function Index({ monitoredChildren = [], zones = [], filters, met
 
                                     return (
                                         <TableRow key={child.id} className={`transition-all hover:bg-muted/40 ${isSAM ? 'bg-red-500/5 hover:bg-red-500/10' : isDoubleBurden ? 'bg-purple-500/5 hover:bg-purple-500/10' : ''}`}>
-                                            
+
                                             {/* Child & Parent */}
                                             <TableCell className="pl-6 py-3.5">
                                                 <div className="flex items-center gap-3">
@@ -457,7 +448,7 @@ export default function Index({ monitoredChildren = [], zones = [], filters, met
                                             {/* WHO 3-Axis Diagnostics */}
                                             <TableCell className="py-3.5 text-center">
                                                 <div className="flex flex-col items-center gap-1">
-                                                    
+
                                                     {/* Primary Triage Badge */}
                                                     {isSAM ? (
                                                         <Badge variant="destructive" className="text-[9px] uppercase font-black px-2.5 py-0.5 rounded-md animate-pulse">
@@ -552,7 +543,7 @@ export default function Index({ monitoredChildren = [], zones = [], filters, met
                             <span className="text-xs text-muted-foreground font-medium">
                                 Showing <strong className="text-foreground">{(currentPage - 1) * itemsPerPage + 1}</strong> to <strong className="text-foreground">{Math.min(currentPage * itemsPerPage, monitoredChildren.length)}</strong> of <strong className="text-foreground">{monitoredChildren.length}</strong> children
                             </span>
-                            
+
                             <div className="flex items-center gap-1.5">
                                 <Button
                                     variant="outline"
@@ -576,9 +567,8 @@ export default function Index({ monitoredChildren = [], zones = [], filters, met
                                                         variant={currentPage === p ? "default" : "outline"}
                                                         size="sm"
                                                         onClick={() => setCurrentPage(p)}
-                                                        className={`h-8 w-8 p-0 rounded-xl text-xs font-black ${
-                                                            currentPage === p ? 'bg-emerald-600 text-white' : ''
-                                                        }`}
+                                                        className={`h-8 w-8 p-0 rounded-xl text-xs font-black ${currentPage === p ? 'bg-emerald-600 text-white' : ''
+                                                            }`}
                                                     >
                                                         {p}
                                                     </Button>

@@ -12,14 +12,19 @@ class CaseManagementService
      */
     public function createCase(array $validatedData, string $type): CaseReport
     {
-        // Generate clean, sequential case number format (e.g. VAWC-2026-0044)
-        $year = now()->year;
-        $nextSeq = CaseReport::where('type', $type)->whereYear('created_at', $year)->count() + 1;
-        $caseNumber = sprintf('%s-%d-%04d', $type, $year, $nextSeq);
-
-        while (CaseReport::where('case_number', $caseNumber)->exists()) {
-            $nextSeq++;
+        // Generate clean, sequential case number format (or honor provided sub-case docket)
+        if (!empty($validatedData['case_number'])) {
+            $caseNumber = $validatedData['case_number'];
+        } else {
+            $incidentDate = !empty($validatedData['incident_date']) ? \Carbon\Carbon::parse($validatedData['incident_date']) : now();
+            $year = $incidentDate->year;
+            $nextSeq = CaseReport::where('type', $type)->whereYear('created_at', $year)->count() + 1;
             $caseNumber = sprintf('%s-%d-%04d', $type, $year, $nextSeq);
+
+            while (CaseReport::where('case_number', $caseNumber)->exists()) {
+                $nextSeq++;
+                $caseNumber = sprintf('%s-%d-%04d', $type, $year, $nextSeq);
+            }
         }
 
         // Base Data Mapping matching the Unified CaseReport migration
@@ -52,7 +57,7 @@ class CaseManagementService
 
         // 2. Initial Status
         $reportData['lifecycle_status'] = 'New';
-        $reportData['user_id'] = \Illuminate\Support\Facades\Auth::id();
+        $reportData['user_id'] = \Illuminate\Support\Facades\Auth::id() ?? $validatedData['user_id'] ?? \App\Models\User::first()?->id;
 
         return CaseReport::create($reportData);
     }

@@ -150,6 +150,9 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.', 'middleware' => ['auth', 'v
     // CASE MANAGEMENT BASE ON WORKFLOW OF HANDLING VAWC CASES AND BPO ISSUANCE
     // -----------------------------------------------------------
     // VAWC Digital Case Management (RA 9262)
+    Route::get('vawc/dossiers/search', [\App\Http\Controllers\Admin\VawcController::class, 'searchDossiers'])->name('vawc.dossiers.search');
+    Route::get('vawc/survivors/search', [\App\Http\Controllers\Admin\VawcController::class, 'searchSurvivors'])->name('vawc.survivors.search');
+    Route::get('vawc/respondents/search', [\App\Http\Controllers\Admin\VawcController::class, 'searchRespondents'])->name('vawc.respondents.search');
     Route::get('vawc/cases/create', [\App\Http\Controllers\Admin\VawcController::class, 'create'])->name('vawc.create');
     Route::post('vawc/cases', [\App\Http\Controllers\Admin\VawcController::class, 'store'])->name('vawc.store');
     Route::get('vawc/cases', [\App\Http\Controllers\Admin\VawcController::class, 'index'])->name('vawc.index');

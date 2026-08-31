@@ -18,7 +18,7 @@ class VawcLegalService
 
             return VawcLegalEscalation::create([
                 'vawc_case_id' => $case->id,
-                'violation_datetime' => $data['violation_datetime'] ?? now(),
+                'violation_datetime' => !empty($data['violation_datetime']) ? \Carbon\Carbon::parse($data['violation_datetime']) : now(),
                 'referral_target' => $data['referral_target'],
                 'escorted_by_pb' => filter_var($data['escorted_by_pb'] ?? false, FILTER_VALIDATE_BOOLEAN),
                 'status' => 'Case Prepared',
@@ -29,11 +29,12 @@ class VawcLegalService
     public function closeCase(VawcCase $case, array $data): VawcCase
     {
         return \Illuminate\Support\Facades\DB::transaction(function () use ($case, $data) {
+            $closedAt = !empty($data['closed_at']) ? \Carbon\Carbon::parse($data['closed_at']) : now();
             $case->update([
                 'status' => 'Closed',
                 'closure_reason' => $data['closure_reason'],
                 'closure_remarks' => $data['closure_remarks'] ?? null,
-                'closed_at' => now(),
+                'closed_at' => $closedAt,
             ]);
 
             // If the VAWC case is closed, update the parent CaseReport status.

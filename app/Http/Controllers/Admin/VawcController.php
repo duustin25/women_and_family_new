@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\VawcCase;
+use App\Models\VawcDossier;
 use App\Models\CaseAbuseType;
 use App\Models\Zone;
 use App\Services\VawcCaseService;
@@ -37,61 +38,211 @@ class VawcController extends Controller
     }
 
     /**
-     * Display a listing of VAWC cases.
+     * Display a listing of VAWC cases grouped by Master Dossiers.
      */
     public function index(Request $request)
     {
-        $query = VawcCase::with(['caseReport.abuseType', 'involvedParties', 'assessment', 'protectionOrders']);
+        $query = VawcDossier::with([
+            'cases' => function ($q) {
+                $q->with(['caseReport.abuseType', 'involvedParties', 'assessment', 'protectionOrders.issuedBy'])
+                  ->orderBy('incident_sequence', 'desc');
+            }
+        ]);
 
-        // Filter by Search (Case Number or Victim Name)
+        // Filter by Search (Dossier #, Survivor Name, Respondent Name, or Sub-Case #)
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
-                $q->whereHas('caseReport', function ($cq) use ($search) {
-                    $cq->where('case_number', 'LIKE', "%{$search}%")
-                        ->orWhere('victim_name', 'LIKE', "%{$search}%");
-                })->orWhereHas('involvedParties', function ($pq) use ($search) {
-                    $pq->where('name', 'LIKE', "%{$search}%");
-                });
-            });
-        }
-
-        // Filter by Status (If an exact sub-status is chosen)
-        if ($request->filled('status') && $request->status !== 'all') {
-            $statusFilter = $request->status;
-            $query->where(function ($q) use ($statusFilter) {
-                $q->where('vawc_cases.status', $statusFilter)
-                  ->orWhereHas('protectionOrders', function ($poq) use ($statusFilter) {
-                      $poq->where('status', $statusFilter);
+                $q->where('dossier_number', 'LIKE', "%{$search}%")
+                  ->orWhere('survivor_name', 'LIKE', "%{$search}%")
+                  ->orWhere('respondent_name', 'LIKE', "%{$search}%")
+                  ->orWhereHas('cases.caseReport', function ($cq) use ($search) {
+                      $cq->where('case_number', 'LIKE', "%{$search}%");
+                  })
+                  ->orWhereHas('cases', function ($sq) use ($search) {
+                      $sq->where('sub_case_number', 'LIKE', "%{$search}%");
                   });
             });
         }
 
-        // The "Archived vs Active" Strategy Pattern Separation
-        if ($request->input('archived') === '1') {
-            $query->where('vawc_cases.status', 'Closed'); // Only show the Historical records
-            $cases = $query->orderByDesc('vawc_cases.created_at')->paginate(15)->withQueryString();
-        } else {
-            $query->where('vawc_cases.status', '!=', 'Closed'); // Only show Active Worklist
+        // Filter by Status
+        if ($request->filled('status') && $request->status !== 'all') {
+            $statusFilter = $request->status;
+            $query->where(function ($q) use ($statusFilter) {
+                $q->where('current_lifecycle', $statusFilter)
+                  ->orWhereHas('cases', function ($cq) use ($statusFilter) {
+                      $cq->where('status', $statusFilter)
+                         ->orWhereHas('protectionOrders', function ($poq) use ($statusFilter) {
+                             $poq->where('status', $statusFilter);
+                         });
+                  });
+            });
+        }
 
-            // PRIORITY TRIAGE QUEUE: Sort by Risk Score first, then date
-            $cases = $query->leftJoin('vawc_assessments', 'vawc_assessments.vawc_case_id', '=', 'vawc_cases.id')
-                ->select('vawc_cases.*')
-                ->orderByDesc('vawc_assessments.risk_score')
-                ->orderByDesc('vawc_cases.created_at')
+        // Active Worklist vs Dormant/Archived Dossiers
+        if ($request->input('archived') === '1') {
+            $query->where('current_lifecycle', 'Dormant/Closed');
+            $dossiers = $query->orderByDesc('last_incident_at')->paginate(15)->withQueryString();
+        } else {
+            $query->where('current_lifecycle', '!=', 'Dormant/Closed');
+
+            // PRIORITY TRIAGE: Sort by highest threat level, then last incident timestamp
+            $dossiers = $query->orderByRaw("FIELD(highest_threat_level, 'CRITICAL', 'HIGH', 'MODERATE', 'LOW', 'PENDING')")
+                ->orderByDesc('last_incident_at')
+                ->orderByDesc('created_at')
                 ->paginate(15)->withQueryString();
         }
 
         return Inertia::render('Admin/Vawc/Index', [
-            'cases' => $cases,
+            'dossiers' => $dossiers,
             'filters' => $request->only(['search', 'status', 'archived'])
         ]);
     }
 
     /**
-     * Show the form for creating a new VAWC case (Wireframe).
+     * Search existing dossiers for the "Search First, Encode Second" Intake Gateway.
      */
-    public function create()
+    public function searchDossiers(Request $request)
+    {
+        $query = $request->query('query', '');
+        if (empty($query) || strlen(trim($query)) < 2) {
+            return response()->json([]);
+        }
+
+        $search = trim($query);
+        $dossiers = VawcDossier::with([
+            'cases' => function ($q) {
+                $q->with(['caseReport.abuseType', 'assessment', 'protectionOrders'])->latest();
+            }
+        ])
+        ->where(function ($q) use ($search) {
+            $q->where('dossier_number', 'LIKE', "%{$search}%")
+              ->orWhere('survivor_name', 'LIKE', "%{$search}%")
+              ->orWhere('respondent_name', 'LIKE', "%{$search}%");
+        })
+        ->take(8)
+        ->get()
+        ->map(function ($d) {
+            $latestCase = $d->cases->first();
+            $activeBpo = $latestCase?->protectionOrders?->first(fn($p) => in_array($p->status, ['Applied', 'Issued', 'Served']));
+
+            return [
+                'id' => $d->id,
+                'dossier_number' => $d->dossier_number,
+                'survivor_name' => $d->survivor_name,
+                'respondent_name' => $d->respondent_name,
+                'relationship_type' => $d->relationship_type,
+                'incident_count' => $d->incident_count,
+                'highest_threat_level' => $d->highest_threat_level,
+                'current_lifecycle' => $d->current_lifecycle,
+                'last_incident_at' => $d->last_incident_at ? $d->last_incident_at->format('M d, Y') : 'N/A',
+                'survivor_demographics' => $d->survivor_demographics,
+                'respondent_demographics' => $d->respondent_demographics,
+                'active_bpo_status' => $activeBpo?->status ?? null,
+                'latest_case' => $latestCase ? [
+                    'id' => $latestCase->id,
+                    'sub_case_number' => $latestCase->sub_case_number,
+                    'status' => $latestCase->status,
+                    'abuse_type' => $latestCase->caseReport?->abuseType?->name ?? 'VAWC',
+                    'risk_level' => $latestCase->assessment?->risk_level ?? 'PENDING',
+                    'risk_score' => $latestCase->assessment?->risk_score ?? null,
+                ] : null,
+            ];
+        });
+
+        return response()->json($dossiers);
+    }
+
+    /**
+     * Search existing survivors across all master dossiers.
+     */
+    public function searchSurvivors(Request $request)
+    {
+        $query = trim($request->get('query', ''));
+        if (strlen($query) < 2) {
+            return response()->json([]);
+        }
+
+        $dossiers = VawcDossier::with(['cases.assessment'])
+            ->where('survivor_name', 'LIKE', "%{$query}%")
+            ->get();
+
+        $grouped = $dossiers->groupBy(fn($d) => strtolower(trim($d->survivor_name)));
+
+        $results = [];
+        foreach ($grouped as $normalizedName => $groupDossiers) {
+            $first = $groupDossiers->first();
+            $totalIncidents = (int) $groupDossiers->sum('incident_count');
+            $dossierNumbers = $groupDossiers->pluck('dossier_number')->all();
+            $respondentNames = $groupDossiers->pluck('respondent_name')->all();
+
+            $results[] = [
+                'survivor_name' => $first->survivor_name,
+                'survivor_demographics' => $first->survivor_demographics,
+                'total_dossiers_count' => $groupDossiers->count(),
+                'total_incidents_count' => $totalIncidents,
+                'dossier_numbers' => $dossierNumbers,
+                'respondent_names' => $respondentNames,
+                'is_compound_victim' => $groupDossiers->count() > 1,
+            ];
+        }
+
+        return response()->json($results);
+    }
+
+    /**
+     * Search existing respondents/perpetrators across all master dossiers.
+     */
+    public function searchRespondents(Request $request)
+    {
+        $query = trim($request->get('query', ''));
+        if (strlen($query) < 2) {
+            return response()->json([]);
+        }
+
+        $dossiers = VawcDossier::with(['cases.assessment'])
+            ->where('respondent_name', 'LIKE', "%{$query}%")
+            ->get();
+
+        $grouped = $dossiers->groupBy(fn($d) => strtolower(trim($d->respondent_name)));
+
+        $results = [];
+        foreach ($grouped as $normalizedName => $groupDossiers) {
+            $first = $groupDossiers->first();
+            $totalIncidents = (int) $groupDossiers->sum('incident_count');
+            $dossierNumbers = $groupDossiers->pluck('dossier_number')->all();
+            $survivorNames = $groupDossiers->pluck('survivor_name')->all();
+
+            $highestThreat = 'LOW';
+            $threatOrder = ['CRITICAL' => 4, 'HIGH' => 3, 'MODERATE' => 2, 'LOW' => 1, 'PENDING' => 0];
+            $maxWeight = 0;
+            foreach ($groupDossiers as $d) {
+                $w = $threatOrder[$d->highest_threat_level] ?? 0;
+                if ($w >= $maxWeight) {
+                    $maxWeight = $w;
+                    $highestThreat = $d->highest_threat_level;
+                }
+            }
+
+            $results[] = [
+                'respondent_name' => $first->respondent_name,
+                'respondent_demographics' => $first->respondent_demographics,
+                'total_dossiers_count' => $groupDossiers->count(),
+                'total_incidents_count' => $totalIncidents,
+                'dossier_numbers' => $dossierNumbers,
+                'survivor_names' => $survivorNames,
+                'highest_threat_level' => $highestThreat,
+                'is_serial_perpetrator' => $groupDossiers->count() > 1 || $totalIncidents > 1,
+            ];
+        }
+
+        return response()->json($results);
+    }
+
+    /**
+     * Show the form for creating a new VAWC case.
+     */
+    public function create(Request $request)
     {
         $abuseTypes = CaseAbuseType::where('is_active', true)
             ->where(function ($query) {
@@ -101,9 +252,34 @@ class VawcController extends Controller
 
         $zones = Zone::where('is_active', true)->get();
 
+        // Optional pre-selected dossier from quick link
+        $preselectedDossier = null;
+        if ($request->filled('dossier_id')) {
+            $dossier = VawcDossier::with(['cases.caseReport.abuseType', 'cases.assessment', 'cases.protectionOrders'])->find($request->dossier_id);
+            if ($dossier) {
+                $latestCase = $dossier->cases->first();
+                $activeBpo = $latestCase?->protectionOrders?->first(fn($p) => in_array($p->status, ['Applied', 'Issued', 'Served']));
+                $preselectedDossier = [
+                    'id' => $dossier->id,
+                    'dossier_number' => $dossier->dossier_number,
+                    'survivor_name' => $dossier->survivor_name,
+                    'respondent_name' => $dossier->respondent_name,
+                    'relationship_type' => $dossier->relationship_type,
+                    'incident_count' => $dossier->incident_count,
+                    'highest_threat_level' => $dossier->highest_threat_level,
+                    'current_lifecycle' => $dossier->current_lifecycle,
+                    'last_incident_at' => $dossier->last_incident_at ? $dossier->last_incident_at->format('M d, Y') : 'N/A',
+                    'survivor_demographics' => $dossier->survivor_demographics,
+                    'respondent_demographics' => $dossier->respondent_demographics,
+                    'active_bpo_status' => $activeBpo?->status ?? null,
+                ];
+            }
+        }
+
         return Inertia::render('Admin/Vawc/Create', [
             'abuseTypes' => $abuseTypes,
-            'zones' => $zones
+            'zones' => $zones,
+            'preselectedDossier' => $preselectedDossier,
         ]);
     }
 
@@ -112,8 +288,8 @@ class VawcController extends Controller
      */
     public function store(Request $request)
     {
-        // Validation for the specialized VAWC form
         $validated = $request->validate([
+            'dossier_id' => 'nullable|exists:vawc_dossiers,id',
             'intake_type' => 'required|in:Direct,Third-Party',
             'victim.name' => 'required|string|max:255',
             'victim.age' => 'nullable|integer',
@@ -126,13 +302,13 @@ class VawcController extends Controller
             'complainant.relation_to_victim' => 'nullable|string|max:255',
             'is_anonymous' => 'boolean',
 
-            'respondent.name' => 'nullable|string|max:255',
+            'respondent.name' => 'required|string|max:255',
             'respondent.age' => 'nullable|integer',
             'respondent.gender' => 'nullable|string',
             'respondent.contact' => 'nullable|string',
             'respondent.address' => 'nullable|string',
 
-            'incident_date' => 'required', // Relaxed to handle datetime-local string
+            'incident_date' => 'required',
             'incident_location' => 'required|string',
             'description' => 'required|string',
             'abuse_type' => 'required|string',
@@ -141,7 +317,7 @@ class VawcController extends Controller
             'children_count' => 'nullable|integer',
             'is_repeat_offense' => 'boolean',
             'has_weapon_involved' => 'boolean',
-            'respondent.relationship' => 'nullable|string',
+            'respondent.relationship' => 'required|string|max:255',
 
             'incident_veracity' => 'boolean',
             'perpetrator_present' => 'boolean',
@@ -163,25 +339,84 @@ class VawcController extends Controller
             'referral_status' => 'nullable|array',
             'witness_info' => 'nullable|string',
             'action_sought' => 'nullable|array',
-
-            // Risk assessment is now fully automated via VAWC-RAVE Engine
         ]);
 
-        $this->vawcService->createVawcCase($validated);
+        $vawcCase = $this->vawcService->createVawcCase($validated);
 
-        return redirect()->route('admin.vawc.dashboard')->with('success', 'VAWC Case recorded successfully.');
+        return redirect()->route('admin.vawc.show', $vawcCase->id)->with('success', 'VAWC Case incident recorded under Master Dossier.');
     }
 
     /**
-     * Display the specified VAWC case (Wireframe).
+     * Display the specified VAWC case and Master Dossier Incident History.
      */
     public function show($id)
     {
-        $case = VawcCase::with(['caseReport.abuseType', 'involvedParties', 'assessment', 'protectionOrders.issuedBy', 'complianceLogs', 'escalations'])
-            ->findOrFail($id);
+        $case = VawcCase::with([
+            'dossier.cases' => function ($q) {
+                $q->with(['caseReport.abuseType', 'assessment', 'protectionOrders.issuedBy'])
+                  ->orderBy('incident_sequence', 'desc');
+            },
+            'caseReport.abuseType',
+            'involvedParties',
+            'assessment',
+            'protectionOrders.issuedBy',
+            'complianceLogs',
+            'escalations'
+        ])->findOrFail($id);
+
+        $respParty = $case->involvedParties->firstWhere('role', 'Respondent');
+        $respName = $respParty?->name ?? $case->dossier?->respondent_name;
+
+        $crossDossiers = collect();
+        if ($respName) {
+            $crossDossiers = VawcDossier::where('respondent_name', 'LIKE', $respName)
+                ->where('id', '!=', $case->dossier_id)
+                ->with(['cases'])
+                ->get();
+        }
+
+        $crossStats = [
+            'has_other_dossiers' => $crossDossiers->isNotEmpty(),
+            'other_dossiers_count' => $crossDossiers->count(),
+            'total_linked_dossiers' => $crossDossiers->count() + 1,
+            'other_incidents_count' => (int) $crossDossiers->sum('incident_count'),
+            'total_perpetrator_incidents' => (int) $crossDossiers->sum('incident_count') + ($case->dossier?->incident_count ?? 1),
+            'is_serial_recidivist' => $crossDossiers->isNotEmpty() || ($case->dossier?->incident_count ?? 1) > 1,
+            'linked_dossier_numbers' => $crossDossiers->pluck('dossier_number')->all(),
+            'linked_survivor_count' => $crossDossiers->count() + 1,
+        ];
+
+        // Multi-Dossier Survivor Compound Risk
+        $victimParty = $case->involvedParties->firstWhere('role', 'Victim');
+        $victimName = $victimParty?->name ?? $case->dossier?->survivor_name;
+
+        $survivorOtherDossiers = collect();
+        if ($victimName) {
+            $survivorOtherDossiers = VawcDossier::where('survivor_name', 'LIKE', $victimName)
+                ->where('id', '!=', $case->dossier_id)
+                ->with(['cases'])
+                ->get();
+        }
+
+        $survivorStats = [
+            'has_other_dossiers' => $survivorOtherDossiers->isNotEmpty(),
+            'other_dossiers_count' => $survivorOtherDossiers->count(),
+            'total_active_dossiers' => $survivorOtherDossiers->count() + 1,
+            'is_compound_victimization' => $survivorOtherDossiers->isNotEmpty(),
+            'other_dossiers' => $survivorOtherDossiers->map(fn($d) => [
+                'id' => $d->id,
+                'dossier_number' => $d->dossier_number,
+                'respondent_name' => $d->respondent_name,
+                'relationship_type' => $d->relationship_type,
+                'highest_threat_level' => $d->highest_threat_level,
+                'latest_case_id' => $d->cases->first()?->id,
+            ])->values()->all(),
+        ];
 
         return Inertia::render('Admin/Vawc/Show', [
-            'case' => $case
+            'case' => $case,
+            'crossStats' => $crossStats,
+            'survivorStats' => $survivorStats,
         ]);
     }
 
@@ -226,6 +461,8 @@ class VawcController extends Controller
                 'weapon_access' => 0,
                 'life_threat_level' => 0,
             ]);
+
+            $case->dossier?->syncDossierAggregates();
         });
 
         return redirect()->back()->with('success', 'Triage assessment recorded successfully.');
@@ -238,6 +475,7 @@ class VawcController extends Controller
     {
         $case = VawcCase::findOrFail($id);
         $this->bpoService->fileApplication($case, $request->all());
+        $case->dossier?->syncDossierAggregates();
 
         return redirect()->back()->with('success', 'BPO Application filed.');
     }
@@ -249,13 +487,13 @@ class VawcController extends Controller
     {
         $case = VawcCase::findOrFail($id);
 
-        // Find the latest 'Applied' BPO
         $order = $case->protectionOrders()
             ->where('status', 'Applied')
             ->latest()
             ->firstOrFail();
 
         $this->bpoService->issueOrder($order, $request->all());
+        $case->dossier?->syncDossierAggregates();
 
         return redirect()->back()->with('success', 'BPO Issued successfully.');
     }
@@ -278,6 +516,7 @@ class VawcController extends Controller
         ]);
 
         $this->bpoService->recordService($order, $request->all());
+        $case->dossier?->syncDossierAggregates();
 
         return redirect()->back()->with('success', 'BPO Service recorded.');
     }
@@ -287,7 +526,7 @@ class VawcController extends Controller
      */
     public function printBpo($id)
     {
-        $case = VawcCase::with(['caseReport', 'involvedParties'])
+        $case = VawcCase::with(['caseReport', 'involvedParties', 'dossier'])
             ->findOrFail($id);
 
         /** @var \App\Models\VawcProtectionOrder $order */
@@ -308,7 +547,7 @@ class VawcController extends Controller
      */
     public function pnpTransmittal($id)
     {
-        $case = VawcCase::with(['caseReport', 'involvedParties', 'protectionOrders'])
+        $case = VawcCase::with(['caseReport', 'involvedParties', 'protectionOrders', 'dossier.cases.caseReport'])
             ->findOrFail($id);
 
         /** @var \App\Models\VawcProtectionOrder $order */
@@ -317,7 +556,6 @@ class VawcController extends Controller
             ->latest()
             ->firstOrFail();
 
-        // Log the transmittal if it hasn't been logged yet
         if ($order->transmittals()->where('agency', 'PNP Women and Children Protection')->count() === 0) {
             $this->bpoService->recordTransmittal($order);
         }
@@ -346,6 +584,7 @@ class VawcController extends Controller
         ]);
 
         $this->complianceService->logMonitoring($case, $request->all());
+        $case->dossier?->syncDossierAggregates();
 
         return redirect()->back()->with('success', 'Compliance log recorded.');
     }
@@ -365,6 +604,7 @@ class VawcController extends Controller
         ]);
 
         $this->legalService->escalateCase($case, $request->all());
+        $case->dossier?->syncDossierAggregates();
 
         return redirect()->back()->with('success', 'Case escalated to legal authorities.');
     }
@@ -374,7 +614,7 @@ class VawcController extends Controller
      */
     public function complaintForm($id)
     {
-        $case = VawcCase::with(['caseReport', 'involvedParties.vawcCase'])
+        $case = VawcCase::with(['caseReport', 'involvedParties.vawcCase', 'dossier'])
             ->findOrFail($id);
 
         return Inertia::render('Admin/Vawc/ComplaintForm', [
@@ -396,14 +636,13 @@ class VawcController extends Controller
         ]);
 
         $this->legalService->closeCase($case, $request->all());
+        $case->dossier?->syncDossierAggregates();
 
         return redirect()->back()->with('success', 'Case safely closed and archived.');
     }
 
-
     /**
-     * Display the Barangay VAWC Desk Triage & Action Center — Priority Queue by Triage Priority Index.
-     * Heavy trend charts have been moved to the Official Analytics page.
+     * Display the Barangay VAWC Desk Triage & Action Center.
      */
     public function dashboard()
     {
@@ -411,7 +650,7 @@ class VawcController extends Controller
 
         // Base queries for total counts & capped priority queues
         $criticalQuery = VawcCase::select('vawc_cases.*')
-            ->with(['caseReport.abuseType', 'assessment'])
+            ->with(['caseReport.abuseType', 'assessment', 'dossier'])
             ->join('vawc_assessments', 'vawc_assessments.vawc_case_id', '=', 'vawc_cases.id')
             ->whereIn('vawc_assessments.risk_level', ['CRITICAL', 'HIGH'])
             ->where('vawc_cases.status', '!=', 'Closed');
@@ -424,7 +663,7 @@ class VawcController extends Controller
             ->get()
             ->map(fn($c) => [
                 'id'            => $c->id,
-                'case_number'   => $c->caseReport?->case_number ?? 'N/A',
+                'case_number'   => $c->sub_case_number ?? $c->caseReport?->case_number ?? 'N/A',
                 'victim_name'   => $c->caseReport?->victim_name ?? 'Unknown',
                 'status'        => $c->status,
                 'risk_level'    => $c->assessment?->risk_level ?? 'UNKNOWN',
@@ -438,7 +677,7 @@ class VawcController extends Controller
 
         // 2. Moderate Risk Queue
         $moderateQuery = VawcCase::select('vawc_cases.*')
-            ->with(['caseReport.abuseType', 'assessment'])
+            ->with(['caseReport.abuseType', 'assessment', 'dossier'])
             ->join('vawc_assessments', 'vawc_assessments.vawc_case_id', '=', 'vawc_cases.id')
             ->whereIn('vawc_assessments.risk_level', ['MODERATE'])
             ->where('vawc_cases.status', '!=', 'Closed');
@@ -451,7 +690,7 @@ class VawcController extends Controller
             ->get()
             ->map(fn($c) => [
                 'id'            => $c->id,
-                'case_number'   => $c->caseReport?->case_number ?? 'N/A',
+                'case_number'   => $c->sub_case_number ?? $c->caseReport?->case_number ?? 'N/A',
                 'victim_name'   => $c->caseReport?->victim_name ?? 'Unknown',
                 'status'        => $c->status,
                 'risk_level'    => $c->assessment?->risk_level ?? 'UNKNOWN',
@@ -465,7 +704,7 @@ class VawcController extends Controller
 
         // 2.5. Low Risk Queue
         $lowQuery = VawcCase::select('vawc_cases.*')
-            ->with(['caseReport.abuseType', 'assessment'])
+            ->with(['caseReport.abuseType', 'assessment', 'dossier'])
             ->join('vawc_assessments', 'vawc_assessments.vawc_case_id', '=', 'vawc_cases.id')
             ->whereIn('vawc_assessments.risk_level', ['LOW'])
             ->where('vawc_cases.status', '!=', 'Closed');
@@ -478,7 +717,7 @@ class VawcController extends Controller
             ->get()
             ->map(fn($c) => [
                 'id'            => $c->id,
-                'case_number'   => $c->caseReport?->case_number ?? 'N/A',
+                'case_number'   => $c->sub_case_number ?? $c->caseReport?->case_number ?? 'N/A',
                 'victim_name'   => $c->caseReport?->victim_name ?? 'Unknown',
                 'status'        => $c->status,
                 'risk_level'    => $c->assessment?->risk_level ?? 'UNKNOWN',
@@ -490,8 +729,8 @@ class VawcController extends Controller
                 'children_count' => $c->children_count ?? 0,
             ]);
 
-        // 3. Active cases with no assessment yet (needs triage)
-        $unassessedQuery = VawcCase::with(['caseReport.abuseType'])
+        // 3. Active cases with no assessment yet
+        $unassessedQuery = VawcCase::with(['caseReport.abuseType', 'dossier'])
             ->doesntHave('assessment')
             ->where('status', '!=', 'Closed');
 
@@ -502,7 +741,7 @@ class VawcController extends Controller
             ->get()
             ->map(fn($c) => [
                 'id'            => $c->id,
-                'case_number'   => $c->caseReport?->case_number ?? 'N/A',
+                'case_number'   => $c->sub_case_number ?? $c->caseReport?->case_number ?? 'N/A',
                 'victim_name'   => $c->caseReport?->victim_name ?? 'Unknown',
                 'status'        => $c->status,
                 'risk_level'    => 'PENDING',
@@ -514,7 +753,7 @@ class VawcController extends Controller
                 'children_count' => $c->children_count ?? 0,
             ]);
 
-        // 4. KPI Metrics (lightweight)
+        // 4. KPI Metrics
         $kpis = $this->analyticsService->getVawcSpecificStats($currentYear);
 
         return Inertia::render('Admin/Vawc/Dashboard', [

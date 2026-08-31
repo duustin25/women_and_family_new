@@ -46,13 +46,13 @@ export default function AuditLogs({ logs, filters }: AuditLogProps) {
             const hasDateEndChanged = dateEnd !== (filters.date_end || '');
 
             if (hasSearchChanged || hasDateStartChanged || hasDateEndChanged) {
-                router.get('/admin/audit-logs', { 
-                    ...filters, 
+                router.get('/admin/audit-logs', {
+                    ...filters,
                     search: searchQuery,
                     date_start: dateStart,
                     date_end: dateEnd
-                }, { 
-                    preserveState: true, 
+                }, {
+                    preserveState: true,
                     preserveScroll: true,
                     replace: true
                 });
@@ -83,13 +83,13 @@ export default function AuditLogs({ logs, filters }: AuditLogProps) {
     const renderVisualDiff = (oldVals: any, newVals: any) => {
         const oldData = oldVals || {};
         const newData = newVals || {};
-        
+
         const excludeKeys = [
-            'created_at', 'updated_at', 'deleted_at', 'id', 'password', 
-            'remember_token', 'email_verified_at', 'two_factor_secret', 
+            'created_at', 'updated_at', 'deleted_at', 'id', 'password',
+            'remember_token', 'email_verified_at', 'two_factor_secret',
             'two_factor_recovery_codes', 'two_factor_confirmed_at'
         ];
-        
+
         const allKeys = Array.from(
             new Set([...Object.keys(oldData), ...Object.keys(newData)])
         ).filter(key => !excludeKeys.includes(key));
@@ -112,7 +112,7 @@ export default function AuditLogs({ logs, filters }: AuditLogProps) {
                         {allKeys.map(key => {
                             const oldVal = oldData[key];
                             const newVal = newData[key];
-                            
+
                             const formatValue = (val: any) => {
                                 if (val === null || val === undefined) return <span className="text-muted-foreground italic font-normal">empty</span>;
                                 if (typeof val === 'boolean') return val ? 'true' : 'false';
@@ -170,7 +170,7 @@ export default function AuditLogs({ logs, filters }: AuditLogProps) {
                 if (item.title) return item.title;
                 if (item.first_name) return `${item.first_name} ${item.last_name || ''}`.trim();
                 if (item.name) return item.name;
-                
+
                 if (type) {
                     if (type.includes('VawcCase')) return `VAWC Case Record`;
                     if (type.includes('BcpcAssessment')) return `BCPC Assessment`;
@@ -194,18 +194,18 @@ export default function AuditLogs({ logs, filters }: AuditLogProps) {
 
             // If the record relation is null (likely deleted), try to salvage from the snapshot values
             const data = log.new_values || log.old_values || {};
-            
+
             // Handle Route/unauthorized access logs specially
             if (data.path) {
                 return `${data.method || 'GET'} /${data.path.replace(/^\//, '')}`;
             }
 
             const snapshotId = extractIdentifier(data, log.auditable_type);
-            
+
             if (snapshotId) {
                 // If it's a generic fallback we don't append Snapshot, but if it's a specific name we do
                 if (snapshotId.includes('Record') || snapshotId.includes('Assessment') || snapshotId.includes('Log') || snapshotId.includes('Order') || snapshotId.includes('Party') || snapshotId.includes('Communication')) {
-                   return snapshotId;
+                    return snapshotId;
                 }
                 return `${snapshotId} (Deleted/Snapshot)`;
             }
@@ -298,9 +298,9 @@ export default function AuditLogs({ logs, filters }: AuditLogProps) {
                                             <TableRow key={log.id} className="hover:bg-muted/5">
                                                 <TableCell className="pl-6">
                                                     <Badge variant="outline" className={`text-[10px] font-bold uppercase tracking-wider ${actionType === 'critical' ? 'text-red-600 border-red-200 bg-red-50' :
-                                                            actionType === 'warning' ? 'text-amber-600 border-amber-200 bg-amber-50' :
-                                                                actionType === 'success' ? 'text-emerald-600 border-emerald-200 bg-emerald-50' :
-                                                                    'text-blue-600 border-blue-200 bg-blue-50'
+                                                        actionType === 'warning' ? 'text-amber-600 border-amber-200 bg-amber-50' :
+                                                            actionType === 'success' ? 'text-emerald-600 border-emerald-200 bg-emerald-50' :
+                                                                'text-blue-600 border-blue-200 bg-blue-50'
                                                         }`}>
                                                         {log.action}
                                                     </Badge>
@@ -425,28 +425,28 @@ export default function AuditLogs({ logs, filters }: AuditLogProps) {
                                     </span>
                                 </div>
                             </div>
-                            
+
                             <div className="pt-4 border-t">
                                 <h4 className="text-sm font-semibold mb-2">Changes Summary</h4>
                                 {renderVisualDiff(selectedLog.old_values, selectedLog.new_values)}
                             </div>
-                            
+
                             <details className="text-xs border rounded-md p-2 bg-muted/20">
                                 <summary className="cursor-pointer font-medium text-muted-foreground select-none">View Raw JSON Payload</summary>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
                                     <div>
                                         <h5 className="font-semibold mb-1">Old Values</h5>
                                         <pre className="bg-muted/50 p-2 rounded text-[10px] overflow-x-auto border max-h-[150px]">
-                                            {selectedLog.old_values && Object.keys(selectedLog.old_values).length > 0 
-                                                ? JSON.stringify(selectedLog.old_values, null, 2) 
+                                            {selectedLog.old_values && Object.keys(selectedLog.old_values).length > 0
+                                                ? JSON.stringify(selectedLog.old_values, null, 2)
                                                 : 'No old values'}
                                         </pre>
                                     </div>
                                     <div>
                                         <h5 className="font-semibold mb-1">New Values</h5>
                                         <pre className="bg-muted/50 p-2 rounded text-[10px] overflow-x-auto border max-h-[150px]">
-                                            {selectedLog.new_values && Object.keys(selectedLog.new_values).length > 0 
-                                                ? JSON.stringify(selectedLog.new_values, null, 2) 
+                                            {selectedLog.new_values && Object.keys(selectedLog.new_values).length > 0
+                                                ? JSON.stringify(selectedLog.new_values, null, 2)
                                                 : 'No new values'}
                                         </pre>
                                     </div>

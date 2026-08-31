@@ -16,6 +16,7 @@ class VawcProtectionOrder extends Model
     protected $fillable = [
         'vawc_case_id',
         'type',
+        'order_number',
         'status',
         'application_datetime',
         'issued_datetime',

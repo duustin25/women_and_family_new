@@ -17,11 +17,21 @@ class VawcBpoService
     public function fileApplication(VawcCase $case, array $data): VawcProtectionOrder
     {
         return \Illuminate\Support\Facades\DB::transaction(function () use ($case, $data) {
+            $subCaseNumber = $case->sub_case_number;
+            $orderNumber = $subCaseNumber 
+                ? preg_replace('/^(VAWC|DOS)-/', 'BPO-', $subCaseNumber)
+                : sprintf('BPO-%s-%04d-01', date('Y'), $case->id);
+
+            $appDate = !empty($data['application_datetime']) 
+                ? Carbon::parse($data['application_datetime']) 
+                : ($case->caseReport?->incident_date ? Carbon::parse($case->caseReport->incident_date) : now());
+
             $order = VawcProtectionOrder::create([
                 'vawc_case_id' => $case->id,
                 'type' => $data['type'] ?? 'BPO',
+                'order_number' => $orderNumber,
                 'status' => 'Applied',
-                'application_datetime' => now(),
+                'application_datetime' => $appDate,
                 'is_sla_breached' => false,
             ]);
 
@@ -37,15 +47,17 @@ class VawcBpoService
     public function issueOrder(VawcProtectionOrder $order, array $data): VawcProtectionOrder
     {
         return \Illuminate\Support\Facades\DB::transaction(function () use ($order, $data) {
-            $issuedAt = now();
+            $issuedAt = !empty($data['issued_datetime']) 
+                ? Carbon::parse($data['issued_datetime']) 
+                : ($order->application_datetime ? Carbon::parse($order->application_datetime)->addHours(2) : now());
             $isBreached = false;
 
             // RA 9262: Same-Day Issuance Requirement
             if ($order->application_datetime) {
-                $appDate = Carbon::parse($order->application_datetime)->toDateString();
-                $issueDate = $issuedAt->toDateString();
+                $appDateStr = Carbon::parse($order->application_datetime)->toDateString();
+                $issueDateStr = $issuedAt->toDateString();
                 
-                if ($appDate !== $issueDate) {
+                if ($appDateStr !== $issueDateStr) {
                     $isBreached = true;
                 }
             }
@@ -71,10 +83,14 @@ class VawcBpoService
     public function recordService(VawcProtectionOrder $order, array $data): VawcBpoServiceRecord
     {
         return \Illuminate\Support\Facades\DB::transaction(function () use ($order, $data) {
+            $servedAt = !empty($data['served_datetime']) 
+                ? Carbon::parse($data['served_datetime']) 
+                : now();
+
             $record = VawcBpoServiceRecord::create([
                 'protection_order_id' => $order->id,
                 'service_method' => $data['service_method'] ?? 'Personally Received',
-                'served_datetime' => $data['served_datetime'] ?? now(),
+                'served_datetime' => $servedAt,
                 'served_by_id' => Auth::id(),
                 'receiver_name' => $data['receiver_name'] ?? null,
             ]);
