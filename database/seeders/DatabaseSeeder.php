@@ -42,7 +42,7 @@ class DatabaseSeeder extends Seeder
 
         $zones = [];
         foreach ($defaultZones as $zData) {
-            $zones[] = Zone::create($zData);
+            $zones[] = Zone::firstOrCreate(['name' => $zData['name']], $zData);
         }
 
         // 2. Seed Default Case Abuse Types
@@ -58,7 +58,7 @@ class DatabaseSeeder extends Seeder
         $vawcAbuseTypes = [];
         $bcpcAbuseTypes = [];
         foreach ($abuseTypes as $atData) {
-            $type = CaseAbuseType::create($atData);
+            $type = CaseAbuseType::firstOrCreate(['name' => $atData['name'], 'category' => $atData['category']], $atData);
             if ($atData['category'] === 'VAWC') {
                 $vawcAbuseTypes[] = $type;
             } else {
@@ -67,30 +67,35 @@ class DatabaseSeeder extends Seeder
         }
 
         // 3. Create Super Admin (System Administrator)
-        $admin = User::factory()->create([
-            'name' => 'Gerald Sobrevega',
-            'email' => 'admin@gmail.com',
-            'password' => bcrypt('password'),
-            'role' => User::ROLE_ADMIN,
-        ]);
+        $admin = User::firstOrCreate(
+            ['email' => 'admin@gmail.com'],
+            [
+                'name' => 'Gerald Sobrevega',
+                'password' => bcrypt('password'),
+                'role' => User::ROLE_ADMIN,
+            ]
+        );
 
         // 4. Add Gerald to the Officials Chart
-        OrganizationalMember::create([
-            'user_id' => $admin->id,
-            'position' => 'Head Committee',
-            'committee' => 'Office of the Women and Family',
-            'level' => 'head',
-            'display_order' => 1,
-            'is_active' => true,
-        ]);
+        OrganizationalMember::firstOrCreate(
+            ['user_id' => $admin->id, 'committee' => 'Office of the Women and Family'],
+            [
+                'position' => 'Head Committee',
+                'level' => 'head',
+                'display_order' => 1,
+                'is_active' => true,
+            ]
+        );
 
         // 5. Create Sample Staff/Officer (VAWC)
-        $vawcOfficer = User::factory()->create([
-            'name' => 'Officer Sarah (VAWC)',
-            'email' => 'vawc@gmail.com',
-            'password' => bcrypt('password'),
-            'role' => User::ROLE_HEAD,
-        ]);
+        $vawcOfficer = User::firstOrCreate(
+            ['email' => 'vawc@gmail.com'],
+            [
+                'name' => 'Officer Sarah (VAWC)',
+                'password' => bcrypt('password'),
+                'role' => User::ROLE_HEAD,
+            ]
+        );
 
         // 6. Define Custom Schemas & Print Settings matching actual application sheets
 
@@ -432,16 +437,18 @@ class DatabaseSeeder extends Seeder
             $presData = $orgInfo['president'];
             unset($orgInfo['president']);
 
-            $org = Organization::create($orgInfo);
+            $org = Organization::firstOrCreate(['slug' => $orgInfo['slug']], $orgInfo);
 
             // Create President User
-            User::create([
-                'name' => $presData['name'],
-                'email' => $presData['email'],
-                'password' => bcrypt('password'),
-                'role' => User::ROLE_PRESIDENT,
-                'organization_id' => $org->id,
-            ]);
+            User::firstOrCreate(
+                ['email' => $presData['email']],
+                [
+                    'name' => $presData['name'],
+                    'password' => bcrypt('password'),
+                    'role' => User::ROLE_PRESIDENT,
+                    'organization_id' => $org->id,
+                ]
+            );
 
             // Seed 60 applications/members for this organization
             // 40 Approved (with active Members), 15 Pending, 5 Disapproved
