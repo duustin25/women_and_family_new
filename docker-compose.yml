@@ -1,0 +1,39 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: women-and-family-app:latest
+    restart: unless-stopped
+    ports:
+      - "${PORT:-8000}:8000"
+    environment:
+      - PORT=8000
+      - APP_NAME="Barangay 183 WFP System"
+      - APP_ENV=production
+      - APP_DEBUG=false
+      - APP_URL=${APP_URL:-http://localhost}
+      - APP_KEY=${APP_KEY:-base64:oMEz6UXDf9g4izZZ6ja9EQJ6X3K2C49D5ic/K2HhqOs=}
+      - DB_CONNECTION=mysql
+      - DB_URL=mysql://mysql:mysql-dustin@tcs6sxwbi86ufrpszusampwl:3306/default
+      - DB_HOST=tcs6sxwbi86ufrpszusampwl
+      - DB_PORT=3306
+      - DB_DATABASE=default
+      - DB_USERNAME=mysql
+      - DB_PASSWORD=mysql-dustin
+      - SESSION_DRIVER=database
+      - SESSION_LIFETIME=120
+      - CACHE_STORE=database
+      - QUEUE_CONNECTION=database
+      - FILESYSTEM_DISK=public
+      - AUTORUN_MIGRATIONS=true
+      - AUTORUN_SEED=${AUTORUN_SEED:-false}
+    volumes:
+      - storage_app:/var/www/html/storage/app
+      - storage_logs:/var/www/html/storage/logs
+
+volumes:
+  storage_app:
+    driver: local
+  storage_logs:
+    driver: local
