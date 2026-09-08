@@ -36,8 +36,8 @@ export default function Index({ officials, users }: { officials: Official[], use
 
     const filteredOfficials = officials.filter(off => {
         const displayName = off.user ? off.user.name : (off.name || 'Vacant Position');
-        return displayName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            off.position.toLowerCase().includes(searchQuery.toLowerCase());
+        return (displayName || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+            (off.position || '').toLowerCase().includes(searchQuery.toLowerCase());
     });
 
     const deleteOfficial = (id: number) => {

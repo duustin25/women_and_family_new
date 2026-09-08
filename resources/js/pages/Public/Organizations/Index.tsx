@@ -9,9 +9,9 @@ import {
 export default function Index({ organizations = { data: [] } }: any) {
     const [searchQuery, setSearchQuery] = React.useState("");
 
-    const filteredOrgs = organizations.data.filter((org: any) => {
-        return org.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            org.description.toLowerCase().includes(searchQuery.toLowerCase());
+    const filteredOrgs = (organizations?.data || []).filter((org: any) => {
+        return (org?.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+            (org?.description || '').toLowerCase().includes(searchQuery.toLowerCase());
     });
 
     return (

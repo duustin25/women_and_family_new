@@ -68,7 +68,7 @@ export default function ApplicationStatusPage({ search: initialSearch, applicati
     };
 
     const getStatusBadge = (status: string) => {
-        const lower = status.toLowerCase();
+        const lower = (status || '').toLowerCase();
         if (lower === 'approved') {
             return (
                 <Badge className="bg-emerald-600 text-white font-bold text-xs uppercase px-3 py-1 flex items-center gap-1.5 w-fit">
@@ -205,7 +205,7 @@ export default function ApplicationStatusPage({ search: initialSearch, applicati
                                         </div>
 
                                         {/* Status Context Alerts */}
-                                        {application.status.toLowerCase() === 'approved' && (
+                                        {application.status?.toLowerCase() === 'approved' && (
                                             <div className="bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 p-4 rounded-xl text-emerald-900 dark:text-emerald-200 text-xs leading-relaxed space-y-1">
                                                 <p className="font-bold text-sm flex items-center gap-1.5">
                                                     <CheckCircle2 className="w-4 h-4 text-emerald-600" /> Membership Verified!
@@ -216,7 +216,7 @@ export default function ApplicationStatusPage({ search: initialSearch, applicati
                                             </div>
                                         )}
 
-                                        {application.status.toLowerCase() === 'pending' && (
+                                        {application.status?.toLowerCase() === 'pending' && (
                                             <div className="bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 p-4 rounded-xl text-blue-900 dark:text-blue-200 text-xs leading-relaxed space-y-1">
                                                 <p className="font-bold text-sm flex items-center gap-1.5">
                                                     <Clock className="w-4 h-4 text-blue-600" /> Application Under Review
@@ -227,7 +227,7 @@ export default function ApplicationStatusPage({ search: initialSearch, applicati
                                             </div>
                                         )}
 
-                                        {application.status.toLowerCase() === 'appealed' && (
+                                        {application.status?.toLowerCase() === 'appealed' && (
                                             <div className="bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 p-4 rounded-xl text-amber-900 dark:text-amber-200 text-xs leading-relaxed space-y-2">
                                                 <p className="font-bold text-sm flex items-center gap-1.5">
                                                     <ShieldAlert className="w-4 h-4 text-amber-600" /> Appeal Under Independent Review
@@ -244,7 +244,7 @@ export default function ApplicationStatusPage({ search: initialSearch, applicati
                                         )}
 
                                         {/* Disapproved State -> Show Rejection Reason + Appeal Submission Card */}
-                                        {(application.status.toLowerCase() === 'rejected' || application.status.toLowerCase() === 'disapproved') && (
+                                        {(application.status?.toLowerCase() === 'rejected' || application.status?.toLowerCase() === 'disapproved') && (
                                             <div className="space-y-6 pt-2">
                                                 <div className="bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 p-4 rounded-xl text-rose-900 dark:text-rose-200 text-xs space-y-2">
                                                     <p className="font-bold text-sm flex items-center gap-1.5 text-rose-700 dark:text-rose-300">

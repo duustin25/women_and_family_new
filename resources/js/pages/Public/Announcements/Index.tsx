@@ -11,9 +11,9 @@ export default function Index({ announcements = { data: [] } }: any) {
 
     const categories = ["All", "VAWC", "Child Protection", "Emergency", "Health", "Events", "GAD", "General", "Organizations"];
 
-    const filteredAnnouncements = announcements.data.filter((post: any) => {
-        const matchesSearch = post.title.toLowerCase().includes(searchQuery.toLowerCase());
-        const matchesCategory = selectedCategory === "All" || post.category === selectedCategory;
+    const filteredAnnouncements = (announcements?.data || []).filter((post: any) => {
+        const matchesSearch = (post?.title || '').toLowerCase().includes(searchQuery.toLowerCase());
+        const matchesCategory = selectedCategory === "All" || post?.category === selectedCategory;
         return matchesSearch && matchesCategory;
     });
 
