@@ -36,6 +36,14 @@ COPY . .
 RUN composer dump-autoload --optimize --no-dev
 
 # Build production assets (Vite + React + Wayfinder)
+ENV VITE_APP_NAME="Barangay 183 WFP System" \
+    VITE_APP_BARANGAY_NAME="Barangay 183" \
+    VITE_APP_CITY_NAME="Pasay City" \
+    VITE_APP_ZONE="Zone 20" \
+    VITE_HOTLINE_BRGY="(02) 8854-1234" \
+    VITE_HOTLINE_VAWC="911 / 1343" \
+    VITE_OFFICIAL_EMAIL="support@pasay.gov.ph" \
+    VITE_OFFICIAL_FB="https://facebook.com"
 RUN npm run build
 
 # ------------------------------------------------------------------------------

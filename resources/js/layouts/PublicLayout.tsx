@@ -14,13 +14,13 @@ import ChatbotWidget from '@/components/ChatbotWidget';
 import AccessibilityToolbar from '@/components/AccessibilityToolbar';
 import { useAppearance } from '@/hooks/use-appearance';
 
-const brgyName = import.meta.env.VITE_APP_BARANGAY_NAME;
-const cityName = import.meta.env.VITE_APP_CITY_NAME;
-const brgyNum = import.meta.env.VITE_HOTLINE_BRGY;
-const vawcNum = import.meta.env.VITE_HOTLINE_VAWC;
-const brgyMail = import.meta.env.VITE_OFFICIAL_EMAIL;
-const offcialFb = import.meta.env.VITE_OFFICIAL_FB;
-const brgyZone = import.meta.env.VITE_APP_ZONE;
+const brgyName = import.meta.env.VITE_APP_BARANGAY_NAME || 'Barangay 183';
+const cityName = import.meta.env.VITE_APP_CITY_NAME || 'Pasay City';
+const brgyNum = import.meta.env.VITE_HOTLINE_BRGY || '(02) 8854-1234';
+const vawcNum = import.meta.env.VITE_HOTLINE_VAWC || '911 / 1343';
+const brgyMail = import.meta.env.VITE_OFFICIAL_EMAIL || 'support@pasay.gov.ph';
+const offcialFb = import.meta.env.VITE_OFFICIAL_FB || 'https://facebook.com';
+const brgyZone = import.meta.env.VITE_APP_ZONE || 'Zone 20';
 
 interface PublicLayoutProps {
     children: React.ReactNode;
@@ -229,7 +229,7 @@ export default function PublicLayout({ children, bgColor = "bg-white" }: PublicL
                                 {brgyName}'s dedicated Information System for VAWC, BCPC, and GAD management. Built for security, transparency, and the safety of every family.
                             </p>
                             <div className="flex gap-4">
-                                <a href={`mailto:support@${cityName.toLowerCase().replace(' ', '')}.gov.ph`} target="_blank" className="w-10 h-10 rounded bg-purple-900/30 flex items-center justify-center hover:bg-purple-600 transition-all border border-purple-500/20 group" aria-label="Official Email">
+                                <a href={`mailto:support@${(cityName || 'pasaycity').toLowerCase().replace(/\s+/g, '')}.gov.ph`} target="_blank" className="w-10 h-10 rounded bg-purple-900/30 flex items-center justify-center hover:bg-purple-600 transition-all border border-purple-500/20 group" aria-label="Official Email">
                                     <Mail size={18} className="text-purple-300 group-hover:text-white" />
                                 </a>
                                 <a href={offcialFb} target="_blank" className="w-10 h-10 rounded bg-purple-900/30 flex items-center justify-center hover:bg-purple-600 transition-all border border-purple-500/20 group" aria-label="Official Facebook Page">

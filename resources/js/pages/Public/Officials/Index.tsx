@@ -27,7 +27,7 @@ interface Props {
 }
 
 export default function Index({ head, secretary, staff }: Props) {
-    const brgyName = import.meta.env.VITE_APP_BARANGAY_NAME;
+    const brgyName = import.meta.env.VITE_APP_BARANGAY_NAME || 'Barangay 183';
     const defaultImage = "https://ui-avatars.com/api/?background=random&color=333&name=";
 
     const OfficialCard = ({
