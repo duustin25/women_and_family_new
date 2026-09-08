@@ -648,9 +648,60 @@ class VawcController extends Controller
     {
         $currentYear = now()->year;
 
-        // Base queries for total counts & capped priority queues
+        // Identify multi-victim serial respondents across all master dossiers
+        $allRespondentsWithMultiVictims = VawcDossier::select('respondent_name')
+            ->groupBy('respondent_name')
+            ->havingRaw('COUNT(DISTINCT survivor_name) > 1')
+            ->pluck('respondent_name')
+            ->map(fn($n) => strtolower(trim($n)))
+            ->toArray();
+
+        $mapCase = function ($c) use ($allRespondentsWithMultiVictims) {
+            $respName = $c->dossier?->respondent_name ?? 'Unknown Respondent';
+            $isMultiVictim = in_array(strtolower(trim($respName)), $allRespondentsWithMultiVictims);
+
+            // Check active BPO
+            $activeBpo = $c->protectionOrders
+                ->whereIn('status', ['Issued', 'Served', 'Applied'])
+                ->sortByDesc('created_at')
+                ->first();
+
+            $bpoInfo = null;
+            if ($activeBpo) {
+                $issuedAt = $activeBpo->issued_datetime ?? $activeBpo->application_datetime ?? $activeBpo->created_at;
+                $daysActive = (int) max(1, $issuedAt->diffInDays(now()) + 1);
+                $daysRemaining = (int) max(0, 15 - $daysActive);
+                $bpoInfo = [
+                    'order_number' => $activeBpo->order_number,
+                    'status' => $activeBpo->status,
+                    'days_active' => min($daysActive, 15),
+                    'days_remaining' => $daysRemaining,
+                    'is_expired' => $daysActive > 15,
+                ];
+            }
+
+            return [
+                'id'                       => $c->id,
+                'case_number'              => $c->sub_case_number ?? $c->caseReport?->case_number ?? 'N/A',
+                'victim_name'              => $c->caseReport?->victim_name ?? $c->dossier?->survivor_name ?? 'Unknown',
+                'respondent_name'          => $respName,
+                'relationship_type'        => $c->dossier?->relationship_type ?? 'Intimate Partner',
+                'status'                   => $c->status,
+                'risk_level'               => $c->assessment?->risk_level ?? 'PENDING',
+                'risk_score'               => $c->assessment?->risk_score ?? null,
+                'abuse_type'               => $c->caseReport?->abuseType?->name ?? 'Unclassified',
+                'intake_date'              => $c->created_at->format('M d, Y'),
+                'is_repeat'                => (bool) ($c->is_repeat_offense ?? false),
+                'has_weapon'               => (bool) ($c->has_weapon_involved ?? false),
+                'children_count'           => (int) ($c->children_count ?? 0),
+                'is_multi_victim_offender' => $isMultiVictim,
+                'bpo_info'                 => $bpoInfo,
+            ];
+        };
+
+        // 1. Critical & High Risk Queue
         $criticalQuery = VawcCase::select('vawc_cases.*')
-            ->with(['caseReport.abuseType', 'assessment', 'dossier'])
+            ->with(['caseReport.abuseType', 'assessment', 'dossier', 'protectionOrders'])
             ->join('vawc_assessments', 'vawc_assessments.vawc_case_id', '=', 'vawc_cases.id')
             ->whereIn('vawc_assessments.risk_level', ['CRITICAL', 'HIGH'])
             ->where('vawc_cases.status', '!=', 'Closed');
@@ -659,25 +710,13 @@ class VawcController extends Controller
         $criticalQueue = (clone $criticalQuery)
             ->orderByDesc('vawc_assessments.risk_score')
             ->orderByDesc('vawc_cases.created_at')
-            ->take(7)
+            ->take(10)
             ->get()
-            ->map(fn($c) => [
-                'id'            => $c->id,
-                'case_number'   => $c->sub_case_number ?? $c->caseReport?->case_number ?? 'N/A',
-                'victim_name'   => $c->caseReport?->victim_name ?? 'Unknown',
-                'status'        => $c->status,
-                'risk_level'    => $c->assessment?->risk_level ?? 'UNKNOWN',
-                'risk_score'    => $c->assessment?->risk_score ?? 0,
-                'abuse_type'    => $c->caseReport?->abuseType?->name ?? 'Unclassified',
-                'intake_date'   => $c->created_at->format('M d, Y'),
-                'is_repeat'     => $c->is_repeat_offense ?? false,
-                'has_weapon'    => $c->has_weapon_involved ?? false,
-                'children_count' => $c->children_count ?? 0,
-            ]);
+            ->map($mapCase);
 
         // 2. Moderate Risk Queue
         $moderateQuery = VawcCase::select('vawc_cases.*')
-            ->with(['caseReport.abuseType', 'assessment', 'dossier'])
+            ->with(['caseReport.abuseType', 'assessment', 'dossier', 'protectionOrders'])
             ->join('vawc_assessments', 'vawc_assessments.vawc_case_id', '=', 'vawc_cases.id')
             ->whereIn('vawc_assessments.risk_level', ['MODERATE'])
             ->where('vawc_cases.status', '!=', 'Closed');
@@ -686,25 +725,13 @@ class VawcController extends Controller
         $moderateQueue = (clone $moderateQuery)
             ->orderByDesc('vawc_assessments.risk_score')
             ->orderByDesc('vawc_cases.created_at')
-            ->take(7)
+            ->take(10)
             ->get()
-            ->map(fn($c) => [
-                'id'            => $c->id,
-                'case_number'   => $c->sub_case_number ?? $c->caseReport?->case_number ?? 'N/A',
-                'victim_name'   => $c->caseReport?->victim_name ?? 'Unknown',
-                'status'        => $c->status,
-                'risk_level'    => $c->assessment?->risk_level ?? 'UNKNOWN',
-                'risk_score'    => $c->assessment?->risk_score ?? 0,
-                'abuse_type'    => $c->caseReport?->abuseType?->name ?? 'Unclassified',
-                'intake_date'   => $c->created_at->format('M d, Y'),
-                'is_repeat'     => $c->is_repeat_offense ?? false,
-                'has_weapon'    => $c->has_weapon_involved ?? false,
-                'children_count' => $c->children_count ?? 0,
-            ]);
+            ->map($mapCase);
 
-        // 2.5. Low Risk Queue
+        // 3. Low Risk Queue
         $lowQuery = VawcCase::select('vawc_cases.*')
-            ->with(['caseReport.abuseType', 'assessment', 'dossier'])
+            ->with(['caseReport.abuseType', 'assessment', 'dossier', 'protectionOrders'])
             ->join('vawc_assessments', 'vawc_assessments.vawc_case_id', '=', 'vawc_cases.id')
             ->whereIn('vawc_assessments.risk_level', ['LOW'])
             ->where('vawc_cases.status', '!=', 'Closed');
@@ -713,47 +740,23 @@ class VawcController extends Controller
         $lowQueue = (clone $lowQuery)
             ->orderByDesc('vawc_assessments.risk_score')
             ->orderByDesc('vawc_cases.created_at')
-            ->take(7)
+            ->take(10)
             ->get()
-            ->map(fn($c) => [
-                'id'            => $c->id,
-                'case_number'   => $c->sub_case_number ?? $c->caseReport?->case_number ?? 'N/A',
-                'victim_name'   => $c->caseReport?->victim_name ?? 'Unknown',
-                'status'        => $c->status,
-                'risk_level'    => $c->assessment?->risk_level ?? 'UNKNOWN',
-                'risk_score'    => $c->assessment?->risk_score ?? 0,
-                'abuse_type'    => $c->caseReport?->abuseType?->name ?? 'Unclassified',
-                'intake_date'   => $c->created_at->format('M d, Y'),
-                'is_repeat'     => $c->is_repeat_offense ?? false,
-                'has_weapon'    => $c->has_weapon_involved ?? false,
-                'children_count' => $c->children_count ?? 0,
-            ]);
+            ->map($mapCase);
 
-        // 3. Active cases with no assessment yet
-        $unassessedQuery = VawcCase::with(['caseReport.abuseType', 'dossier'])
+        // 4. Pending Unassessed Queue
+        $unassessedQuery = VawcCase::with(['caseReport.abuseType', 'dossier', 'protectionOrders'])
             ->doesntHave('assessment')
             ->where('status', '!=', 'Closed');
 
         $unassessedTotal = (clone $unassessedQuery)->count();
         $unassessedQueue = (clone $unassessedQuery)
             ->latest()
-            ->take(7)
+            ->take(10)
             ->get()
-            ->map(fn($c) => [
-                'id'            => $c->id,
-                'case_number'   => $c->sub_case_number ?? $c->caseReport?->case_number ?? 'N/A',
-                'victim_name'   => $c->caseReport?->victim_name ?? 'Unknown',
-                'status'        => $c->status,
-                'risk_level'    => 'PENDING',
-                'risk_score'    => null,
-                'abuse_type'    => $c->caseReport?->abuseType?->name ?? 'Unclassified',
-                'intake_date'   => $c->created_at->format('M d, Y'),
-                'is_repeat'     => $c->is_repeat_offense ?? false,
-                'has_weapon'    => $c->has_weapon_involved ?? false,
-                'children_count' => $c->children_count ?? 0,
-            ]);
+            ->map($mapCase);
 
-        // 4. KPI Metrics
+        // 5. KPI Metrics
         $kpis = $this->analyticsService->getVawcSpecificStats($currentYear);
 
         return Inertia::render('Admin/Vawc/Dashboard', [

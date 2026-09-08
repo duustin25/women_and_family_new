@@ -265,13 +265,59 @@ export default function Show({ case: vawcCase, crossStats, survivorStats }: Prop
 
     return (
         <AppLayout breadcrumbs={[
-            { title: 'Dashboard', href: '/dashboard' },
+            { title: 'Dashboard', href: route('dashboard') },
             { title: 'VAWC Cases', href: route('admin.vawc.index') },
-            { title: vawcCase.case_report.case_number, href: '#' }
+            { title: vawcCase.sub_case_number || vawcCase.case_report.case_number, href: '#' }
         ]}>
             <Head title={`Case Workflow: ${vawcCase.case_report.case_number}`} />
 
-            <div className="p-6 space-y-6 max-w-7xl mx-auto">
+            <div className="w-full max-w-full px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+                {/* ── UNBOXED CANVAS HEADER ── */}
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                    <div>
+                        <div className="flex flex-wrap items-center gap-2.5">
+                            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
+                                {vawcCase.sub_case_number || vawcCase.case_report.case_number}
+                            </h1>
+                            <Badge variant="outline" className="font-mono text-xs px-2.5 py-1">
+                                {vawcCase.intake_type || 'Direct Intake'}
+                            </Badge>
+                            {vawcCase.status === 'Closed' ? (
+                                <Badge variant="secondary" className="text-xs font-bold bg-slate-200 dark:bg-slate-800">
+                                    ARCHIVED / CLOSED
+                                </Badge>
+                            ) : (
+                                <Badge className="bg-destructive/10 text-destructive border-destructive/20 text-xs font-semibold px-2.5 py-1">
+                                    RA 9262 Protocol
+                                </Badge>
+                            )}
+                        </div>
+                        <p className="text-sm text-muted-foreground mt-1">
+                            Republic Act 9262 Protection & Vulnerability Workflow
+                        </p>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-2.5">
+                        <Button
+                            variant={isRedacted ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => setIsRedacted(!isRedacted)}
+                            className={`min-h-[44px] sm:min-h-[38px] text-xs font-semibold transition-all ${isRedacted ? 'bg-amber-600 hover:bg-amber-700 text-white' : 'border-amber-500/40 text-amber-700 dark:text-amber-300'}`}
+                        >
+                            {isRedacted ? (
+                                <><EyeOff className="w-4 h-4 mr-1.5" /> Identities Redacted (Sec. 44)</>
+                            ) : (
+                                <><Eye className="w-4 h-4 mr-1.5" /> Redact Identities (Sec. 44)</>
+                            )}
+                        </Button>
+                        <Button variant="outline" size="sm" asChild className="min-h-[44px] sm:min-h-[38px]">
+                            <Link href={route('admin.vawc.index')} className="flex gap-1.5 items-center font-semibold text-xs">
+                                <ArrowLeft className="w-4 h-4" /> Back to Registry
+                            </Link>
+                        </Button>
+                    </div>
+                </div>
+
                 {/* ── MASTER DOSSIER COMMAND BAR ── */}
                 {vawcCase.dossier && (
                     <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-gradient-to-r from-primary/10 via-card to-card p-4 rounded-2xl border border-primary/20 shadow-xs gap-3">
@@ -284,14 +330,14 @@ export default function Show({ case: vawcCase, crossStats, survivorStats }: Prop
                                     <span className="font-mono font-black text-xs text-primary">
                                         MASTER FOLDER: {vawcCase.dossier.dossier_number}
                                     </span>
-                                    <Badge variant="secondary" className="text-[10px] font-extrabold uppercase">
+                                    <Badge variant="secondary" className="text-xs font-bold uppercase">
                                         Incident #{vawcCase.incident_sequence || 1} of {vawcCase.dossier.incident_count || 1}
                                     </Badge>
-                                    <Badge variant="outline" className="text-[10px] font-bold">
+                                    <Badge variant="outline" className="text-xs font-semibold">
                                         {vawcCase.dossier.current_lifecycle}
                                     </Badge>
                                 </div>
-                                <p className="text-xs text-muted-foreground font-semibold">
+                                <p className="text-xs sm:text-sm text-muted-foreground font-medium">
                                     Survivor: <strong className="text-foreground">{redactName(vawcCase.dossier.survivor_name)}</strong> vs <strong className="text-foreground">{redactName(vawcCase.dossier.respondent_name)}</strong> ({vawcCase.dossier.relationship_type || 'Intimate Partner'})
                                 </p>
                             </div>
@@ -309,7 +355,7 @@ export default function Show({ case: vawcCase, crossStats, survivorStats }: Prop
                                     </Badge>
                                 )
                             )}
-                            <Button asChild size="sm" className="bg-[#ce1126] hover:bg-red-700 font-bold text-xs">
+                            <Button asChild size="sm" className="bg-[#ce1126] hover:bg-red-700 font-bold text-xs min-h-[44px] sm:min-h-[38px]">
                                 <Link href={route('admin.vawc.create', { dossier_id: vawcCase.dossier_id })}>
                                     <Plus className="w-3.5 h-3.5 mr-1" /> Log Subsequent Incident
                                 </Link>
@@ -317,52 +363,6 @@ export default function Show({ case: vawcCase, crossStats, survivorStats }: Prop
                         </div>
                     </div>
                 )}
-
-                {/* ── TOP HEADER BAR ── */}
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-card p-6 rounded-2xl border border-border shadow-xs">
-                    <div className="flex gap-4 items-center">
-                        <div className="p-3 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive">
-                            <ShieldAlert className="w-6 h-6" />
-                        </div>
-                        <div>
-                            <div className="flex items-center gap-2">
-                                <h1 className="text-2xl font-bold tracking-tight text-foreground">
-                                    {vawcCase.sub_case_number || vawcCase.case_report.case_number}
-                                </h1>
-                                <Badge variant="outline" className="font-mono text-md">
-                                    {vawcCase.intake_type || 'Direct Intake'}
-                                </Badge>
-                                {vawcCase.status === 'Closed' && (
-                                    <Badge variant="secondary" className="text-xs font-bold bg-slate-200 dark:bg-slate-800">
-                                        ARCHIVED / CLOSED
-                                    </Badge>
-                                )}
-                            </div>
-                            <p className="text-muted-foreground text-md font-semibold mt-0.5">
-                                Republic Act 9262 Protection & Vulnerability Workflow
-                            </p>
-                        </div>
-                    </div>
-                    <div className="flex flex-wrap items-center gap-2 mt-4 sm:mt-0">
-                        <Button
-                            variant={isRedacted ? "default" : "outline"}
-                            size="sm"
-                            onClick={() => setIsRedacted(!isRedacted)}
-                            className={`text-xs font-bold transition-all ${isRedacted ? 'bg-amber-600 hover:bg-amber-700 text-white' : 'border-amber-500/40 text-amber-700 dark:text-amber-300'}`}
-                        >
-                            {isRedacted ? (
-                                <><EyeOff className="w-3.5 h-3.5 mr-1.5" /> Identities Redacted (Sec. 44)</>
-                            ) : (
-                                <><Eye className="w-3.5 h-3.5 mr-1.5" /> Redact Identities (Sec. 44)</>
-                            )}
-                        </Button>
-                        <Button variant="outline" size="sm" asChild>
-                            <Link href={route('admin.vawc.index')} className="flex gap-1.5 items-center font-bold text-xs">
-                                <ArrowLeft className="w-4 h-4" /> Back to Registry
-                            </Link>
-                        </Button>
-                    </div>
-                </div>
 
                 {/* ── VAWC-RAVE ALGORITHM RISK SCORECARD BANNER ── */}
                 {vawcCase.assessment && vawcCase.assessment.risk_score > 0 && vawcCase.status !== 'Closed' && (
@@ -466,11 +466,11 @@ export default function Show({ case: vawcCase, crossStats, survivorStats }: Prop
                                     </div>
                                     <div className="p-3 bg-muted rounded-lg space-y-1">
                                         <h4 className="font-bold text-foreground text-m">Step 3: BPO Issuance</h4>
-                                        <p className="text-muted-foreground">The Punong Barangay reviews the application and must issue the BPO within 24 hours of filing.</p>
+                                        <p className="text-muted-foreground">The Punong Barangay conducts ex-parte proceedings immediately and must issue the BPO on the same day of application (RA 9262 Sec. 14). Copy transmitted to PNP WCPD within 24 hours.</p>
                                     </div>
                                     <div className="p-3 bg-muted rounded-lg space-y-1">
                                         <h4 className="font-bold text-foreground text-m">Step 4: Serve BPO</h4>
-                                        <p className="text-muted-foreground">Immediate service of the issued BPO to the respondent. Transmitted to PNP WCPD within 24 hours.</p>
+                                        <p className="text-muted-foreground">Immediate service of the issued BPO to the respondent (Personal or Substituted Service). Official transmittal to PNP WCPD within 24 hours.</p>
                                     </div>
                                     <div className="p-3 bg-muted rounded-lg space-y-1">
                                         <h4 className="font-bold text-foreground text-m">Step 5: Monitor Compliance</h4>
@@ -922,10 +922,11 @@ export default function Show({ case: vawcCase, crossStats, survivorStats }: Prop
                         </div>
                         <div className="flex items-center gap-2">
                             {vawcCase.case_report.is_anonymous && (
-                                <Badge variant="secondary" className="text-xs font-bold bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300">
-                                    Confidential / Anonymous Report
+                                <Badge variant="secondary" className="text-xs font-bold bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border border-amber-300 flex items-center gap-1">
+                                    <EyeOff className="w-3 h-3 text-amber-600" /> Confidential Informant (Sec. 44)
                                 </Badge>
                             )}
+
                             <Badge variant="outline" className="font-mono text-xs">
                                 {vawcCase.sub_case_number || vawcCase.case_report.case_number}
                             </Badge>
@@ -948,27 +949,27 @@ export default function Show({ case: vawcCase, crossStats, survivorStats }: Prop
                                         {/* Multi-Dossier Compound Victimization Alert */}
                                         {survivorStats?.has_other_dossiers && (
                                             <div className="mt-2 p-2.5 rounded-lg border border-amber-500/40 bg-amber-500/10 text-xs space-y-1.5">
-                                                <div className="flex items-center gap-1.5 font-extrabold text-[10px] text-amber-700 dark:text-amber-300 uppercase tracking-wide">
+                                                <div className="flex items-center gap-1.5 font-bold text-xs text-amber-700 dark:text-amber-300 uppercase tracking-wide">
                                                     <AlertTriangle className="w-3.5 h-3.5 shrink-0 text-amber-600" /> Compound Domestic Risk
                                                 </div>
-                                                <p className="text-[11px] text-muted-foreground font-medium leading-tight">
+                                                <p className="text-xs text-muted-foreground font-medium leading-tight">
                                                     Survivor is protected under <strong>{survivorStats.other_dossiers_count} other active Master Dossier(s)</strong>:
                                                 </p>
                                                 <div className="space-y-1 pt-1">
                                                     {survivorStats.other_dossiers.map(od => (
-                                                        <div key={od.id} className="flex items-center justify-between text-[11px] bg-background/80 p-1.5 rounded border">
+                                                        <div key={od.id} className="flex items-center justify-between text-xs bg-background/80 p-1.5 rounded border">
                                                             <span className="font-semibold text-foreground truncate mr-2">
                                                                 vs. {redactName(od.respondent_name)} ({od.relationship_type})
                                                             </span>
                                                             {od.latest_case_id ? (
                                                                 <Link 
                                                                     href={route('admin.vawc.show', od.latest_case_id)} 
-                                                                    className="font-mono text-[10px] font-bold text-primary hover:underline flex items-center gap-0.5 shrink-0"
+                                                                    className="font-mono text-xs font-bold text-primary hover:underline flex items-center gap-0.5 shrink-0"
                                                                 >
                                                                     {od.dossier_number} <ExternalLink className="w-2.5 h-2.5" />
                                                                 </Link>
                                                             ) : (
-                                                                <span className="font-mono text-[10px] font-bold shrink-0">{od.dossier_number}</span>
+                                                                <span className="font-mono text-xs font-bold shrink-0">{od.dossier_number}</span>
                                                             )}
                                                         </div>
                                                     ))}
@@ -990,13 +991,13 @@ export default function Show({ case: vawcCase, crossStats, survivorStats }: Prop
                                     <Separator />
 
                                     <div>
-                                        <p className="text-[11px] font-bold text-muted-foreground uppercase">Complainant / Reporter</p>
+                                        <p className="text-xs font-bold text-muted-foreground uppercase">Complainant / Reporter</p>
                                         <p className="font-bold text-foreground">{redactName(vawcCase.case_report.complainant_name || victim?.name || 'Self (Victim)')}</p>
-                                        <Badge variant="outline" className="text-[11px] font-bold mt-1">
+                                        <Badge variant="outline" className="text-xs font-semibold mt-1">
                                             Relation: {vawcCase.case_report.relation_to_victim || (vawcCase.intake_type === 'Direct' ? 'Self (Victim)' : 'Reporter')}
                                         </Badge>
                                         {vawcCase.case_report.complainant_contact && (
-                                            <p className="text-muted-foreground font-mono text-[11px] mt-1">Contact: {redactContact(vawcCase.case_report.complainant_contact)}</p>
+                                            <p className="text-muted-foreground font-mono text-xs mt-1">Contact: {redactContact(vawcCase.case_report.complainant_contact)}</p>
                                         )}
                                     </div>
                                 </div>
@@ -1021,10 +1022,10 @@ export default function Show({ case: vawcCase, crossStats, survivorStats }: Prop
                                         {/* Cross-Dossier Serial Perpetrator Indicator */}
                                         {crossStats?.has_other_dossiers && (
                                             <div className="mt-2 p-2.5 rounded-lg border border-red-500/30 bg-red-500/10 text-xs space-y-1">
-                                                <div className="flex items-center gap-1.5 font-extrabold text-[10px] text-red-600 dark:text-red-400 uppercase tracking-wide">
+                                                <div className="flex items-center gap-1.5 font-bold text-xs text-red-600 dark:text-red-400 uppercase tracking-wide">
                                                     <ShieldAlert className="w-3.5 h-3.5 shrink-0" /> Cross-Dossier Serial Perpetrator
                                                 </div>
-                                                <p className="text-[11px] text-muted-foreground font-medium leading-tight">
+                                                <p className="text-xs text-muted-foreground font-medium leading-tight">
                                                     Linked to <strong>{crossStats.total_linked_dossiers} Master Dossiers</strong> ({crossStats.total_perpetrator_incidents} Total Incidents recorded across {crossStats.linked_survivor_count} survivors).
                                                 </p>
                                             </div>
@@ -1043,7 +1044,7 @@ export default function Show({ case: vawcCase, crossStats, survivorStats }: Prop
 
                                     {respondent?.physical_description && (
                                         <div className="p-3 bg-muted/40 rounded-lg border text-xs italic text-muted-foreground space-y-1">
-                                            <p className="font-bold text-[10px] uppercase tracking-wider text-muted-foreground not-italic">
+                                            <p className="font-bold text-xs uppercase tracking-wider text-muted-foreground not-italic">
                                                 Physical Marks / Description:
                                             </p>
                                             <p className="font-medium">"{respondent.physical_description}"</p>
@@ -1059,7 +1060,7 @@ export default function Show({ case: vawcCase, crossStats, survivorStats }: Prop
                                 </Label>
                                 <div className="space-y-3 p-4 rounded-xl border bg-card text-xs">
                                     <div>
-                                        <p className="text-[11px] font-bold text-muted-foreground uppercase">Abuse Category</p>
+                                        <p className="text-xs font-bold text-muted-foreground uppercase">Abuse Category</p>
                                         <Badge className="bg-slate-900 text-white font-bold text-xs mt-0.5">
                                             {vawcCase.case_report.abuse_type?.name || 'VAWC'}
                                         </Badge>
@@ -1069,7 +1070,7 @@ export default function Show({ case: vawcCase, crossStats, survivorStats }: Prop
                                         <p className="text-muted-foreground mt-1 font-mono">
                                             Incident Date: {new Date(vawcCase.case_report.incident_date).toLocaleString()}
                                         </p>
-                                        <p className="text-muted-foreground font-mono text-[11px]">
+                                        <p className="text-muted-foreground font-mono text-xs">
                                             Reported Logged: {new Date(vawcCase.created_at).toLocaleString()}
                                         </p>
                                     </div>
@@ -1077,40 +1078,40 @@ export default function Show({ case: vawcCase, crossStats, survivorStats }: Prop
                                     <Separator />
 
                                     <div className="space-y-1.5">
-                                        <p className="text-[11px] font-bold text-muted-foreground uppercase">Safety & Operational Badges</p>
+                                        <p className="text-xs font-bold text-muted-foreground uppercase">Safety & Operational Badges</p>
                                         <div className="flex flex-wrap gap-1">
                                             {vawcCase.children_count > 0 && (
-                                                <Badge variant="destructive" className="text-[10px] font-bold">
+                                                <Badge variant="destructive" className="text-xs font-semibold">
                                                     {vawcCase.children_count} Minors Present
                                                 </Badge>
                                             )}
                                             {vawcCase.is_repeat_offense && (
-                                                <Badge variant="destructive" className="text-[10px] font-bold">
+                                                <Badge variant="destructive" className="text-xs font-semibold">
                                                     Repeat Offense
                                                 </Badge>
                                             )}
                                             {vawcCase.has_weapon_involved && (
-                                                <Badge variant="destructive" className="text-[10px] font-bold">
+                                                <Badge variant="destructive" className="text-xs font-semibold">
                                                     Weapons Involved
                                                 </Badge>
                                             )}
                                             {vawcCase.weapons_confiscated && (
-                                                <Badge variant="outline" className="text-[10px] font-bold border-amber-500 text-amber-700">
+                                                <Badge variant="outline" className="text-xs font-semibold border-amber-500 text-amber-700">
                                                     Weapons Confiscated
                                                 </Badge>
                                             )}
                                             {vawcCase.perpetrator_present && (
-                                                <Badge variant="destructive" className="text-[10px] font-bold">
+                                                <Badge variant="destructive" className="text-xs font-semibold">
                                                     Perpetrator at Scene
                                                 </Badge>
                                             )}
                                             {vawcCase.warrantless_arrest_made && (
-                                                <Badge variant="outline" className="text-[10px] font-bold border-blue-500 text-blue-700">
+                                                <Badge variant="outline" className="text-xs font-semibold border-blue-500 text-blue-700">
                                                     Warrantless Arrest
                                                 </Badge>
                                             )}
                                             {vawcCase.incident_veracity && (
-                                                <Badge variant="outline" className="text-[10px] font-bold border-emerald-500 text-emerald-700">
+                                                <Badge variant="outline" className="text-xs font-semibold border-emerald-500 text-emerald-700">
                                                     Incident Verified
                                                 </Badge>
                                             )}
@@ -1126,18 +1127,26 @@ export default function Show({ case: vawcCase, crossStats, survivorStats }: Prop
                                 </Label>
                                 <div className="space-y-3 p-4 rounded-xl border bg-card text-xs">
                                     <div>
-                                        <p className="text-[11px] font-bold text-muted-foreground uppercase mb-1">Agency Transmittals</p>
+                                        <p className="text-xs font-bold text-muted-foreground uppercase mb-1">Agency Transmittals</p>
                                         {(() => {
-                                            let referrals = [];
-                                            if (typeof vawcCase.referral_status === 'string') {
-                                                try { referrals = JSON.parse(vawcCase.referral_status); } catch (e) { }
-                                            } else if (Array.isArray(vawcCase.referral_status)) {
-                                                referrals = vawcCase.referral_status;
+                                            let referrals: string[] = [];
+                                            const raw = vawcCase.referral_status;
+                                            if (Array.isArray(raw)) {
+                                                referrals = raw;
+                                            } else if (typeof raw === 'string' && raw.trim().length > 0) {
+                                                try {
+                                                    let parsed = JSON.parse(raw);
+                                                    if (typeof parsed === 'string') parsed = JSON.parse(parsed);
+                                                    if (Array.isArray(parsed)) referrals = parsed;
+                                                    else if (typeof parsed === 'string') referrals = [parsed];
+                                                } catch (e) {
+                                                    referrals = [raw];
+                                                }
                                             }
                                             return referrals.length > 0 ? (
-                                                <div className="flex flex-wrap gap-1">
+                                                <div className="flex flex-wrap gap-1.5">
                                                     {referrals.map((r: string) => (
-                                                        <Badge key={r} variant="outline" className="text-[11px] font-bold">
+                                                        <Badge key={r} variant="outline" className="text-xs font-semibold bg-blue-50/50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300 border-blue-200">
                                                             {r}
                                                         </Badge>
                                                     ))}
@@ -1151,18 +1160,26 @@ export default function Show({ case: vawcCase, crossStats, survivorStats }: Prop
                                     <Separator />
 
                                     <div>
-                                        <p className="text-[11px] font-bold text-muted-foreground uppercase mb-1">Survivor's Desired Action</p>
+                                        <p className="text-xs font-bold text-muted-foreground uppercase mb-1">Survivor's Desired Action</p>
                                         {(() => {
-                                            let actions = [];
-                                            if (typeof vawcCase.action_sought === 'string') {
-                                                try { actions = JSON.parse(vawcCase.action_sought); } catch (e) { }
-                                            } else if (Array.isArray(vawcCase.action_sought)) {
-                                                actions = vawcCase.action_sought;
+                                            let actions: string[] = [];
+                                            const raw = vawcCase.action_sought;
+                                            if (Array.isArray(raw)) {
+                                                actions = raw;
+                                            } else if (typeof raw === 'string' && raw.trim().length > 0) {
+                                                try {
+                                                    let parsed = JSON.parse(raw);
+                                                    if (typeof parsed === 'string') parsed = JSON.parse(parsed);
+                                                    if (Array.isArray(parsed)) actions = parsed;
+                                                    else if (typeof parsed === 'string') actions = [parsed];
+                                                } catch (e) {
+                                                    actions = [raw];
+                                                }
                                             }
                                             return actions.length > 0 ? (
-                                                <div className="flex flex-wrap gap-1">
+                                                <div className="flex flex-wrap gap-1.5">
                                                     {actions.map((a: string) => (
-                                                        <Badge key={a} variant="secondary" className="text-[11px] font-bold">
+                                                        <Badge key={a} variant="secondary" className="text-xs font-semibold bg-emerald-50/50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300 border-emerald-200">
                                                             {a}
                                                         </Badge>
                                                     ))}
@@ -1171,13 +1188,14 @@ export default function Show({ case: vawcCase, crossStats, survivorStats }: Prop
                                                 <p className="text-muted-foreground italic">No immediate action specified.</p>
                                             );
                                         })()}
+
                                     </div>
 
                                     {vawcCase.witness_info && (
                                         <>
                                             <Separator />
                                             <div>
-                                                <p className="text-[11px] font-bold text-muted-foreground uppercase">Witness Information</p>
+                                                <p className="text-xs font-bold text-muted-foreground uppercase">Witness Information</p>
                                                 <p className="text-muted-foreground italic">{vawcCase.witness_info}</p>
                                             </div>
                                         </>
@@ -1234,16 +1252,16 @@ export default function Show({ case: vawcCase, crossStats, survivorStats }: Prop
                                             <div className="space-y-2">
                                                 <div className="flex items-center justify-between">
                                                     <div className="flex items-center gap-1.5">
-                                                        <Badge variant={isCurrent ? 'default' : 'secondary'} className="text-[10px] font-mono font-bold">
+                                                        <Badge variant={isCurrent ? 'default' : 'secondary'} className="text-xs font-mono font-bold">
                                                             Incident #{siblingCase.incident_sequence || 1}
                                                         </Badge>
                                                         {isCurrent && (
-                                                            <span className="text-[10px] font-black uppercase text-primary tracking-wider">
+                                                            <span className="text-xs font-black uppercase text-primary tracking-wider">
                                                                 (Viewing Now)
                                                             </span>
                                                         )}
                                                     </div>
-                                                    <Badge variant="outline" className="text-[10px] font-bold">
+                                                    <Badge variant="outline" className="text-xs font-semibold">
                                                         {siblingCase.status}
                                                     </Badge>
                                                 </div>
@@ -1263,12 +1281,12 @@ export default function Show({ case: vawcCase, crossStats, survivorStats }: Prop
 
                                                 <div className="flex flex-wrap items-center gap-1.5 pt-1">
                                                     {siblingCase.assessment && (
-                                                        <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-muted font-mono">
+                                                        <span className="text-xs font-bold px-2 py-0.5 rounded bg-muted font-mono">
                                                             Score: {siblingCase.assessment.risk_score}/12 ({riskLevel})
                                                         </span>
                                                     )}
                                                     {siblingBpo && (
-                                                        <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 font-mono">
+                                                        <span className="text-xs font-bold px-2 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 font-mono">
                                                             {siblingBpo.order_number || `BPO ${siblingBpo.status}`}
                                                         </span>
                                                     )}
@@ -1282,7 +1300,7 @@ export default function Show({ case: vawcCase, crossStats, survivorStats }: Prop
                                                     </Link>
                                                 </Button>
                                             ) : (
-                                                <div className="text-center py-1 text-[11px] font-bold text-primary">
+                                                <div className="text-center py-1 text-xs font-bold text-primary">
                                                     Currently Viewing Active Room
                                                 </div>
                                             )}
@@ -1437,6 +1455,16 @@ export default function Show({ case: vawcCase, crossStats, survivorStats }: Prop
                             </DialogDescription>
                         </DialogHeader>
 
+                        <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl text-xs space-y-1 text-amber-800 dark:text-amber-300">
+                            <p className="font-bold flex items-center gap-1.5">
+                                <AlertTriangle className="w-4 h-4 shrink-0 text-amber-600" />
+                                Statutory Notice (RA 9262 Sec. 33)
+                            </p>
+                            <p className="text-[11px] leading-relaxed text-muted-foreground">
+                                Amicable conciliation or mediation is strictly prohibited under law for VAWC incidents. Cases may only be concluded upon 15-day BPO safe lapse, judicial transfer, or formal prosecutor disposition.
+                            </p>
+                        </div>
+
                         <form onSubmit={handleCloseCase} className="space-y-4">
                             <div className="space-y-2">
                                 <Label className="text-xs font-semibold">Legal Conclusion Reason *</Label>
@@ -1450,6 +1478,9 @@ export default function Show({ case: vawcCase, crossStats, survivorStats }: Prop
                                     <SelectContent>
                                         <SelectItem value="15-Day Protection Order Lapsed Successfully (No Violation)">
                                             15-Day Protection Order Lapsed Successfully (No Violation)
+                                        </SelectItem>
+                                        <SelectItem value="Referred to Family Court / PAO for TPO/PPO Application (Section 15)">
+                                            Referred to Family Court for TPO/PPO (Sec. 15)
                                         </SelectItem>
                                         <SelectItem value="Referred to Social Welfare for Sustained Intervention (Monitoring Complete)">
                                             Referred to Social Welfare (Monitoring Complete)
@@ -1466,6 +1497,7 @@ export default function Show({ case: vawcCase, crossStats, survivorStats }: Prop
                                     </SelectContent>
                                 </Select>
                             </div>
+
 
                             <div className="space-y-2">
                                 <Label className="text-xs font-semibold">Archival Remarks (Optional)</Label>

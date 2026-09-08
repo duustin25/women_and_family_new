@@ -154,8 +154,8 @@ class VawcCaseService
                 'perpetrator_present' => $data['perpetrator_present'] ?? false,
                 'warrantless_arrest_made' => $data['warrantless_arrest_made'] ?? false,
                 'weapons_confiscated' => $data['weapons_confiscated'] ?? false,
-                'referral_status' => json_encode($data['referral_status'] ?? []),
-                'action_sought' => json_encode($data['action_sought'] ?? []),
+                'referral_status' => $data['referral_status'] ?? [],
+                'action_sought' => $data['action_sought'] ?? [],
                 'witness_info' => $data['witness_info'] ?? null,
                 'status' => 'Intake',
             ]);

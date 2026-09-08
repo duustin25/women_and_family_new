@@ -45,7 +45,41 @@ class VawcCase extends Model
         'warrantless_arrest_made' => 'boolean',
         'weapons_confiscated' => 'boolean',
         'closed_at' => 'datetime',
+        'referral_status' => 'array',
+        'action_sought' => 'array',
     ];
+
+    /**
+     * Resilient accessor for referral_status ensuring clean array output.
+     */
+    public function getReferralStatusAttribute($value)
+    {
+        if (is_array($value)) return $value;
+        if (is_string($value)) {
+            $decoded = json_decode($value, true);
+            if (is_string($decoded)) {
+                $decoded = json_decode($decoded, true);
+            }
+            return is_array($decoded) ? $decoded : [];
+        }
+        return [];
+    }
+
+    /**
+     * Resilient accessor for action_sought ensuring clean array output.
+     */
+    public function getActionSoughtAttribute($value)
+    {
+        if (is_array($value)) return $value;
+        if (is_string($value)) {
+            $decoded = json_decode($value, true);
+            if (is_string($decoded)) {
+                $decoded = json_decode($decoded, true);
+            }
+            return is_array($decoded) ? $decoded : [];
+        }
+        return [];
+    }
 
     /**
      * The Master Dossier this VAWC incident belongs to.

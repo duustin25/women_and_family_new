@@ -1,20 +1,32 @@
 import AppLayout from '@/layouts/app-layout';
 import { Head, Link, router } from '@inertiajs/react';
+import React, { useState, useMemo } from 'react';
 import { route } from 'ziggy-js';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import {
-    ShieldAlert, AlertTriangle, Siren, Eye, TrendingUp,
-    Clock, Users, RotateCcw, HelpCircle, CheckCircle2,
-    Plus, ArrowRight, Crosshair, BarChart3, ShieldCheck
+    ShieldAlert, AlertTriangle, Clock, CheckCircle2,
+    Plus, ArrowRight, ShieldCheck, Search, Lock, Unlock,
+    FolderKanban, BarChart3
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+
+interface BpoInfo {
+    order_number: string;
+    status: string;
+    days_active: number;
+    days_remaining: number;
+    is_expired: boolean;
+}
 
 interface CaseQueueItem {
     id: number;
     case_number: string;
     victim_name: string;
+    respondent_name: string;
+    relationship_type: string;
     status: string;
     risk_level: string;
     risk_score: number | null;
@@ -23,6 +35,8 @@ interface CaseQueueItem {
     is_repeat: boolean;
     has_weapon?: boolean;
     children_count?: number;
+    is_multi_victim_offender?: boolean;
+    bpo_info?: BpoInfo | null;
 }
 
 interface Kpis {
@@ -46,91 +60,101 @@ interface Props {
     currentYear: number;
 }
 
-const RISK_STYLES: Record<string, { bar: string; badgeBg: string }> = {
-    CRITICAL: { bar: 'bg-red-600', badgeBg: 'bg-red-600 text-white' },
-    HIGH: { bar: 'bg-orange-500', badgeBg: 'bg-orange-600 text-white' },
-    MODERATE: { bar: 'bg-yellow-500', badgeBg: 'bg-yellow-500 text-black font-bold' },
-    LOW: { bar: 'bg-blue-500', badgeBg: 'bg-blue-600 text-white' },
-    PENDING: { bar: 'bg-slate-400', badgeBg: 'bg-slate-500 text-white' },
-    UNKNOWN: { bar: 'bg-slate-300', badgeBg: 'bg-slate-400 text-white' },
-};
+function redactName(name: string, isRedacted: boolean): string {
+    if (!isRedacted || !name) return name;
+    return name
+        .split(' ')
+        .map(word => (word.length <= 1 ? word : word[0] + '*'.repeat(Math.min(word.length - 1, 4))))
+        .join(' ');
+}
 
-function CaseQueueRow({ item }: { item: CaseQueueItem }) {
-    const style = RISK_STYLES[item.risk_level] ?? RISK_STYLES.UNKNOWN;
-    const scoreMax = 12;
-    const scorePercent = item.risk_score !== null ? Math.min((item.risk_score / scoreMax) * 100, 100) : 0;
+function simplifyRelationship(rel: string): string {
+    if (!rel) return 'Partner';
+    const clean = rel.toLowerCase();
+    if (clean.includes('spouse') || clean.includes('husband') || clean.includes('wife')) return 'Spouse';
+    if (clean.includes('former spouse') || clean.includes('separated') || clean.includes('annulled')) return 'Ex-Spouse';
+    if (clean.includes('common-law') || clean.includes('live-in')) return 'Live-in Partner';
+    if (clean.includes('former live-in') || clean.includes('former dating')) return 'Ex-Partner';
+    if (clean.includes('parent of common child')) return 'Co-Parent';
+    if (clean.includes('dating') || clean.includes('romantic')) return 'Dating Partner';
+    if (clean.includes('relative')) return 'Relative';
+    return rel;
+}
+
+function getScoreBadgeVariant(riskLevel: string) {
+    switch (riskLevel) {
+        case 'CRITICAL':
+        case 'HIGH':
+            return 'bg-red-100 text-red-700 border-red-200 dark:bg-red-950/60 dark:text-red-300 dark:border-red-800';
+        case 'MODERATE':
+            return 'bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800';
+        case 'LOW':
+            return 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-950/60 dark:text-blue-300 dark:border-blue-800';
+        default:
+            return 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700';
+    }
+}
+
+function CaseQueueCard({ item, isPrivacyRedacted }: { item: CaseQueueItem; isPrivacyRedacted: boolean }) {
+    const displayVictim = redactName(item.victim_name, isPrivacyRedacted);
+    const displayRespondent = redactName(item.respondent_name, isPrivacyRedacted);
+    const relationship = simplifyRelationship(item.relationship_type);
+    const scoreStyle = getScoreBadgeVariant(item.risk_level);
 
     return (
         <div
-            className="p-4 border-b last:border-0 hover:bg-muted/40 transition-all cursor-pointer group space-y-2.5"
+            className="p-4 sm:p-5 hover:bg-muted/50 active:bg-muted/70 active:scale-[0.99] transition-transform duration-100 cursor-pointer space-y-3"
             onClick={() => router.visit(`/admin/vawc/cases/${item.id}`)}
         >
-            {/* Top Row: Score + Victim Name + Date & Status Pill */}
+            {/* Header: Survivor vs Respondent + Score Pill */}
             <div className="flex items-start justify-between gap-3">
-                <div className="flex items-start gap-3 min-w-0">
-                    {/* Score Indicator */}
-                    <div className="flex flex-col items-center shrink-0 w-12">
-                        <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">SCORE</span>
-                        <span className="text-2xl font-black font-mono leading-none text-foreground my-0.5">
-                            {item.risk_score !== null ? item.risk_score : '—'}
+                <div className="min-w-0 flex-1">
+                    <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-slate-100 leading-snug truncate">
+                        {displayVictim} <span className="text-sm font-normal text-slate-400 dark:text-slate-500 mx-1">vs</span> {displayRespondent}
+                    </h3>
+                    <p className="text-sm font-medium text-slate-600 dark:text-slate-400 truncate mt-0.5">
+                        {relationship} • {item.abuse_type}
+                    </p>
+                </div>
+
+                <span className={cn("text-xs sm:text-sm font-bold px-2.5 sm:px-3 py-1 rounded-md border shrink-0 font-mono", scoreStyle)}>
+                    {item.risk_score !== null ? `${item.risk_score}/12` : 'Pending'}
+                </span>
+            </div>
+
+            {/* Metadata Line */}
+            <div className="flex items-center justify-between text-xs sm:text-sm font-mono text-slate-500 dark:text-slate-400 font-medium">
+                <span>{item.case_number}</span>
+                <span>{item.intake_date}</span>
+            </div>
+
+            {/* Operational Badges (WCAG Compliant min touch/visual targets) */}
+            {(item.is_multi_victim_offender || item.bpo_info || item.has_weapon || (item.children_count && item.children_count > 0) || item.is_repeat) && (
+                <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
+                    {item.is_multi_victim_offender && (
+                        <span className="text-xs font-semibold px-2.5 py-1 rounded-md bg-amber-100 text-amber-800 border border-amber-300 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800">
+                            🚨 Serial Offender
                         </span>
-                        <div className="w-full bg-muted rounded-full h-1.5 overflow-hidden">
-                            <div
-                                className={cn("h-full rounded-full transition-all", style.bar)}
-                                style={{ width: `${scorePercent}%` }}
-                            />
-                        </div>
-                    </div>
-
-                    {/* Victim Name */}
-                    <div className="min-w-0">
-                        <h3 className="text-base font-extrabold text-foreground group-hover:text-primary transition-colors leading-snug break-words">
-                            {item.victim_name}
-                        </h3>
-                    </div>
-                </div>
-
-                {/* Date & Status Pill */}
-                <div className="flex flex-col items-end gap-1.5 shrink-0">
-                    <span className="text-[11px] font-semibold text-muted-foreground font-mono">
-                        {item.intake_date}
-                    </span>
-                    <Badge variant="outline" className="text-[10px] font-extrabold uppercase px-2 py-0.5 bg-card">
-                        {item.status}
-                    </Badge>
-                </div>
-            </div>
-
-            {/* Middle Row: Case Number Badge & Abuse Category */}
-            <div className="flex items-center justify-between gap-2 pt-0.5">
-                <div className="flex items-center gap-2">
-                    <Badge variant="secondary" className="font-mono text-xs font-bold bg-muted text-foreground border border-border">
-                        {item.case_number}
-                    </Badge>
-                    <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                        {item.abuse_type}
-                    </span>
-                </div>
-                <Eye className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
-            </div>
-
-            {/* Bottom Row: Threat Badges */}
-            {(item.is_repeat || item.has_weapon || (item.children_count && item.children_count > 0)) && (
-                <div className="flex items-center gap-1.5 flex-wrap pt-1 border-t border-border/40">
-                    {item.has_weapon && (
-                        <Badge className="bg-red-600 hover:bg-red-700 text-white text-[10px] font-extrabold uppercase gap-1 py-0 px-2">
-                            WEAPON
-                        </Badge>
                     )}
-                    {item.is_repeat && (
-                        <Badge className="bg-amber-600 hover:bg-amber-700 text-[10px] font-extrabold uppercase gap-1 py-0 px-2">
-                            REPEAT
-                        </Badge>
+                    {item.bpo_info && (
+                        <span className="text-xs font-semibold px-2.5 py-1 rounded-md bg-emerald-100 text-emerald-800 border border-emerald-300 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800">
+                            🛡️ BPO: {item.bpo_info.days_remaining}d left
+                        </span>
+                    )}
+                    {item.has_weapon && (
+                        <span className="text-xs font-semibold px-2.5 py-1 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200/60 dark:border-slate-700">
+                            ⚔️ Weapon
+                        </span>
                     )}
                     {Boolean(item.children_count && item.children_count > 0) && (
-                        <Badge variant="secondary" className="text-[10px] font-extrabold uppercase gap-1 py-0 px-2 bg-purple-600 hover:bg-purple-700 text-white border border-purple-300">
-                            MINORS: {item.children_count}
-                        </Badge>
+                        <span className="text-xs font-semibold px-2.5 py-1 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200/60 dark:border-slate-700">
+                            👶 {item.children_count} {item.children_count === 1 ? 'Minor' : 'Minors'}
+                        </span>
+                    )}
+                    {item.is_repeat && !item.is_multi_victim_offender && (
+                        <span className="text-xs font-semibold px-2.5 py-1 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200/60 dark:border-slate-700">
+                            🔁 Repeat
+                        </span>
                     )}
                 </div>
             )}
@@ -150,249 +174,292 @@ export default function VawcDashboard({
     kpis,
     currentYear
 }: Props) {
+    const [isPrivacyRedacted, setIsPrivacyRedacted] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [activeFilter, setActiveFilter] = useState<'ALL' | 'CRITICAL' | 'BPOS' | 'REPEAT'>('ALL');
+
+    // Filter helper
+    const filterQueue = (queue: CaseQueueItem[]) => {
+        return queue.filter(item => {
+            if (searchQuery.trim()) {
+                const q = searchQuery.toLowerCase().trim();
+                const matches = (
+                    item.victim_name.toLowerCase().includes(q) ||
+                    item.respondent_name.toLowerCase().includes(q) ||
+                    item.case_number.toLowerCase().includes(q) ||
+                    item.abuse_type.toLowerCase().includes(q)
+                );
+                if (!matches) return false;
+            }
+
+            if (activeFilter === 'CRITICAL') return item.risk_level === 'CRITICAL' || item.risk_level === 'HIGH';
+            if (activeFilter === 'BPOS') return !!item.bpo_info;
+            if (activeFilter === 'REPEAT') return item.is_repeat;
+
+            return true;
+        });
+    };
+
+    const filteredCritical = useMemo(() => filterQueue(criticalQueue), [criticalQueue, searchQuery, activeFilter]);
+    const filteredModerate = useMemo(() => filterQueue(moderateQueue), [moderateQueue, searchQuery, activeFilter]);
+    const filteredLow = useMemo(() => filterQueue(lowQueue), [lowQueue, searchQuery, activeFilter]);
+    const filteredUnassessed = useMemo(() => filterQueue(unassessedQueue), [unassessedQueue, searchQuery, activeFilter]);
+
     return (
         <AppLayout breadcrumbs={[
             { title: 'Dashboard', href: '/dashboard' },
-            { title: 'Violence Against Women & Children', href: '/admin/vawc/cases' },
-            { title: 'Triage & Action Center', href: '#' }
+            { title: 'VAWC Cases', href: route('admin.vawc.index') },
+            { title: 'Action Center', href: '#' }
         ]}>
-            <Head title="VAWC Risk Triage & Action Center" />
+            <Head title="VAWC Action Center" />
 
-            <div className="flex h-full flex-1 flex-col gap-6 p-6 max-w-8xl mx-auto">
+            <div className="flex h-full flex-1 flex-col gap-5 sm:gap-6 p-4 sm:p-6 w-full">
 
-                {/* ── HEADER BAR ── */}
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-1">
-                    <div className="flex gap-4 items-center">
-                        <div>
-                            <div className="flex items-center gap-2">
-                                <h1 className="text-2xl font-black tracking-tight text-foreground uppercase">
-                                    VAWC Risk Triage & Action Center
-                                </h1>
-                                <Badge variant="destructive" className="font-bold text-xs">
-                                    RA 9262 Mandate
-                                </Badge>
-                            </div>
+                {/* ── HEADER ── */}
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                    <div>
+                        <div className="flex items-center gap-2.5 flex-wrap">
+                            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
+                                VAWC Action Center
+                            </h1>
+                            <Badge variant="outline" className="text-xs sm:text-sm font-semibold">
+                                RA 9262
+                            </Badge>
                         </div>
+                        <p className="text-sm sm:text-base text-muted-foreground mt-0.5">
+                            Risk triage priority queues and protection order monitoring.
+                        </p>
                     </div>
-                    <div className="flex flex-wrap gap-2">
-                        <Button asChild variant="outline" size="sm" className="font-bold text-xs">
-                            <Link href={`/admin/analytics?year=${currentYear}`} className="flex items-center gap-1.5">
-                                <BarChart3 className="w-4 h-4 text-primary" /> View Analytics
+
+                    {/* Action buttons (WCAG min-h-[44px] touch targets) */}
+                    <div className="flex items-center gap-2 sm:gap-2.5 flex-wrap">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setIsPrivacyRedacted(!isPrivacyRedacted)}
+                            className="flex-1 sm:flex-initial text-sm min-h-[44px] sm:min-h-[40px] gap-2 font-semibold px-4"
+                        >
+                            {isPrivacyRedacted ? <Lock className="w-4 h-4 text-amber-600" /> : <Unlock className="w-4 h-4 text-muted-foreground" />}
+                            <span className="hidden xs:inline">{isPrivacyRedacted ? "Names Redacted" : "Privacy Mode"}</span>
+                            <span className="xs:hidden">{isPrivacyRedacted ? "Redacted" : "Privacy"}</span>
+                        </Button>
+
+                        <Button asChild variant="outline" size="sm" className="flex-1 sm:flex-initial text-sm min-h-[44px] sm:min-h-[40px] font-semibold px-4">
+                            <Link href={route('admin.vawc.index')}>
+                                <FolderKanban className="w-4 h-4 mr-2 text-muted-foreground" />
+                                Registry
                             </Link>
                         </Button>
-                        <Button asChild variant="outline" size="sm" className="font-bold text-xs">
-                            <Link href={route('admin.vawc.index')} className="flex items-center gap-1.5">
-                                View Full Registry
-                            </Link>
-                        </Button>
-                        <Button asChild size="sm" className="bg-[#ce1126] hover:bg-red-700 font-bold text-xs px-4">
-                            <Link href={route('admin.vawc.create')} className="flex items-center gap-1.5">
-                                <Plus className="w-4 h-4" /> New Intake
+
+                        <Button asChild size="sm" className="w-full sm:w-auto text-sm min-h-[44px] sm:min-h-[40px] bg-[#ce1126] hover:bg-red-700 text-white font-bold px-4 shadow-sm">
+                            <Link href={route('admin.vawc.create')}>
+                                <Plus className="w-4 h-4 mr-1.5" /> New Case Intake
                             </Link>
                         </Button>
                     </div>
                 </div>
 
-                {/* ── 4 KPI TILES (PRESERVED & ENHANCED WITH SHADCN) ── */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    {/* 1. Critical Threats Active */}
-                    <Card className="shadow-sm bg-card">
-                        <CardHeader>
-                            <CardTitle className="text-xs font-black text-red-600 uppercase tracking-widest flex items-center gap-1.5">
-                                Total Critical Cases
+                {/* ── 4 SCALED STAT CARDS (RESPONSIVE: 2x2 ON MOBILE/TABLET, 4 COLUMNS ON DESKTOP) ── */}
+                <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 w-full">
+                    <Card className="shadow-2xs border-t-2 border-t-red-600">
+                        <CardHeader className="p-4 sm:p-5 pb-1">
+                            <CardTitle className="text-sm sm:text-base font-semibold text-slate-700 dark:text-slate-300">
+                                Critical Cases
                             </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-4xl font-black tracking-tight text-red-600 font-mono">
-                                {criticalTotal ?? 0}
+                            <div className="text-3xl sm:text-4xl font-extrabold tracking-tight text-red-600 font-mono mt-1">
+                                {criticalTotal}
                             </div>
+                        </CardHeader>
+                        <CardContent className="p-4 sm:p-5 pt-1">
+                            <p className="text-xs sm:text-sm font-medium text-slate-500 dark:text-slate-400">High lethality priority</p>
                         </CardContent>
                     </Card>
 
-                    {/* 2. Pending Triage Queue */}
-                    <Card className="shadow-sm bg-card">
-                        <CardHeader>
-                            <CardTitle className="text-xs font-black text-slate-600 dark:text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
-                                Total Case Pending
+                    <Card className="shadow-2xs border-t-2 border-t-slate-500">
+                        <CardHeader className="p-4 sm:p-5 pb-1">
+                            <CardTitle className="text-sm sm:text-base font-semibold text-slate-700 dark:text-slate-300">
+                                Pending Triage
                             </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-4xl font-black tracking-tight text-foreground font-mono">
-                                {unassessedTotal ?? 0}
+                            <div className="text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground font-mono mt-1">
+                                {unassessedTotal}
                             </div>
+                        </CardHeader>
+                        <CardContent className="p-4 sm:p-5 pt-1">
+                            <p className="text-xs sm:text-sm font-medium text-slate-500 dark:text-slate-400">Awaiting review</p>
                         </CardContent>
                     </Card>
 
-                    {/* 3. Active Enforced BPOs */}
-                    <Card className="shadow-sm bg-card">
-                        <CardHeader>
-                            <CardTitle className="text-xs font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest flex items-center gap-1.5">
-                                Total BPO Monitoring
+                    <Card className="shadow-2xs border-t-2 border-t-emerald-600">
+                        <CardHeader className="p-4 sm:p-5 pb-1">
+                            <CardTitle className="text-sm sm:text-base font-semibold text-slate-700 dark:text-slate-300">
+                                Active BPOs
                             </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-4xl font-black tracking-tight text-emerald-600 dark:text-emerald-400 font-mono">
+                            <div className="text-3xl sm:text-4xl font-extrabold tracking-tight text-emerald-600 dark:text-emerald-400 font-mono mt-1">
                                 {kpis.active_bpos ?? 0}
                             </div>
+                        </CardHeader>
+                        <CardContent className="p-4 sm:p-5 pt-1">
+                            <p className="text-xs sm:text-sm font-medium text-slate-500 dark:text-slate-400">15-day protection</p>
                         </CardContent>
                     </Card>
 
-                    {/* 4. Repeat & Recurrence Alert */}
-                    <Card className="shadow-sm bg-card">
-                        <CardHeader>
-                            <CardTitle className="text-xs font-black text-amber-600 dark:text-amber-400 uppercase tracking-widest flex items-center gap-1.5">
-                                Total Repeat Offense
+                    <Card className="shadow-2xs border-t-2 border-t-amber-600">
+                        <CardHeader className="p-4 sm:p-5 pb-1">
+                            <CardTitle className="text-sm sm:text-base font-semibold text-slate-700 dark:text-slate-300">
+                                Repeat Cases
                             </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-4xl font-black tracking-tight text-amber-600 dark:text-amber-400 font-mono">
+                            <div className="text-3xl sm:text-4xl font-extrabold tracking-tight text-amber-600 dark:text-amber-400 font-mono mt-1">
                                 {kpis.repeat_cases ?? 0}
                             </div>
+                        </CardHeader>
+                        <CardContent className="p-4 sm:p-5 pt-1">
+                            <p className="text-xs sm:text-sm font-medium text-slate-500 dark:text-slate-400">Recidivist incidents</p>
                         </CardContent>
                     </Card>
                 </div>
 
-                {/* ── PRIORITY QUEUES (READABLE & BIG FONTS) ── */}
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+                {/* ── SEARCH & FILTER CONTROLS (MOBILE & TABLET TOUCH-COMPLIANT) ── */}
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 w-full">
+                    <div className="relative flex-1 w-full sm:max-w-md">
+                        <Search className="absolute left-3.5 top-3.5 h-4 w-4 text-muted-foreground" />
+                        <Input
+                            placeholder="Filter survivor, respondent, case #..."
+                            value={searchQuery}
+                            onChange={e => setSearchQuery(e.target.value)}
+                            className="pl-10 h-11 min-h-[44px] text-base bg-background w-full"
+                        />
+                    </div>
 
-                    {/* CRITICAL / HIGH Queue */}
-                    <Card className="border shadow-sm flex flex-col justify-between">
-                        <div>
-                            <CardHeader className="py-3.5 border-b px-4 bg-red-50/50  dark:bg-red-950/20 flex flex-row items-center justify-between">
-                                <CardTitle className="text-sm font-extrabold uppercase tracking-wider text-red-600 flex items-center gap-1.5">
-                                    Critical / High Cases
-                                </CardTitle>
-                                <Badge variant="destructive" className="font-bold text-xs">
-                                    {criticalTotal}
-                                </Badge>
-                            </CardHeader>
-                            <CardContent className="p-0">
-                                {criticalQueue.length === 0 ? (
-                                    <div className="p-6 flex flex-col items-center justify-center text-center text-muted-foreground gap-2">
-                                        <CheckCircle2 className="w-8 h-8 text-emerald-500" />
-                                        <p className="text-xs font-bold uppercase">No critical or high-risk cases</p>
-                                    </div>
-                                ) : (
-                                    <div>{criticalQueue.map(item => <CaseQueueRow key={item.id} item={item} />)}</div>
-                                )}
-                            </CardContent>
-                        </div>
-                        {criticalTotal > criticalQueue.length && (
-                            <CardFooter className="p-2.5 border-t bg-muted/20">
-                                <Link
-                                    href={route('admin.vawc.index')}
-                                    className="w-full text-center text-xs font-bold text-red-600 hover:underline flex items-center justify-center gap-1 py-1"
-                                >
-                                    Showing top {criticalQueue.length} of {criticalTotal} · View All in Registry
-                                    <ArrowRight className="w-3.5 h-3.5" />
-                                </Link>
-                            </CardFooter>
-                        )}
+                    <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 w-full sm:w-auto">
+                        <Button
+                            variant={activeFilter === 'ALL' ? 'secondary' : 'ghost'}
+                            size="sm"
+                            onClick={() => setActiveFilter('ALL')}
+                            className="h-10 min-h-[44px] text-sm font-semibold px-4 whitespace-nowrap"
+                        >
+                            All Cases
+                        </Button>
+                        <Button
+                            variant={activeFilter === 'CRITICAL' ? 'secondary' : 'ghost'}
+                            size="sm"
+                            onClick={() => setActiveFilter('CRITICAL')}
+                            className="h-10 min-h-[44px] text-sm font-semibold px-4 whitespace-nowrap"
+                        >
+                            Critical
+                        </Button>
+                        <Button
+                            variant={activeFilter === 'BPOS' ? 'secondary' : 'ghost'}
+                            size="sm"
+                            onClick={() => setActiveFilter('BPOS')}
+                            className="h-10 min-h-[44px] text-sm font-semibold px-4 whitespace-nowrap"
+                        >
+                            Active BPOs
+                        </Button>
+                        <Button
+                            variant={activeFilter === 'REPEAT' ? 'secondary' : 'ghost'}
+                            size="sm"
+                            onClick={() => setActiveFilter('REPEAT')}
+                            className="h-10 min-h-[44px] text-sm font-semibold px-4 whitespace-nowrap"
+                        >
+                            Repeat
+                        </Button>
+                    </div>
+                </div>
+
+                {/* ── 4 COLUMNS KANBAN QUEUES (ADAPTIVE: 1 COL MOBILE, 2 COL TABLET/IPAD PORTRAIT, 4 COL DESKTOP) ── */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4 gap-4 items-start w-full">
+
+                    {/* 1. Critical / High Queue */}
+                    <Card className="shadow-2xs w-full">
+                        <CardHeader className="py-3 px-4 flex flex-row items-center justify-between border-b bg-red-50/40 dark:bg-red-950/20">
+                            <CardTitle className="text-base sm:text-lg font-bold tracking-tight text-red-600 dark:text-red-400">
+                                Critical / High
+                            </CardTitle>
+                            <Badge variant="secondary" className="text-xs sm:text-sm font-bold px-2.5 py-0.5 rounded-full font-mono">
+                                {filteredCritical.length}
+                            </Badge>
+                        </CardHeader>
+                        <CardContent className="p-0 divide-y divide-border/40">
+                            {filteredCritical.length === 0 ? (
+                                <div className="p-6 text-center text-sm font-medium text-muted-foreground">
+                                    No critical cases
+                                </div>
+                            ) : (
+                                filteredCritical.map(item => (
+                                    <CaseQueueCard key={item.id} item={item} isPrivacyRedacted={isPrivacyRedacted} />
+                                ))
+                            )}
+                        </CardContent>
                     </Card>
 
-                    {/* MODERATE Queue */}
-                    <Card className="border shadow-sm flex flex-col justify-between">
-                        <div>
-                            <CardHeader className="py-3.5 px-4 border-b bg-amber-50/50 dark:bg-amber-950/20 flex flex-row items-center justify-between">
-                                <CardTitle className="text-sm font-extrabold uppercase tracking-wider text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
-                                    Moderate Risk Cases
-                                </CardTitle>
-                                <Badge className="bg-amber-500 text-white font-bold text-xs">
-                                    {moderateTotal}
-                                </Badge>
-                            </CardHeader>
-                            <CardContent className="p-0">
-                                {moderateQueue.length === 0 ? (
-                                    <div className="p-6 flex flex-col items-center justify-center text-center text-muted-foreground gap-2">
-                                        <CheckCircle2 className="w-8 h-8 text-emerald-500" />
-                                        <p className="text-xs font-bold uppercase">No moderate-risk cases</p>
-                                    </div>
-                                ) : (
-                                    <div>{moderateQueue.map(item => <CaseQueueRow key={item.id} item={item} />)}</div>
-                                )}
-                            </CardContent>
-                        </div>
-                        {moderateTotal > moderateQueue.length && (
-                            <CardFooter className="p-2.5 border-t bg-muted/20">
-                                <Link
-                                    href={route('admin.vawc.index')}
-                                    className="w-full text-center text-xs font-bold text-amber-600 dark:text-amber-400 hover:underline flex items-center justify-center gap-1 py-1"
-                                >
-                                    View All {moderateTotal} Moderate Cases
-                                    <ArrowRight className="w-3.5 h-3.5" />
-                                </Link>
-                            </CardFooter>
-                        )}
+                    {/* 2. Moderate Queue */}
+                    <Card className="shadow-2xs w-full">
+                        <CardHeader className="py-3 px-4 flex flex-row items-center justify-between border-b bg-amber-50/40 dark:bg-amber-950/20">
+                            <CardTitle className="text-base sm:text-lg font-bold tracking-tight text-amber-600 dark:text-amber-400">
+                                Moderate Risk
+                            </CardTitle>
+                            <Badge variant="secondary" className="text-xs sm:text-sm font-bold px-2.5 py-0.5 rounded-full font-mono">
+                                {filteredModerate.length}
+                            </Badge>
+                        </CardHeader>
+                        <CardContent className="p-0 divide-y divide-border/40">
+                            {filteredModerate.length === 0 ? (
+                                <div className="p-6 text-center text-sm font-medium text-muted-foreground">
+                                    No moderate cases
+                                </div>
+                            ) : (
+                                filteredModerate.map(item => (
+                                    <CaseQueueCard key={item.id} item={item} isPrivacyRedacted={isPrivacyRedacted} />
+                                ))
+                            )}
+                        </CardContent>
                     </Card>
 
-                    {/* LOW RISK Queue */}
-                    <Card className="border shadow-sm flex flex-col justify-between">
-                        <div>
-                            <CardHeader className="py-3.5 px-4 border-b bg-blue-50/50 dark:bg-blue-950/20 flex flex-row items-center justify-between">
-                                <CardTitle className="text-sm font-extrabold uppercase tracking-wider text-blue-600 dark:text-blue-400 flex items-center gap-1.5">
-                                    Low Risk Cases
-                                </CardTitle>
-                                <Badge className="bg-blue-600 text-white font-bold text-xs">
-                                    {lowTotal}
-                                </Badge>
-                            </CardHeader>
-                            <CardContent className="p-0">
-                                {lowQueue.length === 0 ? (
-                                    <div className="p-6 flex flex-col items-center justify-center text-center text-muted-foreground gap-2">
-                                        <CheckCircle2 className="w-8 h-8 text-emerald-500" />
-                                        <p className="text-xs font-bold uppercase">No low-risk cases</p>
-                                    </div>
-                                ) : (
-                                    <div>{lowQueue.map(item => <CaseQueueRow key={item.id} item={item} />)}</div>
-                                )}
-                            </CardContent>
-                        </div>
-                        {lowTotal > lowQueue.length && (
-                            <CardFooter className="p-2.5 border-t bg-muted/20">
-                                <Link
-                                    href={route('admin.vawc.index')}
-                                    className="w-full text-center text-xs font-bold text-blue-600 hover:underline flex items-center justify-center gap-1 py-1"
-                                >
-                                    Showing top {lowQueue.length} of {lowTotal} · View All in Registry
-                                    <ArrowRight className="w-3.5 h-3.5" />
-                                </Link>
-                            </CardFooter>
-                        )}
+                    {/* 3. Low Risk Queue */}
+                    <Card className="shadow-2xs w-full">
+                        <CardHeader className="py-3 px-4 flex flex-row items-center justify-between border-b bg-blue-50/40 dark:bg-blue-950/20">
+                            <CardTitle className="text-base sm:text-lg font-bold tracking-tight text-blue-600 dark:text-blue-400">
+                                Low Risk
+                            </CardTitle>
+                            <Badge variant="secondary" className="text-xs sm:text-sm font-bold px-2.5 py-0.5 rounded-full font-mono">
+                                {filteredLow.length}
+                            </Badge>
+                        </CardHeader>
+                        <CardContent className="p-0 divide-y divide-border/40">
+                            {filteredLow.length === 0 ? (
+                                <div className="p-6 text-center text-sm font-medium text-muted-foreground">
+                                    No low-risk cases
+                                </div>
+                            ) : (
+                                filteredLow.map(item => (
+                                    <CaseQueueCard key={item.id} item={item} isPrivacyRedacted={isPrivacyRedacted} />
+                                ))
+                            )}
+                        </CardContent>
                     </Card>
 
-                    {/* PENDING QUEUE */}
-                    <Card className="border shadow-sm flex flex-col justify-between">
-                        <div>
-                            <CardHeader className="py-3.5 px-4 border-b bg-slate-100/50 dark:bg-slate-900/50 flex flex-row items-center justify-between">
-                                <CardTitle className="text-sm font-extrabold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-                                    Pending Cases
-                                </CardTitle>
-                                <Badge variant="outline" className="bg-slate-500 text-white text-xs">
-                                    {unassessedTotal}
-                                </Badge>
-                            </CardHeader>
-                            <CardContent className="p-0">
-                                {unassessedQueue.length === 0 ? (
-                                    <div className="p-6 flex flex-col items-center justify-center text-center text-muted-foreground gap-2">
-                                        <CheckCircle2 className="w-8 h-8 text-emerald-500" />
-                                        <p className="text-xs font-bold uppercase">All cases have been assessed</p>
-                                    </div>
-                                ) : (
-                                    <div>{unassessedQueue.map(item => <CaseQueueRow key={item.id} item={item} />)}</div>
-                                )}
-                            </CardContent>
-                        </div>
-                        {unassessedTotal > unassessedQueue.length && (
-                            <CardFooter className="p-2.5 border-t bg-muted/20">
-                                <Link
-                                    href={route('admin.vawc.index')}
-                                    className="w-full text-center text-xs font-bold text-slate-700 dark:text-slate-300 hover:underline flex items-center justify-center gap-1 py-1"
-                                >
-                                    Showing top {unassessedQueue.length} of {unassessedTotal} · View All in Registry
-                                    <ArrowRight className="w-3.5 h-3.5" />
-                                </Link>
-                            </CardFooter>
-                        )}
+                    {/* 4. Pending Review Queue */}
+                    <Card className="shadow-2xs w-full">
+                        <CardHeader className="py-3 px-4 flex flex-row items-center justify-between border-b bg-slate-50/60 dark:bg-slate-900/50">
+                            <CardTitle className="text-base sm:text-lg font-bold tracking-tight text-slate-700 dark:text-slate-300">
+                                Pending Review
+                            </CardTitle>
+                            <Badge variant="secondary" className="text-xs sm:text-sm font-bold px-2.5 py-0.5 rounded-full font-mono">
+                                {filteredUnassessed.length}
+                            </Badge>
+                        </CardHeader>
+                        <CardContent className="p-0 divide-y divide-border/40">
+                            {filteredUnassessed.length === 0 ? (
+                                <div className="p-6 text-center text-sm font-medium text-muted-foreground">
+                                    No pending cases
+                                </div>
+                            ) : (
+                                filteredUnassessed.map(item => (
+                                    <CaseQueueCard key={item.id} item={item} isPrivacyRedacted={isPrivacyRedacted} />
+                                ))
+                            )}
+                        </CardContent>
                     </Card>
 
                 </div>
