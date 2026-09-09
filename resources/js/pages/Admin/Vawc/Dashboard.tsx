@@ -174,8 +174,9 @@ export default function VawcDashboard({
     kpis,
     currentYear
 }: Props) {
-    const [isPrivacyRedacted, setIsPrivacyRedacted] = useState(false);
+    const [isPrivacyRedacted, setIsPrivacyRedacted] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
+
     const [activeFilter, setActiveFilter] = useState<'ALL' | 'CRITICAL' | 'BPOS' | 'REPEAT'>('ALL');
 
     // Filter helper

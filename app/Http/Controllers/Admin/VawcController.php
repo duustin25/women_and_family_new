@@ -360,6 +360,7 @@ class VawcController extends Controller
             'involvedParties',
             'assessment',
             'protectionOrders.issuedBy',
+            'protectionOrders.serviceRecords.servedBy',
             'complianceLogs',
             'escalations'
         ])->findOrFail($id);
@@ -474,10 +475,16 @@ class VawcController extends Controller
     public function applyBpo($id, Request $request)
     {
         $case = VawcCase::findOrFail($id);
+
+        $request->validate([
+            'application_datetime' => 'required',
+            'type' => 'nullable|string',
+        ]);
+
         $this->bpoService->fileApplication($case, $request->all());
         $case->dossier?->syncDossierAggregates();
 
-        return redirect()->back()->with('success', 'BPO Application filed.');
+        return redirect()->back()->with('success', 'BPO Application filed successfully.');
     }
 
     /**
@@ -491,6 +498,17 @@ class VawcController extends Controller
             ->where('status', 'Applied')
             ->latest()
             ->firstOrFail();
+
+        $request->validate([
+            'issued_datetime' => 'required',
+        ]);
+
+        $issuedAt = \Carbon\Carbon::parse($request->issued_datetime);
+        if ($order->application_datetime && $issuedAt->lt(\Carbon\Carbon::parse($order->application_datetime))) {
+            return redirect()->back()->withErrors([
+                'issued_datetime' => 'The issuance timestamp cannot be earlier than the application filing date & time.'
+            ]);
+        }
 
         $this->bpoService->issueOrder($order, $request->all());
         $case->dossier?->syncDossierAggregates();
@@ -515,10 +533,17 @@ class VawcController extends Controller
             'receiver_name' => 'nullable|string'
         ]);
 
+        $servedAt = \Carbon\Carbon::parse($request->served_datetime);
+        if ($order->issued_datetime && $servedAt->lt(\Carbon\Carbon::parse($order->issued_datetime))) {
+            return redirect()->back()->withErrors([
+                'served_datetime' => 'The service timestamp cannot be earlier than the official BPO issuance date & time.'
+            ]);
+        }
+
         $this->bpoService->recordService($order, $request->all());
         $case->dossier?->syncDossierAggregates();
 
-        return redirect()->back()->with('success', 'BPO Service recorded.');
+        return redirect()->back()->with('success', 'BPO Service recorded successfully.');
     }
 
     /**

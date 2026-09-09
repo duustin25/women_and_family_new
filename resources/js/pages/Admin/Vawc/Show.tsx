@@ -18,7 +18,8 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import {
     CheckCircle2, Gavel, Printer, Search, ShieldCheck, MapPin, ClipboardList,
     Info, ArchiveX, Lock, AlertTriangle, Activity, HelpCircle, ArrowLeft, ShieldAlert, Save,
-    Folder, FolderOpen, Layers, Plus, Clock, Calendar, ExternalLink, ChevronRight, Eye, EyeOff
+    Folder, FolderOpen, Layers, Plus, Clock, Calendar, ExternalLink, ChevronRight, Eye, EyeOff,
+    Check, Scale, Building2, UserX
 } from 'lucide-react';
 
 interface Props {
@@ -49,10 +50,68 @@ interface Props {
     };
 }
 
+const STATUTORY_CLOSURE_OPTIONS = [
+    {
+        id: '15-Day Protection Order Lapsed Successfully (No Violation)',
+        category: 'Statutory Order',
+        badgeClass: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/30',
+        title: '15-Day BPO Lapsed Successfully',
+        desc: '15-day protective order elapsed with full respondent compliance and zero violations or threats reported.',
+        icon: ShieldCheck,
+        iconColor: 'text-emerald-600 dark:text-emerald-400',
+    },
+    {
+        id: 'Referred to Family Court / PAO for TPO/PPO Application (Section 15)',
+        category: 'Court Transfer',
+        badgeClass: 'bg-blue-500/10 text-blue-700 dark:text-blue-300 border-blue-500/30',
+        title: 'Referred to Family Court / PAO',
+        desc: 'Case formal transmittal to RTC Family Court or Public Attorney\'s Office for judicial TPO/PPO filing under Section 15.',
+        icon: Scale,
+        iconColor: 'text-blue-600 dark:text-blue-400',
+    },
+    {
+        id: 'Referred to Social Welfare for Sustained Intervention (Monitoring Complete)',
+        category: 'Social Welfare',
+        badgeClass: 'bg-purple-500/10 text-purple-700 dark:text-purple-300 border-purple-500/30',
+        title: 'Referred to Social Welfare (MSWDO)',
+        desc: 'Transferred to DSWD / MSWDO for protective emergency safehouse custody, livelihood, and sustained psychosocial rehabilitation.',
+        icon: Building2,
+        iconColor: 'text-purple-600 dark:text-purple-400',
+    },
+    {
+        id: 'Court Issued Permanent Protection Order (PPO)',
+        category: 'Judicial Ruling',
+        badgeClass: 'bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 border-indigo-500/30',
+        title: 'Permanent Protection Order (PPO)',
+        desc: 'RTC Family Court has concluded judicial proceedings and issued a permanent, final protective order against respondent.',
+        icon: Gavel,
+        iconColor: 'text-indigo-600 dark:text-indigo-400',
+    },
+    {
+        id: 'Case Dismissed by Prosecutor',
+        category: 'Prosecutorial',
+        badgeClass: 'bg-slate-500/10 text-slate-700 dark:text-slate-300 border-slate-500/30',
+        title: 'Case Dismissed by Prosecutor',
+        desc: 'City or Provincial Prosecutor released formal resolution dismissing criminal complaint upon preliminary investigation.',
+        icon: CheckCircle2,
+        iconColor: 'text-slate-600 dark:text-slate-400',
+    },
+    {
+        id: 'Victim Withdrew / Relocated out of Jurisdiction',
+        category: 'Administrative',
+        badgeClass: 'bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/30',
+        title: 'Survivor Relocated / Withdrew',
+        desc: 'Voluntary affidavit of desistance executed by survivor or permanent relocation outside barangay administrative jurisdiction.',
+        icon: UserX,
+        iconColor: 'text-amber-600 dark:text-amber-400',
+    },
+];
+
 export default function Show({ case: vawcCase, crossStats, survivorStats }: Props) {
     const confirm = useConfirm();
-    const [isRedacted, setIsRedacted] = React.useState(false);
+    const [isRedacted, setIsRedacted] = React.useState(true);
     const victim = vawcCase.involved_parties.find((p: any) => p.role === 'Victim');
+
     const respondent = vawcCase.involved_parties.find((p: any) => p.role === 'Respondent');
     const activeBpo = vawcCase.protection_orders.find((o: any) => ['Applied', 'Issued', 'Served'].includes(o.status));
 
@@ -116,32 +175,186 @@ export default function Show({ case: vawcCase, crossStats, survivorStats }: Prop
         });
     };
 
+    const toLocalISOString = (d: Date) => {
+        const offset = d.getTimezoneOffset() * 60000;
+        return new Date(d.getTime() - offset).toISOString().slice(0, 16);
+    };
+
+    const isHistoricalEntry = (processDate: any, systemDate: any) => {
+        if (!processDate || !systemDate) return false;
+        const p = new Date(processDate).getTime();
+        const s = new Date(systemDate).getTime();
+        if (isNaN(p) || isNaN(s)) return false;
+        return Math.abs(p - s) > (24 * 60 * 60 * 1000);
+    };
+
     const incidentDateISO = vawcCase.case_report?.incident_date
-        ? new Date(vawcCase.case_report.incident_date).toISOString().slice(0, 16)
+        ? toLocalISOString(new Date(vawcCase.case_report.incident_date))
         : getNowLocalISO();
+
+    // 1. Initial Application Datetime:
+    // If BPO already exists, use its application_datetime; otherwise offset +30m from incident date (or current time if live)
+    const initialAppDatetime = React.useMemo(() => {
+        if (activeBpo?.application_datetime) {
+            return toLocalISOString(new Date(activeBpo.application_datetime));
+        }
+        if (vawcCase.case_report?.incident_date) {
+            const incDate = new Date(vawcCase.case_report.incident_date);
+            const offset = new Date(incDate.getTime() + 30 * 60 * 1000);
+            return toLocalISOString(offset);
+        }
+        return getNowLocalISO();
+    }, [vawcCase.case_report?.incident_date, activeBpo?.application_datetime]);
+
+    // 2. Initial Issuance Datetime:
+    // Under RA 9262 Sec. 14, BPO is issued within 24 hours. Default to application filing + 2 hours for realistic processing!
+    const initialIssuanceDatetime = React.useMemo(() => {
+        if (activeBpo?.issued_datetime) {
+            return toLocalISOString(new Date(activeBpo.issued_datetime));
+        }
+        if (activeBpo?.application_datetime) {
+            const appDate = new Date(activeBpo.application_datetime);
+            const offset = new Date(appDate.getTime() + 2 * 60 * 60 * 1000);
+            return toLocalISOString(offset);
+        }
+        if (vawcCase.case_report?.incident_date) {
+            const incDate = new Date(vawcCase.case_report.incident_date);
+            const offset = new Date(incDate.getTime() + (2.5 * 60 * 60 * 1000));
+            return toLocalISOString(offset);
+        }
+        return getNowLocalISO();
+    }, [activeBpo?.issued_datetime, activeBpo?.application_datetime, vawcCase.case_report?.incident_date]);
+
+    // 3. Initial Service Datetime:
+    // Default to issuance + 3 hours for delivery & service
+    const initialServiceDatetime = React.useMemo(() => {
+        const latestService = activeBpo?.service_records?.[0] || activeBpo?.serviceRecords?.[0];
+        if (latestService?.served_datetime) {
+            return toLocalISOString(new Date(latestService.served_datetime));
+        }
+        if (activeBpo?.issued_datetime) {
+            const issueDate = new Date(activeBpo.issued_datetime);
+            const offset = new Date(issueDate.getTime() + 3 * 60 * 60 * 1000);
+            return toLocalISOString(offset);
+        }
+        return getNowLocalISO();
+    }, [activeBpo?.issued_datetime, activeBpo?.service_records, activeBpo?.serviceRecords]);
+
+    // 4. Initial Monitoring Datetime:
+    const initialMonitorDatetime = React.useMemo(() => {
+        if (activeBpo?.issued_datetime && activeBpo?.expiration_date) {
+            const expDate = new Date(activeBpo.expiration_date);
+            const now = new Date();
+            if (now > expDate) {
+                const issueDate = new Date(activeBpo.issued_datetime);
+                const day3 = new Date(issueDate.getTime() + 3 * 24 * 60 * 60 * 1000);
+                return toLocalISOString(day3);
+            }
+        }
+        return getNowLocalISO();
+    }, [activeBpo?.issued_datetime, activeBpo?.expiration_date]);
 
     const daysRemaining = calculateDaysRemaining();
 
     // Form Hooks
     const bpoForm = useForm<any>({
         type: 'BPO',
-        application_datetime: incidentDateISO,
+        application_datetime: initialAppDatetime,
     });
     const issuanceForm = useForm<any>({
-        issued_datetime: incidentDateISO,
+        issued_datetime: initialIssuanceDatetime,
     });
     const serviceForm = useForm<any>({
         service_method: 'Personally Received',
-        served_datetime: incidentDateISO,
+        served_datetime: initialServiceDatetime,
         receiver_name: ''
     });
 
     const complianceForm = useForm<any>({
-        monitor_date: getNowLocalISO(),
+        monitor_date: initialMonitorDatetime,
         is_compliant: true,
         notes: '',
         needs_counseling: false,
     });
+
+    // Auto-sync dynamic offsets when prior milestone changes
+    React.useEffect(() => {
+        if (activeBpo?.application_datetime && !issuanceForm.isDirty) {
+            const appDate = new Date(activeBpo.application_datetime);
+            const offset = new Date(appDate.getTime() + 2 * 60 * 60 * 1000);
+            issuanceForm.setData('issued_datetime', toLocalISOString(offset));
+        }
+    }, [activeBpo?.application_datetime]);
+
+    React.useEffect(() => {
+        if (activeBpo?.issued_datetime && !serviceForm.isDirty) {
+            const issueDate = new Date(activeBpo.issued_datetime);
+            const offset = new Date(issueDate.getTime() + 3 * 60 * 60 * 1000);
+            serviceForm.setData('served_datetime', toLocalISOString(offset));
+        }
+    }, [activeBpo?.issued_datetime]);
+
+    // Real-Time SLA & Timing Analysis for Step 3 (Issuance)
+    const issuanceAnalysis = React.useMemo(() => {
+        const appDatetimeStr = activeBpo?.application_datetime;
+        const issueDatetimeStr = issuanceForm.data.issued_datetime;
+        if (!appDatetimeStr || !issueDatetimeStr) return null;
+
+        const appTime = new Date(appDatetimeStr).getTime();
+        const issueTime = new Date(issueDatetimeStr).getTime();
+        if (isNaN(appTime) || isNaN(issueTime)) return null;
+
+        const diffHours = (issueTime - appTime) / (1000 * 60 * 60);
+
+        if (diffHours < 0) {
+            return {
+                status: 'error' as const,
+                message: 'Statutory Violation: Official issuance timestamp cannot be dated prior to application filing.',
+                diffHours,
+                canSubmit: false,
+            };
+        }
+        if (diffHours > 24) {
+            return {
+                status: 'warning' as const,
+                message: `Statutory SLA Alert (RA 9262 Sec. 14): Selected issuance timestamp is ${diffHours.toFixed(1)} hours past application filing. This exceeds the mandatory 24-hour SLA window and will be officially logged as an SLA Breach in statutory audit records.`,
+                diffHours,
+                canSubmit: true,
+            };
+        }
+        return {
+            status: 'compliant' as const,
+            message: `✓ 24-Hour SLA Compliant: Issued ${diffHours < 1 ? `${Math.round(diffHours * 60)} minutes` : `${diffHours.toFixed(1)} hours`} after application filing (within mandatory 24-hour statutory limit).`,
+            diffHours,
+            canSubmit: true,
+        };
+    }, [activeBpo?.application_datetime, issuanceForm.data.issued_datetime]);
+
+    // Real-Time Timing Analysis for Step 4 (Service)
+    const serviceAnalysis = React.useMemo(() => {
+        const issueDatetimeStr = activeBpo?.issued_datetime;
+        const servedDatetimeStr = serviceForm.data.served_datetime;
+        if (!issueDatetimeStr || !servedDatetimeStr) return null;
+
+        const issueTime = new Date(issueDatetimeStr).getTime();
+        const servedTime = new Date(servedDatetimeStr).getTime();
+        if (isNaN(issueTime) || isNaN(servedTime)) return null;
+
+        const diffHours = (servedTime - issueTime) / (1000 * 60 * 60);
+
+        if (diffHours < 0) {
+            return {
+                status: 'error' as const,
+                message: 'Statutory Violation: Service timestamp cannot be dated prior to official BPO issuance.',
+                canSubmit: false,
+            };
+        }
+        return {
+            status: 'valid' as const,
+            message: `✓ Valid Service Window: Served ${diffHours < 1 ? `${Math.round(diffHours * 60)} minutes` : `${diffHours.toFixed(1)} hours`} after official BPO issuance.`,
+            canSubmit: true,
+        };
+    }, [activeBpo?.issued_datetime, serviceForm.data.served_datetime]);
 
     const escalationForm = useForm<any>({
         referral_target: 'PNP Women and Children Protection',
@@ -263,6 +476,17 @@ export default function Show({ case: vawcCase, crossStats, survivorStats }: Prop
 
     const stepNum = currentStep();
 
+    const activeCaseStatusLabel = () => {
+        if (vawcCase.status === 'Closed') return 'Archived / Concluded';
+        if (vawcCase.status === 'Escalated') return 'Escalated to Court/PNP';
+        if (stepNum === 1) return 'Intake / Assessment Pending';
+        if (stepNum === 2) return 'Application Pending';
+        if (stepNum === 3) return 'BPO Issuance Pending';
+        if (stepNum === 4) return 'BPO Service Pending';
+        if (stepNum === 5) return 'Under Monitoring (15-Day BPO)';
+        return vawcCase.dossier?.current_lifecycle || vawcCase.status;
+    };
+
     return (
         <AppLayout breadcrumbs={[
             { title: 'Dashboard', href: route('dashboard') },
@@ -302,14 +526,15 @@ export default function Show({ case: vawcCase, crossStats, survivorStats }: Prop
                             variant={isRedacted ? "default" : "outline"}
                             size="sm"
                             onClick={() => setIsRedacted(!isRedacted)}
-                            className={`min-h-[44px] sm:min-h-[38px] text-xs font-semibold transition-all ${isRedacted ? 'bg-amber-600 hover:bg-amber-700 text-white' : 'border-amber-500/40 text-amber-700 dark:text-amber-300'}`}
+                            className={`min-h-[44px] sm:min-h-[38px] text-xs font-semibold transition-all ${isRedacted ? 'bg-amber-600 hover:bg-amber-700 text-white shadow-xs' : 'border-amber-500/40 text-amber-700 dark:text-amber-300'}`}
                         >
                             {isRedacted ? (
-                                <><EyeOff className="w-4 h-4 mr-1.5" /> Identities Redacted (Sec. 44)</>
+                                <><Eye className="w-4 h-4 mr-1.5" /> Reveal Identities (Authorized View)</>
                             ) : (
-                                <><Eye className="w-4 h-4 mr-1.5" /> Redact Identities (Sec. 44)</>
+                                <><EyeOff className="w-4 h-4 mr-1.5" /> Redact Identities (Sec. 44)</>
                             )}
                         </Button>
+
                         <Button variant="outline" size="sm" asChild className="min-h-[44px] sm:min-h-[38px]">
                             <Link href={route('admin.vawc.index')} className="flex gap-1.5 items-center font-semibold text-xs">
                                 <ArrowLeft className="w-4 h-4" /> Back to Registry
@@ -333,8 +558,13 @@ export default function Show({ case: vawcCase, crossStats, survivorStats }: Prop
                                     <Badge variant="secondary" className="text-xs font-bold uppercase">
                                         Incident #{vawcCase.incident_sequence || 1} of {vawcCase.dossier.incident_count || 1}
                                     </Badge>
-                                    <Badge variant="outline" className="text-xs font-semibold">
-                                        {vawcCase.dossier.current_lifecycle}
+                                    <Badge variant="outline" className={`text-xs font-semibold ${
+                                        stepNum === 5 ? 'border-emerald-500/30 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300' :
+                                        stepNum >= 2 && stepNum <= 4 ? 'border-amber-500/30 bg-amber-50 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300' :
+                                        stepNum === 6 ? 'border-red-500/30 bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-300' :
+                                        'border-slate-300 bg-slate-50 text-slate-700 dark:bg-slate-900 dark:text-slate-300'
+                                    }`}>
+                                        {activeCaseStatusLabel()}
                                     </Badge>
                                 </div>
                                 <p className="text-xs sm:text-sm text-muted-foreground font-medium">
@@ -610,32 +840,95 @@ export default function Show({ case: vawcCase, crossStats, survivorStats }: Prop
                         {/* STEP 2: APPLY BPO */}
                         {stepNum === 2 && (
                             <form onSubmit={handleApplyBpo} className="max-w-xl mx-auto py-4 space-y-4">
-                                <div className="p-4 rounded-xl border bg-muted/20 space-y-3">
-                                    <div className="flex items-center gap-2">
-                                        <ShieldCheck className="w-5 h-5 text-primary" />
-                                        <h4 className="text-xs font-bold uppercase tracking-wider text-foreground">
-                                            BPO Application Filing Date & Time
-                                        </h4>
+                                <div className="p-4 rounded-xl border bg-card space-y-3 shadow-xs">
+                                    <div className="flex items-center justify-between gap-2 flex-wrap pb-2 border-b">
+                                        <div className="flex items-center gap-2">
+                                            <ShieldCheck className="w-5 h-5 text-red-600" />
+                                            <h4 className="text-xs font-bold uppercase tracking-wider text-foreground">
+                                                BPO Application Filing Date & Time
+                                            </h4>
+                                        </div>
+                                        <Badge variant="outline" className="text-xs font-semibold">
+                                            RA 9262 Sec. 14
+                                        </Badge>
                                     </div>
+
+                                    {/* Critical Priority Ex-Officio Rescue Protocol Alert */}
+                                    {vawcCase.assessment?.risk_level === 'CRITICAL' && (
+                                        <div className="p-3.5 rounded-xl border border-red-500/40 bg-red-500/10 dark:bg-red-950/30 text-xs space-y-1.5">
+                                            <div className="flex items-center justify-between gap-2 flex-wrap font-bold text-red-700 dark:text-red-400">
+                                                <span className="flex items-center gap-1.5">
+                                                    <AlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
+                                                    CRITICAL RESCUE PROTOCOL (Score {vawcCase.assessment.risk_score} / 12)
+                                                </span>
+                                                <Badge className="bg-red-600 text-white font-bold text-xs">
+                                                    Ex-Officio Fast-Track
+                                                </Badge>
+                                            </div>
+                                            <p className="text-muted-foreground leading-relaxed">
+                                                Under <strong>RA 9262 Sec. 14</strong>, when a victim is in acute life danger or incapacitated, an <em>ex-officio</em> emergency protection application can be executed immediately by the Punong Barangay or VAW Desk Officer to dispatch police rescue.
+                                            </p>
+                                        </div>
+                                    )}
+
                                     <div className="space-y-1.5">
-                                        <Label className="text-xs font-semibold">Application Date & Time</Label>
+                                        <Label className="text-xs font-semibold text-foreground">Application Filing Date & Time</Label>
                                         <Input
                                             type="datetime-local"
+                                            min={vawcCase.case_report?.incident_date ? toLocalISOString(new Date(vawcCase.case_report.incident_date)) : undefined}
+                                            max={getNowLocalISO()}
                                             value={bpoForm.data.application_datetime}
                                             onChange={e => bpoForm.setData('application_datetime', e.target.value)}
-                                            className="text-xs"
+                                            className="text-xs sm:text-sm"
                                         />
-                                        <p className="text-[11px] text-muted-foreground">
-                                            Defaults to incident timestamp for historical encoding, or current time for live desk intake.
-                                        </p>
+                                    </div>
+
+                                    {/* Quick Timestamp Preset Buttons */}
+                                    <div className="pt-1 space-y-1">
+                                        <span className="text-xs text-muted-foreground font-medium block">Quick Presets:</span>
+                                        <div className="flex items-center gap-2 flex-wrap">
+                                            {vawcCase.case_report?.incident_date && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        const incDate = new Date(vawcCase.case_report.incident_date);
+                                                        const offset = new Date(incDate.getTime() + 30 * 60 * 1000);
+                                                        bpoForm.setData('application_datetime', toLocalISOString(offset));
+                                                    }}
+                                                    className="px-2.5 py-1 text-xs font-semibold rounded-md border bg-muted/40 hover:bg-muted text-foreground transition-colors cursor-pointer"
+                                                >
+                                                    +30m from Incident
+                                                </button>
+                                            )}
+                                            {vawcCase.case_report?.incident_date && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        bpoForm.setData('application_datetime', toLocalISOString(new Date(vawcCase.case_report.incident_date)));
+                                                    }}
+                                                    className="px-2.5 py-1 text-xs font-semibold rounded-md border bg-muted/40 hover:bg-muted text-foreground transition-colors cursor-pointer"
+                                                >
+                                                    Same as Incident
+                                                </button>
+                                            )}
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    bpoForm.setData('application_datetime', getNowLocalISO());
+                                                }}
+                                                className="px-2.5 py-1 text-xs font-semibold rounded-md border bg-muted/40 hover:bg-muted text-foreground transition-colors cursor-pointer"
+                                            >
+                                                Current Time (Live Intake)
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
 
                                 <div className="text-center pt-2">
-                                    <Button type="submit" size="lg" disabled={bpoForm.processing} className="bg-[#ce1126] hover:bg-red-700 font-bold text-sm px-8 shadow-md">
+                                    <Button type="submit" size="lg" disabled={bpoForm.processing} className="bg-[#ce1126] hover:bg-red-700 font-bold text-sm px-8 shadow-md min-h-[44px]">
                                         File Official Protection Order Application
                                     </Button>
-                                    <p className="text-xs text-muted-foreground font-semibold mt-2">Republic Act 9262 - Section 14 Mandate</p>
+                                    <p className="text-xs text-muted-foreground font-semibold mt-2">Republic Act 9262 - Section 14 Mandate (24-Hour Issuance SLA Clock Starts)</p>
                                 </div>
                             </form>
                         )}
@@ -645,31 +938,147 @@ export default function Show({ case: vawcCase, crossStats, survivorStats }: Prop
                             <form onSubmit={handleIssueBpo} className="max-w-xl mx-auto py-4 space-y-4">
                                 <Alert className="border-amber-300 bg-amber-50 dark:bg-amber-950/20 text-amber-800 dark:text-amber-300">
                                     <Info className="w-4 h-4" />
-                                    <AlertTitle className="text-xs font-bold uppercase">Action Required from Punong Barangay</AlertTitle>
-                                    <AlertDescription className="text-xs mt-1">
-                                        Protection Order must be reviewed and officially issued within same-day SLA of filing.
+                                    <AlertTitle className="text-xs font-bold uppercase">Action Required: Punong Barangay Issuance Mandate</AlertTitle>
+                                    <AlertDescription className="text-xs mt-1 leading-relaxed">
+                                        Under <strong>Republic Act 9262, Section 14</strong>, the Punong Barangay (or Kagawad in PB's absence) must review the application and officially issue the BPO within <strong>24 hours of filing</strong>.
                                     </AlertDescription>
                                 </Alert>
 
-                                <div className="p-4 rounded-xl border bg-muted/20 space-y-3">
+                                <div className="p-4 rounded-xl border bg-card space-y-3 shadow-xs">
+                                    <div className="flex items-center justify-between gap-2 flex-wrap pb-2 border-b">
+                                        <div className="flex items-center gap-2">
+                                            <Gavel className="w-5 h-5 text-red-600" />
+                                            <h4 className="text-xs font-bold uppercase tracking-wider text-foreground">
+                                                Official Issuance Date & Time
+                                            </h4>
+                                        </div>
+                                        <Badge variant="outline" className="text-xs font-semibold">
+                                            24-Hour SLA Target
+                                        </Badge>
+                                    </div>
+
+                                    {/* Application Filing Reference Banner */}
+                                    <div className="p-2.5 rounded-lg bg-muted/50 border text-xs text-muted-foreground flex items-center justify-between gap-2 flex-wrap">
+                                        <div className="flex items-center gap-1.5">
+                                            <ShieldCheck className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+                                            <span>Application Filed:</span>
+                                            <strong className="text-foreground">
+                                                {formatDateTime(activeBpo?.application_datetime)}
+                                            </strong>
+                                        </div>
+                                        <span className="text-xs text-blue-600 dark:text-blue-400 font-medium">SLA Reference Time</span>
+                                    </div>
+
                                     <div className="space-y-1.5">
-                                        <Label className="text-xs font-semibold">Official Issuance Date & Time</Label>
+                                        <Label className="text-xs font-semibold text-foreground">Official Issuance Date & Time</Label>
                                         <Input
                                             type="datetime-local"
+                                            min={activeBpo?.application_datetime ? toLocalISOString(new Date(activeBpo.application_datetime)) : undefined}
+                                            max={getNowLocalISO()}
                                             value={issuanceForm.data.issued_datetime}
                                             onChange={e => issuanceForm.setData('issued_datetime', e.target.value)}
-                                            className="text-xs"
+                                            className="text-xs sm:text-sm"
                                         />
-                                        <p className="text-[11px] text-muted-foreground">
-                                            Specify when the Punong Barangay signed and issued the order.
-                                        </p>
                                     </div>
+
+                                    {/* Quick Preset Offset Buttons */}
+                                    {activeBpo?.application_datetime && (
+                                        <div className="pt-1 space-y-1">
+                                            <span className="text-xs text-muted-foreground font-medium block">Intelligent Offset Presets:</span>
+                                            <div className="flex items-center gap-2 flex-wrap">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        const appDate = new Date(activeBpo.application_datetime);
+                                                        const offset = new Date(appDate.getTime() + 1 * 60 * 60 * 1000);
+                                                        issuanceForm.setData('issued_datetime', toLocalISOString(offset));
+                                                    }}
+                                                    className="px-2.5 py-1 text-xs font-semibold rounded-md border bg-muted/40 hover:bg-muted text-foreground transition-colors cursor-pointer"
+                                                >
+                                                    +1 Hour
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        const appDate = new Date(activeBpo.application_datetime);
+                                                        const offset = new Date(appDate.getTime() + 2 * 60 * 60 * 1000);
+                                                        issuanceForm.setData('issued_datetime', toLocalISOString(offset));
+                                                    }}
+                                                    className="px-2.5 py-1 text-xs font-semibold rounded-md border border-primary/40 bg-primary/10 hover:bg-primary/20 text-primary transition-colors cursor-pointer font-bold"
+                                                >
+                                                    +2 Hours (Recommended)
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        const appDate = new Date(activeBpo.application_datetime);
+                                                        const offset = new Date(appDate.getTime() + 4 * 60 * 60 * 1000);
+                                                        issuanceForm.setData('issued_datetime', toLocalISOString(offset));
+                                                    }}
+                                                    className="px-2.5 py-1 text-xs font-semibold rounded-md border bg-muted/40 hover:bg-muted text-foreground transition-colors cursor-pointer"
+                                                >
+                                                    +4 Hours
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        issuanceForm.setData('issued_datetime', getNowLocalISO());
+                                                    }}
+                                                    className="px-2.5 py-1 text-xs font-semibold rounded-md border bg-muted/40 hover:bg-muted text-foreground transition-colors cursor-pointer"
+                                                >
+                                                    Current Time
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Real-time SLA & Timing Feedback Alert */}
+                                    {issuanceAnalysis && (
+                                        <div className="pt-2">
+                                            {issuanceAnalysis.status === 'error' && (
+                                                <div className="p-3 rounded-xl border border-red-300 dark:border-red-900/60 bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-300 text-xs flex items-start gap-2 leading-relaxed">
+                                                    <AlertTriangle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+                                                    <div>
+                                                        <strong className="block font-bold">Chronological Sequencing Error</strong>
+                                                        {issuanceAnalysis.message}
+                                                    </div>
+                                                </div>
+                                            )}
+                                            {issuanceAnalysis.status === 'warning' && (
+                                                <div className="p-3 rounded-xl border border-amber-300 dark:border-amber-900/60 bg-amber-50 dark:bg-amber-950/30 text-amber-800 dark:text-amber-300 text-xs flex items-start gap-2 leading-relaxed">
+                                                    <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                                                    <div>
+                                                        <strong className="block font-bold">Statutory SLA Breach Warning</strong>
+                                                        {issuanceAnalysis.message}
+                                                    </div>
+                                                </div>
+                                            )}
+                                            {issuanceAnalysis.status === 'compliant' && (
+                                                <div className="p-3 rounded-xl border border-emerald-300 dark:border-emerald-900/60 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-800 dark:text-emerald-300 text-xs flex items-start gap-2 leading-relaxed">
+                                                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                                                    <div>
+                                                        <strong className="block font-bold">SLA Compliant Issuance Window</strong>
+                                                        {issuanceAnalysis.message}
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
 
                                 <div className="text-center pt-2">
-                                    <Button type="submit" size="lg" disabled={issuanceForm.processing} className="bg-[#ce1126] hover:bg-red-700 font-bold text-sm px-8 shadow-md">
-                                        Confirm Protection Order Issuance
+                                    <Button
+                                        type="submit"
+                                        size="lg"
+                                        disabled={issuanceAnalysis?.status === 'error' || issuanceForm.processing}
+                                        className="bg-[#ce1126] hover:bg-red-700 font-bold text-sm px-8 shadow-md min-h-[44px]"
+                                    >
+                                        <Gavel className="w-4 h-4 mr-1.5" />
+                                        {issuanceForm.processing ? 'Issuing BPO...' : 'Confirm Protection Order Issuance'}
                                     </Button>
+                                    <p className="text-xs text-muted-foreground font-semibold mt-2">
+                                        Validates 15-day protective period under Punong Barangay Authority
+                                    </p>
                                 </div>
                             </form>
                         )}
@@ -678,12 +1087,12 @@ export default function Show({ case: vawcCase, crossStats, survivorStats }: Prop
                         {stepNum === 4 && (
                             <div className="space-y-6">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                    <Button variant="outline" className="h-12 font-bold text-xs flex items-center justify-center gap-2" asChild>
+                                    <Button variant="outline" className="h-12 font-bold text-xs flex items-center justify-center gap-2 min-h-[44px]" asChild>
                                         <a href={route('admin.vawc.print-bpo', vawcCase.id)} target="_blank" rel="noreferrer">
                                             <Printer className="w-4 h-4" /> (1) Print Protection Order Document
                                         </a>
                                     </Button>
-                                    <Button variant="outline" className="h-12 font-bold text-xs flex items-center justify-center gap-2" asChild>
+                                    <Button variant="outline" className="h-12 font-bold text-xs flex items-center justify-center gap-2 min-h-[44px]" asChild>
                                         <a href={route('admin.vawc.pnp-transmittal', vawcCase.id)} target="_blank" rel="noreferrer">
                                             <Info className="w-4 h-4" /> (2) Print Police Transmittal
                                         </a>
@@ -692,8 +1101,28 @@ export default function Show({ case: vawcCase, crossStats, survivorStats }: Prop
 
                                 <Separator />
 
-                                <form onSubmit={handleRecordService} className="space-y-4 bg-muted/20 p-4 rounded-xl border">
-                                    <h4 className="text-xs font-bold uppercase tracking-wider text-foreground">Record Service Status</h4>
+                                <form onSubmit={handleRecordService} className="space-y-4 bg-card p-5 rounded-xl border shadow-xs">
+                                    <div className="flex items-center justify-between gap-2 flex-wrap pb-2 border-b">
+                                        <h4 className="text-xs font-bold uppercase tracking-wider text-foreground">
+                                            Record Official Service of BPO to Respondent
+                                        </h4>
+                                        <Badge variant="outline" className="text-xs font-semibold">
+                                            RA 9262 Execution
+                                        </Badge>
+                                    </div>
+
+                                    {/* BPO Issuance Reference Banner */}
+                                    <div className="p-2.5 rounded-lg bg-muted/50 border text-xs text-muted-foreground flex items-center justify-between gap-2 flex-wrap">
+                                        <div className="flex items-center gap-1.5">
+                                            <Gavel className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                                            <span>BPO Issued & Signed:</span>
+                                            <strong className="text-foreground">
+                                                {formatDateTime(activeBpo?.issued_datetime)}
+                                            </strong>
+                                        </div>
+                                        <span className="text-xs text-muted-foreground">Issuance Baseline</span>
+                                    </div>
+
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                         <div className="space-y-2">
                                             <Label className="text-xs font-semibold">Service Method</Label>
@@ -714,6 +1143,8 @@ export default function Show({ case: vawcCase, crossStats, survivorStats }: Prop
                                             <Label className="text-xs font-semibold">Date & Time Served</Label>
                                             <Input
                                                 type="datetime-local"
+                                                min={activeBpo?.issued_datetime ? toLocalISOString(new Date(activeBpo.issued_datetime)) : undefined}
+                                                max={getNowLocalISO()}
                                                 value={serviceForm.data.served_datetime}
                                                 onChange={e => serviceForm.setData('served_datetime', e.target.value)}
                                                 className="text-xs"
@@ -729,8 +1160,85 @@ export default function Show({ case: vawcCase, crossStats, survivorStats }: Prop
                                             />
                                         </div>
                                     </div>
-                                    <div className="flex justify-end">
-                                        <Button type="submit" disabled={serviceForm.processing} className="bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs">
+
+                                    {/* Intelligent Service Presets */}
+                                    {activeBpo?.issued_datetime && (
+                                        <div className="pt-1 space-y-1">
+                                            <span className="text-xs text-muted-foreground font-medium block">Quick Offset Presets:</span>
+                                            <div className="flex items-center gap-2 flex-wrap">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        const issueDate = new Date(activeBpo.issued_datetime);
+                                                        const offset = new Date(issueDate.getTime() + 2 * 60 * 60 * 1000);
+                                                        serviceForm.setData('served_datetime', toLocalISOString(offset));
+                                                    }}
+                                                    className="px-2.5 py-1 text-xs font-semibold rounded-md border bg-muted/40 hover:bg-muted text-foreground transition-colors cursor-pointer"
+                                                >
+                                                    +2 Hours from Issuance
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        const issueDate = new Date(activeBpo.issued_datetime);
+                                                        const offset = new Date(issueDate.getTime() + 4 * 60 * 60 * 1000);
+                                                        serviceForm.setData('served_datetime', toLocalISOString(offset));
+                                                    }}
+                                                    className="px-2.5 py-1 text-xs font-semibold rounded-md border bg-muted/40 hover:bg-muted text-foreground transition-colors cursor-pointer"
+                                                >
+                                                    +4 Hours
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        const issueDate = new Date(activeBpo.issued_datetime);
+                                                        const offset = new Date(issueDate.getTime() + 24 * 60 * 60 * 1000);
+                                                        serviceForm.setData('served_datetime', toLocalISOString(offset));
+                                                    }}
+                                                    className="px-2.5 py-1 text-xs font-semibold rounded-md border bg-muted/40 hover:bg-muted text-foreground transition-colors cursor-pointer"
+                                                >
+                                                    +24 Hours (Next Day)
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        serviceForm.setData('served_datetime', getNowLocalISO());
+                                                    }}
+                                                    className="px-2.5 py-1 text-xs font-semibold rounded-md border bg-muted/40 hover:bg-muted text-foreground transition-colors cursor-pointer"
+                                                >
+                                                    Current Time
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Real-time Service Timing Alert */}
+                                    {serviceAnalysis && (
+                                        <div className="pt-1">
+                                            {serviceAnalysis.status === 'error' && (
+                                                <div className="p-3 rounded-xl border border-red-300 dark:border-red-900/60 bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-300 text-xs flex items-start gap-2 leading-relaxed">
+                                                    <AlertTriangle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+                                                    <div>
+                                                        <strong className="block font-bold">Chronological Sequencing Error</strong>
+                                                        {serviceAnalysis.message}
+                                                    </div>
+                                                </div>
+                                            )}
+                                            {serviceAnalysis.status === 'valid' && (
+                                                <div className="p-2.5 rounded-lg border border-emerald-300 dark:border-emerald-900/60 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-800 dark:text-emerald-300 text-xs flex items-center gap-2">
+                                                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                                                    <span>{serviceAnalysis.message}</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+
+                                    <div className="flex justify-end pt-2">
+                                        <Button
+                                            type="submit"
+                                            disabled={serviceAnalysis?.status === 'error' || serviceForm.processing}
+                                            className="bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs min-h-[42px] px-5"
+                                        >
                                             Save Service Record
                                         </Button>
                                     </div>
@@ -992,14 +1500,32 @@ export default function Show({ case: vawcCase, crossStats, survivorStats }: Prop
 
                                     <div>
                                         <p className="text-xs font-bold text-muted-foreground uppercase">Complainant / Reporter</p>
-                                        <p className="font-bold text-foreground">{redactName(vawcCase.case_report.complainant_name || victim?.name || 'Self (Victim)')}</p>
-                                        <Badge variant="outline" className="text-xs font-semibold mt-1">
-                                            Relation: {vawcCase.case_report.relation_to_victim || (vawcCase.intake_type === 'Direct' ? 'Self (Victim)' : 'Reporter')}
-                                        </Badge>
-                                        {vawcCase.case_report.complainant_contact && (
-                                            <p className="text-muted-foreground font-mono text-xs mt-1">Contact: {redactContact(vawcCase.case_report.complainant_contact)}</p>
+                                        {vawcCase.case_report.is_anonymous ? (
+                                            <div className="mt-1 space-y-1">
+                                                <div className="flex items-center gap-1.5 text-amber-700 dark:text-amber-300 font-bold text-xs">
+                                                    <EyeOff className="w-3.5 h-3.5 text-amber-600" />
+                                                    <span>CONFIDENTIAL INFORMANT</span>
+                                                </div>
+                                                <Badge variant="outline" className="text-[11px] font-semibold border-amber-300 bg-amber-50/50 dark:bg-amber-950/20 text-amber-800 dark:text-amber-300">
+                                                    Sec. 44 Whistleblower Shield Active
+                                                </Badge>
+                                                <p className="text-muted-foreground font-mono text-[11px] mt-0.5">
+                                                    Identity & Contact: <span className="italic text-slate-400">•••••••••••• (SEALED BY LAW)</span>
+                                                </p>
+                                            </div>
+                                        ) : (
+                                            <>
+                                                <p className="font-bold text-foreground">{redactName(vawcCase.case_report.complainant_name || victim?.name || 'Self (Victim)')}</p>
+                                                <Badge variant="outline" className="text-xs font-semibold mt-1">
+                                                    Relation: {vawcCase.case_report.relation_to_victim || (vawcCase.intake_type === 'Direct' ? 'Self (Victim)' : 'Reporter')}
+                                                </Badge>
+                                                {vawcCase.case_report.complainant_contact && (
+                                                    <p className="text-muted-foreground font-mono text-xs mt-1">Contact: {redactContact(vawcCase.case_report.complainant_contact)}</p>
+                                                )}
+                                            </>
                                         )}
                                     </div>
+
                                 </div>
                             </div>
 
@@ -1315,61 +1841,145 @@ export default function Show({ case: vawcCase, crossStats, survivorStats }: Prop
                 {/* OFFICIAL RA 9262 CASE AUDIT TRAIL & HISTORY TIMELINE CARD */}
                 <Card className="border shadow-xs">
                     <CardHeader className="py-4 px-6 border-b bg-muted/20">
-                        <CardTitle className="text-base font-extrabold uppercase tracking-wider text-foreground flex items-center gap-2">
-                            <ClipboardList className="w-5 h-5 text-primary" /> Official Statutory Audit Trail & Processing History Log
-                        </CardTitle>
-                        <CardDescription className="text-xs font-semibold text-muted-foreground">
-                            Chronological audit log of all case workflow milestones, BPO issuance timestamps, service dates, and compliance check-ins.
-                        </CardDescription>
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                            <div>
+                                <CardTitle className="text-base font-extrabold uppercase tracking-wider text-foreground flex items-center gap-2">
+                                    <ClipboardList className="w-5 h-5 text-primary" /> Official Statutory Audit Trail & Processing History Log
+                                </CardTitle>
+                                <CardDescription className="text-xs font-semibold text-muted-foreground mt-0.5">
+                                    Legal chain of custody and chronological audit log of all case workflow milestones, BPO issuance, service, and compliance check-ins.
+                                </CardDescription>
+                            </div>
+                            <Badge variant="outline" className="text-xs font-semibold self-start sm:self-auto border-primary/30 text-primary">
+                                RA 9262 Statutory Record
+                            </Badge>
+                        </div>
                     </CardHeader>
                     <CardContent className="p-6">
+                        {/* Dual-Timestamp Statutory Audit Standard Advisory Banner */}
+                        <div className="mb-6 p-4 rounded-xl border border-blue-200 dark:border-blue-900/60 bg-blue-50/50 dark:bg-blue-950/20 flex items-start gap-3 text-xs leading-relaxed">
+                            <Info className="w-5 h-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
+                            <div>
+                                <strong className="text-sm font-bold text-foreground block">
+                                    Dual-Timestamp Statutory Audit Standard (RA 9262 Protocol)
+                                </strong>
+                                <p className="text-muted-foreground mt-0.5">
+                                    To support both real-time desk intake and retrospective historical encoding, this official registry distinguishes between the <strong>Effective Legal Process Milestone</strong> (the verified date and time the legal event occurred or was back-encoded) and the <strong>System Audit Entry</strong> (the immutable server timestamp when digitally logged).
+                                </p>
+                                <div className="flex items-center gap-2.5 mt-2.5 flex-wrap">
+                                    <Badge variant="outline" className="text-xs font-semibold border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300">
+                                        Historical Back-Encoding (Retroactive Incident Logging)
+                                    </Badge>
+                                    <span className="text-muted-foreground text-xs font-medium">vs.</span>
+                                    <Badge variant="outline" className="text-xs font-semibold border-blue-300 dark:border-blue-700 bg-blue-50 dark:bg-blue-950/40 text-blue-800 dark:text-blue-300">
+                                        Live Real-Time Intake (Direct Desk Record)
+                                    </Badge>
+                                </div>
+                            </div>
+                        </div>
+
                         <div className="relative pl-6 border-l-2 border-primary/30 space-y-6">
 
                             {/* 1. Intake Logged */}
                             <div className="relative group">
                                 <span className="absolute -left-[31px] top-0.5 flex h-4 w-4 rounded-full bg-primary ring-4 ring-background" />
-                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
-                                    <h4 className="text-sm font-extrabold text-foreground">Step 1: Case Intake Disclosed & Registered</h4>
-                                    <span className="text-xs font-mono font-bold text-muted-foreground">
-                                        {formatDateTime(vawcCase.case_report?.incident_date || vawcCase.created_at)}
-                                    </span>
+                                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2">
+                                    <div>
+                                        <div className="flex items-center gap-2 flex-wrap">
+                                            <h4 className="text-sm font-extrabold text-foreground">Step 1: Case Incident & Desk Intake Disclosed</h4>
+                                            {isHistoricalEntry(vawcCase.case_report?.incident_date, vawcCase.created_at) ? (
+                                                <Badge variant="outline" className="text-xs font-semibold border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300">
+                                                    Historical Back-Encoding
+                                                </Badge>
+                                            ) : (
+                                                <Badge variant="outline" className="text-xs font-semibold border-blue-300 dark:border-blue-700 bg-blue-50 dark:bg-blue-950/40 text-blue-800 dark:text-blue-300">
+                                                    Live Real-Time Intake
+                                                </Badge>
+                                            )}
+                                        </div>
+                                        <p className="text-xs text-muted-foreground mt-1">
+                                            Direct intake recorded under Docket Number <strong className="text-foreground font-mono">{vawcCase.sub_case_number || vawcCase.case_report?.case_number}</strong>. Incident reported at {vawcCase.case_report?.incident_location || 'Jurisdiction Site'}.
+                                        </p>
+                                    </div>
+                                    <div className="text-xs text-muted-foreground flex flex-col sm:items-end shrink-0">
+                                        <span className="font-mono font-bold text-foreground flex items-center gap-1">
+                                            <Calendar className="w-3.5 h-3.5 text-slate-500" /> Process Date: {formatDateTime(vawcCase.case_report?.incident_date || vawcCase.created_at)}
+                                        </span>
+                                        <span className="font-mono text-xs flex items-center gap-1 text-muted-foreground">
+                                            <Clock className="w-3 h-3 text-slate-400" /> System Logged: {formatDateTime(vawcCase.created_at)}
+                                        </span>
+                                    </div>
                                 </div>
-                                <p className="text-xs text-muted-foreground mt-1">
-                                    Direct intake recorded under Docket Number <strong className="text-foreground">{vawcCase.sub_case_number || vawcCase.case_report?.case_number}</strong>. Incident reported at {vawcCase.case_report?.incident_location}.
-                                </p>
                             </div>
 
                             {/* 2. Risk Triage Calculated */}
                             {vawcCase.assessment && (
                                 <div className="relative group">
                                     <span className="absolute -left-[31px] top-0.5 flex h-4 w-4 rounded-full bg-amber-500 ring-4 ring-background" />
-                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
-                                        <h4 className="text-sm font-extrabold text-foreground">Step 2: VAWC-RAVE Risk Triage Score Calculated</h4>
-                                        <span className="text-xs font-mono font-bold text-muted-foreground">
-                                            {formatDateTime(vawcCase.assessment.updated_at || vawcCase.assessment.created_at)}
-                                        </span>
+                                    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2">
+                                        <div>
+                                            <div className="flex items-center gap-2 flex-wrap">
+                                                <h4 className="text-sm font-extrabold text-foreground">Step 2: VAWC-RAVE Risk Triage Score Calculated</h4>
+                                                {isHistoricalEntry(vawcCase.case_report?.incident_date, vawcCase.assessment.created_at) ? (
+                                                    <Badge variant="outline" className="text-xs font-semibold border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300">
+                                                        Historical Back-Encoding Evaluation
+                                                    </Badge>
+                                                ) : (
+                                                    <Badge variant="outline" className="text-xs font-semibold border-blue-300 dark:border-blue-700 bg-blue-50 dark:bg-blue-950/40 text-blue-800 dark:text-blue-300">
+                                                        Live Real-Time Intake
+                                                    </Badge>
+                                                )}
+                                            </div>
+                                            <p className="text-xs text-muted-foreground mt-1">
+                                                Automated algorithm evaluated risk score at <strong className="text-foreground">{vawcCase.assessment.risk_score} / 12</strong> ({vawcCase.assessment.risk_level} Priority Queue).
+                                            </p>
+                                        </div>
+                                        <div className="text-xs text-muted-foreground flex flex-col sm:items-end shrink-0">
+                                            <span className="font-mono font-bold text-foreground flex items-center gap-1">
+                                                <Calendar className="w-3.5 h-3.5 text-slate-500" /> Evaluation Date: {formatDateTime(vawcCase.assessment.created_at || vawcCase.case_report?.incident_date)}
+                                            </span>
+                                            <span className="font-mono text-xs flex items-center gap-1 text-muted-foreground">
+                                                <Clock className="w-3 h-3 text-slate-400" /> System Logged: {formatDateTime(vawcCase.assessment.updated_at || vawcCase.assessment.created_at)}
+                                            </span>
+                                        </div>
                                     </div>
-                                    <p className="text-xs text-muted-foreground mt-1">
-                                        Automated algorithm evaluated risk score at <strong className="text-foreground">{vawcCase.assessment.risk_score} / 12</strong> ({vawcCase.assessment.risk_level} Priority Queue).
-                                    </p>
                                 </div>
                             )}
 
-                            {/* 3. BPO Application & Issuance */}
+                            {/* 3. BPO Application, Issuance & Service */}
                             {vawcCase.protection_orders?.map((po: any, idx: number) => (
                                 <React.Fragment key={po.id || idx}>
+                                    {/* Application */}
                                     {po.application_datetime && (
                                         <div className="relative group">
                                             <span className="absolute -left-[31px] top-0.5 flex h-4 w-4 rounded-full bg-blue-500 ring-4 ring-background" />
-                                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
-                                                <h4 className="text-sm font-extrabold text-foreground">Step 3: Barangay Protection Order (BPO) Application Logged</h4>
-                                                <span className="text-xs font-mono font-bold text-muted-foreground">
-                                                    {formatDateTime(po.application_datetime)}
-                                                </span>
+                                            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2">
+                                                <div>
+                                                    <div className="flex items-center gap-2 flex-wrap">
+                                                        <h4 className="text-sm font-extrabold text-foreground">Step 3: Barangay Protection Order (BPO) Application Logged</h4>
+                                                        {isHistoricalEntry(po.application_datetime, po.created_at) ? (
+                                                            <Badge variant="outline" className="text-xs font-semibold border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300">
+                                                                Historical Back-Encoding
+                                                            </Badge>
+                                                        ) : (
+                                                            <Badge variant="outline" className="text-xs font-semibold border-blue-300 dark:border-blue-700 bg-blue-50 dark:bg-blue-950/40 text-blue-800 dark:text-blue-300">
+                                                                Live Real-Time Intake
+                                                            </Badge>
+                                                        )}
+                                                    </div>
+                                                    <p className="text-xs text-muted-foreground mt-1">
+                                                        BPO Application filed under RA 9262 Section 14 ({po.order_number ? <strong className="text-foreground font-mono">{po.order_number}</strong> : 'BPO Order'}). Mandatory 24-Hour Statutory Issuance SLA timer initialized.
+                                                    </p>
+                                                </div>
+                                                <div className="text-xs text-muted-foreground flex flex-col sm:items-end shrink-0">
+                                                    <span className="font-mono font-bold text-foreground flex items-center gap-1">
+                                                        <Calendar className="w-3.5 h-3.5 text-slate-500" /> Application Date: {formatDateTime(po.application_datetime)}
+                                                    </span>
+                                                    <span className="font-mono text-xs flex items-center gap-1 text-muted-foreground">
+                                                        <Clock className="w-3 h-3 text-slate-400" /> System Logged: {formatDateTime(po.created_at)}
+                                                    </span>
+                                                </div>
                                             </div>
-                                            <p className="text-xs text-muted-foreground mt-1">
-                                                BPO Application filed under RA 9262 Section 14 ({po.order_number ? <strong className="text-foreground font-mono">{po.order_number}</strong> : 'BPO Order'}). Same-Day SLA timer initialized.
-                                            </p>
                                         </div>
                                     )}
 
@@ -1377,17 +1987,74 @@ export default function Show({ case: vawcCase, crossStats, survivorStats }: Prop
                                     {po.issued_datetime && (
                                         <div className="relative group">
                                             <span className="absolute -left-[31px] top-0.5 flex h-4 w-4 rounded-full bg-emerald-500 ring-4 ring-background" />
-                                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
-                                                <h4 className="text-sm font-extrabold text-emerald-700 dark:text-emerald-400">Step 4: BPO Officially Issued & Signed</h4>
-                                                <span className="text-xs font-mono font-bold text-muted-foreground">
-                                                    {formatDateTime(po.issued_datetime)}
-                                                </span>
+                                            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2">
+                                                <div>
+                                                    <div className="flex items-center gap-2 flex-wrap">
+                                                        <h4 className="text-sm font-extrabold text-emerald-700 dark:text-emerald-400">Step 4: BPO Officially Issued & Signed</h4>
+                                                        {po.is_sla_breached ? (
+                                                            <Badge variant="outline" className="text-xs font-semibold border-red-300 dark:border-red-800 bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300">
+                                                                SLA Breached (&gt;24h)
+                                                            </Badge>
+                                                        ) : (
+                                                            <Badge variant="outline" className="text-xs font-semibold border-emerald-300 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300">
+                                                                24-Hour SLA Compliant
+                                                            </Badge>
+                                                        )}
+                                                        {isHistoricalEntry(po.issued_datetime, po.created_at) && (
+                                                            <Badge variant="outline" className="text-xs font-semibold border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300">
+                                                                Historical Back-Encoding
+                                                            </Badge>
+                                                        )}
+                                                    </div>
+                                                    <p className="text-xs text-muted-foreground mt-1">
+                                                        Signed by Punong Barangay ({po.order_number ? <span className="font-mono font-bold text-foreground">{po.order_number}</span> : 'Official BPO Document'}). Valid for 15 days until {formatDateOnly(po.expiration_date)}. SLA Status: <strong className={po.is_sla_breached ? 'text-red-600 font-bold' : 'text-emerald-600 font-bold'}>{po.is_sla_breached ? 'Statutory SLA Breached' : '24-Hour SLA Compliant'}</strong>.
+                                                    </p>
+                                                </div>
+                                                <div className="text-xs text-muted-foreground flex flex-col sm:items-end shrink-0">
+                                                    <span className="font-mono font-bold text-foreground flex items-center gap-1">
+                                                        <Calendar className="w-3.5 h-3.5 text-slate-500" /> Issued Date: {formatDateTime(po.issued_datetime)}
+                                                    </span>
+                                                    <span className="font-mono text-xs flex items-center gap-1 text-muted-foreground">
+                                                        <Clock className="w-3 h-3 text-slate-400" /> System Logged: {formatDateTime(po.updated_at || po.created_at)}
+                                                    </span>
+                                                </div>
                                             </div>
-                                            <p className="text-xs text-muted-foreground mt-1">
-                                                Signed by Punong Barangay ({po.order_number ? <span className="font-mono font-bold text-foreground">{po.order_number}</span> : 'Official BPO Document'}). Valid for 15 days until {formatDateOnly(po.expiration_date)}. SLA Status: <strong className={po.is_sla_breached ? 'text-red-600 font-bold' : 'text-emerald-600 font-bold'}>{po.is_sla_breached ? 'SLA Breached' : 'Same-Day SLA Compliant'}</strong>.
-                                            </p>
                                         </div>
                                     )}
+
+                                    {/* BPO Service Records (Step 4.1) */}
+                                    {(po.service_records || po.serviceRecords)?.map((sr: any, sIdx: number) => (
+                                        <div key={sr.id || sIdx} className="relative group">
+                                            <span className="absolute -left-[31px] top-0.5 flex h-4 w-4 rounded-full bg-cyan-600 ring-4 ring-background" />
+                                            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2">
+                                                <div>
+                                                    <div className="flex items-center gap-2 flex-wrap">
+                                                        <h4 className="text-sm font-extrabold text-foreground">Step 4.1: BPO Officially Served to Respondent</h4>
+                                                        {isHistoricalEntry(sr.served_datetime, sr.created_at) ? (
+                                                            <Badge variant="outline" className="text-xs font-semibold border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300">
+                                                                Historical Back-Encoding
+                                                            </Badge>
+                                                        ) : (
+                                                            <Badge variant="outline" className="text-xs font-semibold border-blue-300 dark:border-blue-700 bg-blue-50 dark:bg-blue-950/40 text-blue-800 dark:text-blue-300">
+                                                                Live Real-Time Intake
+                                                            </Badge>
+                                                        )}
+                                                    </div>
+                                                    <p className="text-xs text-muted-foreground mt-1">
+                                                        Service Method: <strong className="text-foreground">{sr.service_method}</strong> · Recipient: <strong className="text-foreground">{sr.receiver_name || 'Respondent'}</strong> {sr.served_by?.name && `· Serving Officer: ${sr.served_by.name}`}.
+                                                    </p>
+                                                </div>
+                                                <div className="text-xs text-muted-foreground flex flex-col sm:items-end shrink-0">
+                                                    <span className="font-mono font-bold text-foreground flex items-center gap-1">
+                                                        <Calendar className="w-3.5 h-3.5 text-slate-500" /> Served Date: {formatDateTime(sr.served_datetime)}
+                                                    </span>
+                                                    <span className="font-mono text-xs flex items-center gap-1 text-muted-foreground">
+                                                        <Clock className="w-3 h-3 text-slate-400" /> System Logged: {formatDateTime(sr.created_at)}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
                                 </React.Fragment>
                             ))}
 
@@ -1395,15 +2062,33 @@ export default function Show({ case: vawcCase, crossStats, survivorStats }: Prop
                             {vawcCase.compliance_logs?.map((log: any) => (
                                 <div key={log.id} className="relative group">
                                     <span className="absolute -left-[31px] top-0.5 flex h-4 w-4 rounded-full bg-purple-500 ring-4 ring-background" />
-                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
-                                        <h4 className="text-sm font-extrabold text-foreground">Step 5: Compliance Monitoring Check-In Session Logged</h4>
-                                        <span className="text-xs font-mono font-bold text-muted-foreground">
-                                            {formatDateTime(log.monitor_date || log.created_at)}
-                                        </span>
+                                    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2">
+                                        <div>
+                                            <div className="flex items-center gap-2 flex-wrap">
+                                                <h4 className="text-sm font-extrabold text-foreground">Step 5: Compliance Monitoring Check-In Session Logged</h4>
+                                                {isHistoricalEntry(log.monitor_date, log.created_at) ? (
+                                                    <Badge variant="outline" className="text-xs font-semibold border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300">
+                                                        Historical Back-Encoding
+                                                    </Badge>
+                                                ) : (
+                                                    <Badge variant="outline" className="text-xs font-semibold border-blue-300 dark:border-blue-700 bg-blue-50 dark:bg-blue-950/40 text-blue-800 dark:text-blue-300">
+                                                        Live Real-Time Intake
+                                                    </Badge>
+                                                )}
+                                            </div>
+                                            <p className="text-xs text-muted-foreground mt-1">
+                                                Officer Check-in Status: <strong className={log.is_compliant ? 'text-emerald-600 font-bold' : 'text-red-600 font-bold'}>{log.is_compliant ? 'Compliant' : 'Violation Observed'}</strong>. Notes: "{log.notes || 'Routine check-in completed.'}" {log.referral_type && `· Referred to ${log.referral_type}`}.
+                                            </p>
+                                        </div>
+                                        <div className="text-xs text-muted-foreground flex flex-col sm:items-end shrink-0">
+                                            <span className="font-mono font-bold text-foreground flex items-center gap-1">
+                                                <Calendar className="w-3.5 h-3.5 text-slate-500" /> Check-in Date: {formatDateTime(log.monitor_date || log.created_at)}
+                                            </span>
+                                            <span className="font-mono text-xs flex items-center gap-1 text-muted-foreground">
+                                                <Clock className="w-3 h-3 text-slate-400" /> System Logged: {formatDateTime(log.created_at)}
+                                            </span>
+                                        </div>
                                     </div>
-                                    <p className="text-xs text-muted-foreground mt-1">
-                                        Officer Check-in Status: <strong className={log.is_compliant ? 'text-emerald-600 font-bold' : 'text-red-600 font-bold'}>{log.is_compliant ? 'Compliant' : 'Violation Observed'}</strong>. Notes: "{log.notes || 'Routine check-in completed.'}" {log.referral_type && `· Referred to ${log.referral_type}`}.
-                                    </p>
                                 </div>
                             ))}
 
@@ -1411,15 +2096,33 @@ export default function Show({ case: vawcCase, crossStats, survivorStats }: Prop
                             {vawcCase.escalations?.map((esc: any) => (
                                 <div key={esc.id} className="relative group">
                                     <span className="absolute -left-[31px] top-0.5 flex h-4 w-4 rounded-full bg-red-600 ring-4 ring-background" />
-                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
-                                        <h4 className="text-sm font-extrabold text-red-600">Step 6: Transmittal & Legal Escalation to Law Enforcement</h4>
-                                        <span className="text-xs font-mono font-bold text-muted-foreground">
-                                            {formatDateTime(esc.escalated_at || esc.created_at)}
-                                        </span>
+                                    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2">
+                                        <div>
+                                            <div className="flex items-center gap-2 flex-wrap">
+                                                <h4 className="text-sm font-extrabold text-red-600">Step 6: Transmittal & Legal Escalation to Law Enforcement</h4>
+                                                {isHistoricalEntry(esc.escalated_at, esc.created_at) ? (
+                                                    <Badge variant="outline" className="text-xs font-semibold border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300">
+                                                        Historical Back-Encoding
+                                                    </Badge>
+                                                ) : (
+                                                    <Badge variant="outline" className="text-xs font-semibold border-blue-300 dark:border-blue-700 bg-blue-50 dark:bg-blue-950/40 text-blue-800 dark:text-blue-300">
+                                                        Live Real-Time Intake
+                                                    </Badge>
+                                                )}
+                                            </div>
+                                            <p className="text-xs text-muted-foreground mt-1">
+                                                Referred to <strong className="text-foreground">{esc.referral_target || 'PNP WCPD'}</strong>. Reason: "{esc.violation_description || 'Protection order breach reported.'}".
+                                            </p>
+                                        </div>
+                                        <div className="text-xs text-muted-foreground flex flex-col sm:items-end shrink-0">
+                                            <span className="font-mono font-bold text-foreground flex items-center gap-1">
+                                                <Calendar className="w-3.5 h-3.5 text-slate-500" /> Escalation Date: {formatDateTime(esc.escalated_at || esc.created_at)}
+                                            </span>
+                                            <span className="font-mono text-xs flex items-center gap-1 text-muted-foreground">
+                                                <Clock className="w-3 h-3 text-slate-400" /> System Logged: {formatDateTime(esc.created_at)}
+                                            </span>
+                                        </div>
                                     </div>
-                                    <p className="text-xs text-muted-foreground mt-1">
-                                        Referred to <strong className="text-foreground">{esc.referral_target || 'PNP WCPD'}</strong>. Reason: "{esc.violation_description || 'Protection order breach reported.'}".
-                                    </p>
                                 </div>
                             ))}
 
@@ -1427,15 +2130,33 @@ export default function Show({ case: vawcCase, crossStats, survivorStats }: Prop
                             {vawcCase.status === 'Closed' && (
                                 <div className="relative group">
                                     <span className="absolute -left-[31px] top-0.5 flex h-4 w-4 rounded-full bg-slate-700 ring-4 ring-background" />
-                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
-                                        <h4 className="text-sm font-extrabold text-slate-800 dark:text-slate-200">Step 7: Case Officially Closed & Archived</h4>
-                                        <span className="text-xs font-mono font-bold text-muted-foreground">
-                                            {formatDateTime(vawcCase.closed_at || vawcCase.updated_at)}
-                                        </span>
+                                    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2">
+                                        <div>
+                                            <div className="flex items-center gap-2 flex-wrap">
+                                                <h4 className="text-sm font-extrabold text-slate-800 dark:text-slate-200">Step 7: Case Officially Closed & Archived</h4>
+                                                {isHistoricalEntry(vawcCase.closed_at, vawcCase.updated_at) ? (
+                                                    <Badge variant="outline" className="text-xs font-semibold border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300">
+                                                        Historical Back-Encoding
+                                                    </Badge>
+                                                ) : (
+                                                    <Badge variant="outline" className="text-xs font-semibold border-blue-300 dark:border-blue-700 bg-blue-50 dark:bg-blue-950/40 text-blue-800 dark:text-blue-300">
+                                                        Live Real-Time Intake
+                                                    </Badge>
+                                                )}
+                                            </div>
+                                            <p className="text-xs text-muted-foreground mt-1">
+                                                Legal Conclusion Reason: <strong className="text-foreground">{vawcCase.closure_reason || 'Case Archived'}</strong>. {vawcCase.closure_remarks && `Remarks: "${vawcCase.closure_remarks}"`}
+                                            </p>
+                                        </div>
+                                        <div className="text-xs text-muted-foreground flex flex-col sm:items-end shrink-0">
+                                            <span className="font-mono font-bold text-foreground flex items-center gap-1">
+                                                <Calendar className="w-3.5 h-3.5 text-slate-500" /> Closed Date: {formatDateTime(vawcCase.closed_at || vawcCase.updated_at)}
+                                            </span>
+                                            <span className="font-mono text-xs flex items-center gap-1 text-muted-foreground">
+                                                <Clock className="w-3 h-3 text-slate-400" /> System Logged: {formatDateTime(vawcCase.updated_at)}
+                                            </span>
+                                        </div>
                                     </div>
-                                    <p className="text-xs text-muted-foreground mt-1">
-                                        Legal Conclusion Reason: <strong className="text-foreground">{vawcCase.closure_reason || 'Case Archived'}</strong>. {vawcCase.closure_remarks && `Remarks: "${vawcCase.closure_remarks}"`}
-                                    </p>
                                 </div>
                             )}
 
@@ -1445,87 +2166,147 @@ export default function Show({ case: vawcCase, crossStats, survivorStats }: Prop
 
                 {/* ── CASE ARCHIVAL / CLOSURE SHADCN DIALOG ── */}
                 <Dialog open={showCloseModal} onOpenChange={setShowCloseModal}>
-                    <DialogContent className="sm:max-w-md">
-                        <DialogHeader>
-                            <DialogTitle className="flex items-center gap-2 text-foreground font-bold text-base">
-                                <ArchiveX className="w-5 h-5 text-slate-500" /> Close & Archive Case File
-                            </DialogTitle>
-                            <DialogDescription className="text-xs pt-1 font-medium">
-                                Provide official legal justification to conclude barangay jurisdiction and archive records.
-                            </DialogDescription>
+                    <DialogContent className="sm:max-w-3xl max-h-[92vh] overflow-y-auto p-5 sm:p-6 gap-4">
+                        <DialogHeader className="space-y-1.5 border-b pb-3.5">
+                            <div className="flex items-start justify-between gap-3 flex-wrap">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-xl bg-red-600/10 dark:bg-red-500/20 text-red-600 dark:text-red-400 flex items-center justify-center shrink-0 border border-red-500/20">
+                                        <ArchiveX className="w-5 h-5" />
+                                    </div>
+                                    <div>
+                                        <DialogTitle className="text-lg sm:text-xl font-bold text-foreground tracking-tight">
+                                            Close & Archive Case Docket
+                                        </DialogTitle>
+                                        <DialogDescription className="text-xs sm:text-sm font-medium text-muted-foreground mt-0.5">
+                                            Establish verified statutory justification to conclude barangay jurisdiction and preserve case history.
+                                        </DialogDescription>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-2 flex-wrap">
+                                    <Badge variant="outline" className="font-mono text-xs font-semibold px-2.5 py-1">
+                                        {vawcCase.sub_case_number}
+                                    </Badge>
+                                    {vawcCase.dossier?.dossier_number && (
+                                        <Badge variant="secondary" className="font-mono text-xs font-semibold px-2.5 py-1">
+                                            {vawcCase.dossier.dossier_number}
+                                        </Badge>
+                                    )}
+                                </div>
+                            </div>
                         </DialogHeader>
 
-                        <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl text-xs space-y-1 text-amber-800 dark:text-amber-300">
-                            <p className="font-bold flex items-center gap-1.5">
-                                <AlertTriangle className="w-4 h-4 shrink-0 text-amber-600" />
-                                Statutory Notice (RA 9262 Sec. 33)
-                            </p>
-                            <p className="text-[11px] leading-relaxed text-muted-foreground">
-                                Amicable conciliation or mediation is strictly prohibited under law for VAWC incidents. Cases may only be concluded upon 15-day BPO safe lapse, judicial transfer, or formal prosecutor disposition.
+                        {/* Statutory Warning Notice */}
+                        <div className="p-3.5 bg-amber-500/10 border border-amber-500/25 rounded-xl space-y-1 text-amber-900 dark:text-amber-200">
+                            <div className="flex items-center gap-2 font-bold text-xs sm:text-sm text-amber-800 dark:text-amber-300">
+                                <AlertTriangle className="w-4 h-4 shrink-0 text-amber-600 dark:text-amber-400" />
+                                <span>Statutory Notice: Amicable Settlement Strictly Prohibited (RA 9262 Sec. 33)</span>
+                            </div>
+                            <p className="text-xs text-muted-foreground leading-relaxed pl-6">
+                                Under Philippine law, conciliation, amicable compromise, or mediation is strictly forbidden for VAWC incidents. This case docket may only be formally concluded upon verified protective order lapse, official court transfer, or formal prosecutor disposition.
                             </p>
                         </div>
 
                         <form onSubmit={handleCloseCase} className="space-y-4">
+                            {/* Interactive Statutory Grounds Selector Cards */}
                             <div className="space-y-2">
-                                <Label className="text-xs font-semibold">Legal Conclusion Reason *</Label>
-                                <Select
-                                    value={closeForm.data.closure_reason}
-                                    onValueChange={val => closeForm.setData('closure_reason', val)}
-                                >
-                                    <SelectTrigger className="w-full text-xs">
-                                        <SelectValue placeholder="Select reason..." />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="15-Day Protection Order Lapsed Successfully (No Violation)">
-                                            15-Day Protection Order Lapsed Successfully (No Violation)
-                                        </SelectItem>
-                                        <SelectItem value="Referred to Family Court / PAO for TPO/PPO Application (Section 15)">
-                                            Referred to Family Court for TPO/PPO (Sec. 15)
-                                        </SelectItem>
-                                        <SelectItem value="Referred to Social Welfare for Sustained Intervention (Monitoring Complete)">
-                                            Referred to Social Welfare (Monitoring Complete)
-                                        </SelectItem>
-                                        <SelectItem value="Court Issued Permanent Protection Order (PPO)">
-                                            Court Issued Permanent Protection Order (PPO)
-                                        </SelectItem>
-                                        <SelectItem value="Case Dismissed by Prosecutor">
-                                            Case Dismissed by Prosecutor
-                                        </SelectItem>
-                                        <SelectItem value="Victim Withdrew / Relocated out of Jurisdiction">
-                                            Victim Withdrew / Relocated
-                                        </SelectItem>
-                                    </SelectContent>
-                                </Select>
+                                <div className="flex items-center justify-between">
+                                    <Label className="text-xs sm:text-sm font-bold text-foreground flex items-center gap-1.5">
+                                        <ShieldCheck className="w-4 h-4 text-red-600" /> Statutory Grounds for Archival *
+                                    </Label>
+                                    <span className="text-xs text-muted-foreground font-medium">Select 1 legal disposition</span>
+                                </div>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                                    {STATUTORY_CLOSURE_OPTIONS.map((item) => {
+                                        const isSelected = closeForm.data.closure_reason === item.id;
+                                        const IconComp = item.icon;
+                                        return (
+                                            <button
+                                                type="button"
+                                                key={item.id}
+                                                onClick={() => closeForm.setData('closure_reason', item.id)}
+                                                className={`p-3 rounded-xl border text-left transition-all flex flex-col justify-between gap-2 min-h-[88px] cursor-pointer ${
+                                                    isSelected
+                                                        ? 'border-red-600 dark:border-red-500 bg-red-50/60 dark:bg-red-950/30 ring-1 ring-red-600 shadow-2xs'
+                                                        : 'bg-card hover:bg-muted/40 border-border'
+                                                }`}
+                                            >
+                                                <div className="flex items-start justify-between gap-2 w-full">
+                                                    <div className="flex items-center gap-2 flex-wrap">
+                                                        <div className={`p-1.5 rounded-lg bg-muted/60 shrink-0 ${item.iconColor}`}>
+                                                            <IconComp className="w-4 h-4" />
+                                                        </div>
+                                                        <Badge variant="outline" className={`text-xs font-semibold px-2 py-0.5 rounded-md border ${item.badgeClass}`}>
+                                                            {item.category}
+                                                        </Badge>
+                                                    </div>
+                                                    <div className={`w-4 h-4 rounded-full flex items-center justify-center border transition-colors shrink-0 mt-0.5 ${
+                                                        isSelected ? 'bg-red-600 border-red-600 text-white' : 'border-input bg-background'
+                                                    }`}>
+                                                        {isSelected && <Check className="w-2.5 h-2.5 stroke-[3]" />}
+                                                    </div>
+                                                </div>
+
+                                                <div>
+                                                    <span className="text-sm font-bold text-foreground block leading-snug">
+                                                        {item.title}
+                                                    </span>
+                                                    <p className="text-xs text-muted-foreground leading-relaxed mt-0.5 line-clamp-2">
+                                                        {item.desc}
+                                                    </p>
+                                                </div>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+
+                                {closeForm.errors.closure_reason && (
+                                    <p className="text-xs text-red-600 dark:text-red-400 font-semibold mt-1">
+                                        {closeForm.errors.closure_reason}
+                                    </p>
+                                )}
                             </div>
 
-
-                            <div className="space-y-2">
-                                <Label className="text-xs font-semibold">Archival Remarks (Optional)</Label>
+                            {/* Optional Archival Remarks */}
+                            <div className="space-y-1.5">
+                                <Label className="text-xs sm:text-sm font-semibold text-foreground flex items-center gap-1.5">
+                                    <Info className="w-4 h-4 text-slate-500" /> Archival Remarks & Audit Trail Documentation (Optional)
+                                </Label>
                                 <Textarea
-                                    placeholder="Add final notes for historical audit log..."
-                                    className="h-20 text-xs resize-none"
+                                    placeholder="Enter final case summary, transmittal reference tracking numbers, or handover notes for historical audit log..."
+                                    className="min-h-[70px] text-xs sm:text-sm rounded-xl resize-none"
                                     value={closeForm.data.closure_remarks}
                                     onChange={e => closeForm.setData('closure_remarks', e.target.value)}
                                 />
                             </div>
 
-                            <DialogFooter className="flex flex-col-reverse sm:flex-row gap-2 pt-2">
+                            {/* Compliance Advisory Callout */}
+                            <div className="p-3 bg-muted/40 rounded-xl border text-xs text-muted-foreground flex items-start gap-2.5 leading-relaxed">
+                                <Info className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
+                                <div>
+                                    <span className="font-bold text-foreground block">Barangay VAW Desk Compliance Log</span>
+                                    Archiving this sub-case docket transitions its status to <strong>Closed</strong> and preserves the complete case dossier. Any future repeat incident involving this perpetrator can be appended as a new sub-case under Master Dossier <span className="font-mono font-bold text-foreground">{vawcCase.dossier?.dossier_number || ''}</span>.
+                                </div>
+                            </div>
+
+                            <DialogFooter className="flex flex-col-reverse sm:flex-row gap-2 pt-3 border-t">
                                 <Button
                                     type="button"
                                     variant="outline"
                                     size="sm"
                                     onClick={() => setShowCloseModal(false)}
-                                    className="text-xs font-semibold"
+                                    className="min-h-[42px] text-xs sm:text-sm font-semibold px-4"
                                 >
                                     Cancel
                                 </Button>
                                 <Button
                                     type="submit"
                                     size="sm"
-                                    disabled={closeForm.processing}
-                                    className="bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs"
+                                    disabled={!closeForm.data.closure_reason || closeForm.processing}
+                                    className="bg-red-600 hover:bg-red-700 text-white font-bold text-xs sm:text-sm min-h-[42px] px-5 shadow-xs"
                                 >
-                                    Confirm Archival
+                                    <ArchiveX className="w-4 h-4 mr-1.5" />
+                                    {closeForm.processing ? 'Archiving Case Docket...' : 'Confirm Case Archival'}
                                 </Button>
                             </DialogFooter>
                         </form>

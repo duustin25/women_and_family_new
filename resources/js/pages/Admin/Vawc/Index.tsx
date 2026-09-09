@@ -183,8 +183,9 @@ export default function Index({ dossiers, filters }: Props) {
     const [search, setSearch] = useState(filters?.search || '');
     const [status, setStatus] = useState(filters?.status || 'all');
     const [archived, setArchived] = useState(filters?.archived || '0');
-    const [isRedacted, setIsRedacted] = useState(false);
+    const [isRedacted, setIsRedacted] = useState(true);
     const [expandedDossiers, setExpandedDossiers] = useState<Record<number, boolean>>({});
+
     const debouncedSearch = useDebounce(search, 300);
     const isInitialMount = React.useRef(true);
 

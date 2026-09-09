@@ -52,12 +52,10 @@ class VawcBpoService
                 : ($order->application_datetime ? Carbon::parse($order->application_datetime)->addHours(2) : now());
             $isBreached = false;
 
-            // RA 9262: Same-Day Issuance Requirement
+            // RA 9262: 24-Hour Issuance Requirement (Section 14)
             if ($order->application_datetime) {
-                $appDateStr = Carbon::parse($order->application_datetime)->toDateString();
-                $issueDateStr = $issuedAt->toDateString();
-                
-                if ($appDateStr !== $issueDateStr) {
+                $appDateTime = Carbon::parse($order->application_datetime);
+                if ($issuedAt->gt($appDateTime->copy()->addHours(24))) {
                     $isBreached = true;
                 }
             }

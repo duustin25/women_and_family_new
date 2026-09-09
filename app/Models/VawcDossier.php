@@ -90,14 +90,16 @@ class VawcDossier extends Model
 
         $this->highest_threat_level = $highestLevel;
 
-        if ($hasActiveBpo) {
-            $this->current_lifecycle = 'Active BPO';
-        } elseif ($hasCourtEscalation) {
+        if ($hasCourtEscalation) {
             $this->current_lifecycle = 'Escalated to Court';
         } elseif ($hasMonitoring) {
             $this->current_lifecycle = 'Under Monitoring';
+        } elseif ($hasActiveBpo) {
+            $this->current_lifecycle = 'Active BPO';
         } elseif ($allClosed && $cases->isNotEmpty()) {
             $this->current_lifecycle = 'Dormant/Closed';
+        } else {
+            $this->current_lifecycle = 'Application Pending';
         }
 
         $latestCase = $cases->first();

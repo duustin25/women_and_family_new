@@ -1483,131 +1483,8 @@ export default function Create({ abuseTypes, zones, preselectedDossier }: Props)
                                 </p>
                             </CardContent>
                         </Card>
-
-                        {/* 4. SCENE VERIFICATION & VAWC-RAVE SAFETY FLAGS */}
-                        <Card className="shadow-2xs">
-                            <CardHeader className="pb-3">
-                                <div className="flex items-center gap-2">
-                                    <div className="p-2 rounded-lg bg-destructive/10 text-destructive">
-                                        <ShieldAlert className="w-5 h-5" />
-                                    </div>
-                                    <div>
-                                        <CardTitle className="text-base sm:text-lg font-bold">Scene Verification & VAWC-RAVE Safety Flags</CardTitle>
-                                        <CardDescription className="text-xs sm:text-sm text-muted-foreground">
-                                            Operational threat indicators evaluated by the VAWC-RAVE Multi-Criteria Decision Analysis engine.
-                                        </CardDescription>
-                                    </div>
-                                </div>
-                            </CardHeader>
-                            <CardContent className="space-y-4">
-                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                                    <div className="flex items-start space-x-3 border p-3.5 rounded-xl bg-card min-h-[44px]">
-                                        <Checkbox
-                                            id="is_repeat"
-                                            checked={data.is_repeat_offense}
-                                            onCheckedChange={(checked) => setData('is_repeat_offense', !!checked)}
-                                            className="mt-0.5"
-                                        />
-                                        <label htmlFor="is_repeat" className="text-sm font-semibold text-foreground leading-snug cursor-pointer">
-                                            Repeat Abuse / Recidivist History
-                                            <span className="block text-xs font-normal text-muted-foreground mt-0.5">Prior domestic violence incidents recorded</span>
-                                        </label>
-                                    </div>
-
-                                    <div className="flex items-start space-x-3 border p-3.5 rounded-xl bg-card min-h-[44px]">
-                                        <Checkbox
-                                            id="has_weapon"
-                                            checked={data.has_weapon_involved}
-                                            onCheckedChange={(checked) => setData('has_weapon_involved', !!checked)}
-                                            className="mt-0.5"
-                                        />
-                                        <label htmlFor="has_weapon" className="text-sm font-semibold text-foreground leading-snug cursor-pointer">
-                                            Weapon Involved in Threat / Assault
-                                            <span className="block text-xs font-normal text-muted-foreground mt-0.5">Bladed weapon, firearm, or blunt instrument</span>
-                                        </label>
-                                    </div>
-
-                                    <div className="flex items-start space-x-3 border p-3.5 rounded-xl bg-card min-h-[44px]">
-                                        <Checkbox
-                                            id="weapons_confiscated"
-                                            checked={data.weapons_confiscated}
-                                            onCheckedChange={(checked) => setData('weapons_confiscated', !!checked)}
-                                            className="mt-0.5"
-                                        />
-                                        <label htmlFor="weapons_confiscated" className="text-sm font-semibold text-foreground leading-snug cursor-pointer">
-                                            Weapons Confiscated / Surrendered
-                                            <span className="block text-xs font-normal text-muted-foreground mt-0.5">Seized by responding officers at scene</span>
-                                        </label>
-                                    </div>
-
-                                    <div className="flex items-start space-x-3 border p-3.5 rounded-xl bg-card min-h-[44px]">
-                                        <Checkbox
-                                            id="perpetrator_present"
-                                            checked={data.perpetrator_present}
-                                            onCheckedChange={(checked) => setData('perpetrator_present', !!checked)}
-                                            className="mt-0.5"
-                                        />
-                                        <label htmlFor="perpetrator_present" className="text-sm font-semibold text-foreground leading-snug cursor-pointer">
-                                            Perpetrator Active / Present at Scene
-                                            <span className="block text-xs font-normal text-muted-foreground mt-0.5">Active threat requiring immediate response</span>
-                                        </label>
-                                    </div>
-
-                                    <div className="flex items-start space-x-3 border p-3.5 rounded-xl bg-card min-h-[44px]">
-                                        <Checkbox
-                                            id="warrantless_arrest_made"
-                                            checked={data.warrantless_arrest_made}
-                                            onCheckedChange={(checked) => setData('warrantless_arrest_made', !!checked)}
-                                            className="mt-0.5"
-                                        />
-                                        <label htmlFor="warrantless_arrest_made" className="text-sm font-semibold text-foreground leading-snug cursor-pointer">
-                                            Warrantless Arrest Executed
-                                            <span className="block text-xs font-normal text-muted-foreground mt-0.5">Lawful arrest executed under Rule 113</span>
-                                        </label>
-                                    </div>
-
-                                    <div className="flex items-start space-x-3 border p-3.5 rounded-xl bg-card min-h-[44px]">
-                                        <Checkbox
-                                            id="incident_veracity"
-                                            checked={data.incident_veracity}
-                                            onCheckedChange={(checked) => setData('incident_veracity', !!checked)}
-                                            className="mt-0.5"
-                                        />
-                                        <label htmlFor="incident_veracity" className="text-sm font-semibold text-foreground leading-snug cursor-pointer">
-                                            Incident & Scene Verified by Officer
-                                            <span className="block text-xs font-normal text-muted-foreground mt-0.5">Physical evidence / statement verified</span>
-                                        </label>
-                                    </div>
-
-                                    <div className="flex items-start space-x-3 border p-3.5 rounded-xl bg-card min-h-[44px]">
-                                        <Checkbox
-                                            id="requires_medical"
-                                            checked={data.requires_medical}
-                                            onCheckedChange={(checked) => setData('requires_medical', !!checked)}
-                                            className="mt-0.5"
-                                        />
-                                        <label htmlFor="requires_medical" className="text-sm font-semibold text-foreground leading-snug cursor-pointer">
-                                            Requires Immediate Medical Attention
-                                            <span className="block text-xs font-normal text-muted-foreground mt-0.5">Physical injuries requiring clinic/hospital exam</span>
-                                        </label>
-                                    </div>
-
-                                    <div className="flex items-start space-x-3 border p-3.5 rounded-xl bg-card min-h-[44px]">
-                                        <Checkbox
-                                            id="requires_housing"
-                                            checked={data.requires_alternative_housing}
-                                            onCheckedChange={(checked) => setData('requires_alternative_housing', !!checked)}
-                                            className="mt-0.5"
-                                        />
-                                        <label htmlFor="requires_housing" className="text-sm font-semibold text-foreground leading-snug cursor-pointer">
-                                            Requires Emergency Safehouse / Shelter
-                                            <span className="block text-xs font-normal text-muted-foreground mt-0.5">Survivor requires immediate relocation</span>
-                                        </label>
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
                     </TabsContent>
+
                 </Tabs>
 
                 {/* ── BOTTOM CONTROLS ── */}
@@ -1697,12 +1574,13 @@ export default function Create({ abuseTypes, zones, preselectedDossier }: Props)
                                 </span>
                             </div>
                             <div className="flex justify-between items-center">
-                                <span className="text-muted-foreground font-semibold">Repeat Offense:</span>
-                                <Badge variant={data.is_repeat_offense ? 'destructive' : 'outline'} className="text-xs font-semibold px-2 py-0.5">
-                                    {data.is_repeat_offense ? 'Yes (Recidivist)' : 'No'}
+                                <span className="text-muted-foreground font-semibold">Incident Intake:</span>
+                                <Badge variant="outline" className="text-xs font-semibold px-2 py-0.5 border-primary text-primary">
+                                    Ready for Triage Assessment
                                 </Badge>
                             </div>
                         </div>
+
 
                         <DialogFooter className="gap-2 sm:gap-0">
                             <Button type="button" variant="outline" size="sm" onClick={() => setShowConfirmModal(false)} className="min-h-[40px] text-sm font-semibold">

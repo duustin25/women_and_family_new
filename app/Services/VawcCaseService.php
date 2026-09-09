@@ -90,7 +90,7 @@ class VawcCaseService
                     ],
                     'incident_count' => 1,
                     'highest_threat_level' => 'PENDING',
-                    'current_lifecycle' => 'Under Monitoring',
+                    'current_lifecycle' => 'Application Pending',
                     'last_incident_at' => $data['incident_date'] ?? now(),
                     'created_by_id' => Auth::id(),
                 ]);

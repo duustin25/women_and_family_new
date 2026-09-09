@@ -22,6 +22,13 @@ class VawcSeeder extends Seeder
 {
     /**
      * Run the database seeds with precise Philippine Standard Time (Asia/Manila) dates and processes.
+     * Fully aligned with latest RA 9262 statutory features:
+     * - Inter-Agency Transmittals (referral_status)
+     * - Survivor Desired Actions (action_sought)
+     * - Corroborating Witness Statements (witness_info)
+     * - Confidential Informant / Whistleblower Shield (is_anonymous = true)
+     * - Unassessed Fresh Intake for Triage Assessment testing (status = 'Intake', no assessment)
+     * - Standard statutory closure reasons and active BPO compliance logs
      */
     public function run(): void
     {
@@ -38,7 +45,6 @@ class VawcSeeder extends Seeder
         $zone2 = $zones->skip(1)->first() ?? $defaultZone;
         $zone3 = $zones->skip(2)->first() ?? $defaultZone;
 
-        $year = '2026';
         $tz = 'Asia/Manila';
 
         // Clean out existing VAWC tables for fresh mock data
@@ -126,7 +132,11 @@ class VawcSeeder extends Seeder
             'has_weapon_involved' => false,
             'incident_veracity' => true,
             'status' => 'Closed',
+            'referral_status' => ['Barangay VAW Desk', 'PAO / Legal Aid'],
+            'action_sought' => ['Barangay Protection Order (BPO)', 'Psychosocial Support & Counseling'],
+            'witness_info' => 'Sister-in-law present during verbal altercation corroborated aggressive threats.',
             'closure_reason' => '15-Day Protection Order Lapsed Successfully (No Violation)',
+            'closure_remarks' => 'Respondent maintained distance during 15-day order with zero reported breaches.',
             'closed_at' => Carbon::parse('2026-01-31 17:00:00', $tz),
         ]);
 
@@ -190,7 +200,11 @@ class VawcSeeder extends Seeder
             'has_weapon_involved' => false,
             'incident_veracity' => true,
             'status' => 'Closed',
+            'referral_status' => ['DSWD / MSWDO', 'Hospital / Medico-Legal'],
+            'action_sought' => ['Medico-Legal Examination & Care', 'Temporary Custody / Emergency Shelter'],
+            'witness_info' => 'Attending barangay health worker documented bilateral forearm contusions and treated minor abrasion.',
             'closure_reason' => 'Referred to Social Welfare for Sustained Intervention (Monitoring Complete)',
+            'closure_remarks' => 'MSWDO social worker conducted 3 home follow-ups and enrolled couple in specialized counseling.',
             'closed_at' => Carbon::parse('2026-06-19 16:30:00', $tz),
         ]);
 
@@ -240,6 +254,9 @@ class VawcSeeder extends Seeder
             'perpetrator_present' => true,
             'incident_veracity' => true,
             'status' => 'Monitoring',
+            'referral_status' => ['DSWD / MSWDO', 'PNP WCPD', 'Hospital / Medico-Legal'],
+            'action_sought' => ['Barangay Protection Order (BPO)', 'Temporary Custody / Emergency Shelter', 'Barangay Tanod Security & Patrols'],
+            'witness_info' => 'Barangay Tanod Patrol Officer Roberto Perez responded directly to distress call and disarmed respondent.',
         ]);
 
         VawcInvolvedParty::create(['vawc_case_id' => $c1_3->id, 'role' => 'Victim', 'name' => 'Shane Miller', 'age' => 29, 'contact_number' => '0917-888-1234', 'address' => 'Block 4 Lot 12, Sunrise Village']);
@@ -356,7 +373,11 @@ class VawcSeeder extends Seeder
             'intake_type' => 'Direct',
             'children_count' => 1,
             'status' => 'Closed',
+            'referral_status' => ['PAO / Legal Aid', 'Barangay VAW Desk'],
+            'action_sought' => ['Psychosocial Support & Counseling'],
+            'witness_info' => 'Neighbor corroborated repeated deprivation of child sustenance funds.',
             'closure_reason' => '15-Day Protection Order Lapsed Successfully (No Violation)',
+            'closure_remarks' => 'Respondent agreed to formal voluntary child support agreement via PAO intervention.',
             'closed_at' => Carbon::parse('2026-03-26 17:00:00', $tz),
         ]);
         VawcInvolvedParty::create(['vawc_case_id' => $c2_1->id, 'role' => 'Victim', 'name' => 'Maria Santos']);
@@ -391,6 +412,9 @@ class VawcSeeder extends Seeder
             'is_repeat_offense' => true,
             'incident_veracity' => true,
             'status' => 'Monitoring',
+            'referral_status' => ['Barangay VAW Desk', 'Hospital / Medico-Legal'],
+            'action_sought' => ['Barangay Protection Order (BPO)', 'Barangay Tanod Security & Patrols'],
+            'witness_info' => 'Purok leader intervened after hearing screams and observed victim with facial bruising.',
         ]);
         VawcInvolvedParty::create(['vawc_case_id' => $c2_2->id, 'role' => 'Victim', 'name' => 'Maria Santos', 'age' => 26]);
         VawcInvolvedParty::create(['vawc_case_id' => $c2_2->id, 'role' => 'Respondent', 'name' => 'Roberto Santos', 'age' => 28]);
@@ -474,6 +498,9 @@ class VawcSeeder extends Seeder
             'has_weapon_involved' => true,
             'warrantless_arrest_made' => true,
             'status' => 'Escalated',
+            'referral_status' => ['PNP WCPD', 'PAO / Legal Aid', 'Hospital / Medico-Legal'],
+            'action_sought' => ['Criminal Investigation & Case Filing', 'Barangay Protection Order (BPO)', 'Temporary Custody / Emergency Shelter'],
+            'witness_info' => 'Subdivision gate guard on duty logged respondent forcibly breaching gate with bladed tool.',
         ]);
         VawcInvolvedParty::create(['vawc_case_id' => $c3_1->id, 'role' => 'Victim', 'name' => 'Elena Cruz', 'age' => 34]);
         VawcInvolvedParty::create(['vawc_case_id' => $c3_1->id, 'role' => 'Respondent', 'name' => 'Mark Cruz', 'age' => 36]);
@@ -503,6 +530,8 @@ class VawcSeeder extends Seeder
         // =============================================================
         // DOSSIER 4: Single Incident Fresh Intake (Pending Assessment / Triage)
         // Survivor: Ana Reyes vs. Respondent: Marco Valderama (Former Dating Partner)
+        // NOTICE: NO VawcAssessment is seeded here intentionally so that the user
+        // can immediately test "Step 1: Perform Triage Assessment" in Show.tsx!
         // =============================================================
         $d4_lastIncident = Carbon::parse('2026-08-31 16:30:00', $tz);
 
@@ -528,7 +557,7 @@ class VawcSeeder extends Seeder
                 'physical_description' => '5\'8", slim build, rides black motorcycle with dark helmet',
             ],
             'incident_count' => 1,
-            'highest_threat_level' => 'HIGH',
+            'highest_threat_level' => 'PENDING',
             'current_lifecycle' => 'Under Monitoring',
             'last_incident_at' => $d4_lastIncident,
             'created_by_id' => $admin->id,
@@ -544,6 +573,7 @@ class VawcSeeder extends Seeder
             'victim_age' => 22,
             'victim_gender' => 'Female',
             'complainant_name' => 'Ana Reyes',
+            'complainant_contact' => '0935-777-8899',
             'relation_to_victim' => 'Self (Victim)',
             'incident_date' => $d4_lastIncident,
             'incident_location' => 'Corner Rizal St., Zone 1',
@@ -562,21 +592,15 @@ class VawcSeeder extends Seeder
             'is_repeat_offense' => false,
             'has_weapon_involved' => false,
             'incident_veracity' => true,
-            'status' => 'Assessment',
+            'status' => 'Intake', // Ready for Phase 1 Triage Assessment in Show.tsx
+            'referral_status' => ['PNP WCPD', 'Barangay VAW Desk'],
+            'action_sought' => ['Barangay Protection Order (BPO)', 'Barangay Tanod Security & Patrols'],
+            'witness_info' => 'Boarding house landlady Aling Nena witnessed respondent circling the premises on a black motorcycle and shouting threats.',
         ]);
-        VawcInvolvedParty::create(['vawc_case_id' => $c4_1->id, 'role' => 'Victim', 'name' => 'Ana Reyes', 'age' => 22]);
+
+        VawcInvolvedParty::create(['vawc_case_id' => $c4_1->id, 'role' => 'Victim', 'name' => 'Ana Reyes', 'age' => 22, 'contact_number' => '0935-777-8899', 'address' => 'Corner Rizal St., Zone 1']);
         VawcInvolvedParty::create(['vawc_case_id' => $c4_1->id, 'role' => 'Respondent', 'name' => 'Marco Valderama', 'relationship_to_victim' => 'Former Dating Partner', 'physical_description' => '5\'8", slim build, rides black motorcycle']);
-        VawcAssessment::create([
-            'vawc_case_id' => $c4_1->id,
-            'requires_medical' => false,
-            'requires_alternative_housing' => true,
-            'abuse_frequency' => 2,
-            'abuse_severity' => 2,
-            'weapon_access' => 1,
-            'life_threat_level' => 2,
-            'risk_score' => 7,
-            'risk_level' => 'MODERATE',
-        ]);
+        // Note: No VawcAssessment is created here to leave case in Step 1 Triage Assessment!
 
         $dossier4->syncDossierAggregates();
 
@@ -645,6 +669,9 @@ class VawcSeeder extends Seeder
             'is_repeat_offense' => false,
             'has_weapon_involved' => false,
             'status' => 'Closed',
+            'referral_status' => ['Barangay VAW Desk'],
+            'action_sought' => ['Barangay Protection Order (BPO)'],
+            'witness_info' => 'Store assistant witnessed respondent aggressively banging on metal roll-up door after operating hours.',
             'closure_reason' => '15-Day Protection Order Lapsed Successfully (No Violation)',
             'closure_remarks' => 'Respondent complied with 15-day stay away order and agreed to sustainable child custody arrangement.',
             'closed_at' => Carbon::parse('2026-03-02 17:00:00', $tz),
@@ -723,11 +750,14 @@ class VawcSeeder extends Seeder
             'has_weapon_involved' => false,
             'incident_veracity' => true,
             'status' => 'Monitoring',
+            'referral_status' => ['PNP WCPD', 'Barangay VAW Desk'],
+            'action_sought' => ['Barangay Protection Order (BPO)', 'Criminal Investigation & Case Filing'],
+            'witness_info' => 'Building security logged respondent attempting unauthorized entry 4 times in 3 days.',
         ]);
         VawcInvolvedParty::create(['vawc_case_id' => $c6_1->id, 'role' => 'Victim', 'name' => 'Elena Cruz', 'age' => 27]);
         VawcInvolvedParty::create(['vawc_case_id' => $c6_1->id, 'role' => 'Respondent', 'name' => 'Lance Dicki', 'relationship_to_victim' => 'Former Live-in Partner', 'age' => 32]);
         
-        $assessment6 = VawcAssessment::create([
+        VawcAssessment::create([
             'vawc_case_id' => $c6_1->id,
             'requires_medical' => false,
             'requires_alternative_housing' => false,
@@ -810,11 +840,14 @@ class VawcSeeder extends Seeder
             'has_weapon_involved' => false,
             'incident_veracity' => true,
             'status' => 'Monitoring',
+            'referral_status' => ['DSWD / MSWDO', 'LGU Crisis Center'],
+            'action_sought' => ['Temporary Custody / Emergency Shelter', 'Barangay Protection Order (BPO)'],
+            'witness_info' => 'Adjacent compound neighbor testified hearing respondent yelling death threats during property dispute.',
         ]);
         VawcInvolvedParty::create(['vawc_case_id' => $c7_1->id, 'role' => 'Victim', 'name' => 'Shane Miller', 'age' => 29, 'address' => 'Block 4 Lot 12, Sunrise Village, Zone 1']);
         VawcInvolvedParty::create(['vawc_case_id' => $c7_1->id, 'role' => 'Respondent', 'name' => 'Larry Dicki', 'relationship_to_victim' => 'Other Household Relative (with custody/care)', 'age' => 54, 'address' => 'Block 4 Lot 12, Sunrise Village, Zone 1']);
         
-        $assessment7 = VawcAssessment::create([
+        VawcAssessment::create([
             'vawc_case_id' => $c7_1->id,
             'requires_medical' => false,
             'requires_alternative_housing' => true, // Multi-perpetrator shared household triggers emergency shelter
@@ -827,5 +860,118 @@ class VawcSeeder extends Seeder
         ]);
 
         $dossier7->syncDossierAggregates();
+
+        // =============================================================
+        // DOSSIER 8: Whistleblower / Confidential Third-Party Informant Case
+        // Demonstrates RA 9262 Section 44 Sealed Confidential Informant Feature
+        // Survivor: Carmela Bautista vs. Respondent: Danilo Bautista (Spouse)
+        // Complainant: Aling Remedios (Concerned Neighbor - Shielded by Law)
+        // =============================================================
+        $d8_lastIncident = Carbon::parse('2026-08-31 23:30:00', $tz);
+
+        $dossier8 = VawcDossier::create([
+            'dossier_number' => 'DOS-2026-0008',
+            'survivor_name' => 'Carmela Bautista',
+            'respondent_name' => 'Danilo Bautista',
+            'relationship_type' => 'Spouse (Legal Husband)',
+            'survivor_demographics' => [
+                'name' => 'Carmela Bautista',
+                'age' => 31,
+                'gender' => 'Female',
+                'contact' => '0917-444-9988',
+                'address' => 'Apartment 3B, San Jose St., Zone 1',
+                'civil_status' => 'Married',
+                'educational_attainment' => 'High School',
+                'occupation' => 'Housewife',
+            ],
+            'respondent_demographics' => [
+                'name' => 'Danilo Bautista',
+                'age' => 35,
+                'gender' => 'Male',
+                'contact' => '0918-222-1133',
+                'address' => 'Apartment 3B, San Jose St., Zone 1',
+                'relationship' => 'Spouse (Legal Husband)',
+                'civil_status' => 'Married',
+                'educational_attainment' => 'High School',
+                'occupation' => 'Tricycle Driver',
+                'physical_description' => '5\'7", stout build, tattoo on right forearm',
+            ],
+            'incident_count' => 1,
+            'highest_threat_level' => 'HIGH',
+            'current_lifecycle' => 'Under Monitoring',
+            'last_incident_at' => $d8_lastIncident,
+            'created_by_id' => $admin->id,
+        ]);
+
+        $cr8_1 = CaseReport::create([
+            'user_id' => $admin->id,
+            'zone_id' => $defaultZone->id,
+            'abuse_type_id' => $physicalAbuse?->id ?? 1,
+            'type' => 'VAWC',
+            'case_number' => 'VAWC-2026-0008-01',
+            'victim_name' => 'Carmela Bautista',
+            'victim_age' => 31,
+            'victim_gender' => 'Female',
+            'complainant_name' => 'Aling Remedios (Neighbor / Informant)',
+            'complainant_contact' => '0918-777-6655',
+            'relation_to_victim' => 'Concerned Neighbor (Whistleblower)',
+            'is_anonymous' => true, // Triggers Section 44 Confidential Informant Shield
+            'incident_date' => $d8_lastIncident,
+            'incident_location' => 'Apartment 3B, San Jose St., Zone 1',
+            'description' => 'Confidential third-party report: Neighbor heard screaming, physical blows, and victim crying for help through shared wall. Respondent was heard barricading doorway.',
+            'lifecycle_status' => 'Investigation',
+            'handled_by_id' => $officer->id,
+        ]);
+
+        $c8_1 = VawcCase::create([
+            'dossier_id' => $dossier8->id,
+            'incident_sequence' => 1,
+            'sub_case_number' => 'VAWC-2026-0008-01',
+            'case_report_id' => $cr8_1->id,
+            'intake_type' => 'Third-Party',
+            'children_count' => 2,
+            'is_repeat_offense' => false,
+            'has_weapon_involved' => false,
+            'perpetrator_present' => true,
+            'incident_veracity' => true,
+            'status' => 'Monitoring',
+            'referral_status' => ['DSWD / MSWDO', 'PNP WCPD', 'Hospital / Medico-Legal'],
+            'action_sought' => ['Barangay Protection Order (BPO)', 'Temporary Custody / Emergency Shelter', 'Barangay Tanod Security & Patrols'],
+            'witness_info' => 'Confidential Informant Aling Remedios and 2 adjacent apartment tenants provided corroborating statements regarding recurring late-night domestic violence.',
+        ]);
+
+        VawcInvolvedParty::create([
+            'vawc_case_id' => $c8_1->id,
+            'role' => 'Victim',
+            'name' => 'Carmela Bautista',
+            'age' => 31,
+            'gender' => 'Female',
+            'contact_number' => '0917-444-9988',
+            'address' => 'Apartment 3B, San Jose St., Zone 1',
+        ]);
+        VawcInvolvedParty::create([
+            'vawc_case_id' => $c8_1->id,
+            'role' => 'Respondent',
+            'relationship_to_victim' => 'Spouse (Legal Husband)',
+            'name' => 'Danilo Bautista',
+            'age' => 35,
+            'gender' => 'Male',
+            'contact_number' => '0918-222-1133',
+            'address' => 'Apartment 3B, San Jose St., Zone 1',
+        ]);
+
+        VawcAssessment::create([
+            'vawc_case_id' => $c8_1->id,
+            'requires_medical' => true,
+            'requires_alternative_housing' => true,
+            'abuse_frequency' => 3,
+            'abuse_severity' => 2,
+            'weapon_access' => 1,
+            'life_threat_level' => 3,
+            'risk_score' => 9,
+            'risk_level' => 'HIGH',
+        ]);
+
+        $dossier8->syncDossierAggregates();
     }
 }

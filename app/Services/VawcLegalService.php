@@ -42,7 +42,10 @@ class VawcLegalService
             // Cases closed from Phase 6 (Court Escalation) count as Closed (Final Judicial Verdict).
             if ($case->caseReport) {
                 $parentStatus = 'Closed';
-                if (str_contains($data['closure_reason'], 'Elapsed Safely') || str_contains($data['closure_reason'], 'Resolved')) {
+                if (str_contains($data['closure_reason'], 'Elapsed Safely') || 
+                    str_contains($data['closure_reason'], 'Resolved') || 
+                    str_contains($data['closure_reason'], 'Lapsed Successfully') || 
+                    str_contains($data['closure_reason'], 'Monitoring Complete')) {
                     $parentStatus = 'Resolved';
                 }
 
