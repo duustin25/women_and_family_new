@@ -9,12 +9,14 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Str;
 
 class VawcCase extends Model
 {
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
+        'uuid',
         'dossier_id',
         'incident_sequence',
         'sub_case_number',
@@ -48,6 +50,36 @@ class VawcCase extends Model
         'referral_status' => 'array',
         'action_sought' => 'array',
     ];
+
+    /**
+     * The "booted" method of the model.
+     */
+    protected static function booted(): void
+    {
+        static::creating(function ($model) {
+            if (empty($model->uuid)) {
+                $model->uuid = (string) Str::uuid();
+            }
+        });
+    }
+
+    /**
+     * Get the route key for the model.
+     */
+    public function getRouteKeyName(): string
+    {
+        return 'uuid';
+    }
+
+    /**
+     * Retrieve the model for a bound value (supports both UUID and legacy ID).
+     */
+    public function resolveRouteBinding($value, $field = null)
+    {
+        return $this->where('uuid', $value)
+            ->orWhere('id', is_numeric($value) ? (int)$value : 0)
+            ->firstOrFail();
+    }
 
     /**
      * Resilient accessor for referral_status ensuring clean array output.

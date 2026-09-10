@@ -7,12 +7,14 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Str;
 
 class VawcDossier extends Model
 {
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
+        'uuid',
         'dossier_number',
         'survivor_name',
         'respondent_name',
@@ -32,6 +34,36 @@ class VawcDossier extends Model
         'incident_count' => 'integer',
         'last_incident_at' => 'datetime',
     ];
+
+    /**
+     * The "booted" method of the model.
+     */
+    protected static function booted(): void
+    {
+        static::creating(function ($model) {
+            if (empty($model->uuid)) {
+                $model->uuid = (string) Str::uuid();
+            }
+        });
+    }
+
+    /**
+     * Get the route key for the model.
+     */
+    public function getRouteKeyName(): string
+    {
+        return 'uuid';
+    }
+
+    /**
+     * Retrieve the model for a bound value (supports both UUID and legacy ID).
+     */
+    public function resolveRouteBinding($value, $field = null)
+    {
+        return $this->where('uuid', $value)
+            ->orWhere('id', is_numeric($value) ? (int)$value : 0)
+            ->firstOrFail();
+    }
 
     /**
      * All sub-cases (incidents) belonging to this Master Dossier.

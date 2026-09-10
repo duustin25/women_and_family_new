@@ -100,7 +100,7 @@ export default function PrintBpo({ case: vawcCase, order, officer }: Props) {
                     [PRINT DOCUMENT]
                 </button>
                 <Link 
-                    href={route('admin.vawc.show', vawcCase.id)} 
+                    href={route('admin.vawc.show', vawcCase.uuid || vawcCase.id)} 
                     style={{ marginLeft: '10px', padding: '10px', color: '#475569', textDecoration: 'none', fontWeight: 'bold' }}
                 >
                     [RETURN TO CASE]

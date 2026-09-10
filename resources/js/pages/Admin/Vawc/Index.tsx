@@ -17,6 +17,7 @@ import { useDebounce } from '@/hooks/use-debounce';
 
 interface SubCase {
     id: number;
+    uuid?: string;
     sub_case_number: string;
     incident_sequence: number;
     status: string;
@@ -55,6 +56,7 @@ interface SubCase {
 
 interface Dossier {
     id: number;
+    uuid?: string;
     dossier_number: string;
     survivor_name: string;
     respondent_name: string;
@@ -478,7 +480,7 @@ export default function Index({ dossiers, filters }: Props) {
                                                     {/* Quick Log Incident Button (Touch Target Compliant) */}
                                                     <div className="flex items-center gap-2 w-full sm:w-auto mt-1 sm:mt-0" onClick={(e) => e.stopPropagation()}>
                                                         <Button asChild size="sm" className="w-full sm:w-auto h-10 min-h-[40px] text-xs sm:text-sm font-semibold bg-[#ce1126] hover:bg-red-700 text-white shadow-xs">
-                                                            <Link href={route('admin.vawc.create', { dossier_id: dossier.id })}>
+                                                            <Link href={route('admin.vawc.create', { dossier_id: dossier.uuid || dossier.id })}>
                                                                 <Plus className="w-4 h-4 mr-1.5" /> Log Incident
                                                             </Link>
                                                         </Button>
@@ -488,60 +490,47 @@ export default function Index({ dossiers, filters }: Props) {
 
                                             {/* ── EXPANDABLE SUB-CASES (INCIDENTS) TABLE WITH HORIZONTAL SCROLL ── */}
                                             {isExpanded && (
-                                                <div className="bg-muted/30 p-3 sm:p-5 md:p-6 border-t border-border/80 animate-in fade-in duration-200">
-                                                    <div className="rounded-xl border bg-card overflow-hidden shadow-xs">
-                                                        <div className="px-4 sm:px-5 py-3 bg-muted/40 border-b flex flex-col sm:flex-row sm:items-center justify-between gap-1">
-                                                            <div className="flex items-center gap-2">
-                                                                <FileText className="w-4 h-4 text-primary shrink-0" />
-                                                                <span className="text-xs sm:text-sm font-bold text-foreground">
-                                                                    Incident Violations Logged Under Dossier ({childCases.length})
-                                                                </span>
-                                                            </div>
-                                                            <span className="text-xs text-muted-foreground font-medium">
-                                                                Legal Chronology (Most Recent First)
-                                                            </span>
-                                                        </div>
-
-                                                        <div className="overflow-x-auto">
-                                                            <Table>
-                                                                <TableHeader className="bg-muted/20">
+                                                <div className="border-t border-border bg-muted/20">
+                                                    <div className="overflow-x-auto w-full">
+                                                        <Table className="min-w-[750px]">
+                                                            <TableHeader className="bg-muted/40">
+                                                                <TableRow>
+                                                                    <TableHead className="w-[140px] pl-4 sm:pl-5 text-xs font-semibold uppercase tracking-wider">Incident #</TableHead>
+                                                                    <TableHead className="w-[120px] text-xs font-semibold uppercase tracking-wider">Date</TableHead>
+                                                                    <TableHead className="w-[160px] text-xs font-semibold uppercase tracking-wider">Abuse Category</TableHead>
+                                                                    <TableHead className="w-[110px] text-xs font-semibold uppercase tracking-wider">Threat Triage</TableHead>
+                                                                    <TableHead className="w-[120px] text-xs font-semibold uppercase tracking-wider">BPO Status</TableHead>
+                                                                    <TableHead className="w-[120px] text-xs font-semibold uppercase tracking-wider">Lifecycle</TableHead>
+                                                                    <TableHead className="w-[100px] text-xs font-semibold uppercase tracking-wider">Children</TableHead>
+                                                                    <TableHead className="w-[60px] pr-4 sm:pr-5 text-right text-xs font-semibold uppercase tracking-wider">Action</TableHead>
+                                                                </TableRow>
+                                                            </TableHeader>
+                                                            <TableBody>
+                                                                {childCases.length === 0 ? (
                                                                     <TableRow>
-                                                                        <TableHead className="font-bold text-xs uppercase tracking-wider py-3.5 pl-4 sm:pl-5 whitespace-nowrap">Sub-Case #</TableHead>
-                                                                        <TableHead className="font-bold text-xs uppercase tracking-wider whitespace-nowrap">Incident Date</TableHead>
-                                                                        <TableHead className="font-bold text-xs uppercase tracking-wider whitespace-nowrap">Abuse Type</TableHead>
-                                                                        <TableHead className="font-bold text-xs uppercase tracking-wider text-center whitespace-nowrap">Triage Score</TableHead>
-                                                                        <TableHead className="font-bold text-xs uppercase tracking-wider whitespace-nowrap">Safety Indicators</TableHead>
-                                                                        <TableHead className="font-bold text-xs uppercase tracking-wider whitespace-nowrap">BPO Status</TableHead>
-                                                                        <TableHead className="font-bold text-xs uppercase tracking-wider text-center whitespace-nowrap">Workflow Phase</TableHead>
-                                                                        <TableHead className="text-right font-bold text-xs uppercase tracking-wider pr-4 sm:pr-5 whitespace-nowrap">Action</TableHead>
+                                                                        <TableCell colSpan={8} className="text-center py-8 text-sm text-muted-foreground italic">
+                                                                            No incident records found.
+                                                                        </TableCell>
                                                                     </TableRow>
-                                                                </TableHeader>
-                                                                <TableBody>
-                                                                    {childCases.length === 0 ? (
-                                                                        <TableRow>
-                                                                            <TableCell colSpan={8} className="text-center py-8 text-sm text-muted-foreground italic">
-                                                                                No incident records found.
-                                                                            </TableCell>
-                                                                        </TableRow>
-                                                                    ) : (
-                                                                        childCases.map((incident: SubCase) => {
-                                                                            const protectionOrders = incident.protection_orders || incident.protectionOrders || [];
-                                                                            const activeBpo = protectionOrders[0];
-                                                                            const riskScore = incident.assessment?.risk_score;
-                                                                            const riskLevel = incident.assessment?.risk_level || 'PENDING';
+                                                                ) : (
+                                                                    childCases.map((incident: SubCase) => {
+                                                                        const protectionOrders = incident.protection_orders || incident.protectionOrders || [];
+                                                                        const activeBpo = protectionOrders[0];
+                                                                        const riskScore = incident.assessment?.risk_score;
+                                                                        const riskLevel = incident.assessment?.risk_level || 'PENDING';
 
-                                                                            return (
-                                                                                <TableRow
-                                                                                    key={incident.id}
-                                                                                    onClick={() => router.visit(route('admin.vawc.show', incident.id))}
-                                                                                    className="cursor-pointer hover:bg-muted/50 active:bg-muted/70 transition-colors group"
-                                                                                >
-                                                                                    {/* Sub-case Number */}
-                                                                                    <TableCell className="pl-4 sm:pl-5 py-3.5 whitespace-nowrap">
-                                                                                        <div className="flex flex-col">
-                                                                                            <span className="font-mono font-bold text-xs sm:text-sm text-foreground tracking-tight group-hover:text-primary transition-colors">
-                                                                                                {incident.sub_case_number || incident.case_report?.case_number}
-                                                                                            </span>
+                                                                        return (
+                                                                            <TableRow
+                                                                                key={incident.id}
+                                                                                onClick={() => router.visit(route('admin.vawc.show', incident.uuid || incident.id))}
+                                                                                className="cursor-pointer hover:bg-muted/50 active:bg-muted/70 transition-colors group"
+                                                                            >
+                                                                                {/* Sub-case Number */}
+                                                                                <TableCell className="pl-4 sm:pl-5 py-3.5 whitespace-nowrap">
+                                                                                    <div className="flex flex-col">
+                                                                                        <span className="font-mono font-bold text-xs sm:text-sm text-foreground tracking-tight group-hover:text-primary transition-colors">
+                                                                                            {incident.sub_case_number || incident.case_report?.case_number}
+                                                                                        </span>
                                                                                             <span className="text-xs text-muted-foreground font-medium">
                                                                                                 Incident #{incident.incident_sequence || 1}
                                                                                             </span>
@@ -625,7 +614,6 @@ export default function Index({ dossiers, filters }: Props) {
                                                             </Table>
                                                         </div>
                                                     </div>
-                                                </div>
                                             )}
                                         </div>
                                     );

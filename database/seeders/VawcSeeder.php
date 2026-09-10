@@ -558,7 +558,7 @@ class VawcSeeder extends Seeder
             ],
             'incident_count' => 1,
             'highest_threat_level' => 'PENDING',
-            'current_lifecycle' => 'Under Monitoring',
+            'current_lifecycle' => 'Intake',
             'last_incident_at' => $d4_lastIncident,
             'created_by_id' => $admin->id,
         ]);
@@ -973,5 +973,118 @@ class VawcSeeder extends Seeder
         ]);
 
         $dossier8->syncDossierAggregates();
+
+        // =============================================================
+        // DOSSIER 9: Historical / Cold Case (Incident Occurred 2 Years Ago)
+        // Survivor: Elena Manalo vs. Respondent: Eduardo Santos (Former Cohabitant)
+        // Tests RA 9262 Section 14 (Imminent Danger requirement for BPO) vs.
+        // Section 24 (10 to 20-Year Prescriptive Period for Criminal Complaints).
+        // Sits on Step 2 (BPO Application) with no prior BPO filed yet.
+        // =============================================================
+        $d9_incident_date = Carbon::parse('2024-08-15 14:30:00', $tz);
+
+        $dossier9 = VawcDossier::create([
+            'dossier_number' => 'DOS-2026-0009',
+            'survivor_name' => 'Elena Manalo',
+            'respondent_name' => 'Eduardo Santos',
+            'relationship_type' => 'Former Cohabitant / Ex-Live-in Partner',
+            'survivor_demographics' => [
+                'name' => 'Elena Manalo',
+                'age' => 34,
+                'gender' => 'Female',
+                'contact' => '0922-333-7744',
+                'address' => 'House 55, Mabini Extension, Zone 2',
+                'civil_status' => 'Single',
+                'educational_attainment' => 'Vocational',
+                'occupation' => 'Freelance Seamstress',
+            ],
+            'respondent_demographics' => [
+                'name' => 'Eduardo Santos',
+                'age' => 38,
+                'gender' => 'Male',
+                'contact' => '0919-888-2211',
+                'address' => 'Barangay San Isidro (Relocated)',
+                'relationship' => 'Former Cohabitant / Ex-Live-in Partner',
+                'civil_status' => 'Single',
+                'occupation' => 'Construction Foreman',
+                'physical_description' => '5\'10", heavily tattooed arms, muscular build',
+            ],
+            'incident_count' => 1,
+            'highest_threat_level' => 'MODERATE',
+            'current_lifecycle' => 'Application Pending',
+            'last_incident_at' => $d9_incident_date,
+            'created_by_id' => $admin->id,
+        ]);
+
+        $cr9_1 = CaseReport::create([
+            'user_id' => $admin->id,
+            'zone_id' => $zone2->id,
+            'abuse_type_id' => $physicalAbuse?->id ?? 1,
+            'type' => 'VAWC',
+            'case_number' => 'VAWC-2026-0009-01',
+            'victim_name' => 'Elena Manalo',
+            'victim_age' => 34,
+            'victim_gender' => 'Female',
+            'complainant_name' => 'Elena Manalo',
+            'complainant_contact' => '0922-333-7744',
+            'relation_to_victim' => 'Self (Victim)',
+            'incident_date' => $d9_incident_date,
+            'incident_location' => 'Former shared apartment, Zone 2',
+            'description' => 'Historical Report: Severe physical assault and economic deprivation occurring approximately two years ago before victim escaped and relocated. Survivor now seeks formal criminal prosecution and documentation for permanent legal remedies.',
+            'lifecycle_status' => 'Investigation',
+            'handled_by_id' => $officer->id,
+        ]);
+
+        $c9_1 = VawcCase::create([
+            'dossier_id' => $dossier9->id,
+            'incident_sequence' => 1,
+            'sub_case_number' => 'VAWC-2026-0009-01',
+            'case_report_id' => $cr9_1->id,
+            'intake_type' => 'Direct',
+            'children_count' => 1,
+            'is_repeat_offense' => false,
+            'has_weapon_involved' => false,
+            'perpetrator_present' => false,
+            'incident_veracity' => true,
+            'status' => 'Assessment', // Step 1 complete; waiting at Step 2 (BPO Application / Direct Referral)
+            'referral_status' => ['PNP WCPD', 'City Prosecutor\'s Office', 'Public Attorney\'s Office (PAO)'],
+            'action_sought' => ['Criminal Prosecution (RA 9262 Sec. 24)', 'Barangay Protection Order (BPO)', 'Legal Aid & Counseling'],
+            'witness_info' => 'Sister-in-law Teresa Manalo confirmed historical injuries and previous hospital admission record dated August 2024.',
+        ]);
+
+        VawcInvolvedParty::create([
+            'vawc_case_id' => $c9_1->id,
+            'role' => 'Victim',
+            'name' => 'Elena Manalo',
+            'age' => 34,
+            'gender' => 'Female',
+            'contact_number' => '0922-333-7744',
+            'address' => 'House 55, Mabini Extension, Zone 2',
+        ]);
+
+        VawcInvolvedParty::create([
+            'vawc_case_id' => $c9_1->id,
+            'role' => 'Respondent',
+            'relationship_to_victim' => 'Former Cohabitant / Ex-Live-in Partner',
+            'name' => 'Eduardo Santos',
+            'age' => 38,
+            'gender' => 'Male',
+            'contact_number' => '0919-888-2211',
+            'address' => 'Barangay San Isidro (Relocated)',
+        ]);
+
+        VawcAssessment::create([
+            'vawc_case_id' => $c9_1->id,
+            'requires_medical' => false,
+            'requires_alternative_housing' => false,
+            'abuse_frequency' => 1,
+            'abuse_severity' => 2,
+            'weapon_access' => 0,
+            'life_threat_level' => 1,
+            'risk_score' => 4,
+            'risk_level' => 'MODERATE',
+        ]);
+
+        $dossier9->syncDossierAggregates();
     }
 }

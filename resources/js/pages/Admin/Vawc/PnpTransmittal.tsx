@@ -66,7 +66,7 @@ export default function PnpTransmittal({ case: vawcCase, order, officer }: Props
             <hr style={{ marginTop: '50px' }} />
             <div className="no-print" style={{ textAlign: 'center', marginTop: '20px' }}>
                 <button onClick={() => window.print()} style={{ padding: '10px 20px', cursor: 'pointer' }}>[PRINT LETTER]</button>
-                <Link href={route('admin.vawc.show', vawcCase.id)} style={{ marginLeft: '10px' }}>[BACK TO CASE]</Link>
+                <Link href={route('admin.vawc.show', vawcCase.uuid || vawcCase.id)} style={{ marginLeft: '10px' }}>[BACK TO CASE]</Link>
             </div>
 
             <style>{`

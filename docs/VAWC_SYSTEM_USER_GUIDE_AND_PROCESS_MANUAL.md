@@ -98,11 +98,13 @@ flowchart TD
 ---
 
 ### Stage 7: Legal Transmittal & Escalation (`Step 6: Referral / Escalation`)
-- **Trigger**: Non-compliance with BPO or high-risk threat escalation.
+- **Trigger**: Non-compliance with BPO, high-risk threat escalation, or direct transmittal of historical criminal complaints (RA 9262 Sec. 24).
 - **Statutory Penalty**: Under RA 9262 Section 15, violation of a BPO is a criminal offense punishable by imprisonment of 30 days without prejudice to criminal charges for the underlying acts of violence.
-- **System Action**:
-  - Electronic transmittal and PDF transmittal package generated for **PNP Women and Children Protection Desk (WCPD)** and Prosecutor's Office.
-  - Case file remains preserved in read-only format at the Barangay level to support subsequent court hearings (TPO/PPO).
+- **The Jurisdictional Gate (Loss of Local Disposition Authority)**:
+  - Once escalated to the **PNP Women and Children Protection Desk (WCPD)**, City/Provincial Prosecutor, or Family Court, **the barangay desk officer legally loses authority to close, drop, or archive the case file**.
+  - **Public Crime Doctrine**: Under Philippine jurisprudence and RA 9262, domestic violence is a crime against the State, not a private civil feud. Neither the barangay nor the victim can unilaterally "drop" or "close" an active criminal investigation.
+  - **UI Enforcement**: The system immediately blocks the standard `Close Case File` action and displays `Local Closure Blocked (Active Criminal Proceeding)`.
+  - **Community Safety & Welfare Monitoring Track**: Desk officers can continue logging community safety check-ins and tanod neighborhood wellness checks without altering the case's persistent `Escalated to Court/PNP` legal status.
 
 ---
 
@@ -110,14 +112,17 @@ flowchart TD
 - **STRICT STATUTORY RULE — PROHIBITION OF CONCILIATION (RA 9262 Section 33)**:
   - Under Section 33 of RA 9262, **conciliation and amicable settlement are strictly illegal** for offenses punishable under the Anti-VAWC Act.
   - **"Amicable Settlement / Conciliation" is strictly excluded from system options.**
-- **The 7 Legally Verified Closure Grounds**:
-  1. `15-Day Protection Order Lapsed Successfully (No Violation)`
-  2. `Referred to Family Court / PAO for TPO/PPO Application (Section 15)`
-  3. `Referred to Social Welfare for Sustained Intervention (Monitoring Complete)`
-  4. `Court Issued Permanent Protection Order (PPO)`
-  5. `Case Dismissed by Prosecutor`
-  6. `Victim Withdrew / Relocated out of Jurisdiction`
-  7. `Administrative Dismissal (Lack of Legal Merit / No Veracity)`
+- **The Two Distinct Closure Pathways**:
+  1. **Standard 15-Day BPO Lapsed Path (Step 5)**:
+     - Used only when the 15-day protection order has concluded successfully with zero reported violations, or transferred to CSWDO for social welfare intervention.
+  2. **Official Judicial / Prosecutorial Resolution Gate (Step 6 Escalated Path)**:
+     - An escalated case remains locked in active criminal status until an official legal resolution is rendered by a Court or Prosecutor.
+     - To close an escalated case, the officer must record mandatory statutory credentials:
+       - **Docket / Resolution Number** (e.g., `Crim Case No. 2026-114`)
+       - **Issuing Court / Prosecutor Body** (e.g., `RTC Branch 12 Family Court`, `City Prosecutor's Office`)
+       - **Official Order / Resolution Date**
+       - **Judicial Findings & Transmittal Summary**
+     - Permitted grounds: Court Issued Permanent Protection Order (PPO), Court Issued Temporary Protection Order (TPO), Prosecutor Formal Information Filed in Court, or Case Dismissed by Presiding Judge / Prosecutor.
 
 ---
 
@@ -145,4 +150,11 @@ To defend the system during panel evaluation and judicial accreditation against 
 > *"All datetime input controls enforce strict `min` boundaries (cannot be dated before the incident) and `max` boundaries (cannot be dated in the future). Furthermore, Step 3 incorporates a real-time RA 9262 Section 14 SLA Health Analyzer that warns against delays exceeding 24 hours."*
 
 ### Q3: "Why is there no 'Amicable Settlement' option for closing a VAWC case?"
-> *"Section 33 of Republic Act 9262 explicitly mandates the Prohibition of Conciliation. Barangay officials are legally barred from attempting conciliation or amicable settlements for acts of violence against women and children. Our system enforces this statutory mandate by offering only the 7 legally recognized judicial and administrative closure dispositions."*
+> *"Section 33 of Republic Act 9262 explicitly mandates the Prohibition of Conciliation. Barangay officials are legally barred from attempting conciliation or amicable settlements for acts of violence against women and children. Our system enforces this statutory mandate by offering only legally recognized judicial and administrative closure dispositions."*
+
+### Q4: "What if a victim reports an incident that occurred 2 years ago? Can she still apply for a BPO?"
+> *"Under RA 9262 Section 14, a BPO is an emergency relief intended to avert imminent, immediate danger within the barangay. If the incident occurred 2 years ago with no recent contact, an emergency 15-day BPO is legally inappropriate. However, under Section 24, VAWC crimes prescribe in 10 to 20 years. Therefore, the barangay must never turn the victim away; our system provides an automated Direct Criminal Transmittal route that bypasses local BPO steps and forwards the case directly to the PNP WCPD and City Prosecutor for formal criminal prosecution."*
+
+### Q5: "If a case is escalated to the PNP or Court, can the Barangay Desk Officer still close or archive it?"
+> *"Absolutely not. Under Philippine administrative law and RA 9262, domestic violence is a public crime against the State. Once escalated (Step 6), the barangay surrenders administrative jurisdiction over the legal disposition to the PNP WCPD and the Judiciary. Our system implements a strict Jurisdictional Gate: the 'Close Case File' button is locked, preventing arbitrary local dismissal. Archival (Step 7) remains locked until an official judicial verdict, PPO, or prosecutorial resolution is rendered, requiring the officer to input the court docket number, issuing body, and order date before the system permits final archival."*
+

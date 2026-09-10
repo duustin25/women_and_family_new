@@ -1,5 +1,5 @@
 import AppLayout from '@/layouts/app-layout';
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head, Link, useForm, router } from '@inertiajs/react';
 import React from 'react';
 import { route } from 'ziggy-js';
 import { toast } from 'sonner';
@@ -19,7 +19,7 @@ import {
     CheckCircle2, Gavel, Printer, Search, ShieldCheck, MapPin, ClipboardList,
     Info, ArchiveX, Lock, AlertTriangle, Activity, HelpCircle, ArrowLeft, ShieldAlert, Save,
     Folder, FolderOpen, Layers, Plus, Clock, Calendar, ExternalLink, ChevronRight, Eye, EyeOff,
-    Check, Scale, Building2, UserX
+    Check, Scale, Building2, UserX, FileText, Send
 } from 'lucide-react';
 
 interface Props {
@@ -41,16 +41,31 @@ interface Props {
         is_compound_victimization: boolean;
         other_dossiers: Array<{
             id: number;
+            uuid?: string;
             dossier_number: string;
             respondent_name: string;
             relationship_type: string;
             highest_threat_level: string;
             latest_case_id?: number;
+            latest_case_uuid?: string;
         }>;
     };
 }
 
-const STATUTORY_CLOSURE_OPTIONS = [
+interface ArchivalOption {
+    id: string;
+    category: string;
+    badgeClass: string;
+    title: string;
+    desc: string;
+    icon: any;
+    iconColor: string;
+    disabledWhenEscalated: boolean;
+    disabledReason?: string;
+    isJudicial?: boolean;
+}
+
+const ARCHIVAL_OPTIONS: ArchivalOption[] = [
     {
         id: '15-Day Protection Order Lapsed Successfully (No Violation)',
         category: 'Statutory Order',
@@ -59,6 +74,8 @@ const STATUTORY_CLOSURE_OPTIONS = [
         desc: '15-day protective order elapsed with full respondent compliance and zero violations or threats reported.',
         icon: ShieldCheck,
         iconColor: 'text-emerald-600 dark:text-emerald-400',
+        disabledWhenEscalated: true,
+        disabledReason: 'Irrelevant once a case is in criminal courts / escalated to law enforcement.',
     },
     {
         id: 'Referred to Family Court / PAO for TPO/PPO Application (Section 15)',
@@ -66,17 +83,32 @@ const STATUTORY_CLOSURE_OPTIONS = [
         badgeClass: 'bg-blue-500/10 text-blue-700 dark:text-blue-300 border-blue-500/30',
         title: 'Referred to Family Court / PAO',
         desc: 'Case formal transmittal to RTC Family Court or Public Attorney\'s Office for judicial TPO/PPO filing under Section 15.',
-        icon: Scale,
+        icon: Building2,
         iconColor: 'text-blue-600 dark:text-blue-400',
+        disabledWhenEscalated: false,
+        isJudicial: true,
     },
     {
         id: 'Referred to Social Welfare for Sustained Intervention (Monitoring Complete)',
-        category: 'Social Welfare',
+        category: 'Intervention Complete',
+        badgeClass: 'bg-teal-500/10 text-teal-700 dark:text-teal-300 border-teal-500/30',
+        title: 'Social Welfare Counseling Completed',
+        desc: 'Comprehensive rehabilitation & psychiatric counseling program fulfilled. Risk diminished.',
+        icon: Check,
+        iconColor: 'text-teal-600 dark:text-teal-400',
+        disabledWhenEscalated: true,
+        disabledReason: 'Civil/protective counseling complete; not applicable to ongoing criminal prosecutions.',
+    },
+    {
+        id: 'Court Issued Temporary Protection Order (TPO)',
+        category: 'Judicial Ruling',
         badgeClass: 'bg-purple-500/10 text-purple-700 dark:text-purple-300 border-purple-500/30',
-        title: 'Referred to Social Welfare (MSWDO)',
-        desc: 'Transferred to DSWD / MSWDO for protective emergency safehouse custody, livelihood, and sustained psychosocial rehabilitation.',
-        icon: Building2,
+        title: 'Court Issued Judicial TPO',
+        desc: 'RTC/MTC Court has assumed jurisdiction and issued an ex-parte judicial Temporary Protection Order.',
+        icon: Scale,
         iconColor: 'text-purple-600 dark:text-purple-400',
+        disabledWhenEscalated: false,
+        isJudicial: true,
     },
     {
         id: 'Court Issued Permanent Protection Order (PPO)',
@@ -86,6 +118,8 @@ const STATUTORY_CLOSURE_OPTIONS = [
         desc: 'RTC Family Court has concluded judicial proceedings and issued a permanent, final protective order against respondent.',
         icon: Gavel,
         iconColor: 'text-indigo-600 dark:text-indigo-400',
+        disabledWhenEscalated: false,
+        isJudicial: true,
     },
     {
         id: 'Case Dismissed by Prosecutor',
@@ -95,21 +129,27 @@ const STATUTORY_CLOSURE_OPTIONS = [
         desc: 'City or Provincial Prosecutor released formal resolution dismissing criminal complaint upon preliminary investigation.',
         icon: CheckCircle2,
         iconColor: 'text-slate-600 dark:text-slate-400',
+        disabledWhenEscalated: false,
+        isJudicial: true,
     },
     {
-        id: 'Victim Withdrew / Relocated out of Jurisdiction',
+        id: 'Survivor Relocated Outside Barangay Jurisdiction',
         category: 'Administrative',
         badgeClass: 'bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/30',
         title: 'Survivor Relocated / Withdrew',
-        desc: 'Voluntary affidavit of desistance executed by survivor or permanent relocation outside barangay administrative jurisdiction.',
+        desc: 'Voluntary affidavit of desistance executed by survivor or permanent relocation outside barangay administrative boundaries.',
         icon: UserX,
         iconColor: 'text-amber-600 dark:text-amber-400',
+        disabledWhenEscalated: true,
+        disabledReason: 'Under RA 9262 Public Crime Protocol, a public crime cannot be administratively dropped or withdrawn once escalated.',
     },
 ];
 
 export default function Show({ case: vawcCase, crossStats, survivorStats }: Props) {
     const confirm = useConfirm();
     const [isRedacted, setIsRedacted] = React.useState(true);
+    const caseRouteKey = vawcCase.uuid || vawcCase.id;
+    const dossierRouteKey = vawcCase.dossier?.uuid || vawcCase.dossier?.id || vawcCase.dossier_id;
     const victim = vawcCase.involved_parties.find((p: any) => p.role === 'Victim');
 
     const respondent = vawcCase.involved_parties.find((p: any) => p.role === 'Respondent');
@@ -192,11 +232,27 @@ export default function Show({ case: vawcCase, crossStats, survivorStats }: Prop
         ? toLocalISOString(new Date(vawcCase.case_report.incident_date))
         : getNowLocalISO();
 
+    // Calculate days elapsed since incident to detect cold cases / delayed reporting (RA 9262 Sec. 14 vs Sec. 24)
+    const daysSinceIncident = React.useMemo(() => {
+        if (!vawcCase.case_report?.incident_date) return 0;
+        const incDate = new Date(vawcCase.case_report.incident_date).getTime();
+        const now = Date.now();
+        if (isNaN(incDate)) return 0;
+        return Math.max(0, Math.floor((now - incDate) / (1000 * 60 * 60 * 24)));
+    }, [vawcCase.case_report?.incident_date]);
+
+    const isColdCase = daysSinceIncident > 30;
+
     // 1. Initial Application Datetime:
-    // If BPO already exists, use its application_datetime; otherwise offset +30m from incident date (or current time if live)
+    // If BPO already exists, use its application_datetime.
+    // If incident is a cold case (>30 days ago), default to CURRENT TIME (live intake) so SLA starts today!
+    // Otherwise offset +30m from incident date (or current time if live).
     const initialAppDatetime = React.useMemo(() => {
         if (activeBpo?.application_datetime) {
             return toLocalISOString(new Date(activeBpo.application_datetime));
+        }
+        if (isColdCase) {
+            return getNowLocalISO();
         }
         if (vawcCase.case_report?.incident_date) {
             const incDate = new Date(vawcCase.case_report.incident_date);
@@ -204,7 +260,7 @@ export default function Show({ case: vawcCase, crossStats, survivorStats }: Prop
             return toLocalISOString(offset);
         }
         return getNowLocalISO();
-    }, [vawcCase.case_report?.incident_date, activeBpo?.application_datetime]);
+    }, [vawcCase.case_report?.incident_date, activeBpo?.application_datetime, isColdCase]);
 
     // 2. Initial Issuance Datetime:
     // Under RA 9262 Sec. 14, BPO is issued within 24 hours. Default to application filing + 2 hours for realistic processing!
@@ -217,13 +273,13 @@ export default function Show({ case: vawcCase, crossStats, survivorStats }: Prop
             const offset = new Date(appDate.getTime() + 2 * 60 * 60 * 1000);
             return toLocalISOString(offset);
         }
-        if (vawcCase.case_report?.incident_date) {
+        if (!isColdCase && vawcCase.case_report?.incident_date) {
             const incDate = new Date(vawcCase.case_report.incident_date);
             const offset = new Date(incDate.getTime() + (2.5 * 60 * 60 * 1000));
             return toLocalISOString(offset);
         }
         return getNowLocalISO();
-    }, [activeBpo?.issued_datetime, activeBpo?.application_datetime, vawcCase.case_report?.incident_date]);
+    }, [activeBpo?.issued_datetime, activeBpo?.application_datetime, vawcCase.case_report?.incident_date, isColdCase]);
 
     // 3. Initial Service Datetime:
     // Default to issuance + 3 hours for delivery & service
@@ -381,8 +437,33 @@ export default function Show({ case: vawcCase, crossStats, survivorStats }: Prop
 
     // Modal State
     const [showCloseModal, setShowCloseModal] = React.useState(false);
+    const [judicialFields, setJudicialFields] = React.useState({
+        docket_number: '',
+        issuing_court: '',
+        resolution_date: getNowLocalISO().slice(0, 10),
+    });
 
     // Handlers
+    const handleColdCaseDirectReferral = () => {
+        confirm({
+            title: "Direct Criminal Transmittal to PNP WCPD",
+            message: `Under RA 9262 Section 24, crimes of violence against women prescribe in 10 to 20 years. Because this incident occurred ${daysSinceIncident} days ago and lacks active imminent danger for an emergency 15-day BPO, this case will be officially transmitted directly to the PNP Women & Children Protection Desk and City Prosecutor for criminal investigation and court proceedings. Proceed with statutory transmittal?`,
+            confirmText: "Transmit to Police & Prosecutor",
+            variant: "destructive",
+            onConfirm: () => {
+                router.post(route('admin.vawc.escalate', caseRouteKey), {
+                    referral_target: 'PNP Women and Children Protection',
+                    violation_datetime: getNowLocalISO(),
+                    escorted_by_pb: true,
+                    violation_description: `Statutory Direct Criminal Transmittal under RA 9262 Section 24 (Historical Incident / Delayed Reporting). Incident occurred ${daysSinceIncident} days ago. In accordance with RA 9262 Sec. 14 & 24, the complaint is formally accepted and referred directly to PNP WCPD and City Prosecutor's Office for criminal prosecution.`,
+                }, {
+                    onSuccess: () => toast.success('Historical case transmitted directly to PNP WCPD & Prosecutor!'),
+                    onError: () => toast.error('Failed to transmit case.')
+                });
+            }
+        });
+    };
+
     const handleApplyBpo = (e?: React.FormEvent | React.MouseEvent) => {
         if (e) {
             e.preventDefault();
@@ -393,7 +474,7 @@ export default function Show({ case: vawcCase, crossStats, survivorStats }: Prop
             message: "Are you sure you want to file an official application for BPO?",
             confirmText: "File Application",
             variant: "info",
-            onConfirm: () => bpoForm.post(route('admin.vawc.apply-bpo', vawcCase.id), {
+            onConfirm: () => bpoForm.post(route('admin.vawc.apply-bpo', caseRouteKey), {
                 onSuccess: () => toast.success('BPO Application Filed Successfully!'),
                 onError: () => toast.error('Failed to file BPO application.')
             }),
@@ -410,7 +491,7 @@ export default function Show({ case: vawcCase, crossStats, survivorStats }: Prop
             message: "Are you sure you want to confirm official BPO Issuance? (RA 9262 Mandate)",
             confirmText: "Issue BPO",
             variant: "info",
-            onConfirm: () => issuanceForm.post(route('admin.vawc.issue-bpo', vawcCase.id), {
+            onConfirm: () => issuanceForm.post(route('admin.vawc.issue-bpo', caseRouteKey), {
                 onSuccess: () => toast.success('Protection Order Issued Successfully!'),
                 onError: () => toast.error('Failed to issue Protection Order.')
             }),
@@ -419,7 +500,7 @@ export default function Show({ case: vawcCase, crossStats, survivorStats }: Prop
 
     const handleRecordService = (e: React.FormEvent) => {
         e.preventDefault();
-        serviceForm.post(route('admin.vawc.record-service', vawcCase.id), {
+        serviceForm.post(route('admin.vawc.record-service', caseRouteKey), {
             onSuccess: () => toast.success('Service Record Saved Successfully!'),
             onError: () => toast.error('Failed to record BPO service.')
         });
@@ -427,7 +508,7 @@ export default function Show({ case: vawcCase, crossStats, survivorStats }: Prop
 
     const handleLogCompliance = (e: React.FormEvent) => {
         e.preventDefault();
-        complianceForm.post(route('admin.vawc.log-compliance', vawcCase.id), {
+        complianceForm.post(route('admin.vawc.log-compliance', caseRouteKey), {
             onSuccess: () => {
                 complianceForm.reset();
                 toast.success('Monitoring session logged successfully!');
@@ -438,7 +519,7 @@ export default function Show({ case: vawcCase, crossStats, survivorStats }: Prop
 
     const handleEscalate = (e: React.FormEvent) => {
         e.preventDefault();
-        escalationForm.post(route('admin.vawc.escalate', vawcCase.id), {
+        escalationForm.post(route('admin.vawc.escalate', caseRouteKey), {
             onSuccess: () => toast.success('Case Escalation & Referral Transmitted Successfully!'),
             onError: () => toast.error('Failed to escalate case.')
         });
@@ -446,18 +527,46 @@ export default function Show({ case: vawcCase, crossStats, survivorStats }: Prop
 
     const handleCloseCase = (e: React.FormEvent) => {
         e.preventDefault();
-        closeForm.post(route('admin.vawc.close', vawcCase.id), {
+        if (!closeForm.data.closure_reason) {
+            toast.error('Please select a statutory closure ground.');
+            return;
+        }
+
+        const isEscalated = stepNum === 6 || vawcCase.status === 'Escalated';
+        const selectedOpt = ARCHIVAL_OPTIONS.find(o => o.id === closeForm.data.closure_reason);
+
+        if (isEscalated && selectedOpt?.disabledWhenEscalated) {
+            toast.error('Selected disposition is forbidden for escalated public crime cases.');
+            return;
+        }
+
+        let finalRemarks = closeForm.data.closure_remarks || '';
+
+        if (isEscalated || selectedOpt?.isJudicial) {
+            if (!judicialFields.docket_number || !judicialFields.issuing_court) {
+                toast.error('Court docket number and issuing court/prosecutor body are mandatory.');
+                return;
+            }
+            const judicialHeader = `[OFFICIAL JUDICIAL DISPOSITION] Issuing Body: ${judicialFields.issuing_court} | Docket/Resolution No: ${judicialFields.docket_number} | Order Date: ${judicialFields.resolution_date}.`;
+            finalRemarks = finalRemarks ? `${judicialHeader} Archival Notes: ${finalRemarks}` : judicialHeader;
+        }
+
+        router.post(route('admin.vawc.close', caseRouteKey), {
+            closure_reason: closeForm.data.closure_reason,
+            closure_remarks: finalRemarks,
+            closed_at: (isEscalated || selectedOpt?.isJudicial) ? judicialFields.resolution_date : getNowLocalISO().slice(0, 10),
+        }, {
             onSuccess: () => {
                 setShowCloseModal(false);
                 toast.success('Case file officially closed and archived.');
             },
-            onError: () => toast.error('Failed to close case file. Select a closure reason.')
+            onError: () => toast.error('Failed to close case file.')
         });
     };
 
     const handleAssessCase = (e: React.FormEvent) => {
         e.preventDefault();
-        assessForm.post(route('admin.vawc.assess', vawcCase.id), {
+        assessForm.post(route('admin.vawc.assess', caseRouteKey), {
             onSuccess: () => toast.success('Triage Assessment calculated and risk score updated!'),
             onError: () => toast.error('Failed to submit triage assessment.')
         });
@@ -771,7 +880,7 @@ export default function Show({ case: vawcCase, crossStats, survivorStats }: Prop
                                             variant="outline"
                                             size="sm"
                                             onClick={() => setShowCloseModal(true)}
-                                            className="text-xs font-bold"
+                                            className="text-xs font-bold min-h-[44px] sm:min-h-[38px] cursor-pointer"
                                         >
                                             <ArchiveX className="w-4 h-4 mr-1 text-slate-500" /> Close Case File
                                         </Button>
@@ -871,6 +980,53 @@ export default function Show({ case: vawcCase, crossStats, survivorStats }: Prop
                                         </div>
                                     )}
 
+                                    {/* Historical Incident / Cold Case Statutory Advisory (RA 9262 Sec. 14 vs. Sec. 24) */}
+                                    {isColdCase && (
+                                        <div className="p-4 rounded-xl border border-amber-500/40 bg-amber-500/10 dark:bg-amber-950/30 text-xs space-y-3">
+                                            <div className="flex items-center justify-between gap-2 flex-wrap font-bold text-amber-800 dark:text-amber-300">
+                                                <span className="flex items-center gap-1.5 text-sm">
+                                                    <Scale className="w-4 h-4 text-amber-600 shrink-0" />
+                                                    Historical Incident Advisory ({daysSinceIncident} days elapsed)
+                                                </span>
+                                                <Badge variant="outline" className="border-amber-500/40 bg-amber-100 dark:bg-amber-900/50 text-amber-800 dark:text-amber-300 text-xs font-bold">
+                                                    RA 9262 Sec. 14 vs. Sec. 24
+                                                </Badge>
+                                            </div>
+                                            <p className="text-muted-foreground leading-relaxed">
+                                                Under <strong>RA 9262 Sec. 14</strong>, an emergency BPO requires <em>imminent danger</em>. For historical incidents lacking active contact, an emergency order is legally inapplicable. However, under <strong>Sec. 24</strong>, crimes of VAWC prescribe in <strong>10 to 20 years</strong>—the barangay must accept the complaint and facilitate formal prosecution.
+                                            </p>
+
+                                            <div className="pt-2 border-t border-amber-500/20 flex flex-col sm:flex-row gap-2.5">
+                                                <Button
+                                                    type="button"
+                                                    variant="destructive"
+                                                    onClick={handleColdCaseDirectReferral}
+                                                    className="flex-1 min-h-[44px] sm:min-h-[38px] text-xs font-bold flex items-center justify-center gap-1.5 shadow-xs"
+                                                >
+                                                    <Building2 className="w-4 h-4 shrink-0" />
+                                                    Refer Directly to PNP WCPD (Criminal Transmittal)
+                                                </Button>
+
+                                                {vawcCase.dossier?.id && (
+                                                    <Button
+                                                        type="button"
+                                                        variant="outline"
+                                                        asChild
+                                                        className="flex-1 min-h-[44px] sm:min-h-[38px] text-xs font-bold border-amber-600/40 hover:bg-amber-100/50 dark:hover:bg-amber-950/50 text-amber-900 dark:text-amber-200"
+                                                    >
+                                                        <Link href={route('admin.vawc.create', { dossier_id: vawcCase.dossier.id })}>
+                                                            <Plus className="w-4 h-4 mr-1 shrink-0" />
+                                                            Log New Threats Today (Subsequent Incident)
+                                                        </Link>
+                                                    </Button>
+                                                )}
+                                            </div>
+                                            <p className="text-muted-foreground text-xs italic">
+                                                * If the survivor still experiences active tension or lingering threat from the respondent today, you may proceed with filing the BPO application below with today's live intake timestamp.
+                                            </p>
+                                        </div>
+                                    )}
+
                                     <div className="space-y-1.5">
                                         <Label className="text-xs font-semibold text-foreground">Application Filing Date & Time</Label>
                                         <Input
@@ -887,7 +1043,7 @@ export default function Show({ case: vawcCase, crossStats, survivorStats }: Prop
                                     <div className="pt-1 space-y-1">
                                         <span className="text-xs text-muted-foreground font-medium block">Quick Presets:</span>
                                         <div className="flex items-center gap-2 flex-wrap">
-                                            {vawcCase.case_report?.incident_date && (
+                                            {!isColdCase && vawcCase.case_report?.incident_date && (
                                                 <button
                                                     type="button"
                                                     onClick={() => {
@@ -900,7 +1056,7 @@ export default function Show({ case: vawcCase, crossStats, survivorStats }: Prop
                                                     +30m from Incident
                                                 </button>
                                             )}
-                                            {vawcCase.case_report?.incident_date && (
+                                            {!isColdCase && vawcCase.case_report?.incident_date && (
                                                 <button
                                                     type="button"
                                                     onClick={() => {
@@ -916,7 +1072,9 @@ export default function Show({ case: vawcCase, crossStats, survivorStats }: Prop
                                                 onClick={() => {
                                                     bpoForm.setData('application_datetime', getNowLocalISO());
                                                 }}
-                                                className="px-2.5 py-1 text-xs font-semibold rounded-md border bg-muted/40 hover:bg-muted text-foreground transition-colors cursor-pointer"
+                                                className={`px-2.5 py-1 text-xs font-semibold rounded-md border transition-colors cursor-pointer ${
+                                                    isColdCase ? 'bg-primary text-primary-foreground font-bold shadow-xs' : 'bg-muted/40 hover:bg-muted text-foreground'
+                                                }`}
                                             >
                                                 Current Time (Live Intake)
                                             </button>
@@ -1088,12 +1246,12 @@ export default function Show({ case: vawcCase, crossStats, survivorStats }: Prop
                             <div className="space-y-6">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                     <Button variant="outline" className="h-12 font-bold text-xs flex items-center justify-center gap-2 min-h-[44px]" asChild>
-                                        <a href={route('admin.vawc.print-bpo', vawcCase.id)} target="_blank" rel="noreferrer">
+                                        <a href={route('admin.vawc.print-bpo', caseRouteKey)} target="_blank" rel="noreferrer">
                                             <Printer className="w-4 h-4" /> (1) Print Protection Order Document
                                         </a>
                                     </Button>
                                     <Button variant="outline" className="h-12 font-bold text-xs flex items-center justify-center gap-2 min-h-[44px]" asChild>
-                                        <a href={route('admin.vawc.pnp-transmittal', vawcCase.id)} target="_blank" rel="noreferrer">
+                                        <a href={route('admin.vawc.pnp-transmittal', caseRouteKey)} target="_blank" rel="noreferrer">
                                             <Info className="w-4 h-4" /> (2) Print Police Transmittal
                                         </a>
                                     </Button>
@@ -1251,12 +1409,12 @@ export default function Show({ case: vawcCase, crossStats, survivorStats }: Prop
                             <div className="space-y-6">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                     <Button variant="outline" className="h-11 font-bold text-xs" asChild>
-                                        <a href={route('admin.vawc.print-bpo', vawcCase.id)} target="_blank" rel="noreferrer">
+                                        <a href={route('admin.vawc.print-bpo', caseRouteKey)} target="_blank" rel="noreferrer">
                                             <Printer className="w-4 h-4 mr-1.5" /> Print Protection Order
                                         </a>
                                     </Button>
                                     <Button variant="outline" className="h-11 font-bold text-xs" asChild>
-                                        <a href={route('admin.vawc.pnp-transmittal', vawcCase.id)} target="_blank" rel="noreferrer">
+                                        <a href={route('admin.vawc.pnp-transmittal', caseRouteKey)} target="_blank" rel="noreferrer">
                                             <Info className="w-4 h-4 mr-1.5" /> Print Police Transmittal
                                         </a>
                                     </Button>
@@ -1278,26 +1436,182 @@ export default function Show({ case: vawcCase, crossStats, survivorStats }: Prop
                             </div>
                         )}
 
-                        {/* STEP 6: REFERRAL / ESCALATION */}
+                        {/* STEP 6: REFERRAL / EXTERNAL LEGAL PROSECUTION */}
                         {stepNum === 6 && (
-                            <Alert className="border-red-600 bg-red-50 dark:bg-red-950/20 text-red-700 dark:text-red-400">
-                                <Gavel className="w-5 h-5 text-red-600" />
-                                <AlertTitle className="text-xs font-bold uppercase">Official Case Escalation</AlertTitle>
-                                <AlertDescription className="text-xs mt-1 font-medium">
-                                    Case referred to higher legal authorities (Police/Prosecutor) due to violation or high risk.
-                                </AlertDescription>
-                            </Alert>
+                            <div className="space-y-4">
+                                <Alert className="border-red-500/40 bg-red-500/10 dark:bg-red-950/30 text-red-800 dark:text-red-300">
+                                    <Gavel className="w-5 h-5 text-red-600 shrink-0" />
+                                    <div className="space-y-1">
+                                        <AlertTitle className="text-xs font-bold uppercase tracking-wider">
+                                            Official Legal Escalation & Statutory Referral Transmitted
+                                        </AlertTitle>
+                                        <AlertDescription className="text-xs leading-relaxed font-medium">
+                                            This case has been formally referred to external law enforcement and prosecutorial authorities pursuant to <strong>Republic Act 9262</strong>. Below are the official documentation actions and statutory transmittal records.
+                                        </AlertDescription>
+                                    </div>
+                                </Alert>
+
+                                {/* Legal Document Actions Bar */}
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <Button
+                                        variant="outline"
+                                        size="lg"
+                                        className="min-h-[44px] font-bold text-xs sm:text-sm border-primary/30 hover:bg-primary/5 flex items-center justify-center gap-2"
+                                        asChild
+                                    >
+                                        <a href={route('admin.vawc.complaint-form', caseRouteKey)} target="_blank" rel="noreferrer">
+                                            <FileText className="w-4 h-4 text-primary" />
+                                            Print Court Complaint Assistance Form
+                                        </a>
+                                    </Button>
+
+                                    <Button
+                                        variant="outline"
+                                        size="lg"
+                                        className="min-h-[44px] font-bold text-xs sm:text-sm border-destructive/30 hover:bg-destructive/5 flex items-center justify-center gap-2"
+                                        asChild
+                                    >
+                                        <a href={route('admin.vawc.pnp-transmittal', caseRouteKey)} target="_blank" rel="noreferrer">
+                                            <Printer className="w-4 h-4 text-destructive" />
+                                            Print Official Police (PNP WCPD) Transmittal
+                                        </a>
+                                    </Button>
+                                </div>
+
+                                {/* Escalation History & Agency Details Card */}
+                                {vawcCase.escalations && vawcCase.escalations.length > 0 ? (
+                                    <div className="space-y-3">
+                                        <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                                            Statutory Transmittal & Escalation Log
+                                        </h4>
+                                        <div className="space-y-2.5">
+                                            {vawcCase.escalations.map((esc: any) => (
+                                                <div key={esc.id} className="p-4 rounded-xl border bg-card text-xs space-y-2 shadow-xs">
+                                                    <div className="flex items-center justify-between gap-2 flex-wrap pb-2 border-b">
+                                                        <div className="flex items-center gap-2">
+                                                            <Building2 className="w-4 h-4 text-red-600" />
+                                                            <span className="font-bold text-sm text-foreground">
+                                                                {esc.referral_target}
+                                                            </span>
+                                                        </div>
+                                                        <div className="flex items-center gap-2">
+                                                            {esc.escorted_by_pb && (
+                                                                <Badge variant="secondary" className="text-xs font-semibold bg-primary/10 text-primary border-primary/20">
+                                                                    Escorted by Punong Barangay
+                                                                </Badge>
+                                                            )}
+                                                            <Badge className="bg-red-600 text-white text-xs font-bold">
+                                                                {esc.status || 'Case Prepared'}
+                                                            </Badge>
+                                                        </div>
+                                                    </div>
+                                                    <p className="text-muted-foreground leading-relaxed">
+                                                        <strong>Transmittal Justification / Particulars:</strong> {esc.violation_description || 'Formal transmittal for investigation and court filing.'}
+                                                    </p>
+                                                    <div className="text-muted-foreground font-mono text-xs flex items-center gap-1.5 pt-1">
+                                                        <Clock className="w-3.5 h-3.5" />
+                                                        <span>Transmitted / Logged: {formatDateTime(esc.violation_datetime || esc.created_at)}</span>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="p-4 rounded-xl border bg-muted/30 text-xs text-muted-foreground flex items-center gap-2">
+                                        <Info className="w-4 h-4 text-primary shrink-0" />
+                                        <span>Case is flagged as Escalated. Use the print actions above to furnish the survivor and PNP with certified copies.</span>
+                                    </div>
+                                )}
+
+                                {/* Jurisdictional Gate Notice & Step 7 Lock Advisory */}
+                                <div className="p-4 rounded-xl border border-red-500/30 bg-red-500/5 dark:bg-red-950/20 text-xs space-y-3">
+                                    <div className="flex items-center justify-between gap-2 flex-wrap font-bold text-red-800 dark:text-red-300">
+                                        <span className="flex items-center gap-1.5 text-sm">
+                                            <Lock className="w-4 h-4 text-red-600 shrink-0" />
+                                            Jurisdictional Gate: Step 7 (Archive) Locked
+                                        </span>
+                                        <Badge variant="outline" className="border-red-500/30 bg-red-100/60 dark:bg-red-900/40 text-red-800 dark:text-red-300 text-xs font-bold">
+                                            Public Crime Rule (RA 9262)
+                                        </Badge>
+                                    </div>
+                                    <p className="text-muted-foreground leading-relaxed">
+                                        Under Philippine law, violence against women and children is a <strong>public crime against the State</strong>. Because this case was formally transmitted to the <strong>PNP Women & Children Protection Desk (WCPD)</strong> and prosecutorial authorities, the Barangay VAW Desk no longer holds legal jurisdiction to unilaterally close or dismiss this file.
+                                    </p>
+                                    <p className="text-muted-foreground leading-relaxed">
+                                        The record remains permanently active under <strong>Escalated Status</strong> for community safety monitoring. Step 7 (Archival) remains locked until an official judicial verdict or prosecutor resolution is formally entered into the case record.
+                                    </p>
+
+                                    <div className="pt-2 border-t border-red-500/20 flex flex-col sm:flex-row items-center justify-between gap-3">
+                                        <span className="text-xs text-muted-foreground font-medium italic">
+                                            * Has an official court order or prosecutor resolution arrived?
+                                        </span>
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            onClick={() => setShowCloseModal(true)}
+                                            className="min-h-[44px] sm:min-h-[38px] text-xs font-bold border-primary/40 hover:bg-primary/10 text-primary dark:text-primary-foreground shadow-xs shrink-0 cursor-pointer"
+                                        >
+                                            <Scale className="w-4 h-4 mr-1.5 shrink-0" />
+                                            Record Official Court Order / Prosecutor Resolution
+                                        </Button>
+                                    </div>
+                                </div>
+                            </div>
                         )}
 
-                        {/* STEP 7: ARCHIVED */}
+                        {/* STEP 7: ARCHIVED / OFFICIALLY CONCLUDED */}
                         {stepNum === 7 && (
-                            <Alert className="bg-muted text-muted-foreground border-border">
-                                <Lock className="w-4 h-4" />
-                                <AlertTitle className="text-xs font-bold uppercase">Case Record Closed</AlertTitle>
-                                <AlertDescription className="text-xs mt-1 font-medium">
-                                    Reason: {vawcCase.closure_reason || 'Archived'}. Remarks: "{vawcCase.closure_remarks || 'None'}".
-                                </AlertDescription>
-                            </Alert>
+                            <div className="p-5 rounded-xl border border-border bg-card shadow-xs space-y-3">
+                                <div className="flex items-center justify-between gap-2 flex-wrap pb-3 border-b">
+                                    <div className="flex items-center gap-2.5">
+                                        <div className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 flex items-center justify-center border border-emerald-500/20">
+                                            <Lock className="w-4 h-4" />
+                                        </div>
+                                        <div>
+                                            <h4 className="text-sm font-bold text-foreground">
+                                                Official Case Docket Closed & Preserved
+                                            </h4>
+                                            <p className="text-xs text-muted-foreground">
+                                                Republic Act 9262 Statutory Archival Record
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <Badge variant="secondary" className="font-mono text-xs font-bold uppercase">
+                                        Archived
+                                    </Badge>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                                    <div className="p-3 rounded-lg bg-muted/40 border space-y-1">
+                                        <span className="text-muted-foreground font-semibold block uppercase tracking-wider text-xs">
+                                            Statutory Disposition Grounds:
+                                        </span>
+                                        <strong className="text-foreground text-sm block">
+                                            {vawcCase.closure_reason || 'Administrative Conclusion'}
+                                        </strong>
+                                    </div>
+
+                                    <div className="p-3 rounded-lg bg-muted/40 border space-y-1">
+                                        <span className="text-muted-foreground font-semibold block uppercase tracking-wider text-xs">
+                                            Official Concluded Timestamp:
+                                        </span>
+                                        <span className="text-foreground font-mono font-medium block">
+                                            {formatDateTime(vawcCase.closed_at || vawcCase.updated_at)}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                {vawcCase.closure_remarks && (
+                                    <div className="p-3 rounded-lg bg-muted/30 border text-xs space-y-1">
+                                        <span className="text-muted-foreground font-semibold block uppercase tracking-wider text-xs">
+                                            Official Disposition Particulars & Judicial Details:
+                                        </span>
+                                        <p className="text-foreground italic leading-relaxed">
+                                            "{vawcCase.closure_remarks}"
+                                        </p>
+                                    </div>
+                                )}
+                            </div>
                         )}
                     </CardContent>
                 </Card>
@@ -1308,8 +1622,15 @@ export default function Show({ case: vawcCase, crossStats, survivorStats }: Prop
                         <Card className="md:col-span-2 shadow-xs">
                             <CardHeader className="pb-3 border-b">
                                 <CardTitle className="text-xs font-bold uppercase tracking-wider text-foreground">
-                                    Compliance & Counseling Monitoring Log
+                                    {stepNum === 5
+                                        ? "15-Day BPO Compliance & Counseling Monitoring Log"
+                                        : "Community Safety & Welfare Monitoring Log (Survivor Support Track)"}
                                 </CardTitle>
+                                <CardDescription className="text-xs">
+                                    {stepNum === 5
+                                        ? "Record monitoring check-ins and compliance checks during the active 15-day protective period."
+                                        : "Record ongoing welfare check-ins, Tanod patrols, and support visits while criminal prosecution is handled by PNP/Court."}
+                                </CardDescription>
                             </CardHeader>
                             <CardContent className="p-6 space-y-4">
                                 <form onSubmit={handleLogCompliance} className="space-y-4">
@@ -1324,7 +1645,9 @@ export default function Show({ case: vawcCase, crossStats, survivorStats }: Prop
                                             />
                                         </div>
                                         <div className="space-y-2">
-                                            <Label className="text-xs font-semibold">Compliance Status</Label>
+                                            <Label className="text-xs font-semibold">
+                                                {stepNum === 5 ? "Compliance Status" : "Safety Check Status"}
+                                            </Label>
                                             <Select
                                                 value={complianceForm.data.is_compliant ? 'true' : 'false'}
                                                 onValueChange={val => complianceForm.setData('is_compliant', val === 'true')}
@@ -1333,27 +1656,40 @@ export default function Show({ case: vawcCase, crossStats, survivorStats }: Prop
                                                     <SelectValue placeholder="Select status" />
                                                 </SelectTrigger>
                                                 <SelectContent>
-                                                    <SelectItem value="true">Compliant (Following Order)</SelectItem>
-                                                    <SelectItem value="false">Non-Compliant (VIOLATION)</SelectItem>
+                                                    {stepNum === 5 ? (
+                                                        <>
+                                                            <SelectItem value="true">Compliant (Following Order)</SelectItem>
+                                                            <SelectItem value="false">Non-Compliant (VIOLATION)</SelectItem>
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <SelectItem value="true">Survivor Safe & Supported (No Threat)</SelectItem>
+                                                            <SelectItem value="false">Security Concern / Tanod Support Dispatched</SelectItem>
+                                                        </>
+                                                    )}
                                                 </SelectContent>
                                             </Select>
                                         </div>
                                     </div>
                                     <div className="space-y-2">
-                                        <Label className="text-xs font-semibold">Monitoring Notes</Label>
+                                        <Label className="text-xs font-semibold">
+                                            {stepNum === 5 ? "Monitoring Notes" : "Safety & Welfare Check-in Notes"}
+                                        </Label>
                                         <Input
-                                            placeholder="Enter brief notes about victim check-in..."
+                                            placeholder={stepNum === 5 ? "Enter brief notes about victim check-in..." : "Enter welfare check-in notes (home visit, Tanod neighborhood watch, counseling update)..."}
                                             value={complianceForm.data.notes}
                                             onChange={e => complianceForm.setData('notes', e.target.value)}
                                             className="text-xs"
                                         />
                                     </div>
-                                    <Button type="submit" disabled={complianceForm.processing} className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs">
-                                        Save Monitoring Log Entry
+                                    <Button type="submit" disabled={complianceForm.processing} className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs min-h-[44px] sm:min-h-[38px]">
+                                        {stepNum === 5 ? "Save Monitoring Log Entry" : "Save Community Safety Log Entry"}
                                     </Button>
                                 </form>
 
-                                <Separator />
+                                {vawcCase.compliance_logs && vawcCase.compliance_logs.length > 0 && (
+                                    <Separator />
+                                )}
 
                                 <div className="space-y-2 max-h-56 overflow-y-auto">
                                     {vawcCase.compliance_logs.map((log: any) => (
@@ -1451,7 +1787,7 @@ export default function Show({ case: vawcCase, crossStats, survivorStats }: Prop
                                 </Label>
                                 <div className="space-y-3 p-4 rounded-xl border bg-card text-xs">
                                     <div>
-                                        <p className="text-[11px] font-bold text-muted-foreground uppercase">Survivor Full Name</p>
+                                        <p className="text-xs font-bold text-muted-foreground uppercase">Survivor Full Name</p>
                                         <p className="font-bold text-sm text-foreground">{redactName(victim?.name)}</p>
 
                                         {/* Multi-Dossier Compound Victimization Alert */}
@@ -1469,9 +1805,9 @@ export default function Show({ case: vawcCase, crossStats, survivorStats }: Prop
                                                             <span className="font-semibold text-foreground truncate mr-2">
                                                                 vs. {redactName(od.respondent_name)} ({od.relationship_type})
                                                             </span>
-                                                            {od.latest_case_id ? (
+                                                            {od.latest_case_uuid || od.latest_case_id ? (
                                                                 <Link 
-                                                                    href={route('admin.vawc.show', od.latest_case_id)} 
+                                                                    href={route('admin.vawc.show', od.latest_case_uuid || od.latest_case_id)} 
                                                                     className="font-mono text-xs font-bold text-primary hover:underline flex items-center gap-0.5 shrink-0"
                                                                 >
                                                                     {od.dossier_number} <ExternalLink className="w-2.5 h-2.5" />
@@ -1506,10 +1842,10 @@ export default function Show({ case: vawcCase, crossStats, survivorStats }: Prop
                                                     <EyeOff className="w-3.5 h-3.5 text-amber-600" />
                                                     <span>CONFIDENTIAL INFORMANT</span>
                                                 </div>
-                                                <Badge variant="outline" className="text-[11px] font-semibold border-amber-300 bg-amber-50/50 dark:bg-amber-950/20 text-amber-800 dark:text-amber-300">
+                                                <Badge variant="outline" className="text-xs font-semibold border-amber-300 bg-amber-50/50 dark:bg-amber-950/20 text-amber-800 dark:text-amber-300">
                                                     Sec. 44 Whistleblower Shield Active
                                                 </Badge>
-                                                <p className="text-muted-foreground font-mono text-[11px] mt-0.5">
+                                                <p className="text-muted-foreground font-mono text-xs mt-0.5">
                                                     Identity & Contact: <span className="italic text-slate-400">•••••••••••• (SEALED BY LAW)</span>
                                                 </p>
                                             </div>
@@ -1821,7 +2157,7 @@ export default function Show({ case: vawcCase, crossStats, survivorStats }: Prop
 
                                             {!isCurrent ? (
                                                 <Button asChild variant="outline" size="sm" className="w-full text-xs font-bold mt-2">
-                                                    <Link href={route('admin.vawc.show', siblingCase.id)}>
+                                                    <Link href={route('admin.vawc.show', siblingCase.uuid || siblingCase.id)}>
                                                         Inspect Incident #{siblingCase.incident_sequence} <ChevronRight className="w-3.5 h-3.5 ml-1" />
                                                     </Link>
                                                 </Button>
@@ -2164,14 +2500,22 @@ export default function Show({ case: vawcCase, crossStats, survivorStats }: Prop
                     </CardContent>
                 </Card>
 
-                {/* ── CASE ARCHIVAL / CLOSURE SHADCN DIALOG ── */}
+                {/* ── UNIFIED STATUTORY CASE ARCHIVAL MODAL (Phase 5 & Phase 6 Adaptive) ── */}
                 <Dialog open={showCloseModal} onOpenChange={setShowCloseModal}>
                     <DialogContent className="sm:max-w-3xl max-h-[92vh] overflow-y-auto p-5 sm:p-6 gap-4">
                         <DialogHeader className="space-y-1.5 border-b pb-3.5">
                             <div className="flex items-start justify-between gap-3 flex-wrap">
                                 <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-xl bg-red-600/10 dark:bg-red-500/20 text-red-600 dark:text-red-400 flex items-center justify-center shrink-0 border border-red-500/20">
-                                        <ArchiveX className="w-5 h-5" />
+                                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border ${
+                                        stepNum === 6 || vawcCase.status === 'Escalated'
+                                            ? 'bg-indigo-600/10 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 border-indigo-500/20'
+                                            : 'bg-emerald-600/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-emerald-500/20'
+                                    }`}>
+                                        {stepNum === 6 || vawcCase.status === 'Escalated' ? (
+                                            <Scale className="w-5 h-5" />
+                                        ) : (
+                                            <ShieldCheck className="w-5 h-5" />
+                                        )}
                                     </div>
                                     <div>
                                         <DialogTitle className="text-lg sm:text-xl font-bold text-foreground tracking-tight">
@@ -2187,7 +2531,7 @@ export default function Show({ case: vawcCase, crossStats, survivorStats }: Prop
                                         {vawcCase.sub_case_number}
                                     </Badge>
                                     {vawcCase.dossier?.dossier_number && (
-                                        <Badge variant="secondary" className="font-mono text-xs font-semibold px-2.5 py-1">
+                                        <Badge variant="outline" className="font-mono text-xs font-semibold px-2.5 py-1 bg-muted/30">
                                             {vawcCase.dossier.dossier_number}
                                         </Badge>
                                     )}
@@ -2195,79 +2539,162 @@ export default function Show({ case: vawcCase, crossStats, survivorStats }: Prop
                             </div>
                         </DialogHeader>
 
-                        {/* Statutory Warning Notice */}
-                        <div className="p-3.5 bg-amber-500/10 border border-amber-500/25 rounded-xl space-y-1 text-amber-900 dark:text-amber-200">
-                            <div className="flex items-center gap-2 font-bold text-xs sm:text-sm text-amber-800 dark:text-amber-300">
-                                <AlertTriangle className="w-4 h-4 shrink-0 text-amber-600 dark:text-amber-400" />
-                                <span>Statutory Notice: Amicable Settlement Strictly Prohibited (RA 9262 Sec. 33)</span>
+                        {/* Adaptive Statutory Warning Notice */}
+                        {(stepNum === 6 || vawcCase.status === 'Escalated') ? (
+                            <div className="p-3.5 bg-blue-500/10 border border-blue-500/25 rounded-xl space-y-1 text-blue-900 dark:text-blue-200">
+                                <div className="flex items-center gap-2 font-bold text-xs sm:text-sm text-blue-800 dark:text-blue-300">
+                                    <Lock className="w-4 h-4 shrink-0 text-blue-600 dark:text-blue-400" />
+                                    <span>Escalated Legal Track: RA 9262 Public Crime Protocol Active</span>
+                                </div>
+                                <p className="text-xs text-muted-foreground leading-relaxed pl-6">
+                                    Because this case is escalated to law enforcement / court, local administrative dismissals (e.g. withdrawal or BPO lapse) are strictly disabled. Only formal judicial transitions or prosecutorial resolutions can conclude this docket.
+                                </p>
                             </div>
-                            <p className="text-xs text-muted-foreground leading-relaxed pl-6">
-                                Under Philippine law, conciliation, amicable compromise, or mediation is strictly forbidden for VAWC incidents. This case docket may only be formally concluded upon verified protective order lapse, official court transfer, or formal prosecutor disposition.
-                            </p>
-                        </div>
+                        ) : (
+                            <div className="p-3.5 bg-amber-500/10 border border-amber-500/25 rounded-xl space-y-1 text-amber-900 dark:text-amber-200">
+                                <div className="flex items-center gap-2 font-bold text-xs sm:text-sm text-amber-800 dark:text-amber-300">
+                                    <AlertTriangle className="w-4 h-4 shrink-0 text-amber-600 dark:text-amber-400" />
+                                    <span>Statutory Notice: Amicable Settlement Strictly Prohibited (RA 9262 Sec. 33)</span>
+                                </div>
+                                <p className="text-xs text-muted-foreground leading-relaxed pl-6">
+                                    Conciliation, amicable compromise, or mediation is strictly forbidden by law. Closure is only permitted upon full 15-day order lapse with zero violations or transfer to social welfare.
+                                </p>
+                            </div>
+                        )}
 
                         <form onSubmit={handleCloseCase} className="space-y-4">
-                            {/* Interactive Statutory Grounds Selector Cards */}
                             <div className="space-y-2">
                                 <div className="flex items-center justify-between">
                                     <Label className="text-xs sm:text-sm font-bold text-foreground flex items-center gap-1.5">
-                                        <ShieldCheck className="w-4 h-4 text-red-600" /> Statutory Grounds for Archival *
+                                        <ShieldCheck className="w-4 h-4 text-emerald-600" /> Statutory Grounds for Archival *
                                     </Label>
-                                    <span className="text-xs text-muted-foreground font-medium">Select 1 legal disposition</span>
+                                    <span className="text-[11px] text-muted-foreground font-medium">
+                                        Select 1 legal disposition
+                                    </span>
                                 </div>
 
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                                    {STATUTORY_CLOSURE_OPTIONS.map((item) => {
+                                    {ARCHIVAL_OPTIONS.map((item) => {
+                                        const isEscalated = stepNum === 6 || vawcCase.status === 'Escalated';
+                                        const isDisabled = isEscalated && item.disabledWhenEscalated;
                                         const isSelected = closeForm.data.closure_reason === item.id;
                                         const IconComp = item.icon;
+
                                         return (
                                             <button
                                                 type="button"
                                                 key={item.id}
-                                                onClick={() => closeForm.setData('closure_reason', item.id)}
-                                                className={`p-3 rounded-xl border text-left transition-all flex flex-col justify-between gap-2 min-h-[88px] cursor-pointer ${
-                                                    isSelected
-                                                        ? 'border-red-600 dark:border-red-500 bg-red-50/60 dark:bg-red-950/30 ring-1 ring-red-600 shadow-2xs'
-                                                        : 'bg-card hover:bg-muted/40 border-border'
+                                                disabled={isDisabled}
+                                                onClick={() => {
+                                                    if (!isDisabled) {
+                                                        closeForm.setData('closure_reason', item.id);
+                                                    }
+                                                }}
+                                                className={`p-3.5 rounded-xl border text-left transition-all flex flex-col justify-between gap-2.5 min-h-[105px] relative ${
+                                                    isDisabled
+                                                        ? 'opacity-50 bg-muted/40 border-dashed border-border cursor-not-allowed select-none'
+                                                        : isSelected
+                                                        ? 'border-indigo-600 bg-indigo-50/60 dark:bg-indigo-950/30 ring-1 ring-indigo-600 shadow-2xs cursor-pointer'
+                                                        : 'bg-card hover:bg-muted/40 border-border cursor-pointer'
                                                 }`}
                                             >
                                                 <div className="flex items-start justify-between gap-2 w-full">
-                                                    <div className="flex items-center gap-2 flex-wrap">
-                                                        <div className={`p-1.5 rounded-lg bg-muted/60 shrink-0 ${item.iconColor}`}>
-                                                            <IconComp className="w-4 h-4" />
+                                                    <div className="flex items-center gap-1.5 flex-wrap">
+                                                        <div className={`p-1.5 rounded-md bg-muted/60 shrink-0 ${item.iconColor}`}>
+                                                            <IconComp className="w-3.5 h-3.5" />
                                                         </div>
-                                                        <Badge variant="outline" className={`text-xs font-semibold px-2 py-0.5 rounded-md border ${item.badgeClass}`}>
+                                                        <Badge variant="outline" className={`text-xs font-semibold px-1.5 py-0.5 rounded-md border ${item.badgeClass}`}>
                                                             {item.category}
                                                         </Badge>
+                                                        {isDisabled && (
+                                                            <Badge variant="outline" className="text-[10px] font-bold text-red-600 border-red-300 bg-red-50 dark:bg-red-950/40">
+                                                                Disabled: Escalated
+                                                            </Badge>
+                                                        )}
                                                     </div>
                                                     <div className={`w-4 h-4 rounded-full flex items-center justify-center border transition-colors shrink-0 mt-0.5 ${
-                                                        isSelected ? 'bg-red-600 border-red-600 text-white' : 'border-input bg-background'
+                                                        isDisabled
+                                                            ? 'border-muted-foreground/30 bg-muted/50'
+                                                            : isSelected
+                                                            ? 'bg-indigo-600 border-indigo-600 text-white'
+                                                            : 'border-input bg-background'
                                                     }`}>
                                                         {isSelected && <Check className="w-2.5 h-2.5 stroke-[3]" />}
                                                     </div>
                                                 </div>
 
                                                 <div>
-                                                    <span className="text-sm font-bold text-foreground block leading-snug">
+                                                    <span className={`text-xs font-bold block leading-snug ${isDisabled ? 'text-muted-foreground line-through decoration-red-500/50' : 'text-foreground'}`}>
                                                         {item.title}
                                                     </span>
                                                     <p className="text-xs text-muted-foreground leading-relaxed mt-0.5 line-clamp-2">
                                                         {item.desc}
                                                     </p>
+                                                    {isDisabled && item.disabledReason && (
+                                                        <p className="text-[11px] text-red-600 dark:text-red-400 font-semibold mt-1 flex items-center gap-1">
+                                                            <Lock className="w-3 h-3 shrink-0" />
+                                                            {item.disabledReason}
+                                                        </p>
+                                                    )}
                                                 </div>
                                             </button>
                                         );
                                     })}
                                 </div>
-
-                                {closeForm.errors.closure_reason && (
-                                    <p className="text-xs text-red-600 dark:text-red-400 font-semibold mt-1">
-                                        {closeForm.errors.closure_reason}
-                                    </p>
-                                )}
                             </div>
 
-                            {/* Optional Archival Remarks */}
+                            {/* Conditional Mandatory Judicial Credentials Grid */}
+                            {((stepNum === 6 || vawcCase.status === 'Escalated') || ARCHIVAL_OPTIONS.find(o => o.id === closeForm.data.closure_reason)?.isJudicial) && closeForm.data.closure_reason && (
+                                <div className="p-3.5 bg-muted/30 border border-indigo-500/30 rounded-xl space-y-3">
+                                    <div className="flex items-center gap-2 text-xs font-bold text-indigo-700 dark:text-indigo-300">
+                                        <Scale className="w-4 h-4 text-indigo-600" />
+                                        <span>Mandatory Legal Transmittal & Judicial Credentials (RA 9262)</span>
+                                    </div>
+                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                        <div className="space-y-1">
+                                            <Label className="text-xs font-semibold text-foreground">
+                                                Docket / Resolution No. *
+                                            </Label>
+                                            <Input
+                                                placeholder="e.g. Crim Case No. 2026-114"
+                                                value={judicialFields.docket_number}
+                                                onChange={e => setJudicialFields(prev => ({ ...prev, docket_number: e.target.value }))}
+                                                className="text-xs"
+                                                required
+                                            />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <Label className="text-xs font-semibold text-foreground">
+                                                Issuing Court / Prosecutor Body *
+                                            </Label>
+                                            <Input
+                                                placeholder="e.g. RTC Branch 12 Family Court"
+                                                value={judicialFields.issuing_court}
+                                                onChange={e => setJudicialFields(prev => ({ ...prev, issuing_court: e.target.value }))}
+                                                className="text-xs"
+                                                required
+                                            />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <Label className="text-xs font-semibold text-foreground">
+                                                Order / Resolution Date *
+                                            </Label>
+                                            <Input
+                                                type="date"
+                                                value={judicialFields.resolution_date}
+                                                onChange={e => setJudicialFields(prev => ({ ...prev, resolution_date: e.target.value }))}
+                                                className="text-xs"
+                                                required
+                                            />
+                                        </div>
+                                    </div>
+                                    <p className="text-[11px] text-muted-foreground italic">
+                                        * Under RA 9262 Public Crime Protocol, escalated cases require verified court docket credentials before final archival.
+                                    </p>
+                                </div>
+                            )}
+
+                            {/* Remarks Field */}
                             <div className="space-y-1.5">
                                 <Label className="text-xs sm:text-sm font-semibold text-foreground flex items-center gap-1.5">
                                     <Info className="w-4 h-4 text-slate-500" /> Archival Remarks & Audit Trail Documentation (Optional)
@@ -2278,15 +2705,6 @@ export default function Show({ case: vawcCase, crossStats, survivorStats }: Prop
                                     value={closeForm.data.closure_remarks}
                                     onChange={e => closeForm.setData('closure_remarks', e.target.value)}
                                 />
-                            </div>
-
-                            {/* Compliance Advisory Callout */}
-                            <div className="p-3 bg-muted/40 rounded-xl border text-xs text-muted-foreground flex items-start gap-2.5 leading-relaxed">
-                                <Info className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
-                                <div>
-                                    <span className="font-bold text-foreground block">Barangay VAW Desk Compliance Log</span>
-                                    Archiving this sub-case docket transitions its status to <strong>Closed</strong> and preserves the complete case dossier. Any future repeat incident involving this perpetrator can be appended as a new sub-case under Master Dossier <span className="font-mono font-bold text-foreground">{vawcCase.dossier?.dossier_number || ''}</span>.
-                                </div>
                             </div>
 
                             <DialogFooter className="flex flex-col-reverse sm:flex-row gap-2 pt-3 border-t">
@@ -2302,11 +2720,15 @@ export default function Show({ case: vawcCase, crossStats, survivorStats }: Prop
                                 <Button
                                     type="submit"
                                     size="sm"
-                                    disabled={!closeForm.data.closure_reason || closeForm.processing}
-                                    className="bg-red-600 hover:bg-red-700 text-white font-bold text-xs sm:text-sm min-h-[42px] px-5 shadow-xs"
+                                    disabled={
+                                        !closeForm.data.closure_reason ||
+                                        closeForm.processing ||
+                                        ((stepNum === 6 || vawcCase.status === 'Escalated') && (!judicialFields.docket_number || !judicialFields.issuing_court))
+                                    }
+                                    className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs sm:text-sm min-h-[42px] px-5 shadow-xs"
                                 >
                                     <ArchiveX className="w-4 h-4 mr-1.5" />
-                                    {closeForm.processing ? 'Archiving Case Docket...' : 'Confirm Case Archival'}
+                                    {closeForm.processing ? 'Archiving Docket...' : 'Archive Case Docket'}
                                 </Button>
                             </DialogFooter>
                         </form>

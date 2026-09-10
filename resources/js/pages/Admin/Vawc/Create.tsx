@@ -1006,10 +1006,17 @@ export default function Create({ abuseTypes, zones, preselectedDossier }: Props)
                                         <Label className="text-sm font-semibold text-foreground">Date & Time of Incident *</Label>
                                         <Input
                                             type="datetime-local"
+                                            max={new Date().toISOString().slice(0, 16)}
                                             value={data.incident_date}
                                             onChange={e => setData('incident_date', e.target.value)}
                                             className="text-sm font-semibold h-10 min-h-[40px]"
                                         />
+                                        {data.incident_date && (Date.now() - new Date(data.incident_date).getTime() > 30 * 24 * 60 * 60 * 1000) && (
+                                            <p className="text-xs text-amber-600 dark:text-amber-400 font-medium flex items-center gap-1 mt-1">
+                                                <Scale className="w-3.5 h-3.5 shrink-0" />
+                                                Historical Incident: Accepted under RA 9262 Sec. 24 (10–20 yr prescriptive period).
+                                            </p>
+                                        )}
                                         {errors.incident_date && <p className="text-xs text-destructive font-medium">{errors.incident_date}</p>}
                                     </div>
 

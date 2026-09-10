@@ -128,6 +128,7 @@ class VawcController extends Controller
 
             return [
                 'id' => $d->id,
+                'uuid' => $d->uuid,
                 'dossier_number' => $d->dossier_number,
                 'survivor_name' => $d->survivor_name,
                 'respondent_name' => $d->respondent_name,
@@ -141,6 +142,7 @@ class VawcController extends Controller
                 'active_bpo_status' => $activeBpo?->status ?? null,
                 'latest_case' => $latestCase ? [
                     'id' => $latestCase->id,
+                    'uuid' => $latestCase->uuid,
                     'sub_case_number' => $latestCase->sub_case_number,
                     'status' => $latestCase->status,
                     'abuse_type' => $latestCase->caseReport?->abuseType?->name ?? 'VAWC',
@@ -255,12 +257,16 @@ class VawcController extends Controller
         // Optional pre-selected dossier from quick link
         $preselectedDossier = null;
         if ($request->filled('dossier_id')) {
-            $dossier = VawcDossier::with(['cases.caseReport.abuseType', 'cases.assessment', 'cases.protectionOrders'])->find($request->dossier_id);
+            $dossier = VawcDossier::with(['cases.caseReport.abuseType', 'cases.assessment', 'cases.protectionOrders'])
+                ->where('uuid', $request->dossier_id)
+                ->orWhere('id', is_numeric($request->dossier_id) ? (int)$request->dossier_id : 0)
+                ->first();
             if ($dossier) {
                 $latestCase = $dossier->cases->first();
                 $activeBpo = $latestCase?->protectionOrders?->first(fn($p) => in_array($p->status, ['Applied', 'Issued', 'Served']));
                 $preselectedDossier = [
                     'id' => $dossier->id,
+                    'uuid' => $dossier->uuid,
                     'dossier_number' => $dossier->dossier_number,
                     'survivor_name' => $dossier->survivor_name,
                     'respondent_name' => $dossier->respondent_name,
@@ -343,7 +349,22 @@ class VawcController extends Controller
 
         $vawcCase = $this->vawcService->createVawcCase($validated);
 
-        return redirect()->route('admin.vawc.show', $vawcCase->id)->with('success', 'VAWC Case incident recorded under Master Dossier.');
+        return redirect()->route('admin.vawc.show', $vawcCase->uuid)->with('success', 'VAWC Case incident recorded under Master Dossier.');
+    }
+
+    /**
+     * Resolve a VawcCase by UUID or legacy ID.
+     */
+    protected function findCase($id, array $with = []): VawcCase
+    {
+        $query = VawcCase::query();
+        if (!empty($with)) {
+            $query->with($with);
+        }
+
+        return $query->where('uuid', $id)
+            ->orWhere('id', is_numeric($id) ? (int)$id : 0)
+            ->firstOrFail();
     }
 
     /**
@@ -351,7 +372,7 @@ class VawcController extends Controller
      */
     public function show($id)
     {
-        $case = VawcCase::with([
+        $case = $this->findCase($id, [
             'dossier.cases' => function ($q) {
                 $q->with(['caseReport.abuseType', 'assessment', 'protectionOrders.issuedBy'])
                   ->orderBy('incident_sequence', 'desc');
@@ -363,7 +384,7 @@ class VawcController extends Controller
             'protectionOrders.serviceRecords.servedBy',
             'complianceLogs',
             'escalations'
-        ])->findOrFail($id);
+        ]);
 
         $respParty = $case->involvedParties->firstWhere('role', 'Respondent');
         $respName = $respParty?->name ?? $case->dossier?->respondent_name;
@@ -406,11 +427,13 @@ class VawcController extends Controller
             'is_compound_victimization' => $survivorOtherDossiers->isNotEmpty(),
             'other_dossiers' => $survivorOtherDossiers->map(fn($d) => [
                 'id' => $d->id,
+                'uuid' => $d->uuid,
                 'dossier_number' => $d->dossier_number,
                 'respondent_name' => $d->respondent_name,
                 'relationship_type' => $d->relationship_type,
                 'highest_threat_level' => $d->highest_threat_level,
                 'latest_case_id' => $d->cases->first()?->id,
+                'latest_case_uuid' => $d->cases->first()?->uuid,
             ])->values()->all(),
         ];
 
@@ -426,7 +449,7 @@ class VawcController extends Controller
      */
     public function assessCase(Request $request, $id)
     {
-        $case = VawcCase::findOrFail($id);
+        $case = $this->findCase($id);
 
         if ($case->assessment()->exists()) {
             return redirect()->back()->with('error', 'Case has already been triaged.');
@@ -474,7 +497,7 @@ class VawcController extends Controller
      */
     public function applyBpo($id, Request $request)
     {
-        $case = VawcCase::findOrFail($id);
+        $case = $this->findCase($id);
 
         $request->validate([
             'application_datetime' => 'required',
@@ -492,7 +515,7 @@ class VawcController extends Controller
      */
     public function issueBpo($id, Request $request)
     {
-        $case = VawcCase::findOrFail($id);
+        $case = $this->findCase($id);
 
         $order = $case->protectionOrders()
             ->where('status', 'Applied')
@@ -521,7 +544,7 @@ class VawcController extends Controller
      */
     public function recordBpoService($id, Request $request)
     {
-        $case = VawcCase::findOrFail($id);
+        $case = $this->findCase($id);
         $order = $case->protectionOrders()
             ->where('status', 'Issued')
             ->latest()
@@ -551,8 +574,7 @@ class VawcController extends Controller
      */
     public function printBpo($id)
     {
-        $case = VawcCase::with(['caseReport', 'involvedParties', 'dossier'])
-            ->findOrFail($id);
+        $case = $this->findCase($id, ['caseReport', 'involvedParties', 'dossier']);
 
         /** @var \App\Models\VawcProtectionOrder $order */
         $order = $case->protectionOrders()
@@ -572,8 +594,7 @@ class VawcController extends Controller
      */
     public function pnpTransmittal($id)
     {
-        $case = VawcCase::with(['caseReport', 'involvedParties', 'protectionOrders', 'dossier.cases.caseReport'])
-            ->findOrFail($id);
+        $case = $this->findCase($id, ['caseReport', 'involvedParties', 'protectionOrders', 'dossier.cases.caseReport']);
 
         /** @var \App\Models\VawcProtectionOrder $order */
         $order = $case->protectionOrders()
@@ -597,7 +618,7 @@ class VawcController extends Controller
      */
     public function logCompliance($id, Request $request)
     {
-        $case = VawcCase::findOrFail($id);
+        $case = $this->findCase($id);
 
         $request->validate([
             'monitor_date' => 'required',
@@ -619,7 +640,7 @@ class VawcController extends Controller
      */
     public function escalate($id, Request $request)
     {
-        $case = VawcCase::findOrFail($id);
+        $case = $this->findCase($id);
 
         $request->validate([
             'referral_target' => 'required|string',
@@ -639,8 +660,7 @@ class VawcController extends Controller
      */
     public function complaintForm($id)
     {
-        $case = VawcCase::with(['caseReport', 'involvedParties.vawcCase', 'dossier'])
-            ->findOrFail($id);
+        $case = $this->findCase($id, ['caseReport', 'involvedParties.vawcCase', 'dossier']);
 
         return Inertia::render('Admin/Vawc/ComplaintForm', [
             'case' => $case,
@@ -653,7 +673,7 @@ class VawcController extends Controller
      */
     public function closeCase($id, Request $request)
     {
-        $case = VawcCase::findOrFail($id);
+        $case = $this->findCase($id);
 
         $request->validate([
             'closure_reason' => 'required|string',
@@ -707,6 +727,7 @@ class VawcController extends Controller
 
             return [
                 'id'                       => $c->id,
+                'uuid'                     => $c->uuid,
                 'case_number'              => $c->sub_case_number ?? $c->caseReport?->case_number ?? 'N/A',
                 'victim_name'              => $c->caseReport?->victim_name ?? $c->dossier?->survivor_name ?? 'Unknown',
                 'respondent_name'          => $respName,

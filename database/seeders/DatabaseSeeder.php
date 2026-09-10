@@ -51,8 +51,6 @@ class DatabaseSeeder extends Seeder
             ['name' => 'Sexual', 'category' => 'VAWC', 'color' => '#2d00f5ff', 'description' => 'Sexual acts or coercion.', 'is_active' => true],
             ['name' => 'Psychological', 'category' => 'VAWC', 'color' => '#02ff0fff', 'description' => 'Mental distress or harassment.', 'is_active' => true],
             ['name' => 'Economic', 'category' => 'VAWC', 'color' => '#fae903ff', 'description' => 'Deprivation of financial resources.', 'is_active' => true],
-            ['name' => 'Neglect / Nutritional Deprivation', 'category' => 'BCPC', 'color' => '#3b82f6', 'description' => 'Failure to provide child nourishment or safety.', 'is_active' => true],
-            ['name' => 'Child Labor Exploitation', 'category' => 'BCPC', 'color' => '#10b981', 'description' => 'Exploitative work conditions for minors.', 'is_active' => true],
         ];
 
         $vawcAbuseTypes = [];

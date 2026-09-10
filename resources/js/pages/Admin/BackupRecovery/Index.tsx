@@ -4,7 +4,7 @@ import AppLayout from '@/layouts/app-layout';
 import {
     Database, Download, RefreshCw, Trash2, ShieldCheck,
     AlertTriangle, Server, FileText, Lock, HardDrive, CheckCircle2,
-    Calendar, Layers, Activity
+    Calendar, Layers, Activity, Eye, EyeOff
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -33,6 +33,9 @@ interface BackupRecoveryProps {
 export default function Index({ backups }: BackupRecoveryProps) {
     const [isCreating, setIsCreating] = useState(false);
     const [selectedRestoreFile, setSelectedRestoreFile] = useState<string | null>(null);
+    const [selectedDownloadFile, setSelectedDownloadFile] = useState<string | null>(null);
+    const [downloadPassword, setDownloadPassword] = useState('');
+    const [showDownloadPassword, setShowDownloadPassword] = useState(false);
 
     const { data, setData, post, processing, errors, reset } = useForm({
         password: '',
@@ -54,8 +57,35 @@ export default function Index({ backups }: BackupRecoveryProps) {
                 e.target.value = '';
             },
             onSuccess: () => toast.success(`External backup file '${file.name}' uploaded successfully!`),
-            onError: () => toast.error('Failed to upload backup file. Only .sql or .sql.gz files are allowed.'),
+            onError: () => toast.error('Failed to upload backup file. Supported formats: .sql, .sql.gz, .enc, or .zip.'),
         });
+    };
+
+    const handleDownloadWithPassword = (e?: React.FormEvent) => {
+        if (e) e.preventDefault();
+        if (!selectedDownloadFile) return;
+
+        if (!downloadPassword || downloadPassword.length < 6) {
+            toast.error('Please enter a password with at least 6 characters to encrypt the archive.');
+            return;
+        }
+
+        const url = route('admin.backups.download', {
+            filename: selectedDownloadFile,
+            password: downloadPassword
+        });
+        window.location.href = url;
+        setSelectedDownloadFile(null);
+        setDownloadPassword('');
+        toast.success('Generating AES-256 encrypted ZIP archive...');
+    };
+
+    const handleDownloadDirect = () => {
+        if (!selectedDownloadFile) return;
+        const url = route('admin.backups.download', { filename: selectedDownloadFile });
+        window.location.href = url;
+        setSelectedDownloadFile(null);
+        setDownloadPassword('');
     };
 
     const handleCreateBackup = () => {
@@ -121,7 +151,7 @@ export default function Index({ backups }: BackupRecoveryProps) {
                         <label className="cursor-pointer">
                             <input
                                 type="file"
-                                accept=".sql,.gz"
+                                accept=".sql,.gz,.enc,.zip"
                                 onChange={handleFileUpload}
                                 className="hidden"
                                 disabled={isUploading}
@@ -286,8 +316,18 @@ export default function Index({ backups }: BackupRecoveryProps) {
                                     {backups.map((file) => (
                                         <TableRow key={file.filename}>
                                             <TableCell className="font-mono font-bold text-xs flex items-center gap-2">
-                                                <FileText className="w-4 h-4 text-muted-foreground" />
-                                                <span>{file.filename}</span>
+                                                <FileText className="w-4 h-4 text-muted-foreground shrink-0" />
+                                                <span className="truncate">{file.filename}</span>
+                                                {file.filename.endsWith('.enc') && (
+                                                    <Badge variant="outline" className="text-[10px] border-purple-300 text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-950/40 shrink-0">
+                                                        AES-256 Encrypted
+                                                    </Badge>
+                                                )}
+                                                {file.filename.endsWith('.zip') && (
+                                                    <Badge variant="outline" className="text-[10px] border-emerald-300 text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 shrink-0">
+                                                        AES-256 ZIP
+                                                    </Badge>
+                                                )}
                                             </TableCell>
                                             <TableCell>
                                                 <Badge variant="secondary" className="font-mono">
@@ -298,17 +338,18 @@ export default function Index({ backups }: BackupRecoveryProps) {
                                                 {file.created_at}
                                             </TableCell>
                                             <TableCell className="text-right space-x-2">
-                                                {/* Download Button */}
+                                                {/* Download Button with Password Option */}
                                                 <Button
-                                                    asChild
                                                     variant="outline"
                                                     size="sm"
+                                                    onClick={() => {
+                                                        setSelectedDownloadFile(file.filename);
+                                                        setDownloadPassword('');
+                                                    }}
                                                     className="border-emerald-600 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40"
                                                 >
-                                                    <a href={route('admin.backups.download', { filename: file.filename })}>
-                                                        <Download className="w-3.5 h-3.5 mr-1" />
-                                                        Download
-                                                    </a>
+                                                    <Download className="w-3.5 h-3.5 mr-1" />
+                                                    Download
                                                 </Button>
 
                                                 {/* Restore Button */}
@@ -398,6 +439,103 @@ export default function Index({ backups }: BackupRecoveryProps) {
                                     {processing ? 'Restoring State...' : 'Authorize & Restore'}
                                 </Button>
                             </DialogFooter>
+                        </form>
+                    </DialogContent>
+                </Dialog>
+
+                {/* 6. Password-Protected AES-256 Download Dialog */}
+                <Dialog open={!!selectedDownloadFile} onOpenChange={(open) => !open && setSelectedDownloadFile(null)}>
+                    <DialogContent className="sm:max-w-md w-full overflow-hidden p-6 gap-0">
+                        <DialogHeader className="space-y-1 pb-4">
+                            <div className="flex items-center gap-2">
+                                <div className="w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-950/50 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shrink-0">
+                                    <ShieldCheck className="w-5 h-5" />
+                                </div>
+                                <div>
+                                    <DialogTitle className="text-base font-bold text-foreground">
+                                        Secure Database Export
+                                    </DialogTitle>
+                                    <div className="flex items-center gap-1.5 mt-0.5">
+                                        <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-emerald-300 text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/30">
+                                            AES-256 ZIP Encryption
+                                        </Badge>
+                                    </div>
+                                </div>
+                            </div>
+                            <DialogDescription className="text-xs text-muted-foreground pt-1">
+                                Protect this snapshot with a password. Windows, macOS, 7-Zip, and WinRAR will require this password to extract or view the database dump.
+                            </DialogDescription>
+                        </DialogHeader>
+
+                        <form onSubmit={handleDownloadWithPassword} className="space-y-4 pt-1">
+                            {/* Target File Info */}
+                            <div className="p-3 rounded-lg border bg-muted/40 text-xs space-y-1 overflow-hidden">
+                                <span className="text-muted-foreground block text-[11px] font-medium">Selected Backup File:</span>
+                                <span className="font-mono font-bold text-foreground block truncate text-xs" title={selectedDownloadFile || ''}>
+                                    {selectedDownloadFile}
+                                </span>
+                            </div>
+
+                            {/* Password Input */}
+                            <div className="space-y-1.5">
+                                <Label htmlFor="archive-password" className="text-xs font-semibold text-foreground">
+                                    Set Archive Decryption Password
+                                </Label>
+                                <div className="relative">
+                                    <Input
+                                        id="archive-password"
+                                        type={showDownloadPassword ? "text" : "password"}
+                                        value={downloadPassword}
+                                        onChange={(e) => setDownloadPassword(e.target.value)}
+                                        placeholder="Enter at least 6 characters"
+                                        className="pr-10 text-xs font-mono"
+                                        autoFocus
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowDownloadPassword(!showDownloadPassword)}
+                                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors p-1"
+                                        tabIndex={-1}
+                                    >
+                                        {showDownloadPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                    </button>
+                                </div>
+                                <p className="text-[11px] text-muted-foreground">
+                                    Anyone who acquires this file cannot access or modify records without this password.
+                                </p>
+                            </div>
+
+                            {/* Action Buttons */}
+                            <div className="space-y-2 pt-2">
+                                <Button
+                                    type="submit"
+                                    disabled={!downloadPassword || downloadPassword.length < 6}
+                                    className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold flex items-center justify-center gap-2 shadow-sm"
+                                >
+                                    <Lock className="w-4 h-4" />
+                                    <span>Download Encrypted ZIP Archive</span>
+                                </Button>
+
+                                <div className="flex items-center justify-between pt-1 text-xs">
+                                    <button
+                                        type="button"
+                                        onClick={handleDownloadDirect}
+                                        className="text-muted-foreground hover:text-foreground underline underline-offset-2 transition-colors text-[11px]"
+                                    >
+                                        Download direct (unprotected)
+                                    </button>
+
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => setSelectedDownloadFile(null)}
+                                        className="h-8 px-3 text-xs"
+                                    >
+                                        Cancel
+                                    </Button>
+                                </div>
+                            </div>
                         </form>
                     </DialogContent>
                 </Dialog>
