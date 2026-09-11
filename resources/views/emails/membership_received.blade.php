@@ -1,35 +1,28 @@
 <x-mail::message>
-# 📄 Membership Application Received
-
-**Barangay 183 — Women & Family Protection System**
-
----
+# Application Received
 
 Dear **{{ $application->fullname }}**,
 
-Thank you for applying to join **{{ $application->organization->name ?? 'Barangay 183 Organization' }}**.
-
-We have officially received your online application form and uploaded requirements. Your application is currently queued for officer review.
+Thank you for submitting your membership application for **{{ $application->organization->name ?? 'Barangay 183 Organization' }}**.
 
 <x-mail::panel>
-### 📌 Application Reference Summary
-- **Applicant Name:** {{ $application->fullname }}
-- **Target Organization:** {{ $application->organization->name ?? 'Barangay 183' }}
-- **Application Status:** ⏳ **PENDING VERIFICATION**
-- **Date Submitted:** {{ $application->created_at->format('F d, Y - h:i A') }}
+**Applicant Name:** {{ $application->fullname }}  
+**Organization:** {{ $application->organization->name ?? 'Barangay 183' }}  
+**Status:** Pending Verification  
+**Date Submitted:** {{ $application->created_at->format('F d, Y - h:i A') }}
 </x-mail::panel>
 
-### ⚖️ Barangay Governance Review SLA
-Under Barangay 183 Organization Governance Guidelines, applications are reviewed within **14 calendar days**. You will receive an automated email notification once action is taken.
+Your submission and uploaded documents have been received and queued for officer review. You will receive an automated email notification once action has been taken.
 
-If you need to update your submitted details or present additional requirements, please visit the Barangay Hall during office hours.
+<x-mail::button :url="config('app.url')">
+View Official Portal
+</x-mail::button>
+
+Warm regards,  
+**{{ $application->organization->name ?? 'Barangay 183' }} Administration**  
+📍 Pasay City
 
 <x-mail::subcopy>
-**Data Privacy Notice (Republic Act 10173):** This email notification was issued by the official Barangay 183 Women & Family Protection System. Your personal data is protected and kept strictly confidential.
+**Data Privacy Notice:** This official notification is issued in accordance with Republic Act 10173 (Data Privacy Act of 2012).
 </x-mail::subcopy>
-
-Respectfully,  
-**{{ $application->organization->name ?? 'Barangay 183' }} Administration**  
-*Women & Family Protection Information System*  
-📍 Barangay 183, Pasay City
 </x-mail::message>

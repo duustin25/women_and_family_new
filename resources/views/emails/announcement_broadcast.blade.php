@@ -1,44 +1,29 @@
 <x-mail::message>
-{{-- ═══════════════════ HEADER ═══════════════════ --}}
-<div style="border-bottom: 3px solid #ce1126; padding-bottom: 12px; margin-bottom: 20px;">
+# {{ $announcement->title }}
 
-# 📢 Official Announcement
+Hello **Member**,
 
-**Barangay 183 — Women & Family Protection System**
-
-</div>
-
----
-
-Hello **Verified Member**,
-
-An official announcement has been issued by **{{ $announcement->organization->name ?? 'Barangay 183 Hall' }}** that requires your attention.
+An official announcement has been issued by **{{ $announcement->organization->name ?? 'Barangay 183 Hall' }}**.
 
 <x-mail::panel>
-**📌 Title:** {{ $announcement->title }}  
-**🗂 Category:** {{ $announcement->category }}  
-**📅 Posted on:** {{ $announcement->created_at->format('F j, Y') }}  
+**Category:** {{ $announcement->category }}  
+**Date Posted:** {{ $announcement->created_at->format('F j, Y') }}  
 @if($announcement->location)
-**📍 Location:** {{ $announcement->location }}
+**Location:** {{ $announcement->location }}
 @endif
 </x-mail::panel>
 
-### Summary:
 {{ $announcement->excerpt }}
 
-Please click the button below to read the full announcement on the Official Barangay Hub.
-
-<x-mail::button :url="config('app.url') . '/announcements/' . $announcement->slug" color="error">
+<x-mail::button :url="config('app.url') . '/announcements/' . $announcement->slug">
 Read Full Announcement
 </x-mail::button>
 
----
-
-📌 **Data Privacy Notice**  
-This broadcast was sent to you as a registered Barangay 183 member. Your data is processed in compliance with Republic Act 10173 (Data Privacy Act of 2012).
-
-Respectfully,  
+Warm regards,  
 **{{ $announcement->organization->name ?? 'Barangay 183' }} Administrative Team**  
-*Women & Family Protection Information System*  
-📍 Barangay 183, Pasay City
+📍 Pasay City
+
+<x-mail::subcopy>
+**Data Privacy Notice:** This broadcast was sent to you as a registered member in accordance with Republic Act 10173 (Data Privacy Act of 2012).
+</x-mail::subcopy>
 </x-mail::message>
