@@ -7,56 +7,39 @@ use App\Models\BcpcChild;
 use App\Models\BcpcAssessment;
 use App\Models\Zone;
 use App\Models\User;
-use App\Models\Member;
 use App\Services\NutritionCalculatorService;
 use Carbon\Carbon;
-use Faker\Factory as Faker;
 use Illuminate\Support\Facades\DB;
 
 class BcpcSeeder extends Seeder
 {
     /**
-     * Helper to compute accurate WHO Median Weight & Height for age in months.
-     */
-    private function getWhoMedians(int $months, string $sex): array
-    {
-        $months = max(0, min(60, $months));
-        if ($sex === 'Female') {
-            $weight = 3.2 + ($months <= 12 ? $months * 0.47 : ($months <= 24 ? 5.7 + ($months - 12) * 0.21 : 8.3 + ($months - 24) * 0.18));
-            $height = 49.1 + ($months <= 12 ? $months * 2.07 : ($months <= 24 ? 24.9 + ($months - 12) * 1.03 : 37.3 + ($months - 24) * 0.60));
-        } else {
-            $weight = 3.3 + ($months <= 12 ? $months * 0.52 : ($months <= 24 ? 6.3 + ($months - 12) * 0.21 : 8.9 + ($months - 24) * 0.17));
-            $height = 49.9 + ($months <= 12 ? $months * 2.15 : ($months <= 24 ? 25.8 + ($months - 12) * 1.01 : 37.9 + ($months - 24) * 0.61));
-        }
-        return [round($weight, 2), round($height, 1)];
-    }
-
-    /**
-     * Seed 50 realistic, mathematically sound BCPC Children & 120-Day SFP Assessments.
+     * Seed 10 realistic, clinically diverse BCPC Children representing distinct health conditions.
      */
     public function run(): void
     {
-        $faker = Faker::create('en_PH');
         $nutritionService = new NutritionCalculatorService();
 
-        // 1. Ensure admin user and zones exist
+        // 1. Ensure admin user and clean Zone 1 - 10 exist
         $admin = User::where('role', 'admin')->first() ?? User::first();
-        $zones = Zone::all();
-        if ($zones->isEmpty()) {
-            $defaultZones = [
-                ['name' => 'Purok 1', 'color_code' => '#10b981', 'description' => 'Barangay 183 Villamor - Purok 1', 'is_active' => true],
-                ['name' => 'Purok 2', 'color_code' => '#3b82f6', 'description' => 'Barangay 183 Villamor - Purok 2', 'is_active' => true],
-                ['name' => 'Purok 3', 'color_code' => '#f59e0b', 'description' => 'Barangay 183 Villamor - Purok 3', 'is_active' => true],
-                ['name' => 'Purok 4', 'color_code' => '#ef4444', 'description' => 'Barangay 183 Villamor - Purok 4', 'is_active' => true],
-                ['name' => 'Purok 5', 'color_code' => '#8b5cf6', 'description' => 'Barangay 183 Villamor - Purok 5', 'is_active' => true],
-                ['name' => 'Purok 6', 'color_code' => '#ec4899', 'description' => 'Barangay 183 Villamor - Purok 6', 'is_active' => true],
-                ['name' => 'Purok 7', 'color_code' => '#6b7280', 'description' => 'Barangay 183 Villamor - Purok 7', 'is_active' => true],
-                ['name' => 'Purok 8', 'color_code' => '#06b6d4', 'description' => 'Barangay 183 Villamor - Purok 8', 'is_active' => true],
+        $zones = Zone::where('name', 'LIKE', 'Zone%')->orderBy('id')->get();
+
+        if ($zones->count() < 10) {
+            $zoneColors = [
+                1 => '#10b981', 2 => '#3b82f6', 3 => '#f59e0b', 4 => '#ef4444', 5 => '#8b5cf6',
+                6 => '#ec4899', 7 => '#6b7280', 8 => '#06b6d4', 9 => '#14b8a6', 10 => '#f97316'
             ];
-            foreach ($defaultZones as $dz) {
-                Zone::create($dz);
+            for ($z = 1; $z <= 10; $z++) {
+                Zone::firstOrCreate(
+                    ['name' => "Zone {$z}"],
+                    [
+                        'color_code' => $zoneColors[$z],
+                        'description' => "Barangay 183 Villamor - Zone {$z}",
+                        'is_active' => true,
+                    ]
+                );
             }
-            $zones = Zone::all();
+            $zones = Zone::where('name', 'LIKE', 'Zone%')->orderBy('id')->get();
         }
 
         // Clean existing BCPC tables cleanly
@@ -67,252 +50,424 @@ class BcpcSeeder extends Seeder
 
         $scholars = ['BNS Maria Cruz', 'BNS Ana Santos', 'BNS Rosa Reyes', 'BNS Carmen Garcia'];
 
-        // Seed 50 Children (IDs 1 to 50)
-        for ($i = 1; $i <= 50; $i++) {
-            $sex = $i % 2 === 0 ? 'Male' : 'Female';
-            $assignedScholar = $scholars[($i - 1) % count($scholars)];
-            $zone = $zones[($i - 1) % count($zones)];
+        // 10 distinct children with specific nutritional conditions
+        $childProfiles = [
+            [
+                'id' => 1,
+                'first_name' => 'Joshua',
+                'last_name' => 'Dela Cruz',
+                'middle_name' => 'Santos',
+                'guardian_name' => 'Rosario Dela Cruz',
+                'sex' => 'Male',
+                'age_months' => 18,
+                'zone_index' => 0, // Zone 1
+                'condition' => 'sam_oedema',
+            ],
+            [
+                'id' => 2,
+                'first_name' => 'Angel Nicole',
+                'last_name' => 'Bautista',
+                'middle_name' => 'Cruz',
+                'guardian_name' => 'Maricel Bautista',
+                'sex' => 'Female',
+                'age_months' => 20,
+                'zone_index' => 1, // Zone 2
+                'condition' => 'sam_wasted',
+            ],
+            [
+                'id' => 3,
+                'first_name' => 'Carl Justin',
+                'last_name' => 'Ramos',
+                'middle_name' => 'Garcia',
+                'guardian_name' => 'Eduardo Ramos',
+                'sex' => 'Male',
+                'age_months' => 24,
+                'zone_index' => 2, // Zone 3
+                'condition' => 'mam_active',
+            ],
+            [
+                'id' => 4,
+                'first_name' => 'Princess Mae',
+                'last_name' => 'Santos',
+                'middle_name' => 'Flores',
+                'guardian_name' => 'Lourdes Santos',
+                'sex' => 'Female',
+                'age_months' => 15,
+                'zone_index' => 3, // Zone 4
+                'condition' => 'underweight',
+            ],
+            [
+                'id' => 5,
+                'first_name' => 'John Gabriel',
+                'last_name' => 'Mendoza',
+                'middle_name' => 'Aquino',
+                'guardian_name' => 'Teresa Mendoza',
+                'sex' => 'Male',
+                'age_months' => 36,
+                'zone_index' => 4, // Zone 5
+                'condition' => 'severely_stunted',
+            ],
+            [
+                'id' => 6,
+                'first_name' => 'Samantha Louise',
+                'last_name' => 'Reyes',
+                'middle_name' => 'Castro',
+                'guardian_name' => 'Gemma Reyes',
+                'sex' => 'Female',
+                'age_months' => 28,
+                'zone_index' => 5, // Zone 6
+                'condition' => 'stunted',
+            ],
+            [
+                'id' => 7,
+                'first_name' => 'Christian Dave',
+                'last_name' => 'Flores',
+                'middle_name' => 'Navarro',
+                'guardian_name' => 'Rowena Flores',
+                'sex' => 'Male',
+                'age_months' => 30,
+                'zone_index' => 6, // Zone 7
+                'condition' => 'overweight',
+            ],
+            [
+                'id' => 8,
+                'first_name' => 'Chloe Beatrice',
+                'last_name' => 'Garcia',
+                'middle_name' => 'Perez',
+                'guardian_name' => 'Jennifer Garcia',
+                'sex' => 'Female',
+                'age_months' => 22,
+                'zone_index' => 7, // Zone 8
+                'condition' => 'obese',
+            ],
+            [
+                'id' => 9,
+                'first_name' => 'Mark Anthony',
+                'last_name' => 'Villanueva',
+                'middle_name' => 'Roxas',
+                'guardian_name' => 'Analyn Villanueva',
+                'sex' => 'Male',
+                'age_months' => 32,
+                'zone_index' => 8, // Zone 9
+                'condition' => 'graduated',
+            ],
+            [
+                'id' => 10,
+                'first_name' => 'Bea Althea',
+                'last_name' => 'Gonzales',
+                'middle_name' => 'Lim',
+                'guardian_name' => 'Clarissa Gonzales',
+                'sex' => 'Female',
+                'age_months' => 24,
+                'zone_index' => 9, // Zone 10
+                'condition' => 'normal',
+            ],
+        ];
 
-            // Scenarios:
-            // 1-10: SAM Active Enrollees (Severely Underweight / Wasted)
-            // 11-20: MAM Active Enrollees (Underweight / Wasted)
-            // 21-30: SFP Graduates (Completed 120-Day SFP, recovered to Normal)
-            // 31-40: Overdue Check-ins (> 30 days since last weighing)
-            // 41-45: Stunted Children (Low height-for-age, normal weight)
-            // 46-50: Healthy Normal Children
-
-            if ($i <= 10) {
-                $category = 'sam_active';
-                $ageInMonthsAtStart = rand(12, 24);
-                $dob = Carbon::now()->subMonths($ageInMonthsAtStart + 2);
-            } elseif ($i <= 20) {
-                $category = 'mam_active';
-                $ageInMonthsAtStart = rand(12, 30);
-                $dob = Carbon::now()->subMonths($ageInMonthsAtStart + 2);
-            } elseif ($i <= 30) {
-                $category = 'graduated';
-                $ageInMonthsAtStart = rand(12, 36);
-                $dob = Carbon::now()->subMonths($ageInMonthsAtStart + 5);
-            } elseif ($i <= 40) {
-                $category = 'overdue';
-                $ageInMonthsAtStart = rand(12, 36);
-                $dob = Carbon::now()->subMonths($ageInMonthsAtStart + 3);
-            } elseif ($i <= 45) {
-                $category = 'stunted';
-                $ageInMonthsAtStart = rand(24, 48);
-                $dob = Carbon::now()->subMonths($ageInMonthsAtStart + 2);
-            } else {
-                $category = 'normal';
-                $ageInMonthsAtStart = rand(6, 48);
-                $dob = Carbon::now()->subMonths($ageInMonthsAtStart + 1);
-            }
-
-            // Link every 3rd child to a real resident profile if exists
-            $member = Member::where('status', 'Active')->inRandomOrder()->first();
-            $guardianName = ($member && $i % 3 === 0) ? $member->fullname : $faker->name();
+        foreach ($childProfiles as $profile) {
+            $assignedScholar = $scholars[($profile['id'] - 1) % count($scholars)];
+            $zone = $zones[$profile['zone_index']] ?? $zones->first();
+            $dob = Carbon::now()->subMonths($profile['age_months']);
 
             $child = BcpcChild::create([
-                'id' => $i,
-                'member_id' => ($member && $i % 3 === 0) ? $member->id : null,
+                'id' => $profile['id'],
+                'member_id' => null,
                 'zone_id' => $zone->id,
-                'guardian_name' => $guardianName,
-                'address' => "House #" . rand(1, 120) . ", Street " . rand(1, 15) . ", " . $zone->name,
-                'contact_number' => "09" . rand(100000000, 999999999),
+                'guardian_name' => $profile['guardian_name'],
+                'address' => "House #" . ($profile['id'] * 12) . ", Street " . $profile['id'] . ", " . $zone->name,
+                'contact_number' => "0917" . str_pad((string)(1000000 + $profile['id'] * 4567), 7, '0', STR_PAD_LEFT),
                 'bns_name' => $assignedScholar,
-                'child_first_name' => $faker->firstName($sex === 'Male' ? 'male' : 'female'),
-                'child_last_name' => $faker->lastName(),
-                'child_middle_name' => $faker->lastName(),
+                'child_first_name' => $profile['first_name'],
+                'child_last_name' => $profile['last_name'],
+                'child_middle_name' => $profile['middle_name'],
                 'date_of_birth' => $dob->toDateString(),
-                'sex' => $sex,
+                'sex' => $profile['sex'],
                 'status' => 'Active',
                 'sfp_status' => 'None',
             ]);
 
-            // Generate realistic assessments matching WHO Z-score thresholds
-            if ($category === 'graduated') {
-                // Completed full 120-Day SFP (Day 1, 30, 60, 90, 120)
-                $sfpStartDate = Carbon::now()->subDays(125);
-                $milestones = [
-                    ['day' => 1, 'days_offset' => 0, 'wt_diff' => -2.8],
-                    ['day' => 30, 'days_offset' => 30, 'wt_diff' => -1.8],
-                    ['day' => 60, 'days_offset' => 60, 'wt_diff' => -0.8],
-                    ['day' => 90, 'days_offset' => 90, 'wt_diff' => 0.0],
-                    ['day' => 120, 'days_offset' => 120, 'wt_diff' => 0.5],
-                ];
-
-                foreach ($milestones as $m) {
-                    $weighDate = (clone $sfpStartDate)->addDays($m['days_offset']);
-                    $ageMonths = $nutritionService->calculateAgeInMonths($dob->toDateString(), $weighDate->toDateString());
+            switch ($profile['condition']) {
+                case 'sam_oedema':
+                    // SAM with Bilateral Oedema (Day 1 & Day 30 milestones)
+                    $sfpStartDate = Carbon::now()->subDays(35);
                     
-                    [$medWt, $medHt] = $this->getWhoMedians($ageMonths, $sex);
-                    $weight = round(max(3.5, $medWt + $m['wt_diff']), 2);
-                    $height = round(max(50.0, $medHt), 1);
+                    // Day 1
+                    BcpcAssessment::create([
+                        'bcpc_child_id' => $child->id,
+                        'user_id' => $admin ? $admin->id : null,
+                        'date_of_weighing' => $sfpStartDate->toDateString(),
+                        'weight_kg' => 6.8,
+                        'height_cm' => 78.5,
+                        'wfa_status' => 'Severely Underweight',
+                        'hfa_status' => 'Normal',
+                        'wflh_status' => 'Severely Wasted',
+                        'intervention_logs' => [
+                            'Supplemental Feeding (SFP)',
+                            'Vitamin A Supplementation',
+                            'Bilateral Oedema (Fluid Retention) [SAM PIMAM]',
+                            'Pasay Health Center RUTF Referral'
+                        ],
+                        'remarks' => 'SAM Priority: Bilateral Oedema detected. Enrolled in PIMAM protocol with Ready-to-Use Therapeutic Food (RUTF).',
+                        'bns_assessor' => $assignedScholar,
+                        'sfp_day_number' => 1,
+                    ]);
 
-                    $wfa = $nutritionService->evaluateWeightForAge($ageMonths, $sex, $weight);
-                    $hfa = $nutritionService->evaluateHeightForAge($ageMonths, $sex, $height);
-                    $wflh = $nutritionService->evaluateWeightForLengthHeight($ageMonths, $sex, $weight, $height);
+                    // Day 30
+                    BcpcAssessment::create([
+                        'bcpc_child_id' => $child->id,
+                        'user_id' => $admin ? $admin->id : null,
+                        'date_of_weighing' => (clone $sfpStartDate)->addDays(30)->toDateString(),
+                        'weight_kg' => 7.4,
+                        'height_cm' => 79.0,
+                        'wfa_status' => 'Severely Underweight',
+                        'hfa_status' => 'Normal',
+                        'wflh_status' => 'Severely Wasted',
+                        'intervention_logs' => ['Supplemental Feeding (SFP)', 'RUTF Ongoing Intake'],
+                        'remarks' => 'Day 30 check-in: Oedema subsiding, weight gain of +600g observed.',
+                        'bns_assessor' => $assignedScholar,
+                        'sfp_day_number' => 30,
+                    ]);
+
+                    $child->update([
+                        'sfp_status' => 'Enrolled',
+                        'sfp_start_date' => $sfpStartDate->toDateString(),
+                    ]);
+                    break;
+
+                case 'sam_wasted':
+                    // SAM Severe Acute Wasting (Day 1 & Day 30)
+                    $sfpStartDate = Carbon::now()->subDays(32);
 
                     BcpcAssessment::create([
                         'bcpc_child_id' => $child->id,
                         'user_id' => $admin ? $admin->id : null,
-                        'date_of_weighing' => $weighDate->toDateString(),
-                        'weight_kg' => $weight,
-                        'height_cm' => $height,
-                        'wfa_status' => $wfa,
-                        'hfa_status' => $hfa,
-                        'wflh_status' => $wflh,
+                        'date_of_weighing' => $sfpStartDate->toDateString(),
+                        'weight_kg' => 6.9,
+                        'height_cm' => 81.0,
+                        'wfa_status' => 'Underweight',
+                        'hfa_status' => 'Normal',
+                        'wflh_status' => 'Severely Wasted',
                         'intervention_logs' => ['Supplemental Feeding (SFP)', 'Vitamin A Supplementation', 'De-worming Protocol'],
-                        'remarks' => $m['day'] == 120 ? 'SFP 120-Day Cycle Completed. Child fully recovered to Normal status!' : 'Weekly feeding check-in.',
+                        'remarks' => 'Severely Wasted acute status. Prioritized for Barangay 120-Day Feeding cycle.',
                         'bns_assessor' => $assignedScholar,
-                        'sfp_day_number' => $m['day'],
+                        'sfp_day_number' => 1,
                     ]);
-                }
 
-                $child->update([
-                    'sfp_status' => 'Graduated',
-                    'sfp_start_date' => $sfpStartDate->toDateString(),
-                    'sfp_end_date' => (clone $sfpStartDate)->addDays(120)->toDateString(),
-                ]);
+                    BcpcAssessment::create([
+                        'bcpc_child_id' => $child->id,
+                        'user_id' => $admin ? $admin->id : null,
+                        'date_of_weighing' => (clone $sfpStartDate)->addDays(30)->toDateString(),
+                        'weight_kg' => 7.5,
+                        'height_cm' => 81.5,
+                        'wfa_status' => 'Underweight',
+                        'hfa_status' => 'Normal',
+                        'wflh_status' => 'Wasted',
+                        'intervention_logs' => ['Supplemental Feeding (SFP)', 'Nutrient-Dense Porridge'],
+                        'remarks' => 'Progressing favorably: Transitioned from Severely Wasted to Wasted (+600g).',
+                        'bns_assessor' => $assignedScholar,
+                        'sfp_day_number' => 30,
+                    ]);
 
-            } elseif ($category === 'sam_active' || $category === 'mam_active') {
-                // Active 120-Day SFP (Enrolled)
-                $sfpStartDate = Carbon::now()->subDays($category === 'sam_active' ? 45 : 35);
-                $isSam = $category === 'sam_active';
+                    $child->update([
+                        'sfp_status' => 'Enrolled',
+                        'sfp_start_date' => $sfpStartDate->toDateString(),
+                    ]);
+                    break;
 
-                $milestones = [
-                    ['day' => 1, 'days_offset' => 0, 'wt_diff' => $isSam ? -4.2 : -2.5],
-                    ['day' => 30, 'days_offset' => 30, 'wt_diff' => $isSam ? -3.5 : -1.8],
-                ];
+                case 'mam_active':
+                    // MAM Active (Wasted / Underweight)
+                    $sfpStartDate = Carbon::now()->subDays(30);
 
-                foreach ($milestones as $m) {
-                    $weighDate = (clone $sfpStartDate)->addDays($m['days_offset']);
-                    $ageMonths = $nutritionService->calculateAgeInMonths($dob->toDateString(), $weighDate->toDateString());
+                    BcpcAssessment::create([
+                        'bcpc_child_id' => $child->id,
+                        'user_id' => $admin ? $admin->id : null,
+                        'date_of_weighing' => $sfpStartDate->toDateString(),
+                        'weight_kg' => 9.4,
+                        'height_cm' => 86.5,
+                        'wfa_status' => 'Underweight',
+                        'hfa_status' => 'Normal',
+                        'wflh_status' => 'Wasted',
+                        'intervention_logs' => ['Supplemental Feeding (SFP)', 'Micronutrient Powder (MNP)'],
+                        'remarks' => 'Moderate Acute Malnutrition (MAM). Enrolled in 120-Day feeding.',
+                        'bns_assessor' => $assignedScholar,
+                        'sfp_day_number' => 1,
+                    ]);
 
-                    [$medWt, $medHt] = $this->getWhoMedians($ageMonths, $sex);
-                    $weight = round(max(3.5, $medWt + $m['wt_diff']), 2);
-                    $height = round(max(50.0, $medHt), 1);
+                    BcpcAssessment::create([
+                        'bcpc_child_id' => $child->id,
+                        'user_id' => $admin ? $admin->id : null,
+                        'date_of_weighing' => Carbon::now()->subDays(2)->toDateString(),
+                        'weight_kg' => 9.9,
+                        'height_cm' => 87.0,
+                        'wfa_status' => 'Underweight',
+                        'hfa_status' => 'Normal',
+                        'wflh_status' => 'Wasted',
+                        'intervention_logs' => ['Supplemental Feeding (SFP)', 'Egg & Fortified Rice Meals'],
+                        'remarks' => 'Day 30 weighing complete. Child shows healthy appetite and consistent gain.',
+                        'bns_assessor' => $assignedScholar,
+                        'sfp_day_number' => 30,
+                    ]);
 
-                    $wfa = $nutritionService->evaluateWeightForAge($ageMonths, $sex, $weight);
-                    $hfa = $nutritionService->evaluateHeightForAge($ageMonths, $sex, $height);
-                    $wflh = $nutritionService->evaluateWeightForLengthHeight($ageMonths, $sex, $weight, $height);
+                    $child->update([
+                        'sfp_status' => 'Enrolled',
+                        'sfp_start_date' => $sfpStartDate->toDateString(),
+                    ]);
+                    break;
 
-                    $interventions = ['Supplemental Feeding (SFP)', 'Vitamin A Supplementation'];
-                    if ($isSam && $m['day'] === 1 && $i <= 3) {
-                        $interventions[] = 'Bilateral Oedema (Fluid Retention) [SAM PIMAM]';
-                        $wfa = 'Severely Underweight';
-                        $wflh = 'Severely Wasted';
+                case 'underweight':
+                    // Moderately Underweight MAM
+                    $sfpStartDate = Carbon::now()->subDays(15);
+
+                    BcpcAssessment::create([
+                        'bcpc_child_id' => $child->id,
+                        'user_id' => $admin ? $admin->id : null,
+                        'date_of_weighing' => $sfpStartDate->toDateString(),
+                        'weight_kg' => 7.6,
+                        'height_cm' => 77.0,
+                        'wfa_status' => 'Underweight',
+                        'hfa_status' => 'Normal',
+                        'wflh_status' => 'Wasted',
+                        'intervention_logs' => ['Supplemental Feeding (SFP)', 'Deworming Protocol', 'Vitamin A'],
+                        'remarks' => 'Moderately Underweight. Registered for community daily supplementary hot meals.',
+                        'bns_assessor' => $assignedScholar,
+                        'sfp_day_number' => 1,
+                    ]);
+
+                    $child->update([
+                        'sfp_status' => 'Enrolled',
+                        'sfp_start_date' => $sfpStartDate->toDateString(),
+                    ]);
+                    break;
+
+                case 'severely_stunted':
+                    // Chronic Linear Undernutrition
+                    BcpcAssessment::create([
+                        'bcpc_child_id' => $child->id,
+                        'user_id' => $admin ? $admin->id : null,
+                        'date_of_weighing' => Carbon::now()->subDays(8)->toDateString(),
+                        'weight_kg' => 13.5,
+                        'height_cm' => 84.0, // Severely stunted (< -3SD)
+                        'wfa_status' => 'Normal',
+                        'hfa_status' => 'Severely Stunted',
+                        'wflh_status' => 'Normal',
+                        'intervention_logs' => [
+                            'Micronutrient Powder (MNP)',
+                            'Zinc Supplementation',
+                            'Dietary Diversity Education for Mother'
+                        ],
+                        'remarks' => 'Severe chronic stunting noted. Focus on dietary diversity, zinc supplementation, and sanitation check.',
+                        'bns_assessor' => $assignedScholar,
+                        'sfp_day_number' => null,
+                    ]);
+                    break;
+
+                case 'stunted':
+                    // Moderately Stunted / Growth Faltering
+                    BcpcAssessment::create([
+                        'bcpc_child_id' => $child->id,
+                        'user_id' => $admin ? $admin->id : null,
+                        'date_of_weighing' => Carbon::now()->subDays(12)->toDateString(),
+                        'weight_kg' => 11.2,
+                        'height_cm' => 82.5, // Stunted (< -2SD)
+                        'wfa_status' => 'Normal',
+                        'hfa_status' => 'Stunted',
+                        'wflh_status' => 'Normal',
+                        'intervention_logs' => ['Micronutrient Powder (MNP)', 'Iron Supplementation'],
+                        'remarks' => 'Moderate stunting detected during Operation Timbang Plus. Monthly height tracking scheduled.',
+                        'bns_assessor' => $assignedScholar,
+                        'sfp_day_number' => null,
+                    ]);
+                    break;
+
+                case 'overweight':
+                    // Overweight & Tall
+                    BcpcAssessment::create([
+                        'bcpc_child_id' => $child->id,
+                        'user_id' => $admin ? $admin->id : null,
+                        'date_of_weighing' => Carbon::now()->subDays(10)->toDateString(),
+                        'weight_kg' => 17.5,
+                        'height_cm' => 98.0,
+                        'wfa_status' => 'Overweight',
+                        'hfa_status' => 'Tall',
+                        'wflh_status' => 'Normal',
+                        'intervention_logs' => ['Nutrition Counseling on Sugary Snacks', 'Physical Activity Guidance'],
+                        'remarks' => 'High linear velocity and weight gain. Caregiver advised on balanced portion control.',
+                        'bns_assessor' => $assignedScholar,
+                        'sfp_day_number' => null,
+                    ]);
+                    break;
+
+                case 'obese':
+                    // Obese on Weight-for-Length/Height
+                    BcpcAssessment::create([
+                        'bcpc_child_id' => $child->id,
+                        'user_id' => $admin ? $admin->id : null,
+                        'date_of_weighing' => Carbon::now()->subDays(5)->toDateString(),
+                        'weight_kg' => 15.2,
+                        'height_cm' => 82.0,
+                        'wfa_status' => 'Overweight',
+                        'hfa_status' => 'Normal',
+                        'wflh_status' => 'Obese',
+                        'intervention_logs' => ['Pediatric Nutritional Assessment Referral', 'Family Meal Plan Consultation'],
+                        'remarks' => 'Weight-for-length z-score is in Obese category (+3SD). Health center referral issued.',
+                        'bns_assessor' => $assignedScholar,
+                        'sfp_day_number' => null,
+                    ]);
+                    break;
+
+                case 'graduated':
+                    // Full 120-Day SFP Cycle Complete (Day 1, 30, 60, 90, 120)
+                    $sfpStartDate = Carbon::now()->subDays(125);
+                    $milestones = [
+                        ['day' => 1, 'offset' => 0, 'wt' => 9.8, 'ht' => 89.0, 'wfa' => 'Severely Underweight', 'wflh' => 'Severely Wasted', 'rem' => 'Cycle commencement: Baseline weighing.'],
+                        ['day' => 30, 'offset' => 30, 'wt' => 10.8, 'ht' => 89.8, 'wfa' => 'Underweight', 'wflh' => 'Wasted', 'rem' => 'Day 30 milestone: Good appetite.'],
+                        ['day' => 60, 'offset' => 60, 'wt' => 11.9, 'ht' => 90.6, 'wfa' => 'Underweight', 'wflh' => 'Normal', 'rem' => 'Day 60 milestone: Wasting resolved.'],
+                        ['day' => 90, 'offset' => 90, 'wt' => 13.0, 'ht' => 91.5, 'wfa' => 'Normal', 'wflh' => 'Normal', 'rem' => 'Day 90 milestone: Weight-for-age normal.'],
+                        ['day' => 120, 'offset' => 120, 'wt' => 14.1, 'ht' => 92.4, 'wfa' => 'Normal', 'wflh' => 'Normal', 'rem' => 'Graduation: Full recovery achieved! SFP completed.'],
+                    ];
+
+                    foreach ($milestones as $m) {
+                        BcpcAssessment::create([
+                            'bcpc_child_id' => $child->id,
+                            'user_id' => $admin ? $admin->id : null,
+                            'date_of_weighing' => (clone $sfpStartDate)->addDays($m['offset'])->toDateString(),
+                            'weight_kg' => $m['wt'],
+                            'height_cm' => $m['ht'],
+                            'wfa_status' => $m['wfa'],
+                            'hfa_status' => 'Normal',
+                            'wflh_status' => $m['wflh'],
+                            'intervention_logs' => ['120-Day SFP Cycle', 'Vitamin A', 'Deworming Protocol'],
+                            'remarks' => $m['rem'],
+                            'bns_assessor' => $assignedScholar,
+                            'sfp_day_number' => $m['day'],
+                        ]);
                     }
 
+                    $child->update([
+                        'sfp_status' => 'Graduated',
+                        'sfp_start_date' => $sfpStartDate->toDateString(),
+                        'sfp_end_date' => (clone $sfpStartDate)->addDays(120)->toDateString(),
+                    ]);
+                    break;
+
+                case 'normal':
+                default:
+                    // Healthy / Normal Baseline
                     BcpcAssessment::create([
                         'bcpc_child_id' => $child->id,
                         'user_id' => $admin ? $admin->id : null,
-                        'date_of_weighing' => $weighDate->toDateString(),
-                        'weight_kg' => $weight,
-                        'height_cm' => $height,
-                        'wfa_status' => $wfa,
-                        'hfa_status' => $hfa,
-                        'wflh_status' => $wflh,
-                        'intervention_logs' => $interventions,
-                        'remarks' => $isSam ? 'SAM Priority: Bilateral Oedema noted. Referred to Pasay Health Center for RUTF administration under PIMAM protocol.' : 'Active 120-Day SFP enrolee.',
+                        'date_of_weighing' => Carbon::now()->subDays(7)->toDateString(),
+                        'weight_kg' => 11.6,
+                        'height_cm' => 86.5,
+                        'wfa_status' => 'Normal',
+                        'hfa_status' => 'Normal',
+                        'wflh_status' => 'Normal',
+                        'intervention_logs' => ['Routine Immunization', 'Semi-Annual Vitamin A'],
+                        'remarks' => 'Child is healthy with optimal growth velocity across all WHO indicators.',
                         'bns_assessor' => $assignedScholar,
-                        'sfp_day_number' => $m['day'],
+                        'sfp_day_number' => null,
                     ]);
-                }
-
-                $child->update([
-                    'sfp_status' => 'Enrolled',
-                    'sfp_start_date' => $sfpStartDate->toDateString(),
-                ]);
-
-            } elseif ($category === 'overdue') {
-                // Overdue Check-in (> 30 days since last weighing)
-                $sfpStartDate = Carbon::now()->subDays(75);
-                $weighDate = (clone $sfpStartDate);
-
-                $ageMonths = $nutritionService->calculateAgeInMonths($dob->toDateString(), $weighDate->toDateString());
-                [$medWt, $medHt] = $this->getWhoMedians($ageMonths, $sex);
-                $weight = round(max(3.5, $medWt - 2.5), 2);
-                $height = round(max(50.0, $medHt), 1);
-
-                $wfa = $nutritionService->evaluateWeightForAge($ageMonths, $sex, $weight);
-                $hfa = $nutritionService->evaluateHeightForAge($ageMonths, $sex, $height);
-                $wflh = $nutritionService->evaluateWeightForLengthHeight($ageMonths, $sex, $weight, $height);
-
-                BcpcAssessment::create([
-                    'bcpc_child_id' => $child->id,
-                    'user_id' => $admin ? $admin->id : null,
-                    'date_of_weighing' => $weighDate->toDateString(),
-                    'weight_kg' => $weight,
-                    'height_cm' => $height,
-                    'wfa_status' => $wfa,
-                    'hfa_status' => $hfa,
-                    'wflh_status' => $wflh,
-                    'intervention_logs' => ['Supplemental Feeding (SFP)'],
-                    'remarks' => 'Overdue weighing check-in required by BNS scholar.',
-                    'bns_assessor' => $assignedScholar,
-                    'sfp_day_number' => 1,
-                ]);
-
-                $child->update([
-                    'sfp_status' => 'Enrolled',
-                    'sfp_start_date' => $sfpStartDate->toDateString(),
-                ]);
-
-            } elseif ($category === 'stunted') {
-                // Stunted Child (Normal weight, low height-for-age)
-                $weighDate = Carbon::now()->subDays(10);
-                $ageMonths = $nutritionService->calculateAgeInMonths($dob->toDateString(), $weighDate->toDateString());
-
-                [$medWt, $medHt] = $this->getWhoMedians($ageMonths, $sex);
-                $weight = round($medWt, 2);
-                $height = round(max(50.0, $medHt - 10.0), 1); // Stunted threshold
-
-                $wfa = $nutritionService->evaluateWeightForAge($ageMonths, $sex, $weight);
-                $hfa = $nutritionService->evaluateHeightForAge($ageMonths, $sex, $height);
-                $wflh = $nutritionService->evaluateWeightForLengthHeight($ageMonths, $sex, $weight, $height);
-
-                BcpcAssessment::create([
-                    'bcpc_child_id' => $child->id,
-                    'user_id' => $admin ? $admin->id : null,
-                    'date_of_weighing' => $weighDate->toDateString(),
-                    'weight_kg' => $weight,
-                    'height_cm' => $height,
-                    'wfa_status' => $wfa,
-                    'hfa_status' => $hfa,
-                    'wflh_status' => $wflh,
-                    'intervention_logs' => ['Micronutrient Powder (MNP)', 'Nutrition Education for Parent'],
-                    'remarks' => 'Stunting noticed. Micronutrient powder given.',
-                    'bns_assessor' => $assignedScholar,
-                    'sfp_day_number' => null,
-                ]);
-
-            } else {
-                // Healthy Normal Child
-                $weighDate = Carbon::now()->subDays(rand(5, 20));
-                $ageMonths = $nutritionService->calculateAgeInMonths($dob->toDateString(), $weighDate->toDateString());
-
-                [$medWt, $medHt] = $this->getWhoMedians($ageMonths, $sex);
-                $weight = round($medWt + 0.5, 2);
-                $height = round($medHt + 1.0, 1);
-
-                $wfa = $nutritionService->evaluateWeightForAge($ageMonths, $sex, $weight);
-                $hfa = $nutritionService->evaluateHeightForAge($ageMonths, $sex, $height);
-                $wflh = $nutritionService->evaluateWeightForLengthHeight($ageMonths, $sex, $weight, $height);
-
-                BcpcAssessment::create([
-                    'bcpc_child_id' => $child->id,
-                    'user_id' => $admin ? $admin->id : null,
-                    'date_of_weighing' => $weighDate->toDateString(),
-                    'weight_kg' => $weight,
-                    'height_cm' => $height,
-                    'wfa_status' => $wfa,
-                    'hfa_status' => $hfa,
-                    'wflh_status' => $wflh,
-                    'intervention_logs' => ['Vitamin A Supplementation'],
-                    'remarks' => 'Healthy child. Normal growth velocity.',
-                    'bns_assessor' => $assignedScholar,
-                    'sfp_day_number' => null,
-                ]);
+                    break;
             }
         }
     }

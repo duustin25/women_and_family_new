@@ -28,21 +28,27 @@ class DatabaseSeeder extends Seeder
     {
         $faker = Faker::create('en_PH'); // Use Philippine localized names/addresses
 
-        // 1. Seed Default Zones (Puroks)
-        $defaultZones = [
-            ['name' => 'Purok 1', 'color_code' => '#10b981', 'description' => 'Barangay 183 Villamor - Purok 1', 'is_active' => true],
-            ['name' => 'Purok 2', 'color_code' => '#3b82f6', 'description' => 'Barangay 183 Villamor - Purok 2', 'is_active' => true],
-            ['name' => 'Purok 3', 'color_code' => '#f59e0b', 'description' => 'Barangay 183 Villamor - Purok 3', 'is_active' => true],
-            ['name' => 'Purok 4', 'color_code' => '#ef4444', 'description' => 'Barangay 183 Villamor - Purok 4', 'is_active' => true],
-            ['name' => 'Purok 5', 'color_code' => '#8b5cf6', 'description' => 'Barangay 183 Villamor - Purok 5', 'is_active' => true],
-            ['name' => 'Purok 6', 'color_code' => '#ec4899', 'description' => 'Barangay 183 Villamor - Purok 6', 'is_active' => true],
-            ['name' => 'Purok 7', 'color_code' => '#6b7280', 'description' => 'Barangay 183 Villamor - Purok 7', 'is_active' => true],
-            ['name' => 'Purok 8', 'color_code' => '#06b6d4', 'description' => 'Barangay 183 Villamor - Purok 8', 'is_active' => true],
+        // 1. Seed Default Zones (Zone 1 - 10)
+        // Clean up any remaining legacy Purok zones
+        \Illuminate\Support\Facades\Schema::disableForeignKeyConstraints();
+        Zone::where('name', 'LIKE', 'Purok%')->delete();
+        \Illuminate\Support\Facades\Schema::enableForeignKeyConstraints();
+
+        $zoneColors = [
+            1 => '#10b981', 2 => '#3b82f6', 3 => '#f59e0b', 4 => '#ef4444', 5 => '#8b5cf6',
+            6 => '#ec4899', 7 => '#6b7280', 8 => '#06b6d4', 9 => '#14b8a6', 10 => '#f97316'
         ];
 
         $zones = [];
-        foreach ($defaultZones as $zData) {
-            $zones[] = Zone::firstOrCreate(['name' => $zData['name']], $zData);
+        for ($z = 1; $z <= 10; $z++) {
+            $zones[] = Zone::updateOrCreate(
+                ['name' => "Zone {$z}"],
+                [
+                    'color_code' => $zoneColors[$z],
+                    'description' => "Barangay 183 Villamor - Zone {$z}",
+                    'is_active' => true,
+                ]
+            );
         }
 
         // 2. Seed Default Case Abuse Types
@@ -65,16 +71,24 @@ class DatabaseSeeder extends Seeder
         }
 
         // 3. Create Super Admin (System Administrator)
-        $defaultPassword = bcrypt(env('SEED_DEFAULT_PASSWORD', 'WFP-B183@SecurePass2026!'));
-
-        $admin = User::updateOrCreate(
-            ['email' => 'admin@gmail.com'],
-            [
-                'name' => 'Administrator Women & Family',
-                'password' => $defaultPassword,
-                'role' => User::ROLE_ADMIN,
-            ]
-        );
+        // Migrate legacy admin email if present to maintain relational IDs
+        $existingAdmin = User::where('email', 'admin@gmail.com')->first();
+        if ($existingAdmin) {
+            $existingAdmin->update([
+                'email' => 'admin_B183@gmail.com',
+                'password' => bcrypt('Gerald_183@Women&Family2026'),
+            ]);
+            $admin = $existingAdmin;
+        } else {
+            $admin = User::updateOrCreate(
+                ['email' => 'admin_B183@gmail.com'],
+                [
+                    'name' => 'Gerald Sobrevega',
+                    'password' => bcrypt('Gerald_183@Women&Family2026'),
+                    'role' => User::ROLE_ADMIN,
+                ]
+            );
+        }
 
         // 4. Add Gerald to the Officials Chart
         OrganizationalMember::firstOrCreate(
@@ -87,15 +101,24 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
-        // 5. Create Sample Staff/Officer (VAWC)
-        $vawcOfficer = User::updateOrCreate(
-            ['email' => 'vawc@gmail.com'],
-            [
-                'name' => 'Officer Sarah (VAWC)',
-                'password' => $defaultPassword,
-                'role' => User::ROLE_HEAD,
-            ]
-        );
+        // 5. Create Sample Staff/Officer (Head Committee / VAWC)
+        $existingHead = User::where('email', 'vawc@gmail.com')->first();
+        if ($existingHead) {
+            $existingHead->update([
+                'email' => 'head_B183@gmail.com',
+                'password' => bcrypt('Head_183@Women&Family2026'),
+            ]);
+            $vawcOfficer = $existingHead;
+        } else {
+            $vawcOfficer = User::updateOrCreate(
+                ['email' => 'head_B183@gmail.com'],
+                [
+                    'name' => 'Officer Sarah (Head Committee)',
+                    'password' => bcrypt('Head_183@Women&Family2026'),
+                    'role' => User::ROLE_HEAD,
+                ]
+            );
+        }
 
         // 6. Define Custom Schemas & Print Settings matching actual application sheets
 
@@ -375,7 +398,7 @@ class DatabaseSeeder extends Seeder
                 'print_settings' => $kalipiPrintSettings,
                 'president' => [
                     'name' => 'Elena Reyes',
-                    'email' => 'kalipi@gmail.com',
+                    'email' => 'kalipi_B183@gmail.com',
                 ]
             ],
             [
@@ -388,7 +411,7 @@ class DatabaseSeeder extends Seeder
                 'print_settings' => $kabahagiPrintSettings,
                 'president' => [
                     'name' => 'Josefa Lopez',
-                    'email' => 'kabahagi@gmail.com',
+                    'email' => 'kabahagi_B183@gmail.com',
                 ]
             ],
             [
@@ -401,7 +424,7 @@ class DatabaseSeeder extends Seeder
                 'print_settings' => $vcoPrintSettings,
                 'president' => [
                     'name' => 'Mark Alcantara',
-                    'email' => 'vco@gmail.com',
+                    'email' => 'vco_B183@gmail.com',
                 ]
             ],
             [
@@ -414,7 +437,7 @@ class DatabaseSeeder extends Seeder
                 'print_settings' => $soloParentsPrintSettings,
                 'president' => [
                     'name' => 'Maria Dela Cruz',
-                    'email' => 'soloparent@gmail.com',
+                    'email' => 'soloparent_B183@gmail.com',
                 ]
             ],
             [
@@ -427,42 +450,50 @@ class DatabaseSeeder extends Seeder
                 'print_settings' => $erpatPrintSettings,
                 'president' => [
                     'name' => 'Ramil Rodriguez',
-                    'email' => 'erpat@gmail.com',
+                    'email' => 'erpat_B183@gmail.com',
                 ]
             ]
         ];
 
-        // 7. Seed Organizations, Presidents & 60 applications per Org
+        // 7. Seed Organizations, Presidents & 3 Pending Applications per Org
+        $presPassword = bcrypt('Org_183@Women&Family2026');
+
+        // Clean out legacy mock applications and legacy test president accounts
+        \Illuminate\Support\Facades\Schema::disableForeignKeyConstraints();
+        Member::truncate();
+        MembershipApplication::truncate();
+        User::whereIn('email', [
+            'kalipi@gmail.com',
+            'kabahagi@gmail.com',
+            'vco@gmail.com',
+            'soloparent@gmail.com',
+            'erpat@gmail.com',
+            'hahah@gmail.com'
+        ])->forceDelete();
+        \Illuminate\Support\Facades\Schema::enableForeignKeyConstraints();
+
         foreach ($orgsData as $orgInfo) {
             $presData = $orgInfo['president'];
             unset($orgInfo['president']);
 
             $org = Organization::firstOrCreate(['slug' => $orgInfo['slug']], $orgInfo);
 
-            // Create President User
-            User::firstOrCreate(
+            // Create or update President User
+            User::updateOrCreate(
                 ['email' => $presData['email']],
                 [
                     'name' => $presData['name'],
-                    'password' => bcrypt('password'),
+                    'password' => $presPassword,
                     'role' => User::ROLE_PRESIDENT,
                     'organization_id' => $org->id,
                 ]
             );
 
-            // Seed 60 applications/members for this organization
-            // 40 Approved (with active Members), 15 Pending, 5 Disapproved
-            for ($i = 0; $i < 60; $i++) {
-                $status = 'Pending';
-                if ($i < 40) {
-                    $status = 'Approved';
-                } elseif ($i >= 55) {
-                    $status = 'Disapproved';
-                }
-
+            // Seed exactly 3 Pending applications per organization (Mock Data)
+            for ($i = 0; $i < 3; $i++) {
                 $applicantName = $faker->name();
                 $applicantEmail = $faker->unique()->safeEmail();
-                $applicantAddress = $faker->streetAddress() . ', Purok ' . rand(1, 8);
+                $applicantAddress = $faker->streetAddress() . ', Zone ' . rand(1, 10);
 
                 // Mock dynamic form responses
                 $formData = [
@@ -523,7 +554,7 @@ class DatabaseSeeder extends Seeder
                     $formData['solo_id'] = 'SP-' . rand(100000, 999999);
                     $formData['solo_expiration'] = $faker->date('Y-m-d', '+2 years');
                     $formData['solo_category'] = $faker->randomElement(['Death of Spouse', 'Abandoned', 'Legal Separation']);
-                    $formData['solo_zone'] = 'Purok ' . rand(1, 8);
+                    $formData['solo_zone'] = 'Zone ' . rand(1, 10);
                     $formData['solo_precinct'] = 'PR-' . rand(10, 99);
                     $formData['solo_children'] = [
                         ['name' => $faker->name(), 'age' => rand(1, 15)],
@@ -537,30 +568,16 @@ class DatabaseSeeder extends Seeder
                     $formData['kabahagi_disability'] = $faker->randomElement(['Visual Impairment', 'Orthopedic Disability', 'Hearing Impairment']);
                 }
 
-                $application = MembershipApplication::create([
+                MembershipApplication::create([
                     'organization_id' => $org->id,
                     'fullname' => $applicantName,
                     'address' => $applicantAddress,
                     'email' => $applicantEmail,
                     'form_data' => $formData,
-                    'status' => $status,
-                    'approved_by' => $status === 'Approved' ? $presData['name'] : null,
-                    'actioned_at' => $status !== 'Pending' ? now()->subDays(rand(1, 10)) : null,
+                    'status' => 'Pending',
+                    'approved_by' => null,
+                    'actioned_at' => null,
                 ]);
-
-                // Create approved member record
-                if ($status === 'Approved') {
-                    Member::create([
-                        'membership_application_id' => $application->id,
-                        'organization_id' => $org->id,
-                        'fullname' => $applicantName,
-                        'email' => $applicantEmail,
-                        'phone' => $formData['vco_guardian_phone'] ?? ($formData['erpat_phone'] ?? ($formData['kalipi_cellphone'] ?? ($formData['solo_phone'] ?? ($formData['kabahagi_phone'] ?? $faker->phoneNumber())))),
-                        'secure_token' => Str::random(32),
-                        'member_meta' => $formData,
-                        'status' => Member::STATUS_ACTIVE,
-                    ]);
-                }
             }
         }
 

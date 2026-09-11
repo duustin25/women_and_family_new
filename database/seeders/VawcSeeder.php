@@ -37,7 +37,7 @@ class VawcSeeder extends Seeder
     {
         // 1. Baseline Models & Officers
         $admin = User::where('role', 'admin')->first() ?? User::first();
-        $officer = User::where('email', 'vawc@gmail.com')->first() ?? $admin;
+        $officer = User::where('email', 'head_B183@gmail.com')->first() ?? (User::where('role', 'head')->first() ?? $admin);
         $zones = Zone::all();
         $physicalAbuse = CaseAbuseType::where('name', 'Physical')->first();
         $psychAbuse = CaseAbuseType::where('name', 'Psychological')->first();
