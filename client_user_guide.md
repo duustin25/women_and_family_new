@@ -36,9 +36,8 @@ The system utilizes three distinct roles:
 3. **Organization President (President)**: Specific management access restricted to their own organization (e.g., KALIPI President only manages KALIPI members).
 
 ### Login Credentials
-To log in, navigate to your site's admin URL and enter your registered email and password.
-* *Default Administrator Email:* `admin@gmail.com`
-* *Default Administrator Password:* `password`
+To log in, navigate to your site's admin URL and enter your registered barangay email and password.
+* *Administrator Access:* Contact the System Administrator or consult your secure deployment configuration (`.env`) for initial provisioned credentials. Password changes should be made immediately upon initial sign-in under **Settings > Password**.
 
 ---
 

@@ -65,11 +65,13 @@ class DatabaseSeeder extends Seeder
         }
 
         // 3. Create Super Admin (System Administrator)
-        $admin = User::firstOrCreate(
+        $defaultPassword = bcrypt(env('SEED_DEFAULT_PASSWORD', 'WFP-B183@SecurePass2026!'));
+
+        $admin = User::updateOrCreate(
             ['email' => 'admin@gmail.com'],
             [
-                'name' => 'Gerald Sobrevega',
-                'password' => bcrypt('password'),
+                'name' => 'Administrator Women & Family',
+                'password' => $defaultPassword,
                 'role' => User::ROLE_ADMIN,
             ]
         );
@@ -86,11 +88,11 @@ class DatabaseSeeder extends Seeder
         );
 
         // 5. Create Sample Staff/Officer (VAWC)
-        $vawcOfficer = User::firstOrCreate(
+        $vawcOfficer = User::updateOrCreate(
             ['email' => 'vawc@gmail.com'],
             [
                 'name' => 'Officer Sarah (VAWC)',
-                'password' => bcrypt('password'),
+                'password' => $defaultPassword,
                 'role' => User::ROLE_HEAD,
             ]
         );

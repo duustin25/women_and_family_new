@@ -126,7 +126,8 @@ php artisan serve
 # Run Vite compiler
 npm run dev
 ```
-Navigate to `http://127.0.0.1:8000`. Login credentials for test Admin can be found in `DatabaseSeeder.php` (`admin@gmail.com` / `password`).
+
+Navigate to `http://127.0.0.1:8000`. Initial administrator credentials and seeding options are securely defined via your `.env` configuration file (see `SEED_DEFAULT_PASSWORD`).
 
 ---
 <div align="center">
