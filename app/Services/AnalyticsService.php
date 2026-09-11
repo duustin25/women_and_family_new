@@ -120,6 +120,8 @@ class AnalyticsService
             ->get()
             ->map(fn($case) => [
                 'id'          => $case->id,
+                'vawc_id'     => $case->vawcCase?->id,
+                'vawc_uuid'   => $case->vawcCase?->uuid,
                 'case_number' => $case->case_number,
                 'type'        => $case->type,
                 'subType'     => $case->abuseType ? $case->abuseType->name : 'General Intake',

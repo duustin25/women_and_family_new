@@ -727,7 +727,7 @@ export default function Show({ case: vawcCase, crossStats, survivorStats }: Prop
                                 )
                             )}
                             <Button asChild size="sm" className="bg-[#ce1126] hover:bg-red-700 font-bold text-xs min-h-[44px] sm:min-h-[38px]">
-                                <Link href={route('admin.vawc.create', { dossier_id: vawcCase.dossier_id })}>
+                                <Link href={route('admin.vawc.create', { dossier_id: vawcCase.dossier?.uuid || vawcCase.dossier_id })}>
                                     <Plus className="w-3.5 h-3.5 mr-1" /> Log Subsequent Incident
                                 </Link>
                             </Button>
@@ -1043,7 +1043,7 @@ export default function Show({ case: vawcCase, crossStats, survivorStats }: Prop
                                                         asChild
                                                         className="flex-1 min-h-[44px] sm:min-h-[38px] text-xs font-bold border-amber-600/40 hover:bg-amber-100/50 dark:hover:bg-amber-950/50 text-amber-900 dark:text-amber-200"
                                                     >
-                                                        <Link href={route('admin.vawc.create', { dossier_id: vawcCase.dossier.id })}>
+                                                        <Link href={route('admin.vawc.create', { dossier_id: vawcCase.dossier?.uuid || vawcCase.dossier?.id })}>
                                                             <Plus className="w-4 h-4 mr-1 shrink-0" />
                                                             Log New Threats Today (Subsequent Incident)
                                                         </Link>
@@ -2369,7 +2369,7 @@ export default function Show({ case: vawcCase, crossStats, survivorStats }: Prop
                                 </CardDescription>
                             </div>
                             <Button asChild size="sm" className="bg-[#ce1126] hover:bg-red-700 font-bold text-xs">
-                                <Link href={route('admin.vawc.create', { dossier_id: vawcCase.dossier_id })}>
+                                <Link href={route('admin.vawc.create', { dossier_id: vawcCase.dossier?.uuid || vawcCase.dossier_id })}>
                                     <Plus className="w-3.5 h-3.5 mr-1" /> Log Subsequent Incident
                                 </Link>
                             </Button>

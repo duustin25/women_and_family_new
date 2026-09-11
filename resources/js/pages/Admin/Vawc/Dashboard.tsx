@@ -23,6 +23,7 @@ interface BpoInfo {
 
 interface CaseQueueItem {
     id: number;
+    uuid?: string;
     case_number: string;
     victim_name: string;
     respondent_name: string;
@@ -104,7 +105,7 @@ function CaseQueueCard({ item, isPrivacyRedacted }: { item: CaseQueueItem; isPri
     return (
         <div
             className="p-4 sm:p-5 hover:bg-muted/50 active:bg-muted/70 active:scale-[0.99] transition-transform duration-100 cursor-pointer space-y-3"
-            onClick={() => router.visit(`/admin/vawc/cases/${item.id}`)}
+            onClick={() => router.visit(route('admin.vawc.show', item.uuid || item.id))}
         >
             {/* Header: Survivor vs Respondent + Score Pill */}
             <div className="flex items-start justify-between gap-3">

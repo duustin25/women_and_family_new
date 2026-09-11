@@ -1,6 +1,7 @@
 import { Head, router } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 import { dashboard } from '@/routes';
+import { route } from 'ziggy-js';
 import type { BreadcrumbItem } from '@/types';
 import {
     Users,
@@ -249,7 +250,7 @@ export default function Dashboard({
                                     {recentCases.length === 0 ? (
                                         <tr><td colSpan={4} className="px-5 py-8 text-center text-slate-400">No recent activity detected.</td></tr>
                                     ) : recentCases.map(c => (
-                                        <tr key={c.id} className="border-b last:border-0 hover:bg-slate-50 dark:hover:bg-neutral-800/50 transition-colors cursor-pointer" onClick={() => router.visit(`/admin/vawc/cases/${c.id}`)}>
+                                        <tr key={c.id} className="border-b last:border-0 hover:bg-slate-50 dark:hover:bg-neutral-800/50 transition-colors cursor-pointer" onClick={() => router.visit(route('admin.vawc.show', c.vawc_uuid || c.vawc_id || c.id))}>
                                             <td className="px-5 py-3 font-black">{c.case_number}</td>
                                             <td className="px-5 py-3 text-slate-500">{c.subType}</td>
                                             <td className="px-5 py-3 text-center">

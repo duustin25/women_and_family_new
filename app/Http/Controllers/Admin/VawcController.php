@@ -11,24 +11,26 @@ use App\Services\VawcCaseService;
 use App\Services\VawcBpoService;
 use App\Services\VawcComplianceService;
 use App\Services\VawcLegalService;
+use App\Services\AnalyticsService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class VawcController extends Controller
 {
-    protected $vawcService;
-    protected $bpoService;
-    protected $complianceService;
-    protected $legalService;
-    protected $analyticsService;
+    protected VawcCaseService $vawcService;
+    protected VawcBpoService $bpoService;
+    protected VawcComplianceService $complianceService;
+    protected VawcLegalService $legalService;
+    protected AnalyticsService $analyticsService;
 
     public function __construct(
         VawcCaseService $vawcService,
         VawcBpoService $bpoService,
         VawcComplianceService $complianceService,
         VawcLegalService $legalService,
-        \App\Services\AnalyticsService $analyticsService
+        AnalyticsService $analyticsService
     ) {
         $this->vawcService = $vawcService;
         $this->bpoService = $bpoService;
@@ -356,22 +358,24 @@ class VawcController extends Controller
     /**
      * Resolve a VawcCase by UUID or legacy ID.
      */
-    protected function findCase($id, array $with = []): VawcCase
+    protected function findCase(string|int $id, array $with = []): VawcCase
     {
         $query = VawcCase::query();
         if (!empty($with)) {
             $query->with($with);
         }
 
-        return $query->where('uuid', $id)
-            ->orWhere('id', is_numeric($id) ? (int)$id : 0)
-            ->firstOrFail();
+        if (Str::isUuid($id)) {
+            return $query->where('uuid', $id)->firstOrFail();
+        }
+
+        return $query->where('id', is_numeric($id) ? (int)$id : 0)->firstOrFail();
     }
 
     /**
      * Display the specified VAWC case and Master Dossier Incident History.
      */
-    public function show($id)
+    public function show(string|int $id)
     {
         $case = $this->findCase($id, [
             'dossier.cases' => function ($q) {
@@ -386,6 +390,13 @@ class VawcController extends Controller
             'complianceLogs',
             'escalations'
         ]);
+
+        // ENFORCE SECURE UUID IN URL:
+        // Automatically redirect numeric ID accesses (e.g. /admin/vawc/cases/6) to the canonical UUID route
+        // to prevent integer ID enumeration / IDOR attacks in compliance with RA 9262 Sec. 44 confidentiality.
+        if (!Str::isUuid($id)) {
+            return redirect()->route('admin.vawc.show', $case->uuid);
+        }
 
         $respParty = $case->involvedParties->firstWhere('role', 'Respondent');
         $respName = $respParty?->name ?? $case->dossier?->respondent_name;
@@ -448,7 +459,7 @@ class VawcController extends Controller
     /**
      * Submit late triage assessment for a pending case.
      */
-    public function assessCase(Request $request, $id)
+    public function assessCase(Request $request, string|int $id)
     {
         $case = $this->findCase($id);
 
@@ -496,7 +507,7 @@ class VawcController extends Controller
     /**
      * File a BPO application for a case.
      */
-    public function applyBpo($id, Request $request)
+    public function applyBpo(string|int $id, Request $request)
     {
         $case = $this->findCase($id);
 
@@ -514,7 +525,7 @@ class VawcController extends Controller
     /**
      * Issue the applied BPO (marks SLA).
      */
-    public function issueBpo($id, Request $request)
+    public function issueBpo(string|int $id, Request $request)
     {
         $case = $this->findCase($id);
 
@@ -546,7 +557,7 @@ class VawcController extends Controller
     /**
      * Record how the BPO was served (Personally vs Residence vs Tender of Service).
      */
-    public function recordBpoService($id, Request $request)
+    public function recordBpoService(string|int $id, Request $request)
     {
         $case = $this->findCase($id);
         $order = $case->protectionOrders()
@@ -580,9 +591,13 @@ class VawcController extends Controller
     /**
      * Generate a printable Barangay Protection Order document.
      */
-    public function printBpo($id)
+    public function printBpo(string|int $id)
     {
         $case = $this->findCase($id, ['caseReport', 'involvedParties', 'dossier']);
+
+        if (!Str::isUuid($id)) {
+            return redirect()->route('admin.vawc.print-bpo', $case->uuid);
+        }
 
         /** @var \App\Models\VawcProtectionOrder $order */
         $order = $case->protectionOrders()
@@ -600,9 +615,13 @@ class VawcController extends Controller
     /**
      * Show a printable transmittal letter for the PNP (Step 7).
      */
-    public function pnpTransmittal($id)
+    public function pnpTransmittal(string|int $id)
     {
-        $case = $this->findCase($id, ['caseReport', 'involvedParties', 'protectionOrders', 'dossier.cases.caseReport']);
+        $case = $this->findCase($id, ['caseReport.abuseType', 'involvedParties', 'protectionOrders', 'dossier.cases.caseReport']);
+
+        if (!Str::isUuid($id)) {
+            return redirect()->route('admin.vawc.pnp-transmittal', $case->uuid);
+        }
 
         /** @var \App\Models\VawcProtectionOrder $order */
         $order = $case->protectionOrders()
@@ -624,7 +643,7 @@ class VawcController extends Controller
     /**
      * Log a compliance monitoring entry (RA 9262 Steps 8-11).
      */
-    public function logCompliance($id, Request $request)
+    public function logCompliance(string|int $id, Request $request)
     {
         $case = $this->findCase($id);
 
@@ -646,7 +665,7 @@ class VawcController extends Controller
     /**
      * Escalate a BPO violation (RA 9262 Step 12).
      */
-    public function escalate($id, Request $request)
+    public function escalate(string|int $id, Request $request)
     {
         $case = $this->findCase($id);
 
@@ -666,9 +685,13 @@ class VawcController extends Controller
     /**
      * Show a printable court complaint assistance form (Step 12).
      */
-    public function complaintForm($id)
+    public function complaintForm(string|int $id)
     {
         $case = $this->findCase($id, ['caseReport', 'involvedParties.vawcCase', 'dossier']);
+
+        if (!Str::isUuid($id)) {
+            return redirect()->route('admin.vawc.complaint-form', $case->uuid);
+        }
 
         return Inertia::render('Admin/Vawc/ComplaintForm', [
             'case' => $case,
@@ -679,7 +702,7 @@ class VawcController extends Controller
     /**
      * Closes/Archives a VAWC Case.
      */
-    public function closeCase($id, Request $request)
+    public function closeCase(string|int $id, Request $request)
     {
         $case = $this->findCase($id);
 
