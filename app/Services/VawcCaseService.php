@@ -148,6 +148,7 @@ class VawcCaseService
                 'case_report_id' => $caseReport->id,
                 'intake_type' => $data['intake_type'] ?? 'Direct',
                 'children_count' => $data['children_count'] ?? 0,
+                'children_details' => $data['children_details'] ?? null,
                 'is_repeat_offense' => $isRepeat,
                 'has_weapon_involved' => $data['has_weapon_involved'] ?? $data['weapons_confiscated'] ?? false,
                 'incident_veracity' => $data['incident_veracity'] ?? false,

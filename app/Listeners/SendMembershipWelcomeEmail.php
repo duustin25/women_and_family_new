@@ -27,20 +27,24 @@ class SendMembershipWelcomeEmail implements ShouldQueue
         $member = Member::where('membership_application_id', $event->application->id)->first();
         
         if ($member && $member->email) {
-            Log::info('SendMembershipWelcomeEmail: Sending to ' . $member->email);
-            Mail::to($member->email)->send(new MembershipApproved($member));
-            
-            // Audit Trail: Log welcome message
-            \App\Models\MemberCommunication::create([
-                'member_id' => $member->id,
-                'sent_by' => \Illuminate\Support\Facades\Auth::id() ?? 1, // Fallback to system admin if needed
-                'subject' => 'Welcome to Barangay 183 Organizational Hub',
-                'body' => 'Your membership application has been approved. Welcome to the organization!',
-                'type' => 'Welcome',
-                'status' => 'Sent'
-            ]);
+            try {
+                Log::info('SendMembershipWelcomeEmail: Sending to ' . $member->email);
+                Mail::to($member->email)->send(new MembershipApproved($member));
+                
+                // Audit Trail: Log welcome message
+                \App\Models\MemberCommunication::create([
+                    'member_id' => $member->id,
+                    'sent_by' => \Illuminate\Support\Facades\Auth::id() ?? 1, // Fallback to system admin if needed
+                    'subject' => 'Welcome to Barangay 183 Organizational Hub',
+                    'body' => 'Your membership application has been approved. Welcome to the organization!',
+                    'type' => 'Welcome',
+                    'status' => 'Sent'
+                ]);
 
-            Log::info('SendMembershipWelcomeEmail: Sent!');
+                Log::info('SendMembershipWelcomeEmail: Sent!');
+            } catch (\Throwable $e) {
+                Log::error('SendMembershipWelcomeEmail: Failed for Member ID ' . $member->id . '. Reason: ' . $e->getMessage());
+            }
         } else {
             Log::warning('SendMembershipWelcomeEmail: Member not found or missing email for App ID ' . $event->application->id);
         }

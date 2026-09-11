@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useAccessibilityMode } from '@/hooks/use-accessibility-mode';
-import { Volume2, VolumeX, Eye, Type, RotateCcw, Accessibility, Check, ChevronDown, ChevronUp } from 'lucide-react';
+import { Volume2, VolumeX, Eye, Type, RotateCcw, Accessibility, Check, ChevronDown, ChevronUp, X } from 'lucide-react';
 
 export default function AccessibilityToolbar() {
     const { settings, updateSetting, resetAccessibility, speak } = useAccessibilityMode();
@@ -13,8 +13,8 @@ export default function AccessibilityToolbar() {
     };
 
     return (
-        <div id="accessibility-toolbar-container" className="fixed bottom-4 left-4 sm:bottom-6 sm:left-6 z-40 font-sans" role="region" aria-label="Accessibility Options">
-            {/* Main Accessibility Trigger Button */}
+        <div id="accessibility-toolbar-container" className="fixed bottom-4 left-4 sm:bottom-6 sm:left-6 z-40 font-sans pointer-events-auto" role="region" aria-label="Accessibility Options">
+            {/* Main Accessibility Trigger Button (Circular design matching Chatbot) */}
             <button
                 onClick={() => {
                     const newState = !isOpen;
@@ -22,21 +22,35 @@ export default function AccessibilityToolbar() {
                     handleSpeakNotice(newState ? "Accessibility Menu Opened" : "Accessibility Menu Closed");
                 }}
                 onFocus={() => handleSpeakNotice("Accessibility Menu Button. Press enter to open menu.")}
-                className="flex items-center gap-2 bg-purple-900 hover:bg-purple-950 text-white border-2 border-purple-400/80 font-bold px-3 py-2.5 sm:px-4 sm:py-3 rounded-full shadow-2xl transition-all transform hover:scale-105 focus-visible:ring-4 focus-visible:ring-purple-300 focus-visible:outline-none min-h-[44px] min-w-[44px]"
+                className={`h-14 w-14 rounded-full shadow-xl transition-all duration-300 pointer-events-auto relative group flex items-center justify-center border-2 border-purple-400/50 focus-visible:ring-4 focus-visible:ring-purple-400 focus-visible:outline-none cursor-pointer ${isOpen
+                    ? "bg-slate-900 hover:bg-slate-800 text-white rotate-90"
+                    : "bg-gradient-to-r from-[#581c87] to-[#7e22ce] text-white hover:scale-110 hover:shadow-purple-900/60"
+                    }`}
                 aria-expanded={isOpen}
-                aria-label="Toggle Accessibility Menu"
+                aria-label={isOpen ? "Close Accessibility Menu" : "Open Accessibility Menu"}
+                title="Accessibility Tools (Voice Assist, Text Size, Contrast, Dyslexic Font)"
             >
-                <span className="hidden sm:inline text-sm uppercase tracking-wider font-extrabold text-white">
-                    Accessibility
-                </span>
-                {isOpen ? <ChevronDown size={18} /> : <ChevronUp size={18} />}
+                {isOpen ? (
+                    <X className="h-6 w-6" />
+                ) : (
+                    <>
+                        <Accessibility className="h-7 w-7 transition-all duration-300 group-hover:scale-0 group-hover:opacity-0 absolute text-purple-100" />
+                        <span className="text-[10px] font-black tracking-wider scale-0 opacity-0 group-hover:scale-100 group-hover:opacity-100 transition-all duration-300 uppercase text-purple-100">
+                            A11Y
+                        </span>
+                        {/* Active dot indicator if any accessibility setting is modified */}
+                        {(settings.voiceAssist || settings.highContrast || settings.dyslexicFont || settings.fontSize !== 'normal') && (
+                            <span className="absolute -top-1 -right-1 h-3.5 w-3.5 bg-purple-400 rounded-full border-2 border-slate-900 animate-pulse" title="Custom Accessibility Mode Active" />
+                        )}
+                    </>
+                )}
             </button>
 
             {/* Expanded Accessibility Panel */}
             {isOpen && (
                 <div
                     id="accessibility-toolbar-panel"
-                    className="fixed bottom-20 left-3 right-3 sm:left-6 sm:right-auto sm:w-96 max-w-[calc(100vw-1.5rem)] bg-slate-900 text-white border-2 border-purple-500/40 rounded-2xl shadow-2xl p-4 sm:p-5 backdrop-blur-xl z-50 animate-in fade-in slide-in-from-bottom-5 duration-200 max-h-[75vh] overflow-y-auto"
+                    className="fixed bottom-20 sm:bottom-24 left-3 right-3 sm:left-6 sm:right-auto sm:w-96 max-w-[calc(100vw-1.5rem)] bg-slate-900 text-white border-2 border-purple-500/40 rounded-2xl shadow-2xl p-4 sm:p-5 backdrop-blur-xl z-50 animate-in fade-in slide-in-from-bottom-5 duration-200 max-h-[70vh] overflow-y-auto"
                     role="dialog"
                     aria-label="Accessibility Settings"
                 >
@@ -72,7 +86,11 @@ export default function AccessibilityToolbar() {
                                     const next = !settings.voiceAssist;
                                     updateSetting('voiceAssist', next);
                                     if (next) {
-                                        speak("Voice Assist Activated. Elements will be read aloud when focused.");
+                                        speak("Voice Assist Activated. Elements will be read aloud when focused with Tab or hovered with mouse. Press Escape to stop speaking.");
+                                    } else {
+                                        if ('speechSynthesis' in window) {
+                                            window.speechSynthesis.cancel();
+                                        }
                                     }
                                 }}
                                 className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all min-h-[44px] min-w-[60px] ${settings.voiceAssist

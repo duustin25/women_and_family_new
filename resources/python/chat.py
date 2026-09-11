@@ -10,12 +10,25 @@ import os
 import warnings
 warnings.filterwarnings("ignore")
 
+base_path = os.path.dirname(os.path.abspath(__file__))
+
+# Ensure NLTK data paths are recognized across local, Linux, and containerized deployments
+for extra_path in [
+    os.path.join(base_path, 'nltk_data'),
+    '/usr/share/nltk_data',
+    '/var/www/html/resources/python/nltk_data',
+]:
+    if os.path.exists(extra_path) and extra_path not in nltk.data.path:
+        nltk.data.path.insert(0, extra_path)
+
 # Initialize Lemmatizer
-lemmatizer = WordNetLemmatizer()
+try:
+    lemmatizer = WordNetLemmatizer()
+except Exception:
+    lemmatizer = None
 
 # Load trained model
 try:
-    base_path = os.path.dirname(os.path.abspath(__file__))
     model_path = os.path.join(base_path, 'chatbot_model.pkl')
     intents_path = os.path.join(base_path, 'intents.json')
     
@@ -26,15 +39,28 @@ try:
     words = data['words']
     classes = data['classes']
     
-    intents = json.loads(open(intents_path).read())
+    with open(intents_path, 'r', encoding='utf-8') as f:
+        intents = json.load(f)
     
 except Exception as e:
     print(json.dumps({"error": str(e), "response": "System Error: Model not loaded."}))
     sys.exit(1)
 
 def clean_up_sentence(sentence):
-    sentence_words = nltk.word_tokenize(sentence)
-    sentence_words = [lemmatizer.lemmatize(word.lower()) for word in sentence_words]
+    try:
+        sentence_words = nltk.word_tokenize(sentence)
+    except Exception:
+        clean = sentence.replace('?', ' ').replace('!', ' ').replace('.', ' ').replace(',', ' ')
+        sentence_words = clean.split()
+
+    if lemmatizer:
+        try:
+            sentence_words = [lemmatizer.lemmatize(word.lower()) for word in sentence_words]
+        except Exception:
+            sentence_words = [word.lower() for word in sentence_words]
+    else:
+        sentence_words = [word.lower() for word in sentence_words]
+
     return sentence_words
 
 def bow(sentence, words, show_details=False):

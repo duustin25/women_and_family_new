@@ -67,15 +67,24 @@ export default function PublicLayout({ children, bgColor = "bg-white" }: PublicL
 
     return (
         <div className={`min-h-screen ${bgColor} dark:bg-neutral-950 text-slate-900 dark:text-slate-100 font-sans selection:bg-purple-100 selection:text-purple-900`}>
-            {/* 4. ADD THE TOASTER COMPONENT HERE */}
+            {/* 0. ACCESSIBILITY: SKIP TO MAIN CONTENT */}
+            <a
+                href="#main-content"
+                className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 z-[9999] bg-purple-800 text-white px-5 py-3 rounded-lg font-black text-xs uppercase tracking-wider shadow-2xl focus:outline-none focus:ring-4 focus:ring-purple-300"
+            >
+                Skip to main content
+            </a>
+
+            {/* 4. TOASTER COMPONENT */}
             <Toaster position="top-right" richColors closeButton theme={appearance === 'dark' ? 'dark' : 'light'} />
+
+            {/* FLOATING ACTION UTILITIES */}
             <ChatbotWidget />
             <AccessibilityToolbar />
 
-
-            {/* --- 0. NEW TOP BAR (HOTLINE MARQUEE) --- */}
+            {/* --- 0. TOP BAR (HOTLINE MARQUEE) --- */}
             <div className="bg-[#3b0764] dark:bg-purple-950 text-white text-[11px] sm:text-xs font-bold uppercase tracking-wider py-1.5 sm:py-2 relative z-50 border-b border-white/5">
-                <div className="container mx-auto px-4 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-1.5 sm:gap-3">
+                <div className="w-[92%] sm:w-[88%] lg:w-[80%] max-w-7xl mx-auto px-1 sm:px-2 flex flex-col md:flex-row justify-between items-center gap-1.5 sm:gap-3">
                     <div className="flex items-center gap-4 sm:gap-6">
                         <span className="flex items-center gap-1.5 text-rose-400 animate-pulse font-black">
                             <AlertCircle size={13} /> Emergency: <a href={`tel:${brgyNum}`} className="text-white hover:text-rose-400 transition-colors">{brgyNum}</a>
@@ -96,7 +105,7 @@ export default function PublicLayout({ children, bgColor = "bg-white" }: PublicL
             {/* 1. STICKY HEADER */}
             <header className="sticky top-0 z-40 shadow-xl">
                 <div className="bg-[#6b21a8] dark:bg-purple-900 text-white border-b border-purple-500/30">
-                    <div className="container mx-auto px-3 sm:px-4 lg:px-8 py-2.5 sm:py-4 flex justify-between items-center">
+                    <div className="w-[92%] sm:w-[88%] lg:w-[80%] max-w-7xl mx-auto px-1 sm:px-2 py-2.5 sm:py-4 flex justify-between items-center">
                         <div className="flex items-center gap-2 sm:gap-4 min-w-0 pr-2">
                             {/* Official Seal 1 (Women and Family Logo) */}
                             <div className="bg-white p-0.5 sm:p-1 rounded-full shadow-lg border-2 border-purple-200 shrink-0">
@@ -128,7 +137,7 @@ export default function PublicLayout({ children, bgColor = "bg-white" }: PublicL
                         <div className="hidden md:flex items-center gap-4">
                             <button
                                 onClick={toggleTheme}
-                                className="p-2 rounded-full hover:bg-white/10 transition-colors text-purple-200 focus:outline-none focus:ring-2 focus:ring-purple-400/50"
+                                className="p-2 rounded-full hover:bg-white/10 transition-colors text-purple-200 focus:outline-none focus:ring-2 focus:ring-purple-400/50 cursor-pointer"
                                 aria-label="Toggle Dark Mode"
                             >
                                 {appearance === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
@@ -149,14 +158,14 @@ export default function PublicLayout({ children, bgColor = "bg-white" }: PublicL
                         <div className="flex items-center gap-1 sm:gap-2 md:hidden">
                             <button
                                 onClick={toggleTheme}
-                                className="p-2 rounded-full hover:bg-white/10 transition-colors text-purple-200 focus:outline-none"
+                                className="p-2 rounded-full hover:bg-white/10 transition-colors text-purple-200 focus:outline-none cursor-pointer"
                                 aria-label="Toggle Dark Mode"
                             >
                                 {appearance === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
                             </button>
-                            <button 
-                                onClick={() => setIsMenuOpen(!isMenuOpen)} 
-                                className="p-2 text-purple-200 hover:text-white transition-colors"
+                            <button
+                                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                                className="p-2 text-purple-200 hover:text-white transition-colors cursor-pointer"
                                 aria-label={isMenuOpen ? "Close menu" : "Open menu"}
                             >
                                 {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
@@ -167,12 +176,12 @@ export default function PublicLayout({ children, bgColor = "bg-white" }: PublicL
 
                 {/* Desktop Navigation */}
                 <nav className="bg-[#3b0764] dark:bg-purple-950 border-t border-white/5 hidden md:block">
-                    <div className="container mx-auto px-8 flex justify-center">
+                    <div className="w-[92%] sm:w-[88%] lg:w-[80%] max-w-7xl mx-auto px-2 flex justify-center">
                         {navLinks.map((link) => (
                             <Link
                                 key={link.name}
                                 href={link.href}
-                                className="px-8 py-5 text-sm font-black uppercase tracking-widest text-slate-200 hover:bg-[#6b21a8] hover:text-white transition-all duration-200 border-x border-white/5 whitespace-nowrap"
+                                className="px-6 lg:px-8 py-5 text-sm font-black uppercase tracking-widest text-slate-200 hover:bg-[#6b21a8] hover:text-white transition-all duration-200 border-x border-white/5 whitespace-nowrap"
                             >
                                 {link.name}
                             </Link>
@@ -210,13 +219,13 @@ export default function PublicLayout({ children, bgColor = "bg-white" }: PublicL
             </header>
 
             {/* 2. MAIN CONTENT AREA */}
-            <main className="min-h-[80vh]">
+            <main id="main-content" className="min-h-[80vh] pb-32 sm:pb-28">
                 {children}
             </main>
 
             {/* 3. REVISED INTERACTABLE FOOTER */}
             <footer className="bg-[#1a0a25] dark:bg-black text-white border-t-[3px] border-purple-600">
-                <div className="container mx-auto px-6 lg:px-10 pt-12 pb-8">
+                <div className="w-[92%] sm:w-[88%] lg:w-[80%] max-w-7xl mx-auto px-2 pt-12 pb-28 md:pb-12">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
 
                         {/* Identity Column */}

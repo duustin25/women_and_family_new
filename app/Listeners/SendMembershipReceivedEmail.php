@@ -9,8 +9,9 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
-class SendMembershipReceivedEmail
+class SendMembershipReceivedEmail implements ShouldQueue
 {
+    use InteractsWithQueue;
 
     /**
      * Handle the event.
@@ -24,9 +25,13 @@ class SendMembershipReceivedEmail
         $email = $application->email ?? ($application->form_data['email'] ?? null);
         
         if ($email) {
-            Log::info('SendMembershipReceivedEmail: Sending confirmation to ' . $email);
-            Mail::to($email)->send(new MembershipApplicationReceived($application));
-            Log::info('SendMembershipReceivedEmail: Sent successfully!');
+            try {
+                Log::info('SendMembershipReceivedEmail: Sending confirmation to ' . $email);
+                Mail::to($email)->send(new MembershipApplicationReceived($application));
+                Log::info('SendMembershipReceivedEmail: Sent successfully!');
+            } catch (\Throwable $e) {
+                Log::error('SendMembershipReceivedEmail: Failed to send confirmation email for App ID ' . $application->id . '. Reason: ' . $e->getMessage());
+            }
         } else {
             Log::warning('SendMembershipReceivedEmail: Application missing email for App ID ' . $application->id);
         }

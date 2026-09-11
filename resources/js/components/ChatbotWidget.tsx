@@ -15,7 +15,7 @@ export default function ChatbotWidget() {
     const brgyNum = import.meta.env.VITE_HOTLINE_BRGY || "Emergency: 911";
 
     return (
-        <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 flex flex-col items-end gap-4 pointer-events-none">
+        <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-40 flex flex-col items-end gap-4 pointer-events-none">
             <Transition
                 show={isOpen}
                 enter="transition ease-out duration-300 transform"
@@ -25,7 +25,7 @@ export default function ChatbotWidget() {
                 leaveFrom="opacity-100 translate-y-0 scale-100"
                 leaveTo="opacity-0 translate-y-8 scale-95 ml-auto"
             >
-                <div className="w-[calc(100vw-2rem)] sm:w-[380px] h-[600px] max-h-[80vh] shadow-2xl rounded-2xl overflow-hidden ring-1 ring-black/5 dark:ring-white/10 pointer-events-auto bg-slate-900 text-white">
+                <div className="w-[calc(100vw-2rem)] sm:w-[380px] h-[600px] max-h-[80vh] shadow-2xl rounded-2xl overflow-hidden ring-1 ring-black/5 dark:ring-white/10 pointer-events-auto bg-slate-900 text-white z-50">
                     {isChatbotEnabled ? (
                         <Chatbot className="h-full w-full border-0 rounded-none shadow-none" />
                     ) : (

@@ -17,10 +17,15 @@ class VawcBpoServiceRecord extends Model
         'served_datetime',
         'served_by_id',
         'receiver_name',
+        'refused_to_sign',
+        'serving_officer_name',
+        'witness_tanod_name',
+        'tender_notes',
     ];
 
     protected $casts = [
         'served_datetime' => 'datetime',
+        'refused_to_sign' => 'boolean',
     ];
 
     /**

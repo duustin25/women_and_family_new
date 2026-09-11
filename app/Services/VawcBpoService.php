@@ -60,12 +60,19 @@ class VawcBpoService
                 }
             }
 
+            $signatoryRole = $data['signatory_role'] ?? 'Punong Barangay';
+            $signatoryName = $data['signatory_name'] ?? (Auth::user()?->name ?? 'Hon. Punong Barangay');
+            $signatoryDesignation = $data['signatory_designation'] ?? ($signatoryRole === 'Acting Kagawad' ? 'Barangay Kagawad / Officer-in-Charge' : 'Punong Barangay');
+
             $order->update([
                 'status' => 'Issued',
                 'issued_datetime' => $issuedAt,
                 'is_sla_breached' => $isBreached,
                 'expiration_date' => $issuedAt->copy()->addDays(15), 
                 'issued_by_id' => Auth::id(),
+                'signatory_role' => $signatoryRole,
+                'signatory_name' => $signatoryName,
+                'signatory_designation' => $signatoryDesignation,
             ]);
 
             // Update parent case status (valid ENUM value)
@@ -77,6 +84,7 @@ class VawcBpoService
 
     /**
      * Record how the BPO was served to the respondent (Step 5).
+     * Supports Tender of Service (SC A.M. No. 04-10-11-SC) when respondent refuses to sign.
      */
     public function recordService(VawcProtectionOrder $order, array $data): VawcBpoServiceRecord
     {
@@ -85,15 +93,26 @@ class VawcBpoService
                 ? Carbon::parse($data['served_datetime']) 
                 : now();
 
+            $isRefused = filter_var($data['refused_to_sign'] ?? false, FILTER_VALIDATE_BOOLEAN);
+            $serviceMethod = $isRefused ? 'Personally Received' : ($data['service_method'] ?? 'Personally Received');
+
             $record = VawcBpoServiceRecord::create([
                 'protection_order_id' => $order->id,
-                'service_method' => $data['service_method'] ?? 'Personally Received',
+                'service_method' => $serviceMethod,
                 'served_datetime' => $servedAt,
                 'served_by_id' => Auth::id(),
                 'receiver_name' => $data['receiver_name'] ?? null,
+                'refused_to_sign' => $isRefused,
+                'serving_officer_name' => $data['serving_officer_name'] ?? (Auth::user()?->name ?? null),
+                'witness_tanod_name' => $data['witness_tanod_name'] ?? null,
+                'tender_notes' => $data['tender_notes'] ?? null,
             ]);
 
-            $order->update(['status' => 'Served']);
+            // Strictly calculate 15-day statutory expiration from verified date and time of service/tender
+            $order->update([
+                'status' => 'Served',
+                'expiration_date' => $servedAt->copy()->addDays(15),
+            ]);
             
             // Advance parent case status to Monitoring Phase (valid ENUM value)
             $order->vawcCase->update(['status' => 'Monitoring']);

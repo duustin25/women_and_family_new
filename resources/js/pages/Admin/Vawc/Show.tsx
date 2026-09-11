@@ -4,6 +4,7 @@ import React from 'react';
 import { route } from 'ziggy-js';
 import { toast } from 'sonner';
 import { useConfirm } from '@/hooks/use-confirm';
+import { cn } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -136,12 +137,23 @@ const ARCHIVAL_OPTIONS: ArchivalOption[] = [
         id: 'Survivor Relocated Outside Barangay Jurisdiction',
         category: 'Administrative',
         badgeClass: 'bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/30',
-        title: 'Survivor Relocated / Withdrew',
-        desc: 'Voluntary affidavit of desistance executed by survivor or permanent relocation outside barangay administrative boundaries.',
+        title: 'Survivor Relocated (Jurisdictional Transfer)',
+        desc: 'Permanent physical relocation outside barangay administrative boundaries. Case docket formally endorsed to receiving LGU VAW desk.',
         icon: UserX,
         iconColor: 'text-amber-600 dark:text-amber-400',
         disabledWhenEscalated: true,
         disabledReason: 'Under RA 9262 Public Crime Protocol, a public crime cannot be administratively dropped or withdrawn once escalated.',
+    },
+    {
+        id: 'Endorsed to DSWD & Family Court (Survivor Desistance / Reconciliation Review)',
+        category: 'Statutory Safeguard',
+        badgeClass: 'bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 border-indigo-500/30',
+        title: 'Desistance / Reconciliation Endorsement',
+        desc: 'Survivor executed Affidavit of Desistance or claimed reconciliation. Endorsed to MSWDO and Family Court for judicial assessment under RA 9262 Sec. 19.',
+        icon: Scale,
+        iconColor: 'text-indigo-600 dark:text-indigo-400',
+        disabledWhenEscalated: false,
+        isJudicial: true,
     },
 ];
 
@@ -319,11 +331,18 @@ export default function Show({ case: vawcCase, crossStats, survivorStats }: Prop
     });
     const issuanceForm = useForm<any>({
         issued_datetime: initialIssuanceDatetime,
+        signatory_role: 'Punong Barangay',
+        signatory_name: '',
+        signatory_designation: 'Punong Barangay',
     });
     const serviceForm = useForm<any>({
         service_method: 'Personally Received',
         served_datetime: initialServiceDatetime,
-        receiver_name: ''
+        receiver_name: '',
+        refused_to_sign: false,
+        serving_officer_name: '',
+        witness_tanod_name: '',
+        tender_notes: '',
     });
 
     const complianceForm = useForm<any>({
@@ -437,6 +456,7 @@ export default function Show({ case: vawcCase, crossStats, survivorStats }: Prop
 
     // Modal State
     const [showCloseModal, setShowCloseModal] = React.useState(false);
+    const [showEscalateModal, setShowEscalateModal] = React.useState(false);
     const [judicialFields, setJudicialFields] = React.useState({
         docket_number: '',
         issuing_court: '',
@@ -520,7 +540,10 @@ export default function Show({ case: vawcCase, crossStats, survivorStats }: Prop
     const handleEscalate = (e: React.FormEvent) => {
         e.preventDefault();
         escalationForm.post(route('admin.vawc.escalate', caseRouteKey), {
-            onSuccess: () => toast.success('Case Escalation & Referral Transmitted Successfully!'),
+            onSuccess: () => {
+                setShowEscalateModal(false);
+                toast.success('Case Escalation & Referral Transmitted Successfully!');
+            },
             onError: () => toast.error('Failed to escalate case.')
         });
     };
@@ -529,6 +552,12 @@ export default function Show({ case: vawcCase, crossStats, survivorStats }: Prop
         e.preventDefault();
         if (!closeForm.data.closure_reason) {
             toast.error('Please select a statutory closure ground.');
+            return;
+        }
+
+        const isPeaceful = closeForm.data.closure_reason === '15-Day Protection Order Lapsed Successfully (No Violation)';
+        if (isPeaceful && (!closeForm.data.closure_remarks || closeForm.data.closure_remarks.trim().length < 10)) {
+            toast.error('Final Welfare Check Notes are mandatory (minimum 10 characters required).');
             return;
         }
 
@@ -554,6 +583,9 @@ export default function Show({ case: vawcCase, crossStats, survivorStats }: Prop
         router.post(route('admin.vawc.close', caseRouteKey), {
             closure_reason: closeForm.data.closure_reason,
             closure_remarks: finalRemarks,
+            docket_number: judicialFields.docket_number || null,
+            issuing_body: judicialFields.issuing_court || null,
+            order_date: judicialFields.resolution_date || null,
             closed_at: (isEscalated || selectedOpt?.isJudicial) ? judicialFields.resolution_date : getNowLocalISO().slice(0, 10),
         }, {
             onSuccess: () => {
@@ -604,7 +636,7 @@ export default function Show({ case: vawcCase, crossStats, survivorStats }: Prop
         ]}>
             <Head title={`Case Workflow: ${vawcCase.case_report.case_number}`} />
 
-            <div className="w-full max-w-full px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+            <div className="w-full max-w-full overflow-x-clip px-3.5 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-6">
                 {/* ── UNBOXED CANVAS HEADER ── */}
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                     <div>
@@ -772,16 +804,15 @@ export default function Show({ case: vawcCase, crossStats, survivorStats }: Prop
                     </Card>
                 )}
 
-                {/* ── PHASE TRACKER PROGRESS BAR ── */}
-                <Card className="">
-                    <CardHeader className="px-6 flex flex-row items-center justify-between border-b border-border">
-                        <CardTitle className="text-md text-foreground flex items-center gap-2">
+                {/* ── PH                <Card className="overflow-hidden">
+                    <CardHeader className="p-4 sm:px-6 flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border">
+                        <CardTitle className="text-base sm:text-md text-foreground flex items-center gap-2">
                             Case Progress Flow
                         </CardTitle>
 
                         <Dialog>
                             <DialogTrigger asChild>
-                                <Button variant="ghost" size="sm" className="h-7 font-bold text-primary gap-1">
+                                <Button variant="ghost" size="sm" className="h-8 sm:h-7 font-bold text-primary gap-1 self-start sm:self-auto px-2">
                                     <HelpCircle className="w-4 h-4" /> View Legal Bases & Protocols
                                 </Button>
                             </DialogTrigger>
@@ -796,109 +827,107 @@ export default function Show({ case: vawcCase, crossStats, survivorStats }: Prop
                                 </DialogHeader>
                                 <div className="mt-2 space-y-3 text-xs leading-relaxed">
                                     <div className="p-3 bg-muted rounded-lg space-y-1">
-                                        <h4 className="font-bold text-foreground text-m">Step 1: Intake & Triage</h4>
+                                        <h4 className="font-bold text-foreground text-sm">Step 1: Intake & Triage</h4>
                                         <p className="text-muted-foreground">Reception of the victim-survivor, recording details in the official Barangay VAWC Desk Logbook in a private area to maintain confidentiality.</p>
                                     </div>
                                     <div className="p-3 bg-muted rounded-lg space-y-1">
-                                        <h4 className="font-bold text-foreground text-m">Step 2: BPO Application</h4>
+                                        <h4 className="font-bold text-foreground text-sm">Step 2: BPO Application</h4>
                                         <p className="text-muted-foreground">Assessing victim safety and assisting in filing an official application for a Barangay Protection Order (BPO).</p>
                                     </div>
                                     <div className="p-3 bg-muted rounded-lg space-y-1">
-                                        <h4 className="font-bold text-foreground text-m">Step 3: BPO Issuance</h4>
+                                        <h4 className="font-bold text-foreground text-sm">Step 3: BPO Issuance</h4>
                                         <p className="text-muted-foreground">The Punong Barangay conducts ex-parte proceedings immediately and must issue the BPO on the same day of application (RA 9262 Sec. 14). Copy transmitted to PNP WCPD within 24 hours.</p>
                                     </div>
                                     <div className="p-3 bg-muted rounded-lg space-y-1">
-                                        <h4 className="font-bold text-foreground text-m">Step 4: Serve BPO</h4>
+                                        <h4 className="font-bold text-foreground text-sm">Step 4: Serve BPO</h4>
                                         <p className="text-muted-foreground">Immediate service of the issued BPO to the respondent (Personal or Substituted Service). Official transmittal to PNP WCPD within 24 hours.</p>
                                     </div>
                                     <div className="p-3 bg-muted rounded-lg space-y-1">
-                                        <h4 className="font-bold text-foreground text-m">Step 5: Monitor Compliance</h4>
+                                        <h4 className="font-bold text-foreground text-sm">Step 5: Monitor Compliance</h4>
                                         <p className="text-muted-foreground">Active 15-day SLA compliance monitoring and victim follow-ups.</p>
                                     </div>
                                     <div className="p-3 bg-muted rounded-lg space-y-1">
-                                        <h4 className="font-bold text-foreground text-m">Step 6: Referral / Escalation</h4>
+                                        <h4 className="font-bold text-foreground text-sm">Step 6: Referral / Escalation</h4>
                                         <p className="text-muted-foreground">Escalate BPO violations or high-risk cases to PNP WCPD or Prosecutor's Office.</p>
                                     </div>
                                     <div className="p-3 bg-muted rounded-lg space-y-1">
-                                        <h4 className="font-bold text-foreground text-m">Step 7: Case Archival</h4>
+                                        <h4 className="font-bold text-foreground text-sm">Step 7: Case Archival</h4>
                                         <p className="text-muted-foreground">Final closure and secure archival of case records.</p>
                                     </div>
                                 </div>
                             </DialogContent>
                         </Dialog>
                     </CardHeader>
-                    <CardContent className="p-4">
-                        <div className="grid grid-cols-7 gap-2">
-                            {[
-                                { id: 1, label: 'Intake' },
-                                { id: 2, label: 'Apply' },
-                                { id: 3, label: 'Issue' },
-                                { id: 4, label: 'Serve' },
-                                { id: 5, label: 'Monitor' },
-                                { id: 6, label: 'Referral' },
-                                { id: 7, label: 'Archive' },
-                            ].map((s) => (
-                                <div key={s.id} className="flex flex-col gap-1.5">
-                                    <div className={`h-2.5 rounded-full transition-all ${s.id < stepNum
-                                        ? 'bg-emerald-500 dark:bg-emerald-600'
-                                        : s.id === stepNum
-                                            ? (s.id === 7 ? 'bg-slate-500' : 'bg-red-600 animate-pulse')
-                                            : 'bg-muted'
-                                        }`} />
-                                    <span className={`text-m uppercase font-bold text-center truncate ${s.id === stepNum ? 'text-red-600 dark:text-red-400 font-extrabold' : 'text-muted-foreground'
-                                        }`}>
-                                        {s.id}. {s.label}
-                                    </span>
-                                </div>
-                            ))}
+                    <CardContent className="p-3.5 sm:p-4">
+                        <div className="overflow-x-auto no-scrollbar pb-1">
+                            <div className="grid grid-cols-7 gap-2 min-w-[520px] sm:min-w-0">
+                                {[
+                                    { id: 1, label: 'Intake' },
+                                    { id: 2, label: 'Apply' },
+                                    { id: 3, label: 'Issue' },
+                                    { id: 4, label: 'Serve' },
+                                    { id: 5, label: 'Monitor' },
+                                    { id: 6, label: 'Referral' },
+                                    { id: 7, label: 'Archive' },
+                                ].map((s) => (
+                                    <div key={s.id} className="flex flex-col gap-1.5">
+                                        <div className={`h-2.5 rounded-full transition-all ${s.id < stepNum
+                                            ? 'bg-emerald-500 dark:bg-emerald-600'
+                                            : s.id === stepNum
+                                                ? (s.id === 7 ? 'bg-slate-500' : 'bg-red-600 animate-pulse')
+                                                : 'bg-muted'
+                                            }`} />
+                                        <span className={`text-xs sm:text-sm uppercase font-bold text-center truncate ${s.id === stepNum ? 'text-red-600 dark:text-red-400 font-extrabold' : 'text-muted-foreground'
+                                            }`}>
+                                            {s.id}. {s.label}
+                                        </span>
+                                    </div>
+                                ))}
+                            </div>
                         </div>
                     </CardContent>
                 </Card>
 
                 {/* ── PRIMARY GUIDED ACTION CARD ── */}
-                <Card className="shadow-xs border">
-                    <CardHeader className="bg-muted/20 pb-4 border-b">
-                        <div className="flex justify-between items-start">
-                            <div className="w-full">
-                                <div className="flex justify-between items-center w-full">
-                                    <div className="flex items-center gap-2">
-                                        <Badge className="bg-red-600 text-white font-bold text-xs px-2.5 py-1">
-                                            STEP {stepNum}: CURRENT PHASE
-                                        </Badge>
-                                        <CardTitle className="text-xl font-bold">
-                                            {stepNum === 1 && "Perform Triage Assessment"}
-                                            {stepNum === 2 && "File Application for Protection Order"}
-                                            {stepNum === 3 && "Barangay Head: Issue Protection Order"}
-                                            {stepNum === 4 && "Print & Serve Official Protection Order"}
-                                            {stepNum === 5 && "Ongoing Compliance Monitoring"}
-                                            {stepNum === 6 && "Case Referred to Higher Legal Authorities"}
-                                            {stepNum === 7 && "Case File Closed & Archived"}
-                                        </CardTitle>
-                                    </div>
-                                    {(stepNum === 5 || stepNum === 6) && (
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={() => setShowCloseModal(true)}
-                                            className="text-xs font-bold min-h-[44px] sm:min-h-[38px] cursor-pointer"
-                                        >
-                                            <ArchiveX className="w-4 h-4 mr-1 text-slate-500" /> Close Case File
-                                        </Button>
-                                    )}
-                                </div>
-                                <CardDescription className="text-xs font-medium mt-2">
-                                    {stepNum === 1 && "Assess risk factors and immediate needs below to calculate the triage level."}
-                                    {stepNum === 2 && "Click below to file the official 15-day Protection Order application."}
-                                    {stepNum === 3 && "Review application and confirm issuance within 24 hours of filing."}
-                                    {stepNum === 4 && "Print documents, serve to respondent, and record service status below."}
-                                    {stepNum === 5 && "Record monitoring check-ins and compliance logs during the 15-day SLA."}
-                                    {stepNum === 6 && "Case referred to PNP WCPD or Prosecutor due to violation or high risk."}
-                                    {stepNum === 7 && "Case record is closed, locked, and preserved for audit compliance."}
-                                </CardDescription>
+                <Card className="shadow-xs border overflow-hidden">
+                    <CardHeader className="p-4 sm:p-6 bg-muted/20 pb-4 border-b">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 w-full">
+                            <div className="flex flex-wrap items-center gap-2">
+                                <Badge className="bg-red-600 text-white font-bold text-xs px-2.5 py-1 shrink-0">
+                                    STEP {stepNum}: CURRENT PHASE
+                                </Badge>
+                                <CardTitle className="text-lg sm:text-xl font-bold">
+                                    {stepNum === 1 && "Perform Triage Assessment"}
+                                    {stepNum === 2 && "File Application for Protection Order"}
+                                    {stepNum === 3 && "Barangay Head: Issue Protection Order"}
+                                    {stepNum === 4 && "Print & Serve Official Protection Order"}
+                                    {stepNum === 5 && "Ongoing Compliance Monitoring"}
+                                    {stepNum === 6 && "Case Referred to Higher Legal Authorities"}
+                                    {stepNum === 7 && "Case File Closed & Archived"}
+                                </CardTitle>
                             </div>
+                            {(stepNum === 5 || stepNum === 6) && (
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setShowCloseModal(true)}
+                                    className="text-xs font-bold min-h-[44px] sm:min-h-[38px] cursor-pointer self-start sm:self-auto shrink-0"
+                                >
+                                    <ArchiveX className="w-4 h-4 mr-1 text-slate-500" /> Close Case File
+                                </Button>
+                            )}
                         </div>
+                        <CardDescription className="text-xs font-medium mt-2">
+                            {stepNum === 1 && "Assess risk factors and immediate needs below to calculate the triage level."}
+                            {stepNum === 2 && "Click below to file the official 15-day Protection Order application."}
+                            {stepNum === 3 && "Review application and confirm issuance within 24 hours of filing."}
+                            {stepNum === 4 && "Print documents, serve to respondent, and record service status below."}
+                            {stepNum === 5 && "Record monitoring check-ins and compliance logs during the 15-day SLA."}
+                            {stepNum === 6 && "Case referred to PNP WCPD or Prosecutor due to violation or high risk."}
+                            {stepNum === 7 && "Case record is closed, locked, and preserved for audit compliance."}
+                        </CardDescription>
                     </CardHeader>
-                    <CardContent className="p-6">
+                    <CardContent className="p-4 sm:p-6">
                         {/* STEP 1: TRIAGE ASSESSMENT CHECKLIST */}
                         {stepNum === 1 && (
                             <form onSubmit={handleAssessCase} className="space-y-6">
@@ -1222,6 +1251,72 @@ export default function Show({ case: vawcCase, crossStats, survivorStats }: Prop
                                             )}
                                         </div>
                                     )}
+
+                                    {/* Signatory Authority Selector (RA 9262 Sec. 14) */}
+                                    <div className="pt-3 border-t space-y-2">
+                                        <Label className="text-xs font-semibold text-foreground flex items-center justify-between">
+                                            <span>Official Signatory Authority</span>
+                                            <span className="text-[11px] text-muted-foreground font-normal">RA 9262 Sec. 14 Protocol</span>
+                                        </Label>
+                                        <div className="grid grid-cols-2 gap-2">
+                                            <Button
+                                                type="button"
+                                                variant={issuanceForm.data.signatory_role === 'Punong Barangay' ? 'default' : 'outline'}
+                                                className={cn("text-xs h-9 justify-center cursor-pointer", issuanceForm.data.signatory_role === 'Punong Barangay' && "bg-primary text-primary-foreground font-bold")}
+                                                onClick={() => {
+                                                    issuanceForm.setData({
+                                                        ...issuanceForm.data,
+                                                        signatory_role: 'Punong Barangay',
+                                                        signatory_designation: 'Punong Barangay',
+                                                    });
+                                                }}
+                                            >
+                                                🏛️ Punong Barangay
+                                            </Button>
+                                            <Button
+                                                type="button"
+                                                variant={issuanceForm.data.signatory_role === 'Acting Kagawad' ? 'default' : 'outline'}
+                                                className={cn("text-xs h-9 justify-center cursor-pointer", issuanceForm.data.signatory_role === 'Acting Kagawad' && "bg-amber-600 hover:bg-amber-700 text-white font-bold")}
+                                                onClick={() => {
+                                                    issuanceForm.setData({
+                                                        ...issuanceForm.data,
+                                                        signatory_role: 'Acting Kagawad',
+                                                        signatory_designation: 'Barangay Kagawad / Officer-in-Charge',
+                                                    });
+                                                }}
+                                            >
+                                                ⚖️ Acting Kagawad (PB Absent)
+                                            </Button>
+                                        </div>
+
+                                        {issuanceForm.data.signatory_role === 'Acting Kagawad' && (
+                                            <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-300 dark:border-amber-800 text-xs space-y-2">
+                                                <p className="text-amber-800 dark:text-amber-300 font-medium leading-relaxed">
+                                                    <strong>RA 9262 Sec. 14 Statutory Exception:</strong> When the Punong Barangay is unavailable, any available Barangay Kagawad is legally mandated to issue the BPO immediately to protect the survivor and prevent administrative delays.
+                                                </p>
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+                                                    <div className="space-y-1">
+                                                        <Label className="text-[11px] font-bold text-foreground">Acting Kagawad Name *</Label>
+                                                        <Input
+                                                            placeholder="Hon. Kagawad Full Name..."
+                                                            value={issuanceForm.data.signatory_name}
+                                                            onChange={e => issuanceForm.setData('signatory_name', e.target.value)}
+                                                            className="text-xs h-8 bg-card"
+                                                        />
+                                                    </div>
+                                                    <div className="space-y-1">
+                                                        <Label className="text-[11px] font-bold text-foreground">Designation Title</Label>
+                                                        <Input
+                                                            placeholder="Barangay Kagawad / Officer-in-Charge"
+                                                            value={issuanceForm.data.signatory_designation}
+                                                            onChange={e => issuanceForm.setData('signatory_designation', e.target.value)}
+                                                            className="text-xs h-8 bg-card"
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
 
                                 <div className="text-center pt-2">
@@ -1317,6 +1412,69 @@ export default function Show({ case: vawcCase, crossStats, survivorStats }: Prop
                                                 className="text-xs"
                                             />
                                         </div>
+                                    </div>
+
+                                    {/* Tender of Service (SC A.M. No. 04-10-11-SC) */}
+                                    <div className="pt-3 border-t space-y-3">
+                                        <div className="flex items-center space-x-2">
+                                            <input
+                                                type="checkbox"
+                                                id="refused_to_sign"
+                                                checked={serviceForm.data.refused_to_sign}
+                                                onChange={e => {
+                                                    const checked = e.target.checked;
+                                                    serviceForm.setData({
+                                                        ...serviceForm.data,
+                                                        refused_to_sign: checked,
+                                                        receiver_name: checked ? (serviceForm.data.receiver_name || `${respondent?.name || 'Respondent'} (Refused to Sign)`) : serviceForm.data.receiver_name,
+                                                    });
+                                                }}
+                                                className="rounded border-gray-300 text-red-600 focus:ring-red-500 w-4 h-4 cursor-pointer"
+                                            />
+                                            <Label htmlFor="refused_to_sign" className="text-xs font-bold text-foreground cursor-pointer flex items-center gap-1.5 flex-wrap">
+                                                <span>Respondent Refused to Sign (Tender of Service Executed)</span>
+                                                <Badge variant="outline" className="text-[10px] border-red-500/30 text-red-600 font-bold">
+                                                    SC Rule A.M. No. 04-10-11-SC
+                                                </Badge>
+                                            </Label>
+                                        </div>
+
+                                        {serviceForm.data.refused_to_sign && (
+                                            <div className="p-3.5 rounded-lg bg-red-50 dark:bg-red-950/30 border border-red-300 dark:border-red-900/60 text-xs space-y-3">
+                                                <p className="text-red-800 dark:text-red-300 leading-relaxed font-medium">
+                                                    <strong>Supreme Court Rule on Protection Orders:</strong> Personal service is legally complete upon tendering the physical BPO in the respondent's presence and explaining its contents, even if the respondent refuses to receive or sign. The <strong>15-day statutory countdown begins immediately upon recorded tender</strong>.
+                                                </p>
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                                    <div className="space-y-1">
+                                                        <Label className="text-[11px] font-bold text-foreground">Serving Officer Name *</Label>
+                                                        <Input
+                                                            placeholder="Name of Serving Tanod/Officer..."
+                                                            value={serviceForm.data.serving_officer_name}
+                                                            onChange={e => serviceForm.setData('serving_officer_name', e.target.value)}
+                                                            className="text-xs h-8 bg-card"
+                                                        />
+                                                    </div>
+                                                    <div className="space-y-1">
+                                                        <Label className="text-[11px] font-bold text-foreground">Accompanying Tanod Witness *</Label>
+                                                        <Input
+                                                            placeholder="Tanod Witness Name / Badge No..."
+                                                            value={serviceForm.data.witness_tanod_name}
+                                                            onChange={e => serviceForm.setData('witness_tanod_name', e.target.value)}
+                                                            className="text-xs h-8 bg-card"
+                                                        />
+                                                    </div>
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <Label className="text-[11px] font-semibold text-foreground">Tender Circumstances & Refusal Notes</Label>
+                                                    <Input
+                                                        placeholder="e.g., Respondent was verbally notified, cursed and refused to touch document; physical copy tendered in his presence."
+                                                        value={serviceForm.data.tender_notes}
+                                                        onChange={e => serviceForm.setData('tender_notes', e.target.value)}
+                                                        className="text-xs h-8 bg-card"
+                                                    />
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
 
                                     {/* Intelligent Service Presets */}
@@ -1421,17 +1579,110 @@ export default function Show({ case: vawcCase, crossStats, survivorStats }: Prop
                                 </div>
 
                                 {daysRemaining !== null && (
-                                    <Alert className="border-amber-300 bg-amber-50 dark:bg-amber-950/20 text-amber-800 dark:text-amber-300">
-                                        <ClipboardList className="w-4 h-4" />
-                                        <AlertTitle className="text-xs font-bold uppercase">15-Day SLA Monitoring Active</AlertTitle>
-                                        <AlertDescription className="text-xs mt-1 font-medium">
-                                            {daysRemaining < 0 ? (
-                                                <span>Protection Order has <strong>Expired</strong> (Expiration: {new Date(activeBpo.expiration_date).toLocaleDateString()}).</span>
-                                            ) : (
-                                                <span>Active Monitoring: <strong>{daysRemaining} Days Remaining</strong> (Expiration: {new Date(activeBpo.expiration_date).toLocaleDateString()}).</span>
-                                            )}
-                                        </AlertDescription>
-                                    </Alert>
+                                    daysRemaining < 0 ? (
+                                        <Card className="border-2 border-amber-400 bg-amber-50/50 dark:bg-amber-950/20 shadow-md p-4 sm:p-5 space-y-4">
+                                            <div className="flex items-start gap-3">
+                                                <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-400/40 text-amber-700 dark:text-amber-300 shrink-0">
+                                                    <Clock className="w-6 h-6 animate-pulse" />
+                                                </div>
+                                                <div className="space-y-1 flex-1">
+                                                    <div className="flex items-center gap-2 flex-wrap">
+                                                        <h4 className="text-sm font-bold text-amber-900 dark:text-amber-200 uppercase tracking-wider">
+                                                            15-Day BPO Validity Concluded — Mandatory Exit Verification Protocol
+                                                        </h4>
+                                                        <Badge variant="outline" className="bg-amber-100 text-amber-900 border-amber-300 text-[10px] font-mono font-bold">
+                                                            RA 9262 SEC. 14 MANDATE
+                                                        </Badge>
+                                                    </div>
+                                                    <p className="text-xs text-amber-800 dark:text-amber-300 leading-relaxed font-medium">
+                                                        The statutory 15-day protective period elapsed on <strong>{new Date(activeBpo.expiration_date).toLocaleDateString()}</strong>. Under Philippine law, a BPO <strong>cannot be extended or renewed at the barangay level</strong>, and cases cannot be silently abandoned without human verification. You must document the final monitoring outcome below.
+                                                    </p>
+                                                </div>
+                                            </div>
+
+                                            {/* Two-Choice Resolution Protocol Grid */}
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2">
+                                                {/* Option A: Peaceful Completion */}
+                                                <div className="p-4 rounded-xl border-2 border-emerald-500/40 bg-card hover:bg-emerald-50/30 dark:hover:bg-emerald-950/20 transition-all flex flex-col justify-between space-y-3">
+                                                    <div className="space-y-1.5">
+                                                        <div className="flex items-center gap-2">
+                                                            <ShieldCheck className="w-5 h-5 text-emerald-600" />
+                                                            <h5 className="text-xs font-bold uppercase text-foreground">Option A: Conclude & Archive Docket (Peaceful)</h5>
+                                                        </div>
+                                                        <p className="text-xs text-muted-foreground leading-relaxed">
+                                                            Respondent complied throughout the 15-day order, caused zero threats, and survivor affirms household security and safety.
+                                                        </p>
+                                                    </div>
+                                                    <Button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            closeForm.setData({
+                                                                closure_reason: '15-Day Protection Order Lapsed Successfully (No Violation)',
+                                                                closure_remarks: 'Full 15-day statutory Barangay Protection Order elapsed with complete respondent compliance and zero violations reported. Survivor affirmed personal safety.',
+                                                            });
+                                                            setShowCloseModal(true);
+                                                        }}
+                                                        className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-10 cursor-pointer"
+                                                    >
+                                                        <Check className="w-4 h-4 mr-1.5" /> Conclude & Archive (Peaceful Completion)
+                                                    </Button>
+                                                </div>
+
+                                                {/* Option B: Threat Persists or Breach Occurred */}
+                                                <div className="p-4 rounded-xl border-2 border-red-500/40 bg-card hover:bg-red-50/30 dark:hover:bg-red-950/20 transition-all flex flex-col justify-between space-y-3">
+                                                    <div className="space-y-1.5">
+                                                        <div className="flex items-center gap-2">
+                                                            <Scale className="w-5 h-5 text-red-600" />
+                                                            <h5 className="text-xs font-bold uppercase text-foreground">Option B: Escalate Docket (Breach or Threat Persists)</h5>
+                                                        </div>
+                                                        <p className="text-xs text-muted-foreground leading-relaxed">
+                                                            Respondent breached the order OR survivor remains under imminent threat beyond barangay protective limits.
+                                                        </p>
+                                                    </div>
+                                                    <div className="grid grid-cols-2 gap-2">
+                                                        <Button
+                                                            type="button"
+                                                            variant="destructive"
+                                                            onClick={() => {
+                                                                escalationForm.setData({
+                                                                    referral_target: 'PNP Women and Children Protection',
+                                                                    violation_datetime: getNowLocalISO(),
+                                                                    escorted_by_pb: true,
+                                                                    violation_description: 'Violation of BPO stay-away order detected during exit monitoring verification.',
+                                                                });
+                                                                setShowEscalateModal(true);
+                                                            }}
+                                                            className="font-bold text-[11px] h-10 px-2 cursor-pointer"
+                                                        >
+                                                            <AlertTriangle className="w-3.5 h-3.5 mr-1" /> Flag BPO Breach
+                                                        </Button>
+                                                        <Button
+                                                            type="button"
+                                                            variant="outline"
+                                                            onClick={() => {
+                                                                closeForm.setData({
+                                                                    closure_reason: 'Referred to Family Court / PAO for TPO/PPO Application (Section 15)',
+                                                                    closure_remarks: '15-day BPO elapsed. Threat persists; survivor assisted in filing court-issued TPO/PPO pursuant to Section 15.',
+                                                                });
+                                                                setShowCloseModal(true);
+                                                            }}
+                                                            className="border-purple-400 text-purple-700 dark:text-purple-300 hover:bg-purple-50 font-bold text-[11px] h-10 px-2 cursor-pointer"
+                                                        >
+                                                            <Building2 className="w-3.5 h-3.5 mr-1" /> Court TPO/PPO
+                                                        </Button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </Card>
+                                    ) : (
+                                        <Alert className="border-amber-300 bg-amber-50 dark:bg-amber-950/20 text-amber-800 dark:text-amber-300">
+                                            <ClipboardList className="w-4 h-4" />
+                                            <AlertTitle className="text-xs font-bold uppercase">15-Day SLA Monitoring Active</AlertTitle>
+                                            <AlertDescription className="text-xs mt-1 font-medium">
+                                                Active Monitoring: <strong>{daysRemaining} Days Remaining</strong> (Expiration: {new Date(activeBpo.expiration_date).toLocaleDateString()}).
+                                            </AlertDescription>
+                                        </Alert>
+                                    )
                                 )}
                             </div>
                         )}
@@ -1456,24 +1707,24 @@ export default function Show({ case: vawcCase, crossStats, survivorStats }: Prop
                                     <Button
                                         variant="outline"
                                         size="lg"
-                                        className="min-h-[44px] font-bold text-xs sm:text-sm border-primary/30 hover:bg-primary/5 flex items-center justify-center gap-2"
+                                        className="min-h-[44px] h-auto py-2.5 font-bold text-xs sm:text-sm border-primary/30 hover:bg-primary/5 flex items-center justify-center gap-2 text-center whitespace-normal"
                                         asChild
                                     >
                                         <a href={route('admin.vawc.complaint-form', caseRouteKey)} target="_blank" rel="noreferrer">
-                                            <FileText className="w-4 h-4 text-primary" />
-                                            Print Court Complaint Assistance Form
+                                            <FileText className="w-4 h-4 text-primary shrink-0" />
+                                            <span>Print Court Complaint Assistance Form</span>
                                         </a>
                                     </Button>
 
                                     <Button
                                         variant="outline"
                                         size="lg"
-                                        className="min-h-[44px] font-bold text-xs sm:text-sm border-destructive/30 hover:bg-destructive/5 flex items-center justify-center gap-2"
+                                        className="min-h-[44px] h-auto py-2.5 font-bold text-xs sm:text-sm border-destructive/30 hover:bg-destructive/5 flex items-center justify-center gap-2 text-center whitespace-normal"
                                         asChild
                                     >
                                         <a href={route('admin.vawc.pnp-transmittal', caseRouteKey)} target="_blank" rel="noreferrer">
-                                            <Printer className="w-4 h-4 text-destructive" />
-                                            Print Official Police (PNP WCPD) Transmittal
+                                            <Printer className="w-4 h-4 text-destructive shrink-0" />
+                                            <span>Print Official Police (PNP WCPD) Transmittal</span>
                                         </a>
                                     </Button>
                                 </div>
@@ -1486,23 +1737,23 @@ export default function Show({ case: vawcCase, crossStats, survivorStats }: Prop
                                         </h4>
                                         <div className="space-y-2.5">
                                             {vawcCase.escalations.map((esc: any) => (
-                                                <div key={esc.id} className="p-4 rounded-xl border bg-card text-xs space-y-2 shadow-xs">
-                                                    <div className="flex items-center justify-between gap-2 flex-wrap pb-2 border-b">
+                                                <div key={esc.id} className="p-3.5 sm:p-4 rounded-xl border bg-card text-xs space-y-2 shadow-xs">
+                                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b">
                                                         <div className="flex items-center gap-2">
-                                                            <Building2 className="w-4 h-4 text-red-600" />
+                                                            <Building2 className="w-4 h-4 text-red-600 shrink-0" />
                                                             <span className="font-bold text-sm text-foreground">
                                                                 {esc.referral_target}
                                                             </span>
                                                         </div>
-                                                        <div className="flex items-center gap-2">
+                                                        <div className="flex flex-wrap items-center gap-1.5 self-start sm:self-auto">
                                                             {esc.escorted_by_pb && (
-                                                                <Badge variant="secondary" className="text-xs font-semibold bg-primary/10 text-primary border-primary/20">
-                                                                    Escorted by Punong Barangay
-                                                                </Badge>
-                                                            )}
-                                                            <Badge className="bg-red-600 text-white text-xs font-bold">
-                                                                {esc.status || 'Case Prepared'}
-                                                            </Badge>
+                                                                 <Badge variant="secondary" className="text-xs font-semibold bg-primary/10 text-primary border-primary/20">
+                                                                     Escorted by Punong Barangay
+                                                                 </Badge>
+                                                             )}
+                                                             <Badge className="bg-red-600 text-white text-xs font-bold">
+                                                                 {esc.status || 'Case Prepared'}
+                                                             </Badge>
                                                         </div>
                                                     </div>
                                                     <p className="text-muted-foreground leading-relaxed">
@@ -1524,13 +1775,13 @@ export default function Show({ case: vawcCase, crossStats, survivorStats }: Prop
                                 )}
 
                                 {/* Jurisdictional Gate Notice & Step 7 Lock Advisory */}
-                                <div className="p-4 rounded-xl border border-red-500/30 bg-red-500/5 dark:bg-red-950/20 text-xs space-y-3">
-                                    <div className="flex items-center justify-between gap-2 flex-wrap font-bold text-red-800 dark:text-red-300">
+                                <div className="p-3.5 sm:p-4 rounded-xl border border-red-500/30 bg-red-500/5 dark:bg-red-950/20 text-xs space-y-3">
+                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 font-bold text-red-800 dark:text-red-300">
                                         <span className="flex items-center gap-1.5 text-sm">
                                             <Lock className="w-4 h-4 text-red-600 shrink-0" />
                                             Jurisdictional Gate: Step 7 (Archive) Locked
                                         </span>
-                                        <Badge variant="outline" className="border-red-500/30 bg-red-100/60 dark:bg-red-900/40 text-red-800 dark:text-red-300 text-xs font-bold">
+                                        <Badge variant="outline" className="border-red-500/30 bg-red-100/60 dark:bg-red-900/40 text-red-800 dark:text-red-300 text-xs font-bold self-start sm:self-auto">
                                             Public Crime Rule (RA 9262)
                                         </Badge>
                                     </div>
@@ -1541,7 +1792,7 @@ export default function Show({ case: vawcCase, crossStats, survivorStats }: Prop
                                         The record remains permanently active under <strong>Escalated Status</strong> for community safety monitoring. Step 7 (Archival) remains locked until an official judicial verdict or prosecutor resolution is formally entered into the case record.
                                     </p>
 
-                                    <div className="pt-2 border-t border-red-500/20 flex flex-col sm:flex-row items-center justify-between gap-3">
+                                    <div className="pt-2 border-t border-red-500/20 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 min-w-0 w-full">
                                         <span className="text-xs text-muted-foreground font-medium italic">
                                             * Has an official court order or prosecutor resolution arrived?
                                         </span>
@@ -1549,7 +1800,7 @@ export default function Show({ case: vawcCase, crossStats, survivorStats }: Prop
                                             type="button"
                                             variant="outline"
                                             onClick={() => setShowCloseModal(true)}
-                                            className="min-h-[44px] sm:min-h-[38px] text-xs font-bold border-primary/40 hover:bg-primary/10 text-primary dark:text-primary-foreground shadow-xs shrink-0 cursor-pointer"
+                                            className="min-h-[44px] sm:min-h-[38px] text-xs font-bold border-primary/40 hover:bg-primary/10 text-primary dark:text-primary-foreground shadow-xs cursor-pointer w-full max-w-full sm:w-auto h-auto py-2.5 px-3 whitespace-normal break-words text-center"
                                         >
                                             <Scale className="w-4 h-4 mr-1.5 shrink-0" />
                                             Record Official Court Order / Prosecutor Resolution
@@ -1618,9 +1869,9 @@ export default function Show({ case: vawcCase, crossStats, survivorStats }: Prop
 
                 {/* ── MONITORING & COMPLIANCE LOGS (Steps 5 & 6) ── */}
                 {(stepNum === 5 || stepNum === 6) && (
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <Card className="md:col-span-2 shadow-xs">
-                            <CardHeader className="pb-3 border-b">
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <Card className="lg:col-span-2 shadow-xs overflow-hidden min-w-0">
+                            <CardHeader className="p-4 sm:p-6 pb-3 border-b">
                                 <CardTitle className="text-xs font-bold uppercase tracking-wider text-foreground">
                                     {stepNum === 5
                                         ? "15-Day BPO Compliance & Counseling Monitoring Log"
@@ -1632,16 +1883,16 @@ export default function Show({ case: vawcCase, crossStats, survivorStats }: Prop
                                         : "Record ongoing welfare check-ins, Tanod patrols, and support visits while criminal prosecution is handled by PNP/Court."}
                                 </CardDescription>
                             </CardHeader>
-                            <CardContent className="p-6 space-y-4">
+                            <CardContent className="p-4 sm:p-6 space-y-4">
                                 <form onSubmit={handleLogCompliance} className="space-y-4">
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div className="space-y-2">
+                                        <div className="space-y-2 min-w-0">
                                             <Label className="text-xs font-semibold">Log Date & Time</Label>
                                             <Input
                                                 type="datetime-local"
                                                 value={complianceForm.data.monitor_date}
                                                 onChange={e => complianceForm.setData('monitor_date', e.target.value)}
-                                                className="text-xs"
+                                                className="text-xs w-full max-w-full min-w-0"
                                             />
                                         </div>
                                         <div className="space-y-2">
@@ -1709,7 +1960,7 @@ export default function Show({ case: vawcCase, crossStats, survivorStats }: Prop
 
                         {/* Order Violation Escalation Card */}
                         {stepNum === 5 && (
-                            <Card className="shadow-xs border-destructive/30 bg-destructive/5">
+                            <Card id="compliance-monitoring-section" className="shadow-xs border-destructive/30 bg-destructive/5">
                                 <CardHeader className="pb-3 border-b border-destructive/20">
                                     <CardTitle className="text-xs font-bold uppercase tracking-wider text-destructive flex items-center gap-1.5">
                                         <Gavel className="w-4 h-4" /> BPO Order Violation?
@@ -1777,11 +2028,11 @@ export default function Show({ case: vawcCase, crossStats, survivorStats }: Prop
                         </div>
                     </CardHeader>
 
-                    <CardContent className="p-6 space-y-6">
+                    <CardContent className="p-4 sm:p-6 space-y-6">
                         {/* 4-COLUMN DOSSIER GRID */}
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                             {/* DOSSIER 1: SURVIVOR & COMPLAINANT */}
-                            <div className="space-y-3">
+                            <div className="space-y-3 min-w-0">
                                 <Label className="text-xs font-extrabold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
                                     <ShieldCheck className="w-4 h-4 text-emerald-600" /> Survivor & Reporter Profile
                                 </Label>
@@ -1866,7 +2117,7 @@ export default function Show({ case: vawcCase, crossStats, survivorStats }: Prop
                             </div>
 
                             {/* DOSSIER 2: RESPONDENT PROFILE */}
-                            <div className="space-y-3">
+                            <div className="space-y-3 min-w-0">
                                 <Label className="text-xs font-extrabold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
                                     <AlertTriangle className="w-4 h-4 text-red-600" /> Respondent Profile
                                 </Label>
@@ -1916,7 +2167,7 @@ export default function Show({ case: vawcCase, crossStats, survivorStats }: Prop
                             </div>
 
                             {/* DOSSIER 3: INCIDENT CONTEXT & THREAT FLAGS */}
-                            <div className="space-y-3">
+                            <div className="space-y-3 min-w-0">
                                 <Label className="text-xs font-extrabold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
                                     <Search className="w-4 h-4 text-amber-600" /> Incident Context & Threat Indicators
                                 </Label>
@@ -1979,11 +2230,38 @@ export default function Show({ case: vawcCase, crossStats, survivorStats }: Prop
                                             )}
                                         </div>
                                     </div>
+
+                                    {vawcCase.children_details && Array.isArray(vawcCase.children_details) && vawcCase.children_details.length > 0 && (
+                                        <>
+                                            <Separator />
+                                            <div className="space-y-1.5">
+                                                <div className="flex items-center justify-between">
+                                                    <p className="text-xs font-bold text-muted-foreground uppercase">Covered Dependent Minors</p>
+                                                    {isRedacted && <span className="text-[10px] text-amber-600 font-semibold">RA 7610 Identity Masked</span>}
+                                                </div>
+                                                <div className="space-y-1.5">
+                                                    {vawcCase.children_details.map((ch: any, idx: number) => (
+                                                        <div key={idx} className="p-2 rounded-lg bg-muted/40 border text-xs flex flex-col gap-0.5">
+                                                            <div className="flex justify-between items-center font-medium">
+                                                                <span className="text-foreground">{redactName(ch.name || `Child #${idx + 1}`)}</span>
+                                                                <span className="text-muted-foreground text-[11px]">{ch.age ? `${ch.age} yrs old` : 'Minor'}</span>
+                                                            </div>
+                                                            {ch.school_or_daycare && (
+                                                                <span className="text-[11px] text-muted-foreground">
+                                                                    Protected Institution: <strong className="text-foreground">{isRedacted ? 'CONFIDENTIAL (Stay-Away Active)' : ch.school_or_daycare}</strong>
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        </>
+                                    )}
                                 </div>
                             </div>
 
                             {/* DOSSIER 4: REFERRALS & ACTIONS SOUGHT */}
-                            <div className="space-y-3">
+                            <div className="space-y-3 min-w-0">
                                 <Label className="text-xs font-extrabold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
                                     <ClipboardList className="w-4 h-4 text-blue-600" /> Referrals, Actions & Witnesses
                                 </Label>
@@ -2096,7 +2374,7 @@ export default function Show({ case: vawcCase, crossStats, survivorStats }: Prop
                                 </Link>
                             </Button>
                         </CardHeader>
-                        <CardContent className="p-6">
+                        <CardContent className="p-4 sm:p-6">
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                 {vawcCase.dossier.cases.map((siblingCase: any) => {
                                     const isCurrent = siblingCase.id === vawcCase.id;
@@ -2191,23 +2469,23 @@ export default function Show({ case: vawcCase, crossStats, survivorStats }: Prop
                             </Badge>
                         </div>
                     </CardHeader>
-                    <CardContent className="p-6">
+                    <CardContent className="p-4 sm:p-6">
                         {/* Dual-Timestamp Statutory Audit Standard Advisory Banner */}
-                        <div className="mb-6 p-4 rounded-xl border border-blue-200 dark:border-blue-900/60 bg-blue-50/50 dark:bg-blue-950/20 flex items-start gap-3 text-xs leading-relaxed">
+                        <div className="mb-6 p-4 rounded-xl border border-blue-200 dark:border-blue-900/60 bg-blue-50/50 dark:bg-blue-950/20 flex items-start gap-3 text-xs leading-relaxed overflow-hidden">
                             <Info className="w-5 h-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
-                            <div>
-                                <strong className="text-sm font-bold text-foreground block">
+                            <div className="min-w-0 flex-1 space-y-1">
+                                <strong className="text-sm font-bold text-foreground block break-words">
                                     Dual-Timestamp Statutory Audit Standard (RA 9262 Protocol)
                                 </strong>
-                                <p className="text-muted-foreground mt-0.5">
+                                <p className="text-muted-foreground mt-0.5 break-words">
                                     To support both real-time desk intake and retrospective historical encoding, this official registry distinguishes between the <strong>Effective Legal Process Milestone</strong> (the verified date and time the legal event occurred or was back-encoded) and the <strong>System Audit Entry</strong> (the immutable server timestamp when digitally logged).
                                 </p>
-                                <div className="flex items-center gap-2.5 mt-2.5 flex-wrap">
-                                    <Badge variant="outline" className="text-xs font-semibold border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300">
+                                <div className="flex items-center gap-2 mt-2.5 flex-wrap">
+                                    <Badge variant="outline" className="text-xs font-semibold border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 break-words text-left">
                                         Historical Back-Encoding (Retroactive Incident Logging)
                                     </Badge>
                                     <span className="text-muted-foreground text-xs font-medium">vs.</span>
-                                    <Badge variant="outline" className="text-xs font-semibold border-blue-300 dark:border-blue-700 bg-blue-50 dark:bg-blue-950/40 text-blue-800 dark:text-blue-300">
+                                    <Badge variant="outline" className="text-xs font-semibold border-blue-300 dark:border-blue-700 bg-blue-50 dark:bg-blue-950/40 text-blue-800 dark:text-blue-300 break-words text-left">
                                         Live Real-Time Intake (Direct Desk Record)
                                     </Badge>
                                 </div>
@@ -2500,6 +2778,111 @@ export default function Show({ case: vawcCase, crossStats, survivorStats }: Prop
                     </CardContent>
                 </Card>
 
+                {/* ── BPO VIOLATION & STATUTORY ESCALATION MODAL (RA 9262 Sec. 24) ── */}
+                <Dialog open={showEscalateModal} onOpenChange={setShowEscalateModal}>
+                    <DialogContent className="sm:max-w-xl p-5 sm:p-6 gap-4">
+                        <DialogHeader className="space-y-1.5 border-b pb-3.5">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border bg-destructive/10 text-destructive border-destructive/20">
+                                    <AlertTriangle className="w-5 h-5" />
+                                </div>
+                                <div>
+                                    <DialogTitle className="text-lg font-bold text-foreground tracking-tight">
+                                        Record BPO Violation & Escalate
+                                    </DialogTitle>
+                                    <DialogDescription className="text-xs text-muted-foreground mt-0.5">
+                                        RA 9262 Sec. 24 — A breach of any protection order condition is a criminal offense punishable by 30 days imprisonment and contempt of court, requiring immediate police inquest referral.
+                                    </DialogDescription>
+                                </div>
+                            </div>
+                        </DialogHeader>
+
+                        <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-xl space-y-1 text-destructive text-xs">
+                            <p className="font-bold flex items-center gap-1.5">
+                                <ShieldAlert className="w-4 h-4 shrink-0" /> Immediate Criminal Inquest Jurisdiction
+                            </p>
+                            <p className="leading-relaxed">
+                                Filing this violation transitions the case to <strong>Phase 6 (Escalated to Law Enforcement)</strong> and generates the official PNP Inquest Transmittal packet with Punong Barangay endorsement.
+                            </p>
+                        </div>
+
+                        <form onSubmit={handleEscalate} className="space-y-3.5 text-xs">
+                            <div className="space-y-1.5">
+                                <Label className="font-semibold text-foreground">Escalation Referral Agency *</Label>
+                                <Select
+                                    value={escalationForm.data.referral_target}
+                                    onValueChange={val => escalationForm.setData('referral_target', val)}
+                                >
+                                    <SelectTrigger className="w-full h-9 text-xs">
+                                        <SelectValue placeholder="Select external agency" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="PNP Women and Children Protection">PNP WCPD (Women & Children Protection Desk - Inquest)</SelectItem>
+                                        <SelectItem value="Prosecutor's Office">Office of the City/Provincial Prosecutor</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+
+                            <div className="space-y-1.5">
+                                <Label className="font-semibold text-foreground">Date & Time of Violation *</Label>
+                                <Input
+                                    type="datetime-local"
+                                    value={escalationForm.data.violation_datetime}
+                                    onChange={e => escalationForm.setData('violation_datetime', e.target.value)}
+                                    className="h-9 text-xs"
+                                    required
+                                />
+                            </div>
+
+                            <div className="space-y-1.5">
+                                <Label className="font-semibold text-foreground">Violation Narrative / Breach Specifics *</Label>
+                                <Textarea
+                                    rows={4}
+                                    placeholder="Detail specific acts committed (e.g., entered prohibited 500m radius, direct threats, physical altercation, unauthorized harassment)..."
+                                    value={escalationForm.data.violation_description}
+                                    onChange={e => escalationForm.setData('violation_description', e.target.value)}
+                                    className="text-xs resize-none"
+                                    required
+                                />
+                            </div>
+
+                            <div className="flex items-center space-x-2 pt-1">
+                                <input
+                                    type="checkbox"
+                                    id="modal-escorted-pb"
+                                    checked={Boolean(escalationForm.data.escorted_by_pb)}
+                                    onChange={e => escalationForm.setData('escorted_by_pb', e.target.checked)}
+                                    className="h-4 w-4 rounded border-gray-300 text-destructive focus:ring-destructive"
+                                />
+                                <Label htmlFor="modal-escorted-pb" className="font-medium text-xs cursor-pointer">
+                                    Survivor escorted by Punong Barangay / Tanod to Police Station for Inquest
+                                </Label>
+                            </div>
+
+                            <DialogFooter className="pt-3 border-t flex items-center justify-end gap-2">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setShowEscalateModal(false)}
+                                    className="text-xs"
+                                >
+                                    Cancel
+                                </Button>
+                                <Button
+                                    type="submit"
+                                    variant="destructive"
+                                    size="sm"
+                                    disabled={escalationForm.processing}
+                                    className="text-xs font-bold gap-1.5"
+                                >
+                                    <AlertTriangle className="w-3.5 h-3.5" /> Confirm Breach & Transmit to PNP
+                                </Button>
+                            </DialogFooter>
+                        </form>
+                    </DialogContent>
+                </Dialog>
+
                 {/* ── UNIFIED STATUTORY CASE ARCHIVAL MODAL (Phase 5 & Phase 6 Adaptive) ── */}
                 <Dialog open={showCloseModal} onOpenChange={setShowCloseModal}>
                     <DialogContent className="sm:max-w-3xl max-h-[92vh] overflow-y-auto p-5 sm:p-6 gap-4">
@@ -2554,10 +2937,10 @@ export default function Show({ case: vawcCase, crossStats, survivorStats }: Prop
                             <div className="p-3.5 bg-amber-500/10 border border-amber-500/25 rounded-xl space-y-1 text-amber-900 dark:text-amber-200">
                                 <div className="flex items-center gap-2 font-bold text-xs sm:text-sm text-amber-800 dark:text-amber-300">
                                     <AlertTriangle className="w-4 h-4 shrink-0 text-amber-600 dark:text-amber-400" />
-                                    <span>Statutory Notice: Amicable Settlement Strictly Prohibited (RA 9262 Sec. 33)</span>
+                                    <span>Statutory Guardrail: Anti-Compromise & Desistance Dismissal Prohibited (RA 9262 Sec. 19 & 33)</span>
                                 </div>
                                 <p className="text-xs text-muted-foreground leading-relaxed pl-6">
-                                    Conciliation, amicable compromise, or mediation is strictly forbidden by law. Closure is only permitted upon full 15-day order lapse with zero violations or transfer to social welfare.
+                                    VAWC is a public crime against the State. Conciliation, mediation, or dismissal based on an Affidavit of Desistance or reconciliation before the barangay is prohibited by law. Desistance requests must be formally endorsed to DSWD and Family Court.
                                 </p>
                             </div>
                         )}
@@ -2656,7 +3039,11 @@ export default function Show({ case: vawcCase, crossStats, survivorStats }: Prop
                                                 Docket / Resolution No. *
                                             </Label>
                                             <Input
-                                                placeholder="e.g. Crim Case No. 2026-114"
+                                                placeholder={
+                                                    closeForm.data.closure_reason === 'Referred to Family Court / PAO for TPO/PPO Application (Section 15)'
+                                                        ? 'e.g., PAO Control No. 2026-889 or RTC Crim Case No. 2026-114'
+                                                        : 'e.g. Crim Case No. 2026-114 or Resolution No. 2026-45'
+                                                }
                                                 value={judicialFields.docket_number}
                                                 onChange={e => setJudicialFields(prev => ({ ...prev, docket_number: e.target.value }))}
                                                 className="text-xs"
@@ -2668,7 +3055,11 @@ export default function Show({ case: vawcCase, crossStats, survivorStats }: Prop
                                                 Issuing Court / Prosecutor Body *
                                             </Label>
                                             <Input
-                                                placeholder="e.g. RTC Branch 12 Family Court"
+                                                placeholder={
+                                                    closeForm.data.closure_reason === 'Referred to Family Court / PAO for TPO/PPO Application (Section 15)'
+                                                        ? "e.g., Public Attorney's Office (PAO) Pasay / RTC Branch 12 Family Court"
+                                                        : 'e.g. RTC Branch 12 Family Court / Office of the City Prosecutor'
+                                                }
                                                 value={judicialFields.issuing_court}
                                                 onChange={e => setJudicialFields(prev => ({ ...prev, issuing_court: e.target.value }))}
                                                 className="text-xs"
@@ -2694,18 +3085,51 @@ export default function Show({ case: vawcCase, crossStats, survivorStats }: Prop
                                 </div>
                             )}
 
-                            {/* Remarks Field */}
-                            <div className="space-y-1.5">
-                                <Label className="text-xs sm:text-sm font-semibold text-foreground flex items-center gap-1.5">
-                                    <Info className="w-4 h-4 text-slate-500" /> Archival Remarks & Audit Trail Documentation (Optional)
-                                </Label>
-                                <Textarea
-                                    placeholder="Enter final case summary, transmittal reference tracking numbers, or handover notes for historical audit log..."
-                                    className="min-h-[70px] text-xs sm:text-sm rounded-xl resize-none"
-                                    value={closeForm.data.closure_remarks}
-                                    onChange={e => closeForm.setData('closure_remarks', e.target.value)}
-                                />
-                            </div>
+                            {/* Dynamic Archival Remarks / Mandatory Welfare Check Notes */}
+                            {(() => {
+                                const isPeacefulCompletion = closeForm.data.closure_reason === '15-Day Protection Order Lapsed Successfully (No Violation)';
+                                const remarksLength = closeForm.data.closure_remarks?.trim().length || 0;
+                                const isWelfareValid = !isPeacefulCompletion || remarksLength >= 10;
+
+                                return (
+                                    <div className="space-y-1.5">
+                                        <div className="flex items-center justify-between">
+                                            <Label className="text-xs sm:text-sm font-semibold text-foreground flex items-center gap-1.5">
+                                                {isPeacefulCompletion ? (
+                                                    <>
+                                                        <ShieldCheck className="w-4 h-4 text-emerald-600" /> Final Welfare Check Notes * (Required)
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <Info className="w-4 h-4 text-slate-500" /> Archival Remarks & Audit Trail Documentation (Optional)
+                                                    </>
+                                                )}
+                                            </Label>
+                                            {isPeacefulCompletion && (
+                                                <span className={`text-[11px] font-semibold ${remarksLength >= 10 ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'}`}>
+                                                    {remarksLength >= 10 ? '✓ Verified' : `Min. 10 chars required (${remarksLength}/10)`}
+                                                </span>
+                                            )}
+                                        </div>
+                                        <Textarea
+                                            placeholder={
+                                                isPeacefulCompletion
+                                                    ? "Document mandatory post-BPO welfare check (e.g., Conducted home visit; respondent maintained distance; survivor confirmed peaceful status)..."
+                                                    : "Enter final case summary, transmittal reference tracking numbers, or handover notes for historical audit log..."
+                                            }
+                                            className={`min-h-[75px] text-xs sm:text-sm rounded-xl resize-none ${isPeacefulCompletion && !isWelfareValid ? 'border-amber-400 focus-visible:ring-amber-400' : ''}`}
+                                            value={closeForm.data.closure_remarks}
+                                            onChange={e => closeForm.setData('closure_remarks', e.target.value)}
+                                            required={isPeacefulCompletion}
+                                        />
+                                        {isPeacefulCompletion && (
+                                            <p className="text-[11px] text-muted-foreground leading-tight">
+                                                Under DILG VAW Desk Guidelines, closing a peacefully completed BPO mandates documenting a final welfare check confirming victim safety.
+                                            </p>
+                                        )}
+                                    </div>
+                                );
+                            })()}
 
                             <DialogFooter className="flex flex-col-reverse sm:flex-row gap-2 pt-3 border-t">
                                 <Button
@@ -2717,19 +3141,30 @@ export default function Show({ case: vawcCase, crossStats, survivorStats }: Prop
                                 >
                                     Cancel
                                 </Button>
-                                <Button
-                                    type="submit"
-                                    size="sm"
-                                    disabled={
-                                        !closeForm.data.closure_reason ||
-                                        closeForm.processing ||
-                                        ((stepNum === 6 || vawcCase.status === 'Escalated') && (!judicialFields.docket_number || !judicialFields.issuing_court))
-                                    }
-                                    className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs sm:text-sm min-h-[42px] px-5 shadow-xs"
-                                >
-                                    <ArchiveX className="w-4 h-4 mr-1.5" />
-                                    {closeForm.processing ? 'Archiving Docket...' : 'Archive Case Docket'}
-                                </Button>
+                                {(() => {
+                                    const isPeacefulCompletion = closeForm.data.closure_reason === '15-Day Protection Order Lapsed Successfully (No Violation)';
+                                    const remarksLength = closeForm.data.closure_remarks?.trim().length || 0;
+                                    const isWelfareValid = !isPeacefulCompletion || remarksLength >= 10;
+                                    const isEscalatedOrJudicial = (stepNum === 6 || vawcCase.status === 'Escalated') || ARCHIVAL_OPTIONS.find(o => o.id === closeForm.data.closure_reason)?.isJudicial;
+                                    const isJudicialValid = !isEscalatedOrJudicial || (Boolean(judicialFields.docket_number) && Boolean(judicialFields.issuing_court));
+
+                                    return (
+                                        <Button
+                                            type="submit"
+                                            size="sm"
+                                            disabled={
+                                                !closeForm.data.closure_reason ||
+                                                closeForm.processing ||
+                                                !isWelfareValid ||
+                                                !isJudicialValid
+                                            }
+                                            className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs sm:text-sm min-h-[42px] px-5 shadow-xs cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                                        >
+                                            <ArchiveX className="w-4 h-4 mr-1.5" />
+                                            {closeForm.processing ? 'Archiving Docket...' : 'Archive Case Docket'}
+                                        </Button>
+                                    );
+                                })()}
                             </DialogFooter>
                         </form>
                     </DialogContent>

@@ -321,6 +321,7 @@ class VawcController extends Controller
             'zone_id' => 'required|exists:zones,id',
 
             'children_count' => 'nullable|integer',
+            'children_details' => 'nullable|array',
             'is_repeat_offense' => 'boolean',
             'has_weapon_involved' => 'boolean',
             'respondent.relationship' => 'required|string|max:255',
@@ -524,6 +525,9 @@ class VawcController extends Controller
 
         $request->validate([
             'issued_datetime' => 'required',
+            'signatory_role' => 'nullable|string',
+            'signatory_name' => 'nullable|string',
+            'signatory_designation' => 'nullable|string',
         ]);
 
         $issuedAt = \Carbon\Carbon::parse($request->issued_datetime);
@@ -540,7 +544,7 @@ class VawcController extends Controller
     }
 
     /**
-     * Record how the BPO was served (Personally vs Residence).
+     * Record how the BPO was served (Personally vs Residence vs Tender of Service).
      */
     public function recordBpoService($id, Request $request)
     {
@@ -553,7 +557,11 @@ class VawcController extends Controller
         $request->validate([
             'service_method' => 'required|string',
             'served_datetime' => 'required',
-            'receiver_name' => 'nullable|string'
+            'receiver_name' => 'nullable|string',
+            'refused_to_sign' => 'nullable|boolean',
+            'serving_officer_name' => 'nullable|string',
+            'witness_tanod_name' => 'nullable|string',
+            'tender_notes' => 'nullable|string',
         ]);
 
         $servedAt = \Carbon\Carbon::parse($request->served_datetime);
@@ -677,7 +685,11 @@ class VawcController extends Controller
 
         $request->validate([
             'closure_reason' => 'required|string',
-            'closure_remarks' => 'nullable|string'
+            'closure_remarks' => 'nullable|string',
+            'docket_number' => 'nullable|string',
+            'issuing_body' => 'nullable|string',
+            'order_date' => 'nullable|string',
+            'closed_at' => 'nullable|string',
         ]);
 
         $this->legalService->closeCase($case, $request->all());
@@ -713,15 +725,24 @@ class VawcController extends Controller
 
             $bpoInfo = null;
             if ($activeBpo) {
-                $issuedAt = $activeBpo->issued_datetime ?? $activeBpo->application_datetime ?? $activeBpo->created_at;
-                $daysActive = (int) max(1, $issuedAt->diffInDays(now()) + 1);
-                $daysRemaining = (int) max(0, 15 - $daysActive);
+                $servedRecord = $activeBpo->serviceRecords->first();
+                $servedAt = $servedRecord?->served_datetime ?? $activeBpo->issued_datetime ?? $activeBpo->application_datetime ?? $activeBpo->created_at;
+                
+                $expDate = $activeBpo->expiration_date 
+                    ? \Carbon\Carbon::parse($activeBpo->expiration_date)->endOfDay() 
+                    : \Carbon\Carbon::parse($servedAt)->addDays(15)->endOfDay();
+                
+                $isExpired = now()->gt($expDate);
+                $daysActive = (int) max(1, $servedAt->diffInDays(now()) + 1);
+                $daysRemaining = $isExpired ? 0 : (int) max(0, ceil(now()->floatDiffInDays($expDate, false)));
+
                 $bpoInfo = [
                     'order_number' => $activeBpo->order_number,
                     'status' => $activeBpo->status,
                     'days_active' => min($daysActive, 15),
                     'days_remaining' => $daysRemaining,
-                    'is_expired' => $daysActive > 15,
+                    'is_expired' => $isExpired,
+                    'expiration_date' => $expDate->format('M d, Y'),
                 ];
             }
 

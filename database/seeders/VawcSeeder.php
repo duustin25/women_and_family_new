@@ -13,6 +13,7 @@ use App\Models\VawcInvolvedParty;
 use App\Models\VawcAssessment;
 use App\Models\VawcProtectionOrder;
 use App\Models\VawcBpoServiceRecord;
+use App\Models\VawcAgencyTransmittal;
 use App\Models\VawcComplianceLog;
 use App\Models\VawcLegalEscalation;
 use Carbon\Carbon;
@@ -28,6 +29,8 @@ class VawcSeeder extends Seeder
      * - Corroborating Witness Statements (witness_info)
      * - Confidential Informant / Whistleblower Shield (is_anonymous = true)
      * - Unassessed Fresh Intake for Triage Assessment testing (status = 'Intake', no assessment)
+     * - Full 15-Day BPO Completion without Violation (Expired BPO, Step 7 Case Archival & Closure)
+     * - Live Lapsed BPO ready for real-time closure testing in Step 5
      * - Standard statutory closure reasons and active BPO compliance logs
      */
     public function run(): void
@@ -52,6 +55,7 @@ class VawcSeeder extends Seeder
         VawcComplianceLog::truncate();
         VawcLegalEscalation::truncate();
         VawcBpoServiceRecord::truncate();
+        VawcAgencyTransmittal::truncate();
         VawcProtectionOrder::truncate();
         VawcAssessment::truncate();
         VawcInvolvedParty::truncate();
@@ -166,6 +170,47 @@ class VawcSeeder extends Seeder
             'life_threat_level' => 1,
             'risk_score' => 4,
             'risk_level' => 'LOW',
+        ]);
+
+        $po1_1 = VawcProtectionOrder::create([
+            'vawc_case_id' => $c1_1->id,
+            'type' => 'BPO',
+            'order_number' => 'BPO-2026-0001-01',
+            'status' => 'Expired',
+            'application_datetime' => Carbon::parse('2026-01-16 09:00:00', $tz),
+            'issued_datetime' => Carbon::parse('2026-01-16 11:00:00', $tz),
+            'expiration_date' => Carbon::parse('2026-01-31 23:59:59', $tz),
+            'is_sla_breached' => false,
+            'issued_by_id' => $admin->id,
+        ]);
+
+        VawcBpoServiceRecord::create([
+            'protection_order_id' => $po1_1->id,
+            'service_method' => 'Personally Received',
+            'served_datetime' => Carbon::parse('2026-01-16 14:00:00', $tz),
+            'served_by_id' => $officer->id,
+            'receiver_name' => 'Lance Dicki',
+        ]);
+
+        VawcComplianceLog::create([
+            'vawc_case_id' => $c1_1->id,
+            'monitor_date' => Carbon::parse('2026-01-19 10:00:00', $tz),
+            'is_compliant' => true,
+            'notes' => 'Day 3 Check: Respondent complied with 15-day stay-away mandate. Residing at temporary location.',
+        ]);
+
+        VawcComplianceLog::create([
+            'vawc_case_id' => $c1_1->id,
+            'monitor_date' => Carbon::parse('2026-01-24 15:00:00', $tz),
+            'is_compliant' => true,
+            'notes' => 'Day 8 Check: Survivor reported no communication or disturbance from respondent.',
+        ]);
+
+        VawcComplianceLog::create([
+            'vawc_case_id' => $c1_1->id,
+            'monitor_date' => Carbon::parse('2026-01-31 16:00:00', $tz),
+            'is_compliant' => true,
+            'notes' => 'Day 15 Check: Final monitoring check. 15-day protective order completed without incident. Survivor expressed security.',
         ]);
 
         // Dossier 1 - Incident #2 (Physical Abuse, Resolved Intervention)
@@ -429,6 +474,53 @@ class VawcSeeder extends Seeder
             'risk_level' => 'MODERATE',
         ]);
 
+        // Dossier 2 - Incident #2 Live Lapsed BPO
+        // Expiration was Sep 9, 2026 (15 days from Aug 25).
+        // Today is Sep 11, 2026 -> Case stays in 'Monitoring' (Step 5) with '15-Day BPO Lapsed' badge
+        // perfectly ready for the user to click 'Close Case File' and test BPO closure!
+        $po2_2 = VawcProtectionOrder::create([
+            'vawc_case_id' => $c2_2->id,
+            'type' => 'BPO',
+            'order_number' => 'BPO-2026-0002-02',
+            'status' => 'Served',
+            'application_datetime' => Carbon::parse('2026-08-25 08:30:00', $tz),
+            'issued_datetime' => Carbon::parse('2026-08-25 10:45:00', $tz),
+            'expiration_date' => Carbon::parse('2026-09-09 23:59:59', $tz),
+            'is_sla_breached' => false,
+            'issued_by_id' => $admin->id,
+        ]);
+
+        VawcBpoServiceRecord::create([
+            'protection_order_id' => $po2_2->id,
+            'service_method' => 'Personally Received',
+            'served_datetime' => Carbon::parse('2026-08-25 14:00:00', $tz),
+            'served_by_id' => $officer->id,
+            'receiver_name' => 'Roberto Santos',
+        ]);
+
+        VawcComplianceLog::create([
+            'vawc_case_id' => $c2_2->id,
+            'monitor_date' => Carbon::parse('2026-08-28 10:30:00', $tz),
+            'is_compliant' => true,
+            'notes' => 'Day 3 Check: Tanod home visit confirmed respondent is staying at his uncle\'s workshop. No contact made with victim.',
+        ]);
+
+        VawcComplianceLog::create([
+            'vawc_case_id' => $c2_2->id,
+            'monitor_date' => Carbon::parse('2026-09-02 14:15:00', $tz),
+            'is_compliant' => true,
+            'notes' => 'Day 8 Check: Survivor Maria Santos reports zero threats or physical appearances. Respondent attending counseling sessions.',
+            'referral_type' => 'DSWD (Counseling)',
+            'referral_details' => 'Enrolled in Family Welfare Counseling',
+        ]);
+
+        VawcComplianceLog::create([
+            'vawc_case_id' => $c2_2->id,
+            'monitor_date' => Carbon::parse('2026-09-08 16:00:00', $tz),
+            'is_compliant' => true,
+            'notes' => 'Day 14 Check: Pre-expiration check-in. Respondent completed 14 consecutive days of compliance with zero breaches. BPO expires tomorrow.',
+        ]);
+
         $dossier2->syncDossierAggregates();
 
         // =============================================================
@@ -514,6 +606,35 @@ class VawcSeeder extends Seeder
             'life_threat_level' => 3,
             'risk_score' => 12,
             'risk_level' => 'CRITICAL',
+        ]);
+
+        $po3_1 = VawcProtectionOrder::create([
+            'vawc_case_id' => $c3_1->id,
+            'type' => 'BPO',
+            'order_number' => 'BPO-2026-0003-01',
+            'status' => 'Violated',
+            'application_datetime' => Carbon::parse('2026-08-27 08:00:00', $tz),
+            'issued_datetime' => Carbon::parse('2026-08-27 09:30:00', $tz),
+            'expiration_date' => Carbon::parse('2026-09-11 23:59:59', $tz),
+            'is_sla_breached' => false,
+            'issued_by_id' => $admin->id,
+        ]);
+
+        VawcBpoServiceRecord::create([
+            'protection_order_id' => $po3_1->id,
+            'service_method' => 'Personally Received',
+            'served_datetime' => Carbon::parse('2026-08-27 11:00:00', $tz),
+            'served_by_id' => $officer->id,
+            'receiver_name' => 'Mark Cruz',
+        ]);
+
+        VawcComplianceLog::create([
+            'vawc_case_id' => $c3_1->id,
+            'monitor_date' => Carbon::parse('2026-08-27 21:00:00', $tz),
+            'is_compliant' => false,
+            'notes' => 'Direct BPO violation: Respondent forcefully entered victim\'s residence brandishing weapon. Tanod disarmed respondent and made warrantless arrest.',
+            'referral_type' => 'PNP/Prosecutor (Violation)',
+            'referral_details' => 'Immediate Inquest Referral to PNP WCPD & Family Court under RA 9262 Sec. 15',
         ]);
 
         VawcLegalEscalation::create([
@@ -679,6 +800,47 @@ class VawcSeeder extends Seeder
         VawcInvolvedParty::create(['vawc_case_id' => $c5_1->id, 'role' => 'Victim', 'name' => 'Clarissa Diaz', 'age' => 38]);
         VawcInvolvedParty::create(['vawc_case_id' => $c5_1->id, 'role' => 'Respondent', 'name' => 'Juan Diaz', 'age' => 41]);
         VawcAssessment::create(['vawc_case_id' => $c5_1->id, 'requires_medical' => false, 'risk_score' => 4, 'risk_level' => 'LOW']);
+
+        $po5_1 = VawcProtectionOrder::create([
+            'vawc_case_id' => $c5_1->id,
+            'type' => 'BPO',
+            'order_number' => 'BPO-2026-0005-01',
+            'status' => 'Expired',
+            'application_datetime' => Carbon::parse('2026-02-15 09:00:00', $tz),
+            'issued_datetime' => Carbon::parse('2026-02-15 11:00:00', $tz),
+            'expiration_date' => Carbon::parse('2026-03-02 23:59:59', $tz),
+            'is_sla_breached' => false,
+            'issued_by_id' => $admin->id,
+        ]);
+
+        VawcBpoServiceRecord::create([
+            'protection_order_id' => $po5_1->id,
+            'service_method' => 'Personally Received',
+            'served_datetime' => Carbon::parse('2026-02-15 15:00:00', $tz),
+            'served_by_id' => $officer->id,
+            'receiver_name' => 'Juan Diaz',
+        ]);
+
+        VawcComplianceLog::create([
+            'vawc_case_id' => $c5_1->id,
+            'monitor_date' => Carbon::parse('2026-02-18 10:00:00', $tz),
+            'is_compliant' => true,
+            'notes' => 'Day 3 Check: Respondent complied with 15-day stay-away mandate. Did not approach store premises.',
+        ]);
+
+        VawcComplianceLog::create([
+            'vawc_case_id' => $c5_1->id,
+            'monitor_date' => Carbon::parse('2026-02-23 14:00:00', $tz),
+            'is_compliant' => true,
+            'notes' => 'Day 8 Check: Routine check-in. Survivor affirms no disturbance or harassment.',
+        ]);
+
+        VawcComplianceLog::create([
+            'vawc_case_id' => $c5_1->id,
+            'monitor_date' => Carbon::parse('2026-03-02 16:00:00', $tz),
+            'is_compliant' => true,
+            'notes' => 'Day 15 Check: 15-day protection order successfully completed with zero violations. Survivor safe.',
+        ]);
 
         $dossier5->syncDossierAggregates();
 
@@ -1086,5 +1248,739 @@ class VawcSeeder extends Seeder
         ]);
 
         $dossier9->syncDossierAggregates();
+
+        // =============================================================
+        // DOSSIER 10: Successfully Completed & Archived 15-Day BPO Case
+        // Survivor: Giselle Ramirez vs. Respondent: Carlito Ramirez (Spouse)
+        // Demonstrates RA 9262 Sec. 14 Completed 15-Day BPO with Zero Violations:
+        // - Full 15-Day Compliance Cycle (Day 3, Day 8 counseling, Day 15 final check)
+        // - BPO Order 'Expired' upon completion
+        // - Step 7: Case Closed & Archived with '15-Day Protection Order Lapsed Successfully (No Violation)'
+        // =============================================================
+        $d10_incident_date = Carbon::parse('2026-08-18 19:30:00', $tz);
+
+        $dossier10 = VawcDossier::create([
+            'dossier_number' => 'DOS-2026-0010',
+            'survivor_name' => 'Giselle Ramirez',
+            'respondent_name' => 'Carlito Ramirez',
+            'relationship_type' => 'Spouse (Legal Husband)',
+            'survivor_demographics' => [
+                'name' => 'Giselle Ramirez',
+                'age' => 30,
+                'gender' => 'Female',
+                'contact' => '0917-234-5678',
+                'address' => 'Lot 8 Block 3, Rosal St., Zone 1',
+                'civil_status' => 'Married',
+                'educational_attainment' => 'College Graduate',
+                'occupation' => 'High School Teacher',
+            ],
+            'respondent_demographics' => [
+                'name' => 'Carlito Ramirez',
+                'age' => 33,
+                'gender' => 'Male',
+                'contact' => '0928-876-5432',
+                'address' => 'Lot 8 Block 3, Rosal St., Zone 1',
+                'relationship' => 'Spouse (Legal Husband)',
+                'civil_status' => 'Married',
+                'educational_attainment' => 'Vocational',
+                'occupation' => 'Auto Mechanic',
+                'physical_description' => '5\'7", athletic build, eagle tattoo on right shoulder',
+            ],
+            'incident_count' => 1,
+            'highest_threat_level' => 'MODERATE',
+            'current_lifecycle' => 'Dormant/Closed',
+            'last_incident_at' => $d10_incident_date,
+            'created_by_id' => $admin->id,
+        ]);
+
+        $cr10_1 = CaseReport::create([
+            'user_id' => $admin->id,
+            'zone_id' => $defaultZone->id,
+            'abuse_type_id' => $physicalAbuse?->id ?? 1,
+            'type' => 'VAWC',
+            'case_number' => 'VAWC-2026-0010-01',
+            'victim_name' => 'Giselle Ramirez',
+            'victim_age' => 30,
+            'victim_gender' => 'Female',
+            'complainant_name' => 'Giselle Ramirez',
+            'complainant_contact' => '0917-234-5678',
+            'relation_to_victim' => 'Self (Victim)',
+            'incident_date' => $d10_incident_date,
+            'incident_location' => 'Lot 8 Block 3, Rosal St., Zone 1',
+            'description' => 'Respondent arrived home in an intoxicated state, engaged in destructive behavior by smashing dinnerware, hurled profanities, and violently grabbed victim\'s arms causing bilateral contusions.',
+            'lifecycle_status' => 'Resolved',
+            'handled_by_id' => $officer->id,
+        ]);
+
+        $c10_1 = VawcCase::create([
+            'dossier_id' => $dossier10->id,
+            'incident_sequence' => 1,
+            'sub_case_number' => 'VAWC-2026-0010-01',
+            'case_report_id' => $cr10_1->id,
+            'intake_type' => 'Direct',
+            'children_count' => 1,
+            'is_repeat_offense' => false,
+            'has_weapon_involved' => false,
+            'incident_veracity' => true,
+            'status' => 'Closed',
+            'referral_status' => ['Barangay VAW Desk', 'DSWD / MSWDO', 'Hospital / Medico-Legal'],
+            'action_sought' => ['Barangay Protection Order (BPO)', 'Psychosocial Support & Counseling', 'Barangay Tanod Security & Patrols'],
+            'witness_info' => 'Next-door neighbor heard loud commotion and crying, saw respondent leaving on foot, and assisted victim to barangay outpost.',
+            'closure_reason' => '15-Day Protection Order Lapsed Successfully (No Violation)',
+            'closure_remarks' => 'Full 15-day statutory Barangay Protection Order elapsed on September 3, 2026 with 100% respondent compliance and zero violations or breaches. Respondent temporarily relocated to Purok 4 relative residence, surrendered house keys, and actively attended MSWDO anger management counseling. Survivor affirmed safety, emotional stability, and expressed profound gratitude to the VAW Desk. File officially concluded and preserved under Step 7.',
+            'closed_at' => Carbon::parse('2026-09-04 09:30:00', $tz),
+        ]);
+
+        VawcInvolvedParty::create([
+            'vawc_case_id' => $c10_1->id,
+            'role' => 'Victim',
+            'name' => 'Giselle Ramirez',
+            'age' => 30,
+            'gender' => 'Female',
+            'contact_number' => '0917-234-5678',
+            'address' => 'Lot 8 Block 3, Rosal St., Zone 1',
+        ]);
+
+        VawcInvolvedParty::create([
+            'vawc_case_id' => $c10_1->id,
+            'role' => 'Respondent',
+            'relationship_to_victim' => 'Spouse (Legal Husband)',
+            'name' => 'Carlito Ramirez',
+            'age' => 33,
+            'gender' => 'Male',
+            'contact_number' => '0928-876-5432',
+            'address' => 'Lot 8 Block 3, Rosal St., Zone 1',
+        ]);
+
+        VawcAssessment::create([
+            'vawc_case_id' => $c10_1->id,
+            'requires_medical' => true,
+            'requires_alternative_housing' => false,
+            'abuse_frequency' => 2,
+            'abuse_severity' => 2,
+            'weapon_access' => 1,
+            'life_threat_level' => 2,
+            'risk_score' => 7,
+            'risk_level' => 'MODERATE',
+        ]);
+
+        $bpo10_apply = Carbon::parse('2026-08-19 08:30:00', $tz);
+        $bpo10_issue = Carbon::parse('2026-08-19 10:15:00', $tz);
+        $bpo10_expire = Carbon::parse('2026-09-03 23:59:59', $tz);
+
+        $po10 = VawcProtectionOrder::create([
+            'vawc_case_id' => $c10_1->id,
+            'type' => 'BPO',
+            'order_number' => 'BPO-2026-0010-01',
+            'status' => 'Expired',
+            'application_datetime' => $bpo10_apply,
+            'issued_datetime' => $bpo10_issue,
+            'expiration_date' => $bpo10_expire,
+            'is_sla_breached' => false,
+            'issued_by_id' => $admin->id,
+        ]);
+
+        VawcBpoServiceRecord::create([
+            'protection_order_id' => $po10->id,
+            'service_method' => 'Personally Received',
+            'served_datetime' => Carbon::parse('2026-08-19 14:00:00', $tz),
+            'served_by_id' => $officer->id,
+            'receiver_name' => 'Carlito Ramirez',
+        ]);
+
+        VawcComplianceLog::create([
+            'vawc_case_id' => $c10_1->id,
+            'monitor_date' => Carbon::parse('2026-08-22 10:00:00', $tz),
+            'is_compliant' => true,
+            'notes' => 'Day 3 Compliance Check: Tanod security patrol conducted unscheduled check. Respondent complied with order to temporarily vacate residence and reside at Purok 4 relative\'s home. No threats communicated.',
+        ]);
+
+        VawcComplianceLog::create([
+            'vawc_case_id' => $c10_1->id,
+            'monitor_date' => Carbon::parse('2026-08-27 14:30:00', $tz),
+            'is_compliant' => true,
+            'notes' => 'Day 8 Compliance Check: Survivor confirmed zero harassment or digital messages. Respondent attended voluntary anger management and marital counseling intake at MSWDO.',
+            'referral_type' => 'DSWD (Counseling)',
+            'referral_details' => 'Enrolled in MSWDO Restorative Family Counseling',
+        ]);
+
+        VawcComplianceLog::create([
+            'vawc_case_id' => $c10_1->id,
+            'monitor_date' => Carbon::parse('2026-09-03 16:00:00', $tz),
+            'is_compliant' => true,
+            'notes' => 'Day 15 Final Compliance Inspection: Full 15-day statutory duration concluded with zero violations or breaches. Respondent fully complied with distance and counseling mandates. Survivor affirms personal safety and stability.',
+        ]);
+
+        $dossier10->syncDossierAggregates();
+
+        // =============================================================
+        // SCENARIO A: MULTI-VICTIM LEGAL-AGE SIBLINGS VS. UNCLE (NON-INTIMATE RELATIVE)
+        // Dossier 11: Luna Garcia (23 yrs old) vs. Larry Garcia (Paternal Uncle)
+        // Decoupled Master Dossier: Routed to PNP WCPD under Revised Penal Code (Sec. 3 Jurisdictional Boundary)
+        // =============================================================
+        $d11_date = Carbon::parse('2026-09-08 11:30:00', $tz);
+
+        $dossier11 = VawcDossier::create([
+            'dossier_number' => 'DOS-2026-0011',
+            'survivor_name' => 'Luna Garcia',
+            'respondent_name' => 'Larry Garcia',
+            'relationship_type' => 'Collateral Relative (Uncle)',
+            'incident_count' => 1,
+            'highest_threat_level' => 'MODERATE',
+            'current_lifecycle' => 'Active',
+            'last_incident_at' => $d11_date,
+            'created_by_id' => $admin->id,
+        ]);
+
+        $cr11 = CaseReport::create([
+            'user_id' => $admin->id,
+            'zone_id' => $zone2->id,
+            'abuse_type_id' => $physicalAbuse?->id ?? 1,
+            'type' => 'VAWC',
+            'case_number' => 'VAWC-2026-0011-01',
+            'victim_name' => 'Luna Garcia',
+            'victim_age' => 23,
+            'victim_gender' => 'Female',
+            'complainant_name' => 'Luna Garcia',
+            'complainant_contact' => '0917-888-1122',
+            'relation_to_victim' => 'Self (Victim)',
+            'incident_date' => $d11_date,
+            'incident_location' => 'Block 4 Lot 12, Mahogany Ave., Zone 2',
+            'description' => 'Adult survivor assaulted by her paternal uncle Larry Garcia following a family property dispute. Respondent physically shoved victim against a concrete wall, causing contusions to her left shoulder, and issued verbal threats.',
+            'lifecycle_status' => 'Under Investigation',
+            'handled_by_id' => $officer->id,
+        ]);
+
+        $c11 = VawcCase::create([
+            'dossier_id' => $dossier11->id,
+            'incident_sequence' => 1,
+            'sub_case_number' => 'VAWC-2026-0011-01',
+            'case_report_id' => $cr11->id,
+            'intake_type' => 'Direct',
+            'children_count' => 0,
+            'is_repeat_offense' => false,
+            'has_weapon_involved' => false,
+            'incident_veracity' => true,
+            'status' => 'Escalated',
+            'referral_status' => ['Barangay VAW Desk', 'PNP WCPD (Women & Children Protection Desk)', 'Public Attorney\'s Office (PAO)'],
+            'action_sought' => ['Police Inquest Referral', 'Medico-Legal Examination', 'Legal Aid Assistance'],
+            'witness_info' => 'Twin sister Jamie Garcia witnessed the assault and attempted to intervene before also being attacked by respondent.',
+        ]);
+
+        VawcInvolvedParty::create([
+            'vawc_case_id' => $c11->id,
+            'role' => 'Victim',
+            'name' => 'Luna Garcia',
+            'age' => 23,
+            'gender' => 'Female',
+            'contact_number' => '0917-888-1122',
+            'address' => 'Block 4 Lot 12, Mahogany Ave., Zone 2',
+            'civil_status' => 'Single',
+            'occupation' => 'Customer Support Associate',
+        ]);
+
+        VawcInvolvedParty::create([
+            'vawc_case_id' => $c11->id,
+            'role' => 'Respondent',
+            'relationship_to_victim' => 'Collateral Relative (Uncle)',
+            'name' => 'Larry Garcia',
+            'age' => 51,
+            'gender' => 'Male',
+            'contact_number' => '0922-444-9988',
+            'address' => 'Block 4 Lot 14, Mahogany Ave., Zone 2',
+            'civil_status' => 'Married',
+            'occupation' => 'Freelance Contractor',
+        ]);
+
+        VawcAssessment::create([
+            'vawc_case_id' => $c11->id,
+            'requires_medical' => true,
+            'requires_alternative_housing' => false,
+            'abuse_frequency' => 1,
+            'abuse_severity' => 2,
+            'weapon_access' => 1,
+            'life_threat_level' => 2,
+            'risk_score' => 6,
+            'risk_level' => 'MODERATE',
+        ]);
+
+        VawcLegalEscalation::create([
+            'vawc_case_id' => $c11->id,
+            'referral_target' => 'PNP Women and Children Protection',
+            'violation_datetime' => Carbon::parse('2026-09-08 14:00:00', $tz),
+            'violation_description' => 'Physical assault and intimidation committed by non-intimate adult relative (paternal uncle). Under RA 9262 Section 3, uncle-niece disputes fall under the Revised Penal Code rather than an intimate-partner BPO. Case formally transmitted to PNP WCPD for criminal inquest.',
+            'escorted_by_pb' => true,
+        ]);
+
+        $dossier11->syncDossierAggregates();
+
+        // =============================================================
+        // SCENARIO A (CONTINUED): MULTI-VICTIM LEGAL-AGE SIBLING 2
+        // Dossier 12: Jamie Garcia (23 yrs old) vs. Larry Garcia (Same Uncle!)
+        // Triggers Cross-Dossier Serial Perpetrator Alert (2 Victims Linked to Larry Garcia)
+        // =============================================================
+        $dossier12 = VawcDossier::create([
+            'dossier_number' => 'DOS-2026-0012',
+            'survivor_name' => 'Jamie Garcia',
+            'respondent_name' => 'Larry Garcia',
+            'relationship_type' => 'Collateral Relative (Uncle)',
+            'incident_count' => 1,
+            'highest_threat_level' => 'MODERATE',
+            'current_lifecycle' => 'Active',
+            'last_incident_at' => $d11_date,
+            'created_by_id' => $admin->id,
+        ]);
+
+        $cr12 = CaseReport::create([
+            'user_id' => $admin->id,
+            'zone_id' => $zone2->id,
+            'abuse_type_id' => $physicalAbuse?->id ?? 1,
+            'type' => 'VAWC',
+            'case_number' => 'VAWC-2026-0012-01',
+            'victim_name' => 'Jamie Garcia',
+            'victim_age' => 23,
+            'victim_gender' => 'Female',
+            'complainant_name' => 'Jamie Garcia',
+            'complainant_contact' => '0917-888-3344',
+            'relation_to_victim' => 'Self (Victim)',
+            'incident_date' => $d11_date,
+            'incident_location' => 'Block 4 Lot 12, Mahogany Ave., Zone 2',
+            'description' => 'Sister of Luna Garcia assaulted during the same household altercation by uncle Larry Garcia when attempting to protect her sister. Sustained blunt force trauma to wrist and grave threats of recurring violence.',
+            'lifecycle_status' => 'Under Investigation',
+            'handled_by_id' => $officer->id,
+        ]);
+
+        $c12 = VawcCase::create([
+            'dossier_id' => $dossier12->id,
+            'incident_sequence' => 1,
+            'sub_case_number' => 'VAWC-2026-0012-01',
+            'case_report_id' => $cr12->id,
+            'intake_type' => 'Direct',
+            'children_count' => 0,
+            'is_repeat_offense' => false,
+            'has_weapon_involved' => false,
+            'incident_veracity' => true,
+            'status' => 'Escalated',
+            'referral_status' => ['Barangay VAW Desk', 'PNP WCPD (Women & Children Protection Desk)', 'City Prosecutor\'s Office'],
+            'action_sought' => ['Criminal Complaint Assistance', 'Police Protection & Patrols', 'PAO Legal Aid'],
+            'witness_info' => 'Sister Luna Garcia and neighbor Romeo Reyes corroborating the sudden assault by Larry Garcia.',
+        ]);
+
+        VawcInvolvedParty::create([
+            'vawc_case_id' => $c12->id,
+            'role' => 'Victim',
+            'name' => 'Jamie Garcia',
+            'age' => 23,
+            'gender' => 'Female',
+            'contact_number' => '0917-888-3344',
+            'address' => 'Block 4 Lot 12, Mahogany Ave., Zone 2',
+            'civil_status' => 'Single',
+            'occupation' => 'Graphic Designer',
+        ]);
+
+        VawcInvolvedParty::create([
+            'vawc_case_id' => $c12->id,
+            'role' => 'Respondent',
+            'relationship_to_victim' => 'Collateral Relative (Uncle)',
+            'name' => 'Larry Garcia',
+            'age' => 51,
+            'gender' => 'Male',
+            'contact_number' => '0922-444-9988',
+            'address' => 'Block 4 Lot 14, Mahogany Ave., Zone 2',
+            'civil_status' => 'Married',
+            'occupation' => 'Freelance Contractor',
+        ]);
+
+        VawcAssessment::create([
+            'vawc_case_id' => $c12->id,
+            'requires_medical' => true,
+            'requires_alternative_housing' => false,
+            'abuse_frequency' => 1,
+            'abuse_severity' => 2,
+            'weapon_access' => 1,
+            'life_threat_level' => 2,
+            'risk_score' => 6,
+            'risk_level' => 'MODERATE',
+        ]);
+
+        VawcLegalEscalation::create([
+            'vawc_case_id' => $c12->id,
+            'referral_target' => 'PNP Women and Children Protection',
+            'violation_datetime' => Carbon::parse('2026-09-08 14:30:00', $tz),
+            'violation_description' => 'Corroborating physical assault against second sibling by same respondent Larry Garcia. Forwarded to PNP WCPD for joint criminal inquest while preserving distinct survivor affidavits.',
+            'escorted_by_pb' => true,
+        ]);
+
+        $dossier12->syncDossierAggregates();
+
+        // =============================================================
+        // SCENARIO B: MINOR SIBLINGS COVERED UNDER RA 7610 & RA 9262
+        // Dossier 13: Clarisse Mendoza vs. Rodrigo Mendoza (Spouse)
+        // Features: 2 Minor Children Covered with School/Daycare Stay-Away & Tender of Service
+        // =============================================================
+        $d13_date = Carbon::parse('2026-09-07 09:00:00', $tz);
+
+        $dossier13 = VawcDossier::create([
+            'dossier_number' => 'DOS-2026-0013',
+            'survivor_name' => 'Clarisse Mendoza',
+            'respondent_name' => 'Rodrigo Mendoza',
+            'relationship_type' => 'Spouse (Legal Husband)',
+            'incident_count' => 1,
+            'highest_threat_level' => 'HIGH',
+            'current_lifecycle' => 'Active',
+            'last_incident_at' => $d13_date,
+            'created_by_id' => $admin->id,
+        ]);
+
+        $cr13 = CaseReport::create([
+            'user_id' => $admin->id,
+            'zone_id' => $zone2->id,
+            'abuse_type_id' => $psychAbuse?->id ?? 2,
+            'type' => 'VAWC',
+            'case_number' => 'VAWC-2026-0013-01',
+            'victim_name' => 'Clarisse Mendoza',
+            'victim_age' => 32,
+            'victim_gender' => 'Female',
+            'complainant_name' => 'Clarisse Mendoza',
+            'complainant_contact' => '0919-555-7788',
+            'relation_to_victim' => 'Self (Victim)',
+            'incident_date' => $d13_date,
+            'incident_location' => 'Unit 3B, Sunshine Residences, Zone 2',
+            'description' => 'Respondent engaged in violent emotional and physical terrorization in the presence of their two minor children (ages 8 and 5). Threatening to abduct the children from their elementary school and daycare center.',
+            'lifecycle_status' => 'Under Investigation',
+            'handled_by_id' => $officer->id,
+        ]);
+
+        $c13 = VawcCase::create([
+            'dossier_id' => $dossier13->id,
+            'incident_sequence' => 1,
+            'sub_case_number' => 'VAWC-2026-0013-01',
+            'case_report_id' => $cr13->id,
+            'intake_type' => 'Direct',
+            'children_count' => 2,
+            'children_details' => [
+                [
+                    'name' => 'Bea Mendoza',
+                    'age' => 8,
+                    'school_or_daycare' => 'Zone 2 Elementary School',
+                ],
+                [
+                    'name' => 'Lucas Mendoza',
+                    'age' => 5,
+                    'school_or_daycare' => 'Zone 2 Daycare Center',
+                ],
+            ],
+            'is_repeat_offense' => false,
+            'has_weapon_involved' => false,
+            'incident_veracity' => true,
+            'status' => 'Monitoring',
+            'referral_status' => ['Barangay VAW Desk', 'BCPC (Child Protection Committee)', 'DepEd Child Protection Desk'],
+            'action_sought' => ['Barangay Protection Order (BPO)', 'School & Daycare Stay-Away Perimeter', 'Child Psychosocial Counseling'],
+            'witness_info' => 'Building security guard assisted survivor after respondent attempted to force entry into unit while screaming threats.',
+        ]);
+
+        VawcInvolvedParty::create([
+            'vawc_case_id' => $c13->id,
+            'role' => 'Victim',
+            'name' => 'Clarisse Mendoza',
+            'age' => 32,
+            'gender' => 'Female',
+            'contact_number' => '0919-555-7788',
+            'address' => 'Unit 3B, Sunshine Residences, Zone 2',
+            'civil_status' => 'Married',
+            'occupation' => 'High School Teacher',
+        ]);
+
+        VawcInvolvedParty::create([
+            'vawc_case_id' => $c13->id,
+            'role' => 'Respondent',
+            'relationship_to_victim' => 'Spouse (Legal Husband)',
+            'name' => 'Rodrigo Mendoza',
+            'age' => 35,
+            'gender' => 'Male',
+            'contact_number' => '0920-111-2233',
+            'address' => 'Unit 3B, Sunshine Residences, Zone 2',
+            'civil_status' => 'Married',
+            'occupation' => 'Logistics Driver',
+        ]);
+
+        VawcAssessment::create([
+            'vawc_case_id' => $c13->id,
+            'requires_medical' => false,
+            'requires_alternative_housing' => false,
+            'abuse_frequency' => 3,
+            'abuse_severity' => 3,
+            'weapon_access' => 1,
+            'life_threat_level' => 3,
+            'risk_score' => 10,
+            'risk_level' => 'HIGH',
+        ]);
+
+        $bpo13_apply = Carbon::parse('2026-09-07 09:30:00', $tz);
+        $bpo13_issue = Carbon::parse('2026-09-07 11:00:00', $tz);
+        $bpo13_expire = Carbon::parse('2026-09-22 23:59:59', $tz);
+
+        $po13 = VawcProtectionOrder::create([
+            'vawc_case_id' => $c13->id,
+            'type' => 'BPO',
+            'order_number' => 'BPO-2026-0013-01',
+            'status' => 'Served',
+            'application_datetime' => $bpo13_apply,
+            'issued_datetime' => $bpo13_issue,
+            'expiration_date' => $bpo13_expire,
+            'is_sla_breached' => false,
+            'issued_by_id' => $admin->id,
+            'signatory_role' => 'Punong Barangay',
+            'signatory_name' => 'Hon. Alberto C. Morales',
+            'signatory_designation' => 'Punong Barangay',
+        ]);
+
+        VawcBpoServiceRecord::create([
+            'protection_order_id' => $po13->id,
+            'service_method' => 'Personally Received',
+            'served_datetime' => Carbon::parse('2026-09-07 14:00:00', $tz),
+            'served_by_id' => $officer->id,
+            'receiver_name' => 'Rodrigo Mendoza',
+            'refused_to_sign' => true,
+            'serving_officer_name' => 'Tanod Supervisor Danilo Cruz',
+            'witness_tanod_name' => 'Tanod Roberto Diaz',
+            'tender_notes' => 'Respondent adamantly refused to accept or affix signature to the BPO document. Tender of Service was formally executed pursuant to SC A.M. No. 04-10-11-SC by leaving physical copy in respondent\'s presence at doorway witnessed by Tanod Diaz.',
+        ]);
+
+        VawcComplianceLog::create([
+            'vawc_case_id' => $c13->id,
+            'monitor_date' => Carbon::parse('2026-09-09 11:30:00', $tz),
+            'is_compliant' => true,
+            'notes' => 'School and Daycare Protection Check: Barangay Tanod roving unit verified respondent was not observed within the 500-meter radius of Zone 2 Elementary School or Daycare Center. Mother affirmed children arrived safely.',
+        ]);
+
+        $dossier13->syncDossierAggregates();
+
+        // =============================================================
+        // SCENARIO C: DUAL-TRACK HOUSEHOLD SPLIT (TRACK 1 - WIFE)
+        // Dossier 14: Jessie Lucia (26 yrs old) vs. Marco Alcantara (Husband)
+        // Qualifying Intimate Partner -> RA 9262 Emergency BPO Track (Signed by Acting Kagawad)
+        // =============================================================
+        $d14_date = Carbon::parse('2026-09-09 07:30:00', $tz);
+
+        $dossier14 = VawcDossier::create([
+            'dossier_number' => 'DOS-2026-0014',
+            'survivor_name' => 'Jessie Lucia',
+            'respondent_name' => 'Marco Alcantara',
+            'relationship_type' => 'Spouse (Legal Husband)',
+            'incident_count' => 1,
+            'highest_threat_level' => 'HIGH',
+            'current_lifecycle' => 'Active',
+            'last_incident_at' => $d14_date,
+            'created_by_id' => $admin->id,
+        ]);
+
+        $cr14 = CaseReport::create([
+            'user_id' => $admin->id,
+            'zone_id' => $zone3->id,
+            'abuse_type_id' => $physicalAbuse?->id ?? 1,
+            'type' => 'VAWC',
+            'case_number' => 'VAWC-2026-0014-01',
+            'victim_name' => 'Jessie Lucia',
+            'victim_age' => 26,
+            'victim_gender' => 'Female',
+            'complainant_name' => 'Jessie Lucia',
+            'complainant_contact' => '0918-333-5566',
+            'relation_to_victim' => 'Self (Victim)',
+            'incident_date' => $d14_date,
+            'incident_location' => 'House #45, Narra St., Zone 3',
+            'description' => 'Respondent husband engaged in severe domestic physical assault against wife Jessie Lucia inside their shared home, inflicting lacerations and bruising. Sister-in-law Rina Lucia was also injured while trying to separate them.',
+            'lifecycle_status' => 'Under Investigation',
+            'handled_by_id' => $officer->id,
+        ]);
+
+        $c14 = VawcCase::create([
+            'dossier_id' => $dossier14->id,
+            'incident_sequence' => 1,
+            'sub_case_number' => 'VAWC-2026-0014-01',
+            'case_report_id' => $cr14->id,
+            'intake_type' => 'Direct',
+            'children_count' => 0,
+            'is_repeat_offense' => false,
+            'has_weapon_involved' => false,
+            'incident_veracity' => true,
+            'status' => 'Monitoring',
+            'referral_status' => ['Barangay VAW Desk', 'Barangay Tanod Patrol Outpost', 'Hospital / Medico-Legal'],
+            'action_sought' => ['Barangay Protection Order (BPO)', 'Order to Vacate Shared Residence', 'Tanod Security Patrols'],
+            'witness_info' => 'Sister Rina Lucia and next-door neighbor witnessed the domestic violence at House #45 Narra St.',
+        ]);
+
+        VawcInvolvedParty::create([
+            'vawc_case_id' => $c14->id,
+            'role' => 'Victim',
+            'name' => 'Jessie Lucia',
+            'age' => 26,
+            'gender' => 'Female',
+            'contact_number' => '0918-333-5566',
+            'address' => 'House #45, Narra St., Zone 3',
+            'civil_status' => 'Married',
+            'occupation' => 'Administrative Assistant',
+        ]);
+
+        VawcInvolvedParty::create([
+            'vawc_case_id' => $c14->id,
+            'role' => 'Respondent',
+            'relationship_to_victim' => 'Spouse (Legal Husband)',
+            'name' => 'Marco Alcantara',
+            'age' => 29,
+            'gender' => 'Male',
+            'contact_number' => '0929-777-4455',
+            'address' => 'House #45, Narra St., Zone 3',
+            'civil_status' => 'Married',
+            'occupation' => 'Sales Executive',
+        ]);
+
+        VawcAssessment::create([
+            'vawc_case_id' => $c14->id,
+            'requires_medical' => true,
+            'requires_alternative_housing' => false,
+            'abuse_frequency' => 2,
+            'abuse_severity' => 3,
+            'weapon_access' => 1,
+            'life_threat_level' => 3,
+            'risk_score' => 8,
+            'risk_level' => 'HIGH',
+        ]);
+
+        $bpo14_apply = Carbon::parse('2026-09-09 08:30:00', $tz);
+        $bpo14_issue = Carbon::parse('2026-09-09 10:00:00', $tz);
+        $bpo14_expire = Carbon::parse('2026-09-24 23:59:59', $tz);
+
+        $po14 = VawcProtectionOrder::create([
+            'vawc_case_id' => $c14->id,
+            'type' => 'BPO',
+            'order_number' => 'BPO-2026-0014-01',
+            'status' => 'Served',
+            'application_datetime' => $bpo14_apply,
+            'issued_datetime' => $bpo14_issue,
+            'expiration_date' => $bpo14_expire,
+            'is_sla_breached' => false,
+            'issued_by_id' => $admin->id,
+            'signatory_role' => 'Acting Kagawad',
+            'signatory_name' => 'Kag. Elena Bautista',
+            'signatory_designation' => 'Barangay Kagawad / Officer-in-Charge',
+        ]);
+
+        VawcBpoServiceRecord::create([
+            'protection_order_id' => $po14->id,
+            'service_method' => 'Personally Received',
+            'served_datetime' => Carbon::parse('2026-09-09 13:30:00', $tz),
+            'served_by_id' => $officer->id,
+            'receiver_name' => 'Marco Alcantara',
+        ]);
+
+        VawcComplianceLog::create([
+            'vawc_case_id' => $c14->id,
+            'monitor_date' => Carbon::parse('2026-09-10 15:00:00', $tz),
+            'is_compliant' => true,
+            'notes' => 'Day 1 Compliance Verification: Respondent complied with directive to vacate House #45 Narra St. and surrendered house keys in presence of Tanod. Survivor affirms no communication attempted.',
+        ]);
+
+        $dossier14->syncDossierAggregates();
+
+        // =============================================================
+        // SCENARIO C (CONTINUED): DUAL-TRACK HOUSEHOLD SPLIT (TRACK 2 - SISTER-IN-LAW)
+        // Dossier 15: Rina Lucia (22 yrs old) vs. Marco Alcantara (Brother-in-Law)
+        // Same Household, Non-Intimate Relative -> Routed to PNP WCPD Criminal Transmittal (RPC Battery)
+        // Cross-Dossier Intelligence Links Both Sisters to Marco Alcantara at Narra St.
+        // =============================================================
+        $dossier15 = VawcDossier::create([
+            'dossier_number' => 'DOS-2026-0015',
+            'survivor_name' => 'Rina Lucia',
+            'respondent_name' => 'Marco Alcantara',
+            'relationship_type' => 'In-Law (Brother-in-Law / Shared Household Relative)',
+            'incident_count' => 1,
+            'highest_threat_level' => 'MODERATE',
+            'current_lifecycle' => 'Active',
+            'last_incident_at' => $d14_date,
+            'created_by_id' => $admin->id,
+        ]);
+
+        $cr15 = CaseReport::create([
+            'user_id' => $admin->id,
+            'zone_id' => $zone3->id,
+            'abuse_type_id' => $physicalAbuse?->id ?? 1,
+            'type' => 'VAWC',
+            'case_number' => 'VAWC-2026-0015-01',
+            'victim_name' => 'Rina Lucia',
+            'victim_age' => 22,
+            'victim_gender' => 'Female',
+            'complainant_name' => 'Rina Lucia',
+            'complainant_contact' => '0918-333-9900',
+            'relation_to_victim' => 'Self (Victim)',
+            'incident_date' => $d14_date,
+            'incident_location' => 'House #45, Narra St., Zone 3',
+            'description' => 'Sister-in-law of Marco Alcantara residing in the same household assaulted when intervening to shield her sister Jessie Lucia. Respondent violently shoved victim against furniture and struck her arm, causing soft-tissue trauma.',
+            'lifecycle_status' => 'Under Investigation',
+            'handled_by_id' => $officer->id,
+        ]);
+
+        $c15 = VawcCase::create([
+            'dossier_id' => $dossier15->id,
+            'incident_sequence' => 1,
+            'sub_case_number' => 'VAWC-2026-0015-01',
+            'case_report_id' => $cr15->id,
+            'intake_type' => 'Direct',
+            'children_count' => 0,
+            'is_repeat_offense' => false,
+            'has_weapon_involved' => false,
+            'incident_veracity' => true,
+            'status' => 'Escalated',
+            'referral_status' => ['Barangay VAW Desk', 'PNP WCPD (Women & Children Protection Desk)', 'Hospital / Medico-Legal'],
+            'action_sought' => ['PNP Inquest Referral', 'Medico-Legal Certificate', 'PAO Legal Representation'],
+            'witness_info' => 'Elder sister Jessie Lucia and neighbor witnessed respondent Marco Alcantara inflicting physical battery on Rina Lucia.',
+        ]);
+
+        VawcInvolvedParty::create([
+            'vawc_case_id' => $c15->id,
+            'role' => 'Victim',
+            'name' => 'Rina Lucia',
+            'age' => 22,
+            'gender' => 'Female',
+            'contact_number' => '0918-333-9900',
+            'address' => 'House #45, Narra St., Zone 3',
+            'civil_status' => 'Single',
+            'occupation' => 'College Student',
+        ]);
+
+        VawcInvolvedParty::create([
+            'vawc_case_id' => $c15->id,
+            'role' => 'Respondent',
+            'relationship_to_victim' => 'In-Law (Brother-in-Law / Shared Household Relative)',
+            'name' => 'Marco Alcantara',
+            'age' => 29,
+            'gender' => 'Male',
+            'contact_number' => '0929-777-4455',
+            'address' => 'House #45, Narra St., Zone 3',
+            'civil_status' => 'Married',
+            'occupation' => 'Sales Executive',
+        ]);
+
+        VawcAssessment::create([
+            'vawc_case_id' => $c15->id,
+            'requires_medical' => true,
+            'requires_alternative_housing' => false,
+            'abuse_frequency' => 1,
+            'abuse_severity' => 2,
+            'weapon_access' => 1,
+            'life_threat_level' => 2,
+            'risk_score' => 6,
+            'risk_level' => 'MODERATE',
+        ]);
+
+        VawcLegalEscalation::create([
+            'vawc_case_id' => $c15->id,
+            'referral_target' => 'PNP Women and Children Protection',
+            'violation_datetime' => Carbon::parse('2026-09-09 09:00:00', $tz),
+            'violation_description' => 'Assault of non-intimate female household member (sister-in-law) during the same domestic incident as wife Jessie Lucia. While the wife proceeds on the RA 9262 BPO track, this docket is transmitted to PNP WCPD for criminal battery under the Revised Penal Code.',
+            'escorted_by_pb' => true,
+        ]);
+
+        $dossier15->syncDossierAggregates();
     }
 }

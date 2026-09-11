@@ -6,7 +6,7 @@ import Autoplay from "embla-carousel-autoplay";
 import {
     ShieldAlert, Users, Baby, ArrowRight,
     MapPin, Calendar, ExternalLink, ChevronRight,
-    LogOut, ShieldCheck, Handshake, Scale, HeartHandshake, Siren,
+    ShieldCheck, Handshake, Scale, HeartHandshake, Siren,
     Mail, CreditCard, QrCode
 } from "lucide-react";
 
@@ -43,16 +43,6 @@ export default function Welcome({ announcements, organizations }: WelcomeProps) 
         <PublicLayout>
             <Head title="Welcome - Brgy 183 Villamor" />
 
-            {/* ======================== SECURE QUICK EXIT ==========================*/}
-            <a
-                href="https://www.google.com"
-                className="fixed bottom-16 left-4 sm:bottom-20 sm:left-6 z-40 flex items-center gap-2 bg-red-600 hover:bg-neutral-900 text-white font-black px-3 py-2.5 sm:px-5 sm:py-4 rounded-full shadow-2xl hover:scale-105 transition-all duration-300 ring-2 ring-white/20"
-                title="Leave Site Quickly - Opens Google"
-            >
-                <LogOut size={18} />
-                <span className="hidden sm:inline uppercase tracking-widest text-sm">Quick Exit</span>
-            </a>
-
             {/* ======================== FIXED BACKGROUND LOGO ==========================*/}
             <div className="fixed inset-0 flex justify-center items-center pointer-events-none z-0">
                 <img
@@ -63,7 +53,7 @@ export default function Welcome({ announcements, organizations }: WelcomeProps) 
             </div>
 
             {/* ======================== HERO SECTION ==========================*/}
-            <section className="relative z-10 py-12 sm:py-20 overflow-hidden min-h-[500px] sm:min-h-[750px] flex items-center bg-neutral-950 text-white transition-colors">
+            <section className="relative z-10 py-12 sm:py-20 overflow-hidden min-h-[500px] sm:min-h-[720px] flex items-center bg-neutral-950 text-white transition-colors">
                 {/* HERO CAROUSEL BACKGROUND */}
                 <div className="absolute inset-0 z-0">
                     <Carousel plugins={[plugin.current]} setApi={setApi} className="w-full h-full [&_div]:h-full" opts={{ loop: true }}>
@@ -80,9 +70,9 @@ export default function Welcome({ announcements, organizations }: WelcomeProps) 
                 </div>
 
                 {/* 2. THE TEXT CONTENT */}
-                <div className="container mx-auto px-4 sm:px-6 relative z-10">
+                <div className="w-[92%] sm:w-[88%] lg:w-[80%] max-w-7xl mx-auto px-1 sm:px-2 relative z-10">
                     <div className="max-w-3xl">
-                        <h1 className="text-3xl sm:text-6xl md:text-8xl font-black uppercase leading-[0.95] sm:leading-[0.85] tracking-tight mb-4 sm:mb-8 animate-in slide-in-from-left-10 duration-700">
+                        <h1 className="text-3xl sm:text-6xl md:text-7xl lg:text-8xl font-black uppercase leading-[0.95] sm:leading-[0.85] tracking-tight mb-4 sm:mb-8 animate-in slide-in-from-left-10 duration-700">
                             Women & Family <br />
                             <span className="text-yellow-500">Protection Center</span>
                         </h1>
@@ -102,56 +92,56 @@ export default function Welcome({ announcements, organizations }: WelcomeProps) 
             </section>
 
             {/* ======================== CORE SERVICES ==========================*/}
-            <section className="py-20 transition-colors bg-neutral-100 dark:bg-neutral-900 border-y border-neutral-200 dark:border-neutral-800 mt-16">
-                <div className="container mx-auto px-6">
-                    <div className="flex items-end justify-between mb-12">
+            <section className="py-16 sm:py-20 transition-colors bg-neutral-100 dark:bg-neutral-900 border-y border-neutral-200 dark:border-neutral-800">
+                <div className="w-[92%] sm:w-[88%] lg:w-[80%] max-w-7xl mx-auto px-1 sm:px-2">
+                    <div className="flex items-end justify-between mb-10 sm:mb-12">
                         <div>
-                            <h2 className="font-black uppercase text-sm mb-2 tracking-widest text-purple-700 dark:text-purple-400">How We Help / Paano Kami Makakatulong</h2>
-                            <h3 className="font-black text-3xl uppercase tracking-tight text-slate-900 dark:text-white">Core Services / Pangunahing Serbisyo</h3>
+                            <h2 className="font-black uppercase text-xs sm:text-sm mb-2 tracking-widest text-purple-700 dark:text-purple-400">How We Help / Paano Kami Makakatulong</h2>
+                            <h3 className="font-black text-2xl sm:text-3xl uppercase tracking-tight text-slate-900 dark:text-white">Core Services / Pangunahing Serbisyo</h3>
                         </div>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                         {/* Service 1 */}
-                        <div className="border bg-white dark:bg-neutral-950 border-neutral-200 dark:border-neutral-800 rounded-lg p-6 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1 h-full flex flex-col items-start gap-4">
+                        <div className="border bg-white dark:bg-neutral-950 border-neutral-200 dark:border-neutral-800 rounded-xl p-6 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1 h-full flex flex-col items-start gap-4" tabIndex={0} aria-label="Core Service: VAWC Support and Assistance">
                             <div className="flex items-center gap-3">
                                 <Siren size={24} className="text-purple-700 dark:text-purple-400 shrink-0" />
-                                <h1 className="text-2xl font-black text-neutral-900 dark:text-white">VAWC Support & Assistance</h1>
+                                <h4 className="text-xl sm:text-2xl font-black text-neutral-900 dark:text-white">VAWC Support & Assistance</h4>
                             </div>
-                            <p className="text-base leading-relaxed text-slate-800 dark:text-slate-200">
+                            <p className="text-sm sm:text-base leading-relaxed text-slate-800 dark:text-slate-200">
                                 Comprehensive guidance and contact information for victims. For absolute privacy and confidentiality, all cases are securely filed in-person by our dedicated VAWC desk officers.
                             </p>
                         </div>
 
                         {/* Service BCPC */}
-                        <div className="border bg-white dark:bg-neutral-950 border-neutral-200 dark:border-neutral-800 rounded-lg p-6 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1 h-full flex flex-col items-start gap-4">
+                        <div className="border bg-white dark:bg-neutral-950 border-neutral-200 dark:border-neutral-800 rounded-xl p-6 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1 h-full flex flex-col items-start gap-4" tabIndex={0} aria-label="Core Service: BCPC Health and Nutrition">
                             <div className="flex items-center gap-3">
                                 <Baby size={24} className="text-purple-700 dark:text-purple-400 shrink-0" />
-                                <h1 className="text-2xl font-black text-neutral-900 dark:text-white">BCPC Health and Nutrition</h1>
+                                <h4 className="text-xl sm:text-2xl font-black text-neutral-900 dark:text-white">BCPC Health & Nutrition</h4>
                             </div>
-                            <p className="text-base leading-relaxed text-slate-800 dark:text-slate-200">
+                            <p className="text-sm sm:text-base leading-relaxed text-slate-800 dark:text-slate-200">
                                 Dedicated monitoring for minors, utilizing our intake system for height, weight, and nutritional status tracking to ensure holistic child health and protection.
                             </p>
                         </div>
 
                         {/* Service 2 */}
-                        <div className="border bg-white dark:bg-neutral-950 border-neutral-200 dark:border-neutral-800 rounded-lg p-6 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1 h-full flex flex-col items-start gap-4">
+                        <div className="border bg-white dark:bg-neutral-950 border-neutral-200 dark:border-neutral-800 rounded-xl p-6 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1 h-full flex flex-col items-start gap-4" tabIndex={0} aria-label="Core Service: GAD Advocacy and Updates">
                             <div className="flex items-center gap-3">
                                 <Scale size={24} className="text-purple-700 dark:text-purple-400 shrink-0" />
-                                <h1 className="text-2xl font-black text-neutral-900 dark:text-white">GAD Advocacy & Updates</h1>
+                                <h4 className="text-xl sm:text-2xl font-black text-neutral-900 dark:text-white">GAD Advocacy & Updates</h4>
                             </div>
-                            <p className="text-base leading-relaxed text-slate-800 dark:text-slate-200">
-                                Browse upcoming Gender and Development (GAD) seminars and community programs. Stay informed about the latest community.
+                            <p className="text-sm sm:text-base leading-relaxed text-slate-800 dark:text-slate-200">
+                                Browse upcoming Gender and Development (GAD) seminars and community programs. Stay informed about the latest community initiatives.
                             </p>
                         </div>
 
                         {/* Service 3 */}
-                        <div className="border bg-white dark:bg-neutral-950 border-neutral-200 dark:border-neutral-800 rounded-lg p-6 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1 h-full flex flex-col items-start gap-4">
+                        <div className="border bg-white dark:bg-neutral-950 border-neutral-200 dark:border-neutral-800 rounded-xl p-6 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1 h-full flex flex-col items-start gap-4" tabIndex={0} aria-label="Core Service: Organization Memberships">
                             <div className="flex items-center gap-3">
                                 <HeartHandshake size={24} className="text-purple-700 dark:text-purple-400 shrink-0" />
-                                <h1 className="text-2xl font-black text-neutral-900 dark:text-white">Organization Memberships</h1>
+                                <h4 className="text-xl sm:text-2xl font-black text-neutral-900 dark:text-white">Organization Memberships</h4>
                             </div>
-                            <p className="text-base leading-relaxed text-slate-800 dark:text-slate-200">
+                            <p className="text-sm sm:text-base leading-relaxed text-slate-800 dark:text-slate-200">
                                 Discover accredited community partners and organizations. Submit membership applications online to join initiatives and help the community.
                             </p>
                         </div>
@@ -160,12 +150,12 @@ export default function Welcome({ announcements, organizations }: WelcomeProps) 
             </section>
 
             {/* ======================== ANNOUNCEMENTS SECTION ==========================*/}
-            <section className="py-20 border-t border-neutral-200 dark:border-neutral-800 relative z-10 transition-colors">
-                <div className="container mx-auto px-6">
-                    <div className="flex items-end justify-between mb-12">
+            <section className="py-16 sm:py-20 border-t border-neutral-200 dark:border-neutral-800 relative z-10 transition-colors">
+                <div className="w-[92%] sm:w-[88%] lg:w-[80%] max-w-7xl mx-auto px-1 sm:px-2">
+                    <div className="flex items-end justify-between mb-10 sm:mb-12">
                         <div>
-                            <h2 className="font-black uppercase text-sm mb-2 tracking-widest text-purple-700 dark:text-purple-400">Barangay Updates / Mga Balita</h2>
-                            <h3 className="font-black text-3xl uppercase tracking-tight text-slate-900 dark:text-white">Latest Announcements / Mga Anunsyo</h3>
+                            <h2 className="font-black uppercase text-xs sm:text-sm mb-2 tracking-widest text-purple-700 dark:text-purple-400">Barangay Updates / Mga Balita</h2>
+                            <h3 className="font-black text-2xl sm:text-3xl uppercase tracking-tight text-slate-900 dark:text-white">Latest Announcements / Mga Anunsyo</h3>
                         </div>
                     </div>
 
@@ -176,14 +166,14 @@ export default function Welcome({ announcements, organizations }: WelcomeProps) 
                                 <Link
                                     key={post.id}
                                     href={`/announcements/${post.slug}`}
-                                    className="bg-white dark:bg-neutral-900 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border border-neutral-200 dark:border-neutral-800"
+                                    className="bg-white dark:bg-neutral-900 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border border-neutral-200 dark:border-neutral-800 group"
+                                    aria-label={`Announcement: ${post.title}`}
                                 >
                                     {/* Image Section */}
                                     <div className="aspect-[16/9] bg-neutral-100 dark:bg-neutral-800 relative overflow-hidden">
-
                                         {/* GAD Badge if applicable */}
                                         {post.category === 'GAD' && (
-                                            <div className="absolute top-4 left-4 z-10 bg-purple-600 text-white text-[15px] font-black px-5 py-1 rounded-full uppercase tracking-wider shadow-sm">
+                                            <div className="absolute top-4 left-4 z-10 bg-purple-600 text-white text-[13px] font-black px-4 py-1 rounded-full uppercase tracking-wider shadow-sm">
                                                 {post.category}
                                             </div>
                                         )}
@@ -191,26 +181,26 @@ export default function Welcome({ announcements, organizations }: WelcomeProps) 
                                         <img
                                             src={post.image}
                                             alt={post.title}
-                                            className="w-full h-full group-hover:scale-105 transition-transform duration-500"
+                                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                                         />
                                     </div>
 
                                     {/** Below of the image */}
-                                    <div className="p-8">
-                                        <div className="flex items-center gap-6 mb-4 text-sm font-bold text-slate-500 dark:text-slate-400">
+                                    <div className="p-6 sm:p-8">
+                                        <div className="flex items-center gap-4 sm:gap-6 mb-3 text-xs sm:text-sm font-bold text-slate-500 dark:text-slate-400">
                                             <span className="flex items-center gap-1">
-                                                <Calendar size={18} /> {post.date}
+                                                <Calendar size={16} /> {post.date}
                                             </span>
                                             {post.location && (
                                                 <span className="flex items-center gap-1 line-clamp-1">
-                                                    <MapPin size={18} /> {post.location}
+                                                    <MapPin size={16} /> {post.location}
                                                 </span>
                                             )}
                                         </div>
-                                        <h4 className="text-2xl font-black text-slate-900 dark:text-white line-clamp-2">
+                                        <h4 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white line-clamp-2">
                                             {post.title}
                                         </h4>
-                                        <p className="text-base text-slate-700 dark:text-slate-300 line-clamp-2 leading-relaxed mt-2">
+                                        <p className="text-sm sm:text-base text-slate-700 dark:text-slate-300 line-clamp-2 leading-relaxed mt-2">
                                             {post.excerpt}
                                         </p>
                                     </div>
@@ -218,15 +208,15 @@ export default function Welcome({ announcements, organizations }: WelcomeProps) 
                             ))
                         ) : (
                             <div className="col-span-full py-16 text-center border-2 border-dashed border-neutral-200 dark:border-neutral-800 rounded-2xl">
-                                <p className="text-lg text-slate-500">No announcements posted yet</p>
+                                <p className="text-base sm:text-lg text-slate-500">No announcements posted yet</p>
                             </div>
                         )}
                     </div>
 
-                    <div className="mt-8 text-center">
+                    <div className="mt-10 text-center">
                         <Link
                             href="/announcements"
-                            className="inline-flex items-center gap-2 px-6 py-3 bg-purple-700 hover:bg-purple-800 text-white font-black uppercase text-xs sm:text-sm tracking-wider rounded-md transition-all shadow-md"
+                            className="inline-flex items-center gap-2 px-6 py-3.5 bg-purple-700 hover:bg-purple-800 text-white font-black uppercase text-xs sm:text-sm tracking-wider rounded-md transition-all shadow-md"
                         >
                             View All Announcements <ArrowRight size={16} />
                         </Link>
@@ -235,11 +225,11 @@ export default function Welcome({ announcements, organizations }: WelcomeProps) 
             </section>
 
             {/* ======================== ORGANIZATIONS SECTION ==========================*/}
-            <section className="py-12 sm:py-20 border-t border-neutral-200 dark:border-neutral-800 relative z-10 transition-colors min-h-[400px]">
-                <div className="container mx-auto px-4 sm:px-6">
-                    <div className="flex items-end justify-between mb-8 sm:mb-12">
+            <section className="py-16 sm:py-20 border-t border-neutral-200 dark:border-neutral-800 relative z-10 transition-colors min-h-[350px]">
+                <div className="w-[92%] sm:w-[88%] lg:w-[80%] max-w-7xl mx-auto px-1 sm:px-2">
+                    <div className="flex items-end justify-between mb-10 sm:mb-12">
                         <div>
-                            <h2 className="font-black uppercase text-xs mb-2 tracking-widest text-purple-700 dark:text-purple-400">Community Partners</h2>
+                            <h2 className="font-black uppercase text-xs sm:text-sm mb-2 tracking-widest text-purple-700 dark:text-purple-400">Community Partners</h2>
                             <h3 className="font-black text-2xl sm:text-3xl uppercase text-slate-900 dark:text-white">Organizations</h3>
                         </div>
                     </div>
@@ -251,7 +241,8 @@ export default function Welcome({ announcements, organizations }: WelcomeProps) 
                                 <Link
                                     key={org.id}
                                     href={`/organizations/${org.slug}`}
-                                    className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-lg p-4 flex flex-row items-start gap-4 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1 h-full"
+                                    className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl p-5 flex flex-row items-start gap-4 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1 h-full"
+                                    aria-label={`Organization: ${org.name}`}
                                 >
                                     {/** 1. THE COLOR DOT */}
                                     <div className={`w-3 h-3 rounded-full shrink-0 mt-2 ${org.color_theme}`}></div>
@@ -259,9 +250,9 @@ export default function Welcome({ announcements, organizations }: WelcomeProps) 
                                     {/** 2. THE TEXT CONTAINER */}
                                     <div className="flex flex-col justify-between h-full min-w-0 flex-1">
                                         <div>
-                                            <h1 className="text-xl sm:text-2xl font-bold mb-2 text-slate-900 dark:text-white">
+                                            <h4 className="text-lg sm:text-xl font-bold mb-2 text-slate-900 dark:text-white">
                                                 {org.name}
-                                            </h1>
+                                            </h4>
                                         </div>
                                         <div className="items-center gap-1 pt-2 border-t border-neutral-200 dark:border-neutral-800 text-slate-600 dark:text-slate-400">
                                             <span className="text-xs sm:text-sm tracking-wide">Pres: </span>
@@ -273,14 +264,14 @@ export default function Welcome({ announcements, organizations }: WelcomeProps) 
                             ))
                         ) : (
                             <div className="col-span-full py-16 text-center border-2 border-dashed border-neutral-200 dark:border-neutral-800 rounded-2xl">
-                                <h1 className="text-lg text-slate-500">No organizations found</h1>
+                                <p className="text-base sm:text-lg text-slate-500">No organizations found</p>
                             </div>
                         )}
                     </div>
-                    <div className="mt-8 text-center pb-6">
+                    <div className="mt-10 text-center pb-6">
                         <Link
                             href="/organizations"
-                            className="inline-flex items-center gap-2 px-6 py-3 bg-purple-700 hover:bg-purple-800 text-white font-black uppercase text-xs sm:text-sm tracking-wider rounded-md transition-all shadow-md">
+                            className="inline-flex items-center gap-2 px-6 py-3.5 bg-purple-700 hover:bg-purple-800 text-white font-black uppercase text-xs sm:text-sm tracking-wider rounded-md transition-all shadow-md">
                             View all organizations <ArrowRight size={16} />
                         </Link>
                     </div>

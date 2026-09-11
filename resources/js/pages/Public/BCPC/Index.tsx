@@ -27,18 +27,18 @@ export default function BcpcIndex() {
                 />
             </div>
 
-            <div className="min-h-screen bg-slate-50/50 dark:bg-neutral-950 font-sans text-slate-800 dark:text-slate-200 transition-colors pb-24 relative z-20">
+            <div className="min-h-screen bg-slate-50/50 dark:bg-neutral-950 font-sans text-slate-800 dark:text-slate-200 transition-colors pb-28 md:pb-24 relative z-20">
 
                 {/* --- UNIFIED HERO SECTION --- */}
                 <section className="relative z-10 bg-slate-100 dark:bg-neutral-900 border-b border-slate-200 dark:border-neutral-800 py-16 md:py-20 mb-12">
-                    <div className="container mx-auto px-6 text-center max-w-4xl">
+                    <div className="w-[92%] sm:w-[88%] lg:w-[80%] max-w-7xl mx-auto px-1 sm:px-2 text-center max-w-4xl">
                         <span className="text-xs font-black tracking-widest text-emerald-600 dark:text-emerald-400 uppercase mb-3 block">
                             Health & Nutrition Monitoring / BCPC Desk
                         </span>
                         <h1 className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white tracking-tighter uppercase leading-none">
                             Children's Protection & Health
                         </h1>
-                        <p className="text-slate-600 dark:text-slate-400 font-bold uppercase text-xs md:text-sm tracking-widest leading-relaxed max-w-2xl mx-auto mt-4 mb-8">
+                        <p className="text-sm sm:text-base font-normal text-slate-600 dark:text-slate-400 leading-relaxed max-w-2xl mx-auto mt-4 mb-8">
                             Ang ating Barangay Council for the Protection of Children (BCPC) ay katuwang sa pagbabantay ng kalusugan, nutrition, at karapatan ng bawat bata sa Barangay 183.
                         </p>
                         <div className="flex justify-center">
@@ -52,7 +52,7 @@ export default function BcpcIndex() {
                     </div>
                 </section>
 
-                <div className="container mx-auto px-6 py-16 space-y-20">
+                <div className="w-[92%] sm:w-[88%] lg:w-[80%] max-w-7xl mx-auto px-1 sm:px-2 py-16 space-y-20">
 
                     {/* --- HEALTH SERVICES GRID --- */}
                     <section id="nutrition-monitoring">
@@ -90,11 +90,11 @@ export default function BcpcIndex() {
                                     <div className="w-12 h-12 bg-sky-50 dark:bg-sky-900/20 rounded-full flex items-center justify-center mb-4">
                                         <Calendar className="w-6 h-6 text-sky-600 dark:text-sky-400" />
                                     </div>
-                                    <CardTitle className="uppercase font-black text-lg text-slate-900 dark:text-white">Birthday Registry</CardTitle>
+                                    <CardTitle className="uppercase font-black text-lg text-slate-900 dark:text-white">Early Childhood Age Registry (0–59 Months)</CardTitle>
                                 </CardHeader>
                                 <CardContent>
                                     <p className="text-slate-700 dark:text-slate-300 text-base leading-relaxed">
-                                        Monitoring ng mga kaarawan sa komunidad upang masiguro ang tamang intervention at pakikilahok sa mga barangay activities.
+                                        Pagsubaybay sa edad at buwan ng mga bata upang matiyak ang napapanahong bakuna at feeding intervention.
                                     </p>
                                 </CardContent>
                             </Card>
@@ -186,7 +186,7 @@ export default function BcpcIndex() {
                     </div>
 
                     {/* --- CHILD PROTECTION / ABUSE REPORTING --- */}
-                    <section className="bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/50 rounded-2xl p-8 md:p-10 flex flex-col md:flex-row gap-6 items-start md:items-center justify-between">
+                    <section className="bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/50 rounded-2xl p-8 md:p-10 flex flex-col md:flex-row gap-8 items-start md:items-center justify-between">
                         <div className="space-y-3 max-w-2xl">
                             <div className="flex items-center gap-2 text-red-700 dark:text-red-400">
                                 <ShieldAlert className="w-6 h-6 animate-pulse" />
@@ -197,18 +197,49 @@ export default function BcpcIndex() {
                                 Ang <strong>RA 7610</strong> ay nagtatanggol sa mga bata laban sa pang-aabuso, child labor, at pananamantala ng sinuman (kamag-anak man o dayuhan). Dahil ito ay krimen, ang Barangay ay walang legal na awtoridad na mag-areglo o magdaos ng mediation. Ito ay <strong>dapat i-report agad</strong> sa mga sumusunod na ahensya.
                             </p>
                         </div>
-                        <div className="flex flex-col gap-3 w-full md:w-auto shrink-0">
-                            <div className="bg-white dark:bg-neutral-900 px-5 py-4 rounded-xl border border-red-100 dark:border-neutral-800 shadow-sm">
-                                <span className="block text-[10px] font-black text-slate-400 uppercase tracking-widest">PNP WCPD Hotline</span>
-                                <a href="tel:177" className="text-red-600 dark:text-red-400 text-lg font-black tracking-wider flex items-center gap-2 hover:underline">
-                                    <Phone className="w-4 h-4" /> 177 / (02) 8532-6690
-                                </a>
+                        <div className="flex flex-col sm:flex-row md:flex-col gap-3.5 w-full md:w-80 shrink-0">
+                            <div className="bg-white dark:bg-neutral-900 p-4 sm:p-5 rounded-xl border border-red-200/80 dark:border-red-900/60 shadow-sm flex flex-col justify-between">
+                                <span className="block text-xs sm:text-sm font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-2">
+                                    PNP WCPD Hotline
+                                </span>
+                                <div className="flex flex-wrap items-center gap-2">
+                                    <a
+                                        href="tel:177"
+                                        className="min-h-[44px] px-3.5 py-2 bg-red-50 hover:bg-red-100 dark:bg-red-950/40 dark:hover:bg-red-900/50 text-red-600 dark:text-red-400 text-sm sm:text-base font-bold rounded-lg border border-red-200 dark:border-red-800/60 flex items-center gap-2 transition-colors active:scale-95 cursor-pointer"
+                                    >
+                                        <Phone className="w-4 h-4 text-red-600 dark:text-red-400 shrink-0" />
+                                        <span>177</span>
+                                    </a>
+                                    <a
+                                        href="tel:0285326690"
+                                        className="min-h-[44px] px-3.5 py-2 bg-red-50 hover:bg-red-100 dark:bg-red-950/40 dark:hover:bg-red-900/50 text-red-600 dark:text-red-400 text-sm sm:text-base font-bold rounded-lg border border-red-200 dark:border-red-800/60 flex items-center gap-2 transition-colors active:scale-95 cursor-pointer"
+                                    >
+                                        <Phone className="w-4 h-4 text-red-600 dark:text-red-400 shrink-0" />
+                                        <span>(02) 8532-6690</span>
+                                    </a>
+                                </div>
                             </div>
-                            <div className="bg-white dark:bg-neutral-900 px-5 py-4 rounded-xl border border-red-100 dark:border-neutral-800 shadow-sm">
-                                <span className="block text-[10px] font-black text-slate-400 uppercase tracking-widest">DSWD Child Protection</span>
-                                <a href="tel:911" className="text-red-600 dark:text-red-400 text-lg font-black tracking-wider flex items-center gap-2 hover:underline">
-                                    <Phone className="w-4 h-4" /> 911 / (02) 8931-8101
-                                </a>
+
+                            <div className="bg-white dark:bg-neutral-900 p-4 sm:p-5 rounded-xl border border-red-200/80 dark:border-red-900/60 shadow-sm flex flex-col justify-between">
+                                <span className="block text-xs sm:text-sm font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-2">
+                                    DSWD Child Protection
+                                </span>
+                                <div className="flex flex-wrap items-center gap-2">
+                                    <a
+                                        href="tel:911"
+                                        className="min-h-[44px] px-3.5 py-2 bg-red-50 hover:bg-red-100 dark:bg-red-950/40 dark:hover:bg-red-900/50 text-red-600 dark:text-red-400 text-sm sm:text-base font-bold rounded-lg border border-red-200 dark:border-red-800/60 flex items-center gap-2 transition-colors active:scale-95 cursor-pointer"
+                                    >
+                                        <Phone className="w-4 h-4 text-red-600 dark:text-red-400 shrink-0" />
+                                        <span>911</span>
+                                    </a>
+                                    <a
+                                        href="tel:0289318101"
+                                        className="min-h-[44px] px-3.5 py-2 bg-red-50 hover:bg-red-100 dark:bg-red-950/40 dark:hover:bg-red-900/50 text-red-600 dark:text-red-400 text-sm sm:text-base font-bold rounded-lg border border-red-200 dark:border-red-800/60 flex items-center gap-2 transition-colors active:scale-95 cursor-pointer"
+                                    >
+                                        <Phone className="w-4 h-4 text-red-600 dark:text-red-400 shrink-0" />
+                                        <span>(02) 8931-8101</span>
+                                    </a>
+                                </div>
                             </div>
                         </div>
                     </section>
@@ -224,8 +255,16 @@ export default function BcpcIndex() {
                             </div>
                         </div>
                         <h2 className="text-emerald-900 dark:text-emerald-300 text-2xl font-black uppercase mb-3 tracking-wider">BCPC NUTRITION HOTLINE</h2>
-                        <p className="text-emerald-700 dark:text-emerald-400 font-black text-5xl tracking-tighter mb-4">(02) 8-183-SAFE</p>
-                        <p className="text-slate-600 dark:text-slate-400 uppercase tracking-widest text-xs md:text-sm font-bold">Barangay 183 Villamor BCPC Desk • Open for Consultations & Nutrition Help</p>
+                        <div className="flex justify-center my-2">
+                            <a 
+                                href="tel:0281837233" 
+                                className="inline-flex items-center justify-center min-h-[44px] px-4 text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300 font-black text-4xl sm:text-5xl tracking-tighter transition-colors hover:underline active:scale-95"
+                                aria-label="Call BCPC Nutrition Hotline (02) 8-183-SAFE"
+                            >
+                                (02) 8-183-SAFE
+                            </a>
+                        </div>
+                        <p className="text-slate-600 dark:text-slate-400 uppercase tracking-widest text-xs md:text-sm font-bold mt-2">Barangay 183 Villamor BCPC Desk • Open for Consultations & Nutrition Help</p>
                     </div>
                 </section>
 

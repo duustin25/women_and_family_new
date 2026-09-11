@@ -16,21 +16,40 @@ class ChatbotService
     public function processQuery(string $query): array
     {
         try {
-            // Path to the python script
             $scriptPath = resource_path('python/chat.py');
 
-            // Handle environment where 'python' might be 'python3'
-            $process = new Process(['python', $scriptPath, $query]);
-            $process->run();
+            // Candidate python executables across different environments (Windows, Linux, Docker)
+            $candidates = array_filter([
+                config('app.python_path'),
+                env('PYTHON_PATH'),
+                PHP_OS_FAMILY === 'Windows' ? 'python' : 'python3',
+                'python3',
+                'python',
+                '/usr/bin/python3',
+                '/usr/local/bin/python3',
+            ]);
+            $candidates = array_unique($candidates);
 
-            if (!$process->isSuccessful()) {
-                // Fallback to python3 if python failed (common on Linux production servers)
-                $process = new Process(['python3', $scriptPath, $query]);
-                $process->run();
+            $process = null;
+            $success = false;
+
+            foreach ($candidates as $binary) {
+                try {
+                    $process = new Process([$binary, $scriptPath, $query]);
+                    $process->setTimeout(8.0);
+                    $process->run();
+
+                    if ($process->isSuccessful()) {
+                        $success = true;
+                        break;
+                    }
+                } catch (\Throwable $e) {
+                    continue;
+                }
             }
 
-            if (!$process->isSuccessful()) {
-                throw new ProcessFailedException($process);
+            if (!$success || !$process) {
+                throw new \RuntimeException('Python NLP inference unavailable or execution failed.');
             }
 
             $output = $process->getOutput();
@@ -53,6 +72,14 @@ class ChatbotService
                         'Nutrition Program',
                         'Who are the officials?'
                     ];
+                } elseif ($intent === 'unknown') {
+                    $payload['suggestions'] = [
+                        'How do I file a VAWC case?',
+                        'Report child abuse',
+                        'Latest Announcements',
+                        'Who are the officials?',
+                        'Emergency Hotlines'
+                    ];
                 }
 
                 return $payload;
@@ -63,12 +90,11 @@ class ChatbotService
             }
 
             return ['response' => "I apologize, but I'm having trouble processing that right now. Please try again."];
-        } catch (\Exception $e) {
-            Log::error('Chatbot Python Error: ' . $e->getMessage());
-            return [
-                'response' => $this->fallbackLogic($query),
-                'error' => 'engine_offline'
-            ];
+        } catch (\Throwable $e) {
+            Log::warning('Chatbot Python Subsystem Notice: ' . $e->getMessage());
+            $fallback = $this->fallbackLogic($query);
+            $fallback['error'] = 'engine_offline';
+            return $fallback;
         }
     }
 
@@ -248,18 +274,83 @@ class ChatbotService
         ];
     }
 
-    private function fallbackLogic(string $query): string
+    private function fallbackLogic(string $query): array
     {
-        $query = strtolower($query);
+        $q = strtolower(trim($query));
 
-        if (Str::contains($query, ['join', 'apply', 'requirements'])) {
-            return "To join an organization, please navigate to the Organizations page and click 'Join'. Requirements usually include a valid ID and proof of residency.";
+        // 1. Greetings & General Help
+        if (Str::contains($q, ['hi', 'hello', 'hey', 'kamusta', 'kumusta', 'magandang', 'greetings', 'help', 'tulong'])) {
+            return [
+                'response' => "Mabuhay! I am The Sentinel. I can assist you with barangay procedures, hotlines, filing VAWC or BCPC reports, officials, and accredited organizations.",
+                'suggestions' => [
+                    'How do I file a VAWC case?',
+                    'Report child abuse',
+                    'Latest Announcements',
+                    'Who are the officials?',
+                    'Emergency Hotlines'
+                ]
+            ];
         }
 
-        if (Str::contains($query, ['vawc', 'bcpc', 'abuse', 'report', 'emergency'])) {
-            return "If this is an emergency, please call 911 immediately. To file a VAWC report, use the red 'Report Case' button on the dashboard.";
+        // 2. VAWC filing & Domestic Violence
+        if (Str::contains($q, ['vawc', 'bpo', 'protection order', 'asawa', 'sinasaktan', 'pambubugbog', 'domestic violence', 'babae'])) {
+            return [
+                'response' => "To report a Violence Against Women and Children (VAWC) incident or request a Barangay Protection Order (BPO):\n\n1. Visit the VAWC Desk at our Barangay Hall.\n2. Or file a confidential report online via the 'VAWC Desk > File a Report' section.\n3. In case of immediate physical danger, please dial 911 or PNP WCPC at 177.",
+                'suggestions' => ['File VAWC Case', 'Emergency Hotlines', 'What is RA 9262?']
+            ];
         }
 
-        return "I am experiencing a temporary system issue. Please contact the administrator or try again later.";
+        // 3. BCPC & Child Abuse
+        if (Str::contains($q, ['bcpc', 'bata', 'child', 'minor', 'abuse', 'pang-aabuso', 'kabataan'])) {
+            return [
+                'response' => "For child protection concerns, the Barangay Council for the Protection of Children (BCPC) provides immediate intervention:\n\n• You may file a child protection report online under the 'BCPC' portal.\n• In-person confidential intake is available at the Barangay BCPC Desk.\n• Emergency Hotline: 911 / DSWD Hotline: 137.",
+                'suggestions' => ['File BCPC Case', 'Emergency Hotlines', 'Nutrition Program']
+            ];
+        }
+
+        // 4. Announcements / News
+        if (Str::contains($q, ['announcement', 'balita', 'news', 'update', 'anunsyo', 'event', 'programa'])) {
+            return $this->fetchAnnouncements();
+        }
+
+        // 5. Officials / Leadership
+        if (Str::contains($q, ['official', 'opisyal', 'kapitan', 'captain', 'kagawad', 'sk', 'secretary', 'lider', 'namumuno'])) {
+            return $this->fetchOfficials();
+        }
+
+        // 6. Emergency Contacts & Hotlines
+        if (Str::contains($q, ['contact', 'hotline', 'emergency', 'telepono', 'number', 'pnp', 'police', 'tawag'])) {
+            return $this->fetchContacts();
+        }
+
+        // 7. Laws & Republic Acts
+        if (Str::contains($q, ['law', 'batas', 'ra 9262', 'ra 7610', 'safe spaces', '11313'])) {
+            return $this->fetchLaws();
+        }
+
+        // 8. Organizations
+        if (Str::contains($q, ['org', 'samahan', 'join', 'apply', 'member', 'accredit', 'kalipi'])) {
+            return $this->fetchOrgInfo($query);
+        }
+
+        // 9. Nutrition Program
+        if (Str::contains($q, ['nutrition', 'nutrisyon', 'timbang', 'feeding', 'buntis', 'health'])) {
+            return [
+                'response' => "Our Barangay Nutrition & Health Committee regularly conducts Operation Timbang (OPT Plus), supplementary feeding, and maternal health monitoring. Please visit our Barangay Health Center or see Announcements for current schedules.",
+                'suggestions' => ['Latest Announcements', 'Who are the officials?', 'Emergency Hotlines']
+            ];
+        }
+
+        // Default graceful response for unclear queries (e.g. "asdasdas")
+        return [
+            'response' => "I apologize, but I didn't quite catch that. Could you please rephrase your question? You can also choose from the suggested topics below:",
+            'suggestions' => [
+                'How do I file a VAWC case?',
+                'Report child abuse',
+                'Latest Announcements',
+                'Who are the officials?',
+                'Emergency Hotlines'
+            ]
+        ];
     }
 }

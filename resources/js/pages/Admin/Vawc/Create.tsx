@@ -123,6 +123,7 @@ export default function Create({ abuseTypes, zones, preselectedDossier }: Props)
         abuse_type: '',
         zone_id: '',
         children_count: 0,
+        children_details: [] as { name: string; age: string; school_or_daycare: string }[],
         is_repeat_offense: !!preselectedDossier,
         has_weapon_involved: false,
         incident_veracity: false,
@@ -496,7 +497,7 @@ export default function Create({ abuseTypes, zones, preselectedDossier }: Props)
             <Head title="New VAWC Case Intake" />
 
             {/* ── FULL-WIDTH & CLEAN UNBOXED CONTAINER ── */}
-            <form onSubmit={handleSubmit} onKeyDown={handleKeyDown} className="flex h-full flex-1 flex-col gap-5 sm:gap-6 p-4 sm:p-6 w-full">
+            <form onSubmit={handleSubmit} onKeyDown={handleKeyDown} className="flex h-full flex-1 flex-col gap-5 sm:gap-6 p-3.5 sm:p-6 w-full max-w-full overflow-x-clip">
 
                 {/* ── HEADER (UNBOXED, IDENTICAL TO ACTION CENTER & REGISTRY) ── */}
                 <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
@@ -570,7 +571,7 @@ export default function Create({ abuseTypes, zones, preselectedDossier }: Props)
                                     <div className="p-3 rounded-xl bg-emerald-500 text-white shadow-xs shrink-0">
                                         <Folder className="w-6 h-6" />
                                     </div>
-                                    <div className="space-y-1">
+                                    <div className="space-y-1 min-w-0">
                                         <div className="flex flex-wrap items-center gap-2">
                                             <span className="font-mono font-bold text-base text-emerald-950 dark:text-emerald-300">
                                                 {attachedDossier.dossier_number}
@@ -582,22 +583,24 @@ export default function Create({ abuseTypes, zones, preselectedDossier }: Props)
                                                 Logging Incident #{attachedDossier.incident_count + 1}
                                             </Badge>
                                         </div>
-                                        <p className="text-base font-bold text-foreground leading-snug">
+                                        <p className="text-base font-bold text-foreground leading-snug break-words">
                                             {attachedDossier.survivor_name} <span className="text-muted-foreground font-normal mx-1">vs</span> {attachedDossier.respondent_name}
                                         </p>
-                                        <p className="text-sm text-muted-foreground font-medium">
-                                            Relationship: <strong className="text-foreground">{simplifyRelationship(attachedDossier.relationship_type)}</strong> | Last activity: {attachedDossier.last_incident_at || 'N/A'}
+                                        <p className="text-sm text-muted-foreground font-medium flex flex-wrap items-center gap-x-2">
+                                            <span>Relationship: <strong className="text-foreground">{simplifyRelationship(attachedDossier.relationship_type)}</strong></span>
+                                            <span className="hidden sm:inline">|</span>
+                                            <span>Last activity: {attachedDossier.last_incident_at || 'N/A'}</span>
                                         </p>
                                     </div>
                                 </div>
 
-                                <div className="flex items-center gap-2">
+                                <div className="flex items-center gap-2 w-full md:w-auto">
                                     <Button
                                         type="button"
                                         variant="outline"
                                         size="sm"
                                         onClick={handleDetachDossier}
-                                        className="min-h-[44px] sm:min-h-[38px] text-xs sm:text-sm font-semibold border-destructive/40 text-destructive hover:bg-destructive/10 px-4"
+                                        className="w-full md:w-auto min-h-[44px] sm:min-h-[38px] text-xs sm:text-sm font-semibold border-destructive/40 text-destructive hover:bg-destructive/10 px-4"
                                     >
                                         <Unlink className="w-4 h-4 mr-1.5" /> Detach / New Survivor
                                     </Button>
@@ -672,21 +675,25 @@ export default function Create({ abuseTypes, zones, preselectedDossier }: Props)
                 {/* ── SHADCN TABS WIZARD PROGRESS ── */}
                 <Tabs value={currentStep.toString()} onValueChange={(val) => setCurrentStep(parseInt(val))} className="w-full">
                     <TabsList className="grid grid-cols-2 lg:grid-cols-4 w-full h-auto p-1.5 bg-muted rounded-xl gap-1">
-                        <TabsTrigger value="1" className="flex items-center justify-center gap-2 py-2.5 min-h-[44px] sm:min-h-[40px] font-semibold text-xs sm:text-sm">
+                        <TabsTrigger value="1" className="flex items-center justify-center gap-1.5 sm:gap-2 py-2.5 min-h-[44px] sm:min-h-[40px] font-semibold text-xs sm:text-sm">
                             <UserPlus className="w-4 h-4 shrink-0" />
-                            <span className="truncate">1. Reporter & Victim</span>
+                            <span className="sm:hidden">1. Reporter</span>
+                            <span className="hidden sm:inline truncate">1. Reporter & Victim</span>
                         </TabsTrigger>
-                        <TabsTrigger value="2" className="flex items-center justify-center gap-2 py-2.5 min-h-[44px] sm:min-h-[40px] font-semibold text-xs sm:text-sm">
+                        <TabsTrigger value="2" className="flex items-center justify-center gap-1.5 sm:gap-2 py-2.5 min-h-[44px] sm:min-h-[40px] font-semibold text-xs sm:text-sm">
                             <MapPin className="w-4 h-4 shrink-0" />
-                            <span className="truncate">2. Incident Facts</span>
+                            <span className="sm:hidden">2. Incident</span>
+                            <span className="hidden sm:inline truncate">2. Incident Facts</span>
                         </TabsTrigger>
-                        <TabsTrigger value="3" className="flex items-center justify-center gap-2 py-2.5 min-h-[44px] sm:min-h-[40px] font-semibold text-xs sm:text-sm">
+                        <TabsTrigger value="3" className="flex items-center justify-center gap-1.5 sm:gap-2 py-2.5 min-h-[44px] sm:min-h-[40px] font-semibold text-xs sm:text-sm">
                             <UserX className="w-4 h-4 shrink-0" />
-                            <span className="truncate">3. Respondent Profile</span>
+                            <span className="sm:hidden">3. Respondent</span>
+                            <span className="hidden sm:inline truncate">3. Respondent Profile</span>
                         </TabsTrigger>
-                        <TabsTrigger value="4" className="flex items-center justify-center gap-2 py-2.5 min-h-[44px] sm:min-h-[40px] font-semibold text-xs sm:text-sm">
+                        <TabsTrigger value="4" className="flex items-center justify-center gap-1.5 sm:gap-2 py-2.5 min-h-[44px] sm:min-h-[40px] font-semibold text-xs sm:text-sm">
                             <FileCheck className="w-4 h-4 shrink-0" />
-                            <span className="truncate">4. Verification</span>
+                            <span className="sm:hidden">4. Verify</span>
+                            <span className="hidden sm:inline truncate">4. Verification</span>
                         </TabsTrigger>
                     </TabsList>
 
@@ -1069,11 +1076,112 @@ export default function Create({ abuseTypes, zones, preselectedDossier }: Props)
                                             type="number"
                                             min="0"
                                             value={data.children_count}
-                                            onChange={e => setData('children_count', parseInt(e.target.value) || 0)}
+                                            onChange={e => {
+                                                const count = parseInt(e.target.value) || 0;
+                                                const currentDetails = [...data.children_details];
+                                                if (count > currentDetails.length) {
+                                                    for (let i = currentDetails.length; i < count; i++) {
+                                                        currentDetails.push({ name: '', age: '', school_or_daycare: '' });
+                                                    }
+                                                } else if (count < currentDetails.length) {
+                                                    currentDetails.splice(count);
+                                                }
+                                                setData({ ...data, children_count: count, children_details: currentDetails });
+                                            }}
                                             className="text-sm h-10 min-h-[40px]"
                                         />
                                     </div>
                                 </div>
+
+                                {data.children_count > 0 && (
+                                    <div className="p-4 rounded-xl border border-amber-200 dark:border-amber-900/50 bg-amber-50/50 dark:bg-amber-950/20 space-y-3">
+                                        <div className="flex items-center justify-between">
+                                            <div>
+                                                <h4 className="text-xs font-bold uppercase tracking-wider text-amber-900 dark:text-amber-200">
+                                                    Minor Children Coverage (RA 7610 & RA 9262 Safeguards)
+                                                </h4>
+                                                <p className="text-xs text-muted-foreground mt-0.5">
+                                                    Names will be automatically redacted in Privacy Mode. Listing school/daycare ensures specific statutory stay-away orders are issued in the BPO.
+                                                </p>
+                                            </div>
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                size="sm"
+                                                className="text-xs h-7 gap-1"
+                                                onClick={() => {
+                                                    const updated = [...data.children_details, { name: '', age: '', school_or_daycare: '' }];
+                                                    setData({ ...data, children_count: updated.length, children_details: updated });
+                                                }}
+                                            >
+                                                + Add Child
+                                            </Button>
+                                        </div>
+
+                                        <div className="space-y-2.5">
+                                            {data.children_details.map((child, idx) => (
+                                                <div key={idx} className="grid grid-cols-1 md:grid-cols-12 gap-2 p-2.5 rounded-lg bg-background border text-xs items-center">
+                                                    <div className="md:col-span-5 space-y-1">
+                                                        <Label className="text-[11px] text-muted-foreground">Child #{idx + 1} Full Name</Label>
+                                                        <Input
+                                                            placeholder="Full name of minor child"
+                                                            value={child.name}
+                                                            onChange={e => {
+                                                                const updated = [...data.children_details];
+                                                                updated[idx].name = e.target.value;
+                                                                setData('children_details', updated);
+                                                            }}
+                                                            className="h-8 text-xs"
+                                                        />
+                                                    </div>
+                                                    <div className="md:col-span-2 space-y-1">
+                                                        <Label className="text-[11px] text-muted-foreground">Age</Label>
+                                                        <Input
+                                                            placeholder="Age"
+                                                            type="number"
+                                                            min="0"
+                                                            max="17"
+                                                            value={child.age}
+                                                            onChange={e => {
+                                                                const updated = [...data.children_details];
+                                                                updated[idx].age = e.target.value;
+                                                                setData('children_details', updated);
+                                                            }}
+                                                            className="h-8 text-xs"
+                                                        />
+                                                    </div>
+                                                    <div className="md:col-span-4 space-y-1">
+                                                        <Label className="text-[11px] text-muted-foreground">School / Daycare Center</Label>
+                                                        <Input
+                                                            placeholder="School or Daycare location"
+                                                            value={child.school_or_daycare}
+                                                            onChange={e => {
+                                                                const updated = [...data.children_details];
+                                                                updated[idx].school_or_daycare = e.target.value;
+                                                                setData('children_details', updated);
+                                                            }}
+                                                            className="h-8 text-xs"
+                                                        />
+                                                    </div>
+                                                    <div className="md:col-span-1 flex justify-end items-end pt-4">
+                                                        <Button
+                                                            type="button"
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            className="h-7 w-7 text-destructive hover:bg-destructive/10"
+                                                            onClick={() => {
+                                                                const updated = data.children_details.filter((_, i) => i !== idx);
+                                                                setData({ ...data, children_count: updated.length, children_details: updated });
+                                                            }}
+                                                        >
+                                                            ✕
+                                                        </Button>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
 
                                 <div className="space-y-2">
                                     <Label className="text-sm font-semibold text-foreground">Statement of Facts (Narrative Description) *</Label>
@@ -1091,8 +1199,8 @@ export default function Create({ abuseTypes, zones, preselectedDossier }: Props)
 
                     {/* ── STEP 3: RESPONDENT PROFILE ── */}
                     <TabsContent value="3" className="space-y-5 sm:space-y-6 mt-4">
-                        <Card className="shadow-2xs">
-                            <CardHeader className="pb-3 flex flex-row items-center justify-between">
+                        <Card className="shadow-2xs overflow-hidden">
+                            <CardHeader className="p-4 sm:p-6 pb-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
                                 <div>
                                     <CardTitle className="text-base sm:text-lg font-bold">Respondent (Perpetrator) Profile</CardTitle>
                                     <CardDescription className="text-xs sm:text-sm text-muted-foreground">
@@ -1100,16 +1208,16 @@ export default function Create({ abuseTypes, zones, preselectedDossier }: Props)
                                     </CardDescription>
                                 </div>
                                 {attachedDossier && (
-                                    <Badge variant="outline" className="bg-emerald-50 text-emerald-800 border-emerald-300 dark:bg-emerald-950/60 dark:text-emerald-300 font-mono text-xs font-semibold px-2.5 py-1 rounded-md flex items-center gap-1">
+                                    <Badge variant="outline" className="bg-emerald-50 text-emerald-800 border-emerald-300 dark:bg-emerald-950/60 dark:text-emerald-300 font-mono text-xs font-semibold px-2.5 py-1 rounded-md flex items-center gap-1 self-start sm:self-auto shrink-0">
                                         <Lock className="w-3.5 h-3.5" /> Bound to {attachedDossier.dossier_number}
                                     </Badge>
                                 )}
                             </CardHeader>
-                            <CardContent className="space-y-4">
+                            <CardContent className="p-4 sm:p-6 space-y-4">
                                 {attachedDossier && (
                                     <div className="p-4 rounded-xl border border-amber-500/30 bg-amber-500/5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-sm text-foreground">
-                                        <div className="flex items-center gap-2">
-                                            <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+                                        <div className="flex items-start gap-2.5">
+                                            <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
                                             <span>
                                                 Perpetrator is locked to <strong>{attachedDossier.respondent_name}</strong> to preserve evidentiary integrity. If this incident involves a <strong>different perpetrator</strong>, detach to initiate a new distinct dossier.
                                             </span>
@@ -1119,7 +1227,7 @@ export default function Create({ abuseTypes, zones, preselectedDossier }: Props)
                                             variant="outline"
                                             size="sm"
                                             onClick={handleDetachDossier}
-                                            className="text-xs h-8 min-h-[36px] shrink-0 border-destructive/40 text-destructive hover:bg-destructive/10"
+                                            className="text-xs min-h-[40px] sm:min-h-[36px] w-full sm:w-auto shrink-0 border-destructive/40 text-destructive hover:bg-destructive/10"
                                         >
                                             <Unlink className="w-3.5 h-3.5 mr-1" /> Different Perpetrator?
                                         </Button>

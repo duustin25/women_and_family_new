@@ -91,7 +91,7 @@ export default function Laws() {
 
             {/* --- UNIFIED HERO SECTION --- */}
             <section className="relative z-10 bg-slate-100 dark:bg-neutral-900 border-b border-slate-200 dark:border-neutral-800 py-16 md:py-20 mb-12">
-                <div className="container mx-auto px-6 text-center max-w-4xl">
+                <div className="w-[92%] sm:w-[88%] lg:w-[80%] max-w-7xl mx-auto px-1 sm:px-2 text-center max-w-4xl">
                     <span className="text-xs font-black tracking-widest text-purple-700 dark:text-purple-400 uppercase mb-3 block">
                         Know Your Rights / Alamin ang Inyong Karapatan
                     </span>
@@ -105,7 +105,7 @@ export default function Laws() {
             </section>
 
             <div className="bg-slate-50/50 dark:bg-neutral-950 min-h-screen pb-24 relative z-20">
-                <div className="mx-auto max-w-6xl px-6">
+                <div className="w-[92%] sm:w-[88%] lg:w-[80%] max-w-7xl mx-auto px-1 sm:px-2">
                     {/* Laws Grid */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                         {laws.map((law) => (

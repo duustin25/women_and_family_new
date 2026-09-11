@@ -99,7 +99,7 @@ export default function Index({ head, secretary, staff }: Props) {
 
                 {/* --- UNIFIED HERO SECTION --- */}
                 <section className="relative z-10 bg-slate-100 dark:bg-neutral-900 border-b border-slate-200 dark:border-neutral-800 py-16 md:py-20 mb-12">
-                    <div className="container mx-auto px-6 text-center max-w-4xl">
+                    <div className="w-[92%] sm:w-[88%] lg:w-[80%] max-w-7xl mx-auto px-1 sm:px-2 text-center max-w-4xl">
                         <span className="text-xs font-black tracking-widest text-purple-700 dark:text-purple-400 uppercase mb-3 block">
                             The Leadership Board / Ang Pamunuan
                         </span>
@@ -112,7 +112,7 @@ export default function Index({ head, secretary, staff }: Props) {
                     </div>
                 </section>
 
-                <div className="container mx-auto px-6 py-16 space-y-16">
+                <div className="w-[92%] sm:w-[88%] lg:w-[80%] max-w-7xl mx-auto px-1 sm:px-2 py-16 space-y-16">
 
                     {/* EXECUTIVE LEVEL (Head & Secretary) */}
                     <div className="space-y-12 max-w-4xl mx-auto">

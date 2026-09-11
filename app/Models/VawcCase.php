@@ -23,6 +23,7 @@ class VawcCase extends Model
         'case_report_id',
         'intake_type',
         'children_count',
+        'children_details',
         'is_repeat_offense',
         'has_weapon_involved',
         'incident_veracity',
@@ -49,6 +50,7 @@ class VawcCase extends Model
         'closed_at' => 'datetime',
         'referral_status' => 'array',
         'action_sought' => 'array',
+        'children_details' => 'array',
     ];
 
     /**

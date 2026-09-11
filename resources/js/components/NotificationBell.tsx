@@ -1,5 +1,5 @@
 import { type SharedData } from '@/types';
-import { usePage, router } from '@inertiajs/react';
+import { usePage, router, usePoll } from '@inertiajs/react';
 import { Bell, CheckCheck } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
@@ -9,6 +9,11 @@ export function NotificationBell() {
     const { auth } = usePage<SharedData>().props;
     const notifications = auth.notifications || [];
     const unreadCount = notifications.filter((n: any) => !n.read_at).length;
+
+    // Real-time autoloader for notifications (polls every 20s in the background)
+    usePoll(20000, {
+        only: ['auth'],
+    });
 
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);

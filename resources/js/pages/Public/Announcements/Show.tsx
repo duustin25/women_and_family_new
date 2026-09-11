@@ -47,7 +47,7 @@ export default function Show({ announcement }: { announcement: any }) {
                 {/* 3. UPDATE ALL REFERENCES to use 'record' instead of 'announcement' */}
                 <Head title={record.title} />
                 
-                <div className="max-w-4xl mx-auto px-6 py-12">
+                <div className="w-[92%] sm:w-[88%] lg:w-[80%] max-w-4xl mx-auto px-1 sm:px-2 py-12">
                     {/* Change Link to an anchor or button and use window.history.back() */}
                     <a 
                         href="#" 

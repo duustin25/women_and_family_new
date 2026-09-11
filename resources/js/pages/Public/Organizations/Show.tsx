@@ -23,7 +23,7 @@ export default function Show({ organization }: { organization: any }) {
             <div className="min-h-screen bg-white dark:bg-slate-950 transition-colors">
                 <Head title={`${record.name} - Brgy 183 Villamor`} />
 
-                <div className="max-w-5xl mx-auto px-6 py-12">
+                <div className="w-[92%] sm:w-[88%] lg:w-[80%] max-w-5xl mx-auto px-1 sm:px-2 py-12">
                     {/* --- Navigation --- */}
                     <a
                         href="#"

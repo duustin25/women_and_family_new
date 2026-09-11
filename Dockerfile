@@ -60,12 +60,20 @@ RUN npm run build
 # ------------------------------------------------------------------------------
 FROM php:8.4-fpm-alpine
 
-# Install Nginx, Supervisor, bash, curl, and process management utilities
+# Install Nginx, Supervisor, bash, curl, Python 3, and scientific packages
 RUN apk add --no-cache \
     nginx \
     supervisor \
     curl \
-    bash
+    bash \
+    python3 \
+    py3-pip \
+    py3-numpy \
+    py3-scikit-learn
+
+# Install NLTK and download offline corpora for AI Classification Subsystem
+RUN pip install --no-cache-dir --break-system-packages nltk \
+    && python3 -m nltk.downloader -d /usr/share/nltk_data punkt wordnet omw-1.4 punkt_tab
 
 # Install official PHP extension installer
 ADD --chmod=0755 https://github.com/mlocati/docker-php-extension-installer/releases/latest/download/install-php-extensions /usr/local/bin/
@@ -118,7 +126,9 @@ ENV APP_ENV=production \
     SESSION_DRIVER=database \
     CACHE_STORE=database \
     QUEUE_CONNECTION=database \
-    AUTORUN_MIGRATIONS=true
+    AUTORUN_MIGRATIONS=true \
+    PYTHON_PATH=python3 \
+    NLTK_DATA=/usr/share/nltk_data
 
 EXPOSE 8000
 

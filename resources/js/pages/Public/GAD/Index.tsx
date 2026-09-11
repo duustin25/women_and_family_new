@@ -263,7 +263,7 @@ export default function GadIndex({ activities = [] }: { activities?: GadEvent[] 
 
                 {/* --- UNIFIED HERO SECTION --- */}
                 <section className="relative z-10 bg-slate-100 dark:bg-neutral-900 border-b border-slate-200 dark:border-neutral-800 py-16 md:py-20 mb-12">
-                    <div className="container mx-auto px-6 text-center max-w-4xl">
+                    <div className="w-[92%] sm:w-[88%] lg:w-[80%] max-w-7xl mx-auto px-1 sm:px-2 text-center max-w-4xl">
                         <span className="text-xs font-black tracking-widest text-purple-700 dark:text-purple-400 uppercase mb-3 block">
                             Community Programs & Services / Barangay GAD
                         </span>
@@ -287,7 +287,7 @@ export default function GadIndex({ activities = [] }: { activities?: GadEvent[] 
                     </div>
                 </section>
 
-                <div className="container mx-auto px-6 py-12 space-y-20">
+                <div className="w-[92%] sm:w-[88%] lg:w-[80%] max-w-7xl mx-auto px-1 sm:px-2 py-12 space-y-20">
 
                     {/* --- DYNAMIC PROGRAM SECTIONS --- */}
                     <section id="programs-board">

@@ -1,5 +1,5 @@
 import AppLayout from '@/layouts/app-layout';
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, usePoll } from '@inertiajs/react';
 import React, { useState, useMemo } from 'react';
 import { route } from 'ziggy-js';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -137,9 +137,15 @@ function CaseQueueCard({ item, isPrivacyRedacted }: { item: CaseQueueItem; isPri
                         </span>
                     )}
                     {item.bpo_info && (
-                        <span className="text-xs font-semibold px-2.5 py-1 rounded-md bg-emerald-100 text-emerald-800 border border-emerald-300 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800">
-                            🛡️ BPO: {item.bpo_info.days_remaining}d left
-                        </span>
+                        item.bpo_info.is_expired ? (
+                            <span className="text-xs font-semibold px-2.5 py-1 rounded-md bg-amber-100 text-amber-900 border border-amber-300 dark:bg-amber-950/80 dark:text-amber-200 dark:border-amber-700 animate-pulse">
+                                ⚠️ 15-Day BPO Lapsed — Exit Check Required
+                            </span>
+                        ) : (
+                            <span className="text-xs font-semibold px-2.5 py-1 rounded-md bg-emerald-100 text-emerald-800 border border-emerald-300 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800">
+                                🛡️ BPO: {item.bpo_info.days_remaining}d left
+                            </span>
+                        )
                     )}
                     {item.has_weapon && (
                         <span className="text-xs font-semibold px-2.5 py-1 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200/60 dark:border-slate-700">
@@ -176,6 +182,11 @@ export default function VawcDashboard({
 }: Props) {
     const [isPrivacyRedacted, setIsPrivacyRedacted] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
+
+    // 🔄 Real-time Autoloader: Silently polls triage queues & KPI aggregates behind the scenes every 10 seconds
+    usePoll(10000, {
+        only: ['criticalQueue', 'criticalTotal', 'moderateQueue', 'moderateTotal', 'lowQueue', 'lowTotal', 'unassessedQueue', 'unassessedTotal', 'kpis'],
+    });
 
     const [activeFilter, setActiveFilter] = useState<'ALL' | 'CRITICAL' | 'BPOS' | 'REPEAT'>('ALL');
 
@@ -234,6 +245,7 @@ export default function VawcDashboard({
 
                     {/* Action buttons (WCAG min-h-[44px] touch targets) */}
                     <div className="flex items-center gap-2 sm:gap-2.5 flex-wrap">
+
                         <Button
                             type="button"
                             variant="outline"

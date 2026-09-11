@@ -33,7 +33,7 @@ export default function Index({ announcements = { data: [] } }: any) {
 
                 {/* --- UNIFIED HERO SECTION --- */}
                 <section className="relative z-10 dark:bg-neutral-900 border-b border-slate-200 dark:border-neutral-800 py-16 md:py-20">
-                    <div className="container mx-auto px-6 text-center max-w-4xl">
+                    <div className="w-[92%] sm:w-[88%] lg:w-[80%] max-w-7xl mx-auto px-1 sm:px-2 text-center max-w-4xl">
                         <span className="text-xs font-black tracking-widest text-purple-700 dark:text-purple-400 uppercase mb-3 block">
                             Community Updates / Mga Balita
                         </span>
@@ -46,7 +46,7 @@ export default function Index({ announcements = { data: [] } }: any) {
                     </div>
                 </section>
 
-                <main className="relative z-20 container mx-auto max-w-6xl px-6 py-12">
+                <main className="relative z-20 w-[92%] sm:w-[88%] lg:w-[80%] max-w-7xl mx-auto px-1 sm:px-2 py-12">
                     {/* FILTER BAR - Standardized panel */}
                     <div className="mb-12">
                         <div className="bg-white dark:bg-neutral-900 p-4 md:p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-neutral-800 flex flex-col md:flex-row gap-6 justify-between items-center">

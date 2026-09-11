@@ -31,16 +31,22 @@ class MembershipController extends Controller
     {
         $isAdmin = Auth::check();
 
-        // 1. VALIDATE CORE FIELDS FIRST
+        // 1. DEFENSIVE MERGE: If top-level fields are empty, pull from form_data
+        $fullname = trim((string) ($request->input('fullname') ?: $request->input('form_data.fullname')));
+        $address = trim((string) ($request->input('address') ?: $request->input('form_data.address')));
+        $email = trim((string) ($request->input('email') ?: $request->input('form_data.email')));
+
+        $request->merge([
+            'fullname' => $fullname,
+            'address' => $address,
+            'email' => $email,
+        ]);
+
         $request->validate([
             'fullname' => 'required|string|max:255',
             'address' => 'required|string|max:255',
             'email' => 'required|email|max:255', // Required for Magic Link Portal
         ]);
-
-        $fullname = $request->input('fullname');
-        $address = $request->input('address');
-        $email = $request->input('email');
 
         // 2. DUPLICATE CHECK (Prevent flooding)
         // Check if this person has an active application (Pending or Approved)
@@ -77,7 +83,7 @@ class MembershipController extends Controller
                 // Type-based rules
                 switch ($field['type']) {
                     case 'email':
-                        $fieldRules[] = 'email:rfc,dns';
+                        $fieldRules[] = 'email';
                         break;
                     case 'number':
                         $fieldRules[] = 'numeric';
@@ -161,10 +167,14 @@ class MembershipController extends Controller
         ]);
 
         // Automatically sends an Email due to logic of the system na may automatic approve pag admin nag encode ng data
-        if ($isAdmin) {
-            event(new \App\Events\ApplicationApproved($application));
-        } else {
-            event(new \App\Events\MembershipApplicationSubmitted($application));
+        try {
+            if ($isAdmin) {
+                event(new \App\Events\ApplicationApproved($application));
+            } else {
+                event(new \App\Events\MembershipApplicationSubmitted($application));
+            }
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Membership application event notification failed: ' . $e->getMessage());
         }
 
 

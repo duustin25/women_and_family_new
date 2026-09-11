@@ -82,7 +82,18 @@ export default function Chatbot({ className }: { className?: string }) {
         setCurrentSuggestions([]);
 
         try {
-            const response = await axios.post(route('chat.send'), { message: userMessage.content });
+            // Always use a relative endpoint so it dynamically inherits the current protocol (http/https), host, and port
+            const endpoint = typeof route === 'function' ? route('chat.send', undefined, false) : '/chat/send';
+            const response = await axios.post(
+                endpoint,
+                { message: userMessage.content },
+                {
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                }
+            );
 
             const botMessage: Message = {
                 id: (Date.now() + 1).toString(),
@@ -101,16 +112,19 @@ export default function Chatbot({ className }: { className?: string }) {
             } else {
                 setIsEngineOffline(false);
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error("Chat error:", error);
+            const serverMessage = error?.response?.data?.message;
+            const content = serverMessage
+                ? `System Notice: ${serverMessage}`
+                : "Unable to connect to the server. Please check your network connection or try again later.";
             const errorMessage: Message = {
                 id: (Date.now() + 1).toString(),
                 role: 'assistant',
-                content: "Network Error: Unable to reach the secure server. Please try again later.",
+                content,
                 timestamp: new Date()
             };
             setMessages(prev => [...prev, errorMessage]);
-            setIsEngineOffline(true);
         } finally {
             setIsLoading(false);
         }

@@ -298,13 +298,42 @@ Avoid rendering uncoerced JSX conditionals that print stray zeros:
 // ❌ BANNED: Renders '0' on screen when count is 0
 {item.children_count && <Badge>Minors</Badge>}
 
-// ✅ ENFORCED: Strict Boolean Coercion
-{Boolean(item.children_count && item.children_count > 0) && (
-    <span className="text-xs font-semibold px-2.5 py-1 rounded-md bg-slate-100 ...">
-        👶 {item.children_count} Minors
-    </span>
 )}
 ```
+
+### D. Silent Real-Time Autoloader Directive (`usePoll` Behind the Scenes)
+Operational emergency command centers (VAWC Triage Action Center, Protection Order Monitoring, and Global Notifications) must operate in **true real-time behind the system** without requiring officers to manually hit F5 or reload the browser.
+
+* **Silent, Zero-Friction Background Synchronization:**
+  - **No Manual Pause Buttons Needed:** The system syncs completely in the background without cluttering the UI with pause/resume buttons or confusing toggles.
+  - **Inertia.js v2 Native Polling (`usePoll`):** Real-time views leverage `@inertiajs/react`'s native `usePoll()`.
+  - **Selective Payload Scoping (`only: [...]`):** Background requests strictly isolate dynamic props (e.g. `only: ['criticalQueue', 'criticalTotal', 'moderateQueue', 'moderateTotal', 'lowQueue', 'lowTotal', 'unassessedQueue', 'unassessedTotal', 'kpis']`), preventing network bloat.
+  - **Automatic Scroll & State Retention:** Inherits `router.reload()` semantics, so in-progress search queries, filter selections, and scroll positions are never disrupted during background ticks.
+* **Polling Interval SLA Standards:**
+  - 🚨 **Emergency Triage Command Board (`Dashboard.tsx`):** Silently syncs every **10,000ms (10 seconds)**.
+  - 🔔 **Global System Notifications (`NotificationBell.tsx`):** Silently syncs every **20,000ms (20 seconds)**.
+* **Smart Tab Visibility & Battery Conservation:**
+  - Inertia automatically pauses background polling when the browser tab loses focus or is minimized (`keepAlive: false` by default), preventing server hammering when inactive.
+
+```tsx
+// Canonical Silent Real-time Autoloader Hook Pattern
+usePoll(10000, {
+    only: ['criticalQueue', 'criticalTotal', 'moderateQueue', 'moderateTotal', 'lowQueue', 'lowTotal', 'unassessedQueue', 'unassessedTotal', 'kpis'],
+});
+```
+
+### E. Universal Responsive Viewport Architecture (Mobile to Tablet to 4K)
+Every page and modal must render with zero unconstrained horizontal overflow and full legibility across smartphones ($375\text{px}-430\text{px}$), tablets ($768\text{px}-1024\text{px}$), laptops, and large desktop screens:
+
+1. **Auto-Collapse Sidebar on Tablets (`< 1024px` / `lg:` breakpoint):**
+   - The desktop navigation sidebar auto-collapses into mobile/drawer mode for all screens below $1024\text{px}$ (`MOBILE_BREAKPOINT = 1024` in `use-mobile.tsx`, `hidden lg:block` / `lg:flex` in `sidebar.tsx`).
+   - This unlocks the full $768\text{px}-820\text{px}$ viewport for case workflow forms, tables, and triage cards rather than losing $256\text{px}$ to a static sidebar.
+2. **Responsive Multi-Column Breakpoints:**
+   - Multi-column grids shift progressively (`grid-cols-1 md:grid-cols-2` or `grid-cols-1 lg:grid-cols-3`) to prevent columns from being squeezed below minimum legible widths ($< 280\text{px}$).
+3. **Zero Container Overflow (`min-w-0` & wrapping bounds):**
+   - Every flex child and grid cell includes `min-w-0` to override CSS's default `min-width: auto`, allowing child text, badges, and buttons to wrap or truncate gracefully.
+   - `Badge` (`badge.tsx`) incorporates `max-w-full whitespace-normal break-words` so multi-word legal badges never force containers wider than screen viewports.
+   - Long action buttons incorporate `max-w-full whitespace-normal break-words text-center` without rigid `shrink-0` constraints.
 
 ---
 

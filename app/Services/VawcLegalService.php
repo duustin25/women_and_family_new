@@ -30,28 +30,73 @@ class VawcLegalService
     {
         return \Illuminate\Support\Facades\DB::transaction(function () use ($case, $data) {
             $closedAt = !empty($data['closed_at']) ? \Carbon\Carbon::parse($data['closed_at']) : now();
+            $rawReason = $data['closure_reason'];
+            $closureRemarks = $data['closure_remarks'] ?? null;
+
+            $isPeacefulBpo = str_contains($rawReason, 'Lapsed Successfully') || 
+                             str_contains($rawReason, 'BPO Concluded') || 
+                             str_contains($rawReason, '15-Day Protection Order Lapsed');
+
+            $isJudicialOrCourt = !empty($data['docket_number']) || 
+                                 !empty($data['issuing_body']) || 
+                                 str_contains($rawReason, 'Court') || 
+                                 str_contains($rawReason, 'PAO') || 
+                                 str_contains($rawReason, 'Prosecutor') || 
+                                 str_contains($rawReason, 'TPO') || 
+                                 str_contains($rawReason, 'PPO');
+
+            // Format official judicial audit trail ledger entry
+            if (!empty($data['docket_number']) || !empty($data['issuing_body'])) {
+                $judicialEntry = sprintf(
+                    "[JUDICIAL AUDIT TRAIL] Issuing Body: %s | Docket/Resolution No: %s | Order Date: %s",
+                    $data['issuing_body'] ?? 'N/A',
+                    $data['docket_number'] ?? 'N/A',
+                    $data['order_date'] ?? $closedAt->toDateString()
+                );
+                if (!str_contains($closureRemarks ?? '', '[JUDICIAL AUDIT TRAIL]') && !str_contains($closureRemarks ?? '', '[OFFICIAL JUDICIAL DISPOSITION]')) {
+                    $closureRemarks = $closureRemarks ? "{$judicialEntry}\n{$closureRemarks}" : $judicialEntry;
+                }
+            }
+
+            $finalClosureReason = $isPeacefulBpo ? 'Closed - BPO Concluded (Peaceful)' : $rawReason;
+
             $case->update([
                 'status' => 'Closed',
-                'closure_reason' => $data['closure_reason'],
-                'closure_remarks' => $data['closure_remarks'] ?? null,
+                'closure_reason' => $finalClosureReason,
+                'closure_remarks' => $closureRemarks,
                 'closed_at' => $closedAt,
             ]);
 
-            // If the VAWC case is closed, update the parent CaseReport status.
-            // Cases safely closed from Phase 5 (Monitoring) usually count as Resolved (Success).
-            // Cases closed from Phase 6 (Court Escalation) count as Closed (Final Judicial Verdict).
+            // Update parent CaseReport lifecycle
             if ($case->caseReport) {
                 $parentStatus = 'Closed';
-                if (str_contains($data['closure_reason'], 'Elapsed Safely') || 
-                    str_contains($data['closure_reason'], 'Resolved') || 
-                    str_contains($data['closure_reason'], 'Lapsed Successfully') || 
-                    str_contains($data['closure_reason'], 'Monitoring Complete')) {
+                if ($isPeacefulBpo || 
+                    str_contains($rawReason, 'Elapsed Safely') || 
+                    str_contains($rawReason, 'Resolved') || 
+                    str_contains($rawReason, 'Monitoring Complete')) {
                     $parentStatus = 'Resolved';
                 }
 
                 $case->caseReport->update([
                     'lifecycle_status' => $parentStatus
                 ]);
+            }
+
+            // If the case had an active BPO, update its status to Expired upon archival
+            foreach ($case->protectionOrders as $po) {
+                if (in_array($po->status, ['Served', 'Issued', 'Applied'])) {
+                    $po->update(['status' => 'Expired']);
+                }
+            }
+
+            // Sync with Dossier lifecycle and audit ledger
+            if ($case->dossier) {
+                if ($isPeacefulBpo) {
+                    $case->dossier->current_lifecycle = 'Dormant/Closed';
+                } elseif ($isJudicialOrCourt) {
+                    $case->dossier->current_lifecycle = 'Escalated to Court';
+                }
+                $case->dossier->save();
             }
 
             return $case;

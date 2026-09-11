@@ -9,8 +9,9 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 
-class SendMembershipDisapprovedEmail
+class SendMembershipDisapprovedEmail implements ShouldQueue
 {
+    use InteractsWithQueue;
 
     /**
      * Handle the event.
@@ -24,9 +25,13 @@ class SendMembershipDisapprovedEmail
         $email = $application->email ?? ($application->form_data['email'] ?? null);
         
         if ($email) {
-            Log::info('SendMembershipDisapprovedEmail: Sending to ' . $email);
-            Mail::to($email)->send(new MembershipDisapproved($application));
-            Log::info('SendMembershipDisapprovedEmail: Sent!');
+            try {
+                Log::info('SendMembershipDisapprovedEmail: Sending to ' . $email);
+                Mail::to($email)->send(new MembershipDisapproved($application));
+                Log::info('SendMembershipDisapprovedEmail: Sent!');
+            } catch (\Throwable $e) {
+                Log::error('SendMembershipDisapprovedEmail: Failed for App ID ' . $application->id . '. Reason: ' . $e->getMessage());
+            }
         } else {
             Log::warning('SendMembershipDisapprovedEmail: Application missing email for App ID ' . $application->id);
         }

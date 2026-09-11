@@ -23,6 +23,9 @@ class VawcProtectionOrder extends Model
         'is_sla_breached',
         'expiration_date',
         'issued_by_id',
+        'signatory_role',
+        'signatory_name',
+        'signatory_designation',
     ];
 
     protected $casts = [

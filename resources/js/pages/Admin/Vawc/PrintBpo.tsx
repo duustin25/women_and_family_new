@@ -59,27 +59,32 @@ export default function PrintBpo({ case: vawcCase, order, officer }: Props) {
             </p>
 
             <ol style={{ marginLeft: '40px', lineHeight: '1.8', marginBottom: '30px', fontWeight: 'bold' }}>
-                <li>CEASE and DESIST from causing or threatening to cause physical harm to the applicant or to any of her children;</li>
-                <li>CEASE and DESIST from harassing, annoying, telephoning, contacting, or otherwise communicating with the applicant, either directly or indirectly.</li>
+                <li>CEASE and DESIST from causing or threatening to cause physical, psychological, or economic harm to the applicant or to any of her minor children;</li>
+                <li>CEASE and DESIST from harassing, annoying, telephoning, contacting, or otherwise communicating with the applicant, either directly or indirectly;</li>
+                <li>STAY AWAY from the residence, place of employment, and the school or daycare premises of the applicant's minor children at a distance of not less than 100 meters.</li>
             </ol>
 
             <p style={{ textIndent: '50px', textAlign: 'justify', lineHeight: '1.6', marginBottom: '20px' }}>
-                Pursuant to Section 14 of R.A. 9262, this Order is valid for <strong>FIFTEEN (15) DAYS</strong> from the date of issuance unless sooner cancelled or lifted by this Office or a competent court. 
+                Pursuant to Section 14 of R.A. 9262, this Order is valid for <strong>FIFTEEN (15) DAYS</strong> from the date of service/tender and cannot be extended or renewed at the barangay level.
             </p>
 
             <div style={{ border: '2px solid black', padding: '15px', marginTop: '30px', backgroundColor: '#f9f9f9' }}>
                 <p style={{ fontWeight: 'bold', margin: 0, textAlign: 'center', textTransform: 'uppercase' }}>WARNING</p>
                 <p style={{ margin: '10px 0 0 0', textAlign: 'justify', fontSize: '0.9rem' }}>
-                    Violation of this Barangay Protection Order is punishable by law and can lead to your immediate arrest. 
-                    If you violate this order, a criminal complaint will be filed against you in court.
+                    Violation of this Barangay Protection Order is a criminal offense punishable by imprisonment under RA 9262 and constitutes indirect contempt of court. 
+                    Immediate warrantless arrest may be executed upon any violation.
                 </p>
             </div>
 
             <div style={{ marginTop: '80px', display: 'flex', justifyContent: 'flex-end' }}>
-                <div style={{ width: '300px', textAlign: 'center' }}>
+                <div style={{ width: '320px', textAlign: 'center' }}>
                     <div style={{ borderBottom: '1px solid black', height: '40px' }}></div>
-                    <p style={{ fontWeight: 'bold', marginTop: '10px', marginBottom: '0' }}>HON. ______________</p>
-                    <p style={{ margin: '0', fontSize: '0.9rem' }}>Punong Barangay</p>
+                    <p style={{ fontWeight: 'bold', marginTop: '10px', marginBottom: '0' }}>
+                        HON. {order.signatory_name?.toUpperCase() || '______________'}
+                    </p>
+                    <p style={{ margin: '0', fontSize: '0.9rem', fontStyle: order.signatory_role === 'Acting Kagawad' ? 'italic' : 'normal' }}>
+                        {order.signatory_designation || order.signatory_role || 'Punong Barangay'}
+                    </p>
                 </div>
             </div>
 
