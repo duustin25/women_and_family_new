@@ -18,7 +18,7 @@ export default function AuthWomenFamilyLayout({
                         >
                             <div className="mb-1 flex items-center justify-center rounded-md">
                                 <img
-                                    src="/LOGO/women&family_logo.png"
+                                    src="/Logo/women&family_logo.png"
                                     alt="Women and Family Portal Logo"
                                     className="h-24 w-auto object-contain"
                                 />

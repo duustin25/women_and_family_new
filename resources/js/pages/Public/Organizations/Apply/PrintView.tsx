@@ -68,7 +68,7 @@ export default function PrintView({ application, organization }: PrintProps) {
             {/* --- OFFICIAL HEADER --- */}
             <header className="text-center mb-10 border-b-2 border-black pb-6">
                 <div className="flex justify-center items-center gap-6 mb-4">
-                    <img src="/LOGO/women&family_logo.png" className="h-20 w-auto object-contain grayscale" alt="Logo" />
+                    <img src="/Logo/women&family_logo.png" className="h-20 w-auto object-contain grayscale" alt="Logo" />
                     <div>
                         <p className="text-sm uppercase tracking-widest font-bold">Republic of the Philippines</p>
                         <p className="text-sm uppercase tracking-widest font-bold">City of Pasay</p>
