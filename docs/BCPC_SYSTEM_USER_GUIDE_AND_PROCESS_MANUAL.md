@@ -15,22 +15,67 @@
 
 ## 🗂️ Table of Contents
 1. [Executive Summary & System Architecture](#1-executive-summary--system-architecture)
-2. [Statutory Legal Framework & Policy Compliance](#2-statutory-legal-framework--policy-compliance)
-3. [WHO 3-Axis Growth Diagnostics Mathematical Engine & Formulas](#3-who-3-axis-growth-diagnostics-mathematical-engine--formulas)
-4. [Clinical Triage Algorithm & The Double Burden of Malnutrition](#4-clinical-triage-algorithm--the-double-burden-of-malnutrition)
-5. [Smart Clinical Guardrails & Malpractice Prevention](#5-smart-clinical-guardrails--malpractice-prevention)
-6. [Extreme Outlier Sanity Check Protocol (Biological Range Engine)](#6-extreme-outlier-sanity-check-protocol-biological-range-engine)
-7. [SFP 120-Day Lifecycle, Velocity Tracking, & Relapse Engine](#7-sfp-120-day-lifecycle-velocity-tracking--relapse-engine)
-8. [60-Month Age-Out Archival Protocol & COA Audit Defense](#8-60-month-age-out-archival-protocol--coa-audit-defense)
-9. [UI/UX Design Architecture & Shadcn Integration](#9-uiux-design-architecture--shadcn-integration)
-10. [Official Printable Masterlist & Sign-Off Workflow](#10-official-printable-masterlist--sign-off-workflow)
-11. [Master Capstone Defense Q&A Script for Panelists](#11-master-capstone-defense-qa-script-for-panelists)
+2. [Study Scope, Delimitations, & System Boundaries](#2-study-scope-delimitations--system-boundaries)
+3. [Statutory Legal Framework & Policy Compliance](#3-statutory-legal-framework--policy-compliance)
+4. [WHO 3-Axis Growth Diagnostics Mathematical Engine & Formulas](#4-who-3-axis-growth-diagnostics-mathematical-engine--formulas)
+5. [Clinical Triage Algorithm & The Double Burden of Malnutrition](#5-clinical-triage-algorithm--the-double-burden-of-malnutrition)
+6. [Smart Clinical Guardrails & Malpractice Prevention](#6-smart-clinical-guardrails--malpractice-prevention)
+7. [Extreme Outlier Sanity Check Protocol (Biological Range Engine)](#7-extreme-outlier-sanity-check-protocol-biological-range-engine)
+8. [SFP 120-Day Lifecycle, Velocity Tracking, & Relapse Engine](#8-sfp-120-day-lifecycle-velocity-tracking--relapse-engine)
+9. [60-Month Age-Out Archival Protocol & COA Audit Defense](#9-60-month-age-out-archival-protocol--coa-audit-defense)
+10. [UI/UX Design Architecture & Shadcn Integration](#10-uiux-design-architecture--shadcn-integration)
+11. [Official Printable Masterlist & Sign-Off Workflow](#11-official-printable-masterlist--sign-off-workflow)
+12. [Master Capstone Defense Q&A Script for Panelists](#12-master-capstone-defense-qa-script-for-panelists)
 
 ---
 
 ## 🏛️ 1. Executive Summary & System Architecture
 
 The **Barangay Council for the Protection of Children (BCPC) Child Nutrition Module** is an enterprise-grade, medically validated Information System engineered for Barangay 183, Pasay City. It automates the annual **Operation Timbang Plus (OPT+)** preschooler census, enforces real-time WHO z-score growth diagnostics, manages the **120-Day Supplemental Feeding Program (SFP)**, prevents human medical error at the point of data entry, and ensures permanent longitudinal data retention for government audits.
+
+---
+
+## 🎯 2. Study Scope, Delimitations, & System Boundaries
+
+### A. Study Scope (What the System Explicitly Encompasses)
+1. **Target Demographics & Age Scope**:
+   - Covers all resident infants and preschool children aged **0 to 59 months** (from birth up to 4 years, 11 months, and 29 days) residing across the **10 Zones** of Barangay 183 Villamor, Pasay City.
+2. **Authorized User Roles & Actors**:
+   - **Barangay Nutrition Scholars (BNS)**: Primary data entry agents conducting door-to-door and clinic-based OPT+ weighing and SFP monitoring.
+   - **BCPC Committee Chairperson & Barangay Officials**: Program supervisors reviewing prevalence rates, approving monthly allocations, and signing official masterlists.
+   - **System Administrators**: Technical custodians managing database integrity, audit trails, and role-based permissions.
+3. **Clinical Growth Standards Engine**:
+   - Implementation of the **World Health Organization (WHO) Child Growth Standards (2006)** across three independent clinical dimensions:
+     - Weight-for-Age (WFA) — Composite mass and undernutrition.
+     - Height-for-Age (HFA) — Chronic linear bone growth and stunting.
+     - Weight-for-Length/Height (WFL/H) — Acute wasting, SAM, MAM, and pediatric obesity.
+   - Real-time continuous linear interpolation between discrete reference age and length milestones.
+4. **Statutory Intervention Lifecycle Management**:
+   - Full digital management of the **120-Day Supplemental Feeding Program (SFP)** mandated by **Republic Act No. 11037**.
+   - Tracking of 5 statutory clinical milestone check-ins: Day 1 (Baseline), Day 30, Day 60 (Mid-term), Day 90, and Day 120 (Final Evaluation & Graduation).
+   - Net weight gain velocity tracking ($\Delta \text{kg}$ and rate of recovery).
+   - Automated **Single Master Profile SFP Relapse Engine** (auto-intake into Cycle 2 if a graduated child relapses).
+5. **Preventative Healthcare & Garantisadong Pambata Logging**:
+   - Multi-select tracking for Vitamin A supplementation (semi-annual), De-worming treatment, Micronutrient Powder (MNP), and Parental Nutrition Counseling.
+6. **Government Reporting & Tripartite Certification**:
+   - Generation of official printable **DOH/NNC e-OPT Plus Masterlists** complete with summary metrics and formal signature blocks (BNS, BCPC Chair, Punong Barangay).
+7. **Permanent Statutory Data Retention (COA & Data Privacy Compliance)**:
+   - Automated transition of 60+ month children from `Active` to `Aged Out` status without destructive record deletion, ensuring continuous audit compliance.
+
+### B. Study Delimitations & System Boundaries (What the System Does NOT Do)
+1. **Exclusion of School-Age Children ($\ge 60$ Months / 5 Years & Older)**:
+   - *Statutory Boundary*: Under **RA 11037** and Joint DOH-DepEd-DSWD guidelines, once a child reaches 60 months of age, community feeding jurisdiction terminates and transfers to the **Department of Education (DepEd) School-Based Feeding Program (SBFP)**.
+   - *System Enforcement*: The system blocks registration of children $\ge 60$ months and archives active children on their 5th birthday.
+2. **Exclusion of Child Abuse (RA 7610) Case Blotter & Criminal Conciliation**:
+   - *Legal Boundary*: RA 7610 cases (child abuse, exploitation, or cruelty committed by neighbors, strangers, or non-intimate partners) are non-mediable public crimes. Barangays have zero statutory jurisdiction to arbitrate or conduct mediation.
+   - *System Enforcement*: The system does not maintain a case management blotter for RA 7610. Instead, it provides an educational Emergency Protocol router directing citizens and officers to the **PNP Women and Children Protection Desk (WCPD)** and **DSWD Child Protection Hotline**.
+3. **Separation of Domestic Violence Involving Minors (Handled under VAWC / RA 9262)**:
+   - *Operational Boundary*: Violence against a child committed by a father, intimate partner, or household member is legally governed by **RA 9262 (VAWC)**.
+   - *System Enforcement*: All protection orders (BPO), legal hearings, and compliance monitoring are restricted exclusively to the **VAWC Module** to prevent dual jurisdiction.
+4. **Exclusion of Inpatient Clinical Treatment & Biomedical Diagnostics**:
+   - *Clinical Boundary*: The system serves as a public health monitoring, early detection, and community feeding triage tool. It identifies Severe Acute Malnutrition (SAM) and Bilateral Pitting Oedema, triggering immediate clinical referral to the Pasay City Health Office, but does not provide diagnostic blood analysis or hospital inpatient management.
+5. **Absence of Direct Hardware Telemetry (IoT Weighing Scales)**:
+   - *Operational Boundary*: In rural and urban barangays, weighing is performed manually using mechanical Salter-type hanging scales, infant beam balances, and wooden stadiometers. The system relies on human data entry safeguarded by **Biological Range Sanity Checks ($\pm 5\text{ SD}$)** rather than direct hardware sensors.
 
 ### High-Level System Architecture & Execution Flow
 ```mermaid
@@ -64,7 +109,7 @@ flowchart TD
 
 ---
 
-## ⚖️ 2. Statutory Legal Framework & Policy Compliance
+## ⚖️ 3. Statutory Legal Framework & Policy Compliance
 
 | Statutory Base | Governing Body | System Enforcement Mechanism |
 | :--- | :--- | :--- |
@@ -76,7 +121,7 @@ flowchart TD
 
 ---
 
-## 📐 3. WHO 3-Axis Growth Diagnostics Mathematical Engine & Formulas
+## 📐 4. WHO 3-Axis Growth Diagnostics Mathematical Engine & Formulas
 
 The system evaluates child physical development across three independent axes based on the **World Health Organization (WHO) Child Growth Standards**:
 
@@ -114,7 +159,7 @@ $$\text{Threshold}(x) = y_1 + \left( \frac{x - x_1}{x_2 - x_1} \right) \times (y
 
 ---
 
-## 🩺 4. Clinical Triage Algorithm & The Double Burden of Malnutrition
+## 🩺 5. Clinical Triage Algorithm & The Double Burden of Malnutrition
 
 ### The Clinical Alert Hierarchy
 The system uses a strict 5-tier triage priority to prevent medical misclassification:
@@ -156,7 +201,7 @@ const isMAM = !isSAM && !isObese && (latestAssessment.wfa_status === 'Underweigh
 
 ---
 
-## 🛡️ 5. Smart Clinical Guardrails & Malpractice Prevention
+## 🛡️ 6. Smart Clinical Guardrails & Malpractice Prevention
 
 ### 1. Symptom vs. Action Separation (Bilateral Pitting Oedema)
 - **Pathology**: Bilateral pitting oedema (swelling in feet/lower legs) indicates kwashiorkor/severe metabolic crisis. Fluid retention gives a false heavy weight that masks severe wasting.
@@ -186,7 +231,7 @@ Preventative health services remain cleanly organized and independently checkabl
 
 ---
 
-## ⚠️ 6. Extreme Outlier Sanity Check Protocol (Biological Range Engine)
+## ⚠️ 7. Extreme Outlier Sanity Check Protocol (Biological Range Engine)
 
 To prevent typos (e.g., accidentally typing `120 cm` instead of `85 cm` or `45 kg` instead of `14.5 kg`), the system executes a mathematical biological sanity check:
 
@@ -216,7 +261,7 @@ $$\text{Median Weight}(m) = \begin{cases}
 
 ---
 
-## 🔄 7. SFP 120-Day Lifecycle, Velocity Tracking, & Relapse Engine
+## 🔄 8. SFP 120-Day Lifecycle, Velocity Tracking, & Relapse Engine
 
 ### SFP Status Lifecycle Matrix
 ```
@@ -249,7 +294,7 @@ The profile dashboard ([`Show.tsx`](file:///c:/Users/djemp/Herd/wfp-system_capts
 
 ---
 
-## 🏛️ 8. 60-Month Age-Out Archival Protocol & COA Audit Defense
+## 🏛️ 9. 60-Month Age-Out Archival Protocol & COA Audit Defense
 
 ### Statutory Mandate: 0–59 Months vs. 60+ Months
 - **Preschooler Scope (RA 11037 & NNC OPT+)**: Covers children aged **0 to 59 months**.
@@ -278,7 +323,7 @@ public function handle(NutritionCalculatorService $nutritionService): int
 
 ---
 
-## 🎨 9. UI/UX Design Architecture & Shadcn Integration
+## 🎨 10. UI/UX Design Architecture & Shadcn Integration
 
 The user interface follows modern design aesthetics and strict accessibility standards:
 - **Design Tokens & Theme**: Tailwind CSS with Shadcn UI primitives, sleek dark-mode compatibility, and glassmorphism styling.
@@ -292,7 +337,7 @@ The user interface follows modern design aesthetics and strict accessibility sta
 
 ---
 
-## 🖨️ 10. Official Printable Masterlist & Sign-Off Workflow
+## 🖨️ 11. Official Printable Masterlist & Sign-Off Workflow
 
 The printable report ([`Print.tsx`](file:///c:/Users/djemp/Herd/wfp-system_captsone/resources/js/pages/Admin/Bcpc/Print.tsx)) generates a government-standard **Barangay e-OPT Plus Masterlist**:
 1. **Summary Metrics Header**: Total Census, SAM, MAM, Stunted, Active SFP, and Graduated totals.
@@ -304,7 +349,7 @@ The printable report ([`Print.tsx`](file:///c:/Users/djemp/Herd/wfp-system_capts
 
 ---
 
-## 🎓 11. Master Capstone Defense Q&A Script for Panelists
+## 🎓 12. Master Capstone Defense Q&A Script for Panelists
 
 ### Question 1: "Why do you have a 3-axis WHO calculator instead of just computing BMI or Weight-for-Age?"
 > **Answer**:  

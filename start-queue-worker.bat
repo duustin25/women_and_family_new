@@ -1,15 +1,18 @@
 @echo off
 REM ============================================================
-REM  WFP System — Queue Worker Starter
-REM  Run this script to process background email jobs.
-REM  Keep this window open while using the system.
+REM  Barangay 183 WFP System — Bulk Queue Worker
+REM  NOTE: Individual & transactional emails (Welcome, Application
+REM  Receipt, Disapproval, Direct Messages) are sent IN REAL TIME!
+REM  This worker processes high-volume background jobs (e.g.
+REM  mass announcements, bulk GAD event invitations).
 REM  Press Ctrl+C to stop.
 REM ============================================================
 
 echo.
 echo  ===================================================
-echo   Barangay 183 WFP System — Queue Worker
-echo   Processing bulk emails, announcements, GAD events
+echo   Barangay 183 WFP System — Bulk Background Worker
+echo   Transactional emails are sent instantly in real-time.
+echo   This worker handles mass broadcasts and bulk jobs.
 echo  ===================================================
 echo.
 
