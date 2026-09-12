@@ -18,15 +18,11 @@ import {
     Building2,
     CalendarRange,
     ChartLine,
-    CircleUser,
-    Database,
     FileSearch,
     FileText,
     LayoutGrid,
-    Logs,
     Settings,
     ShieldAlert,
-    User2,
     Users,
     Wallpaper
 } from 'lucide-react';
@@ -90,6 +86,16 @@ const navGroups: NavGroup[] = [
                 title: 'Applications',
                 href: '/admin/applications',
                 icon: FileSearch,
+                items: [
+                    {
+                        title: 'All Applications',
+                        href: '/admin/applications',
+                    },
+                    {
+                        title: 'Appeals Queue',
+                        href: '/admin/applications/appeals',
+                    },
+                ],
             },
             {
                 title: 'Members',
@@ -107,32 +113,7 @@ const navGroups: NavGroup[] = [
         title: 'Governance & Administration',
         items: [
             {
-                title: 'Officials',
-                href: '/admin/officials',
-                icon: User2,
-            },
-            {
-                title: 'System Users',
-                href: '/admin/system-users',
-                icon: CircleUser,
-            },
-            {
-                title: 'Audit Logs',
-                href: '/admin/audit-logs',
-                icon: Logs,
-            },
-            {
-                title: 'Appeals Queue',
-                href: '/admin/applications/appeals',
-                icon: ShieldAlert,
-            },
-            {
-                title: 'System Backup',
-                href: '/admin/backup-recovery',
-                icon: Database,
-            },
-            {
-                title: 'Settings',
+                title: 'System Settings',
                 href: '/admin/settings',
                 icon: Settings,
             },
@@ -149,35 +130,34 @@ export function AppSidebar() {
     // Filter dynamic groups based on roles
     const filteredGroups = navGroups.map((group) => {
         const filteredItems = group.items.filter((item) => {
-            // Settings & System Backup are strictly Admin ONLY
-            if ((item.title === 'Settings' || item.title === 'System Backup') && role !== 'admin') {
+            // System Settings is strictly Admin ONLY (Option A)
+            if (item.title === 'System Settings' && role !== 'admin') {
                 return false;
             }
 
-            // Audit Logs: Admin and Head see system-wide. President sees only their own (Scoped in Controller).
-            if (item.title === 'Audit Logs' && !['admin', 'head', 'president'].includes(role)) {
+            // Presidents see Org Proposals, not admin GAD/Social/Applications
+            if (item.title === 'Org Proposals' && role !== 'president') {
                 return false;
             }
-
-            // Presidents see Org Proposals, not the admin GAD menu
-            if (item.title === 'Org Proposals' && role !== 'president') return false;
 
             if (role === 'president') {
                 const hiddenFromPresident = [
                     'VAWC Cases',
                     'BCPC Nutrition',
                     'GAD Events',
-                    'System Users',
-                    'Officials',
-                    'Settings',
-                    'Appeals Queue',
+                    'Applications',
+                    'Analytics & Reports',
+                    'System Settings',
                 ];
                 if (hiddenFromPresident.includes(item.title)) return false;
             }
 
             // Head Committee visibility
             if (role === 'head') {
-                const hiddenFromHead = ['System Users', 'Settings'];
+                const hiddenFromHead = [
+                    'Org Proposals',
+                    'System Settings',
+                ];
                 if (hiddenFromHead.includes(item.title)) {
                     return false;
                 }

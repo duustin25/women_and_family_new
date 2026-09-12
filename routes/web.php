@@ -97,7 +97,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
 
         // 'officials'
-        Route::resource('officials', OfficialController::class);
+        Route::get('officials', function (\Illuminate\Http\Request $request) {
+            return redirect()->route('admin.settings.index', array_merge(['tab' => 'officials'], $request->query()));
+        })->name('officials.index');
+        Route::resource('officials', OfficialController::class)->except(['index']);
 
 
         // 2. Membership Applications (Manual Order Fix)
@@ -123,8 +126,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // Audit Trail / Backtrack
         Route::get('/audit-logs/export', [AuditLogController::class, 'export'])
             ->name('audit-logs.export');
-        Route::get('/audit-logs', [AuditLogController::class, 'index'])
-            ->name('audit-logs');
+        Route::get('/audit-logs', function (\Illuminate\Http\Request $request) {
+            return redirect()->route('admin.settings.index', array_merge(['tab' => 'audit'], $request->query()));
+        })->name('audit-logs');
 
         Route::get('/members', [MembersController::class, 'index'])->name('members');
         Route::post('/members/{member}/email', [MembersController::class, 'sendIndividualEmail'])->name('members.email.individual');
@@ -198,10 +202,15 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.', 'middleware' => ['auth', 'v
     // System Users Management (ADMIN ONLY + THROTTLED)
     Route::get('system-users/archives', [\App\Http\Controllers\Admin\SystemUserController::class, 'archives'])->name('system-users.archives');
     Route::post('system-users/{id}/restore', [\App\Http\Controllers\Admin\SystemUserController::class, 'restore'])->name('system-users.restore');
-    Route::resource('system-users', \App\Http\Controllers\Admin\SystemUserController::class)->middleware('throttle:10,1');
+    Route::get('system-users', function (\Illuminate\Http\Request $request) {
+        return redirect()->route('admin.settings.index', array_merge(['tab' => 'users'], $request->query()));
+    })->name('system-users.index');
+    Route::resource('system-users', \App\Http\Controllers\Admin\SystemUserController::class)->except(['index'])->middleware('throttle:10,1');
 
     // Database Backup & Disaster Recovery Routes (SUPER ADMIN ONLY)
-    Route::get('backup-recovery', [DatabaseBackupController::class, 'index'])->name('backups.index');
+    Route::get('backup-recovery', function (\Illuminate\Http\Request $request) {
+        return redirect()->route('admin.settings.index', array_merge(['tab' => 'backup'], $request->query()));
+    })->name('backups.index');
     Route::post('backup-recovery/create', [DatabaseBackupController::class, 'store'])->name('backups.store');
     Route::post('backup-recovery/upload', [DatabaseBackupController::class, 'upload'])->name('backups.upload');
     Route::get('backup-recovery/{filename}/download', [DatabaseBackupController::class, 'download'])->name('backups.download');

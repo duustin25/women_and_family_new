@@ -12,10 +12,28 @@ use App\Models\AuditLog;
 use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 use Exception;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
+use Closure;
 
-class DatabaseBackupController extends Controller
+class DatabaseBackupController extends Controller implements HasMiddleware
 {
     protected DatabaseBackupService $backupService;
+
+    /**
+     * Get the middleware that should be assigned to the controller.
+     */
+    public static function middleware(): array
+    {
+        return [
+            new Middleware(function (Request $request, Closure $next) {
+                if (!$request->user() || !$request->user()->isAdmin()) {
+                    abort(403, 'Unauthorized access to database disaster recovery.');
+                }
+                return $next($request);
+            }),
+        ];
+    }
 
     public function __construct(DatabaseBackupService $backupService)
     {
