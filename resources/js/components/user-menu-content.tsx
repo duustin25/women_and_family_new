@@ -32,7 +32,7 @@ export function UserMenuContent({ user }: Props) {
                 </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            {/* <DropdownMenuGroup>
+            <DropdownMenuGroup>
                 <DropdownMenuItem asChild>
                     <Link
                         className="block w-full cursor-pointer"
@@ -45,7 +45,7 @@ export function UserMenuContent({ user }: Props) {
                     </Link>
                 </DropdownMenuItem>
             </DropdownMenuGroup>
-            <DropdownMenuSeparator /> */}
+            <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
                 <Link
                     className="block w-full cursor-pointer"

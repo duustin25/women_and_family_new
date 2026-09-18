@@ -5,7 +5,6 @@ import { useCurrentUrl } from '@/hooks/use-current-url';
 import { cn, toUrl } from '@/lib/utils';
 import { edit as editAppearance } from '@/routes/appearance';
 import { edit } from '@/routes/profile';
-import { show } from '@/routes/two-factor';
 import { edit as editPassword } from '@/routes/user-password';
 import type { NavItem } from '@/types';
 import { Link } from '@inertiajs/react';
@@ -20,11 +19,6 @@ const sidebarNavItems: NavItem[] = [
     {
         title: 'Password',
         href: editPassword(),
-        icon: null,
-    },
-    {
-        title: 'Two-Factor Auth',
-        href: show(),
         icon: null,
     },
     {

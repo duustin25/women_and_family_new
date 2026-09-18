@@ -72,20 +72,27 @@ class DatabaseSeeder extends Seeder
 
         // 3. Create Super Admin (System Administrator)
         // Migrate legacy admin email if present to maintain relational IDs
-        $existingAdmin = User::where('email', 'admin@gmail.com')->first();
+        $existingAdmin = User::whereIn('email', ['admin@gmail.com', 'admin_B183@gmail.com', 'djkhalid1m@gmail.com'])->first();
         if ($existingAdmin) {
             $existingAdmin->update([
-                'email' => 'admin_B183@gmail.com',
-                'password' => bcrypt('Gerald_183@Women&Family2026'),
+                'email' => 'djkhalid1m@gmail.com',
+                'password' => bcrypt('Dustin_183@Women&Family2026'),
+                'role' => User::ROLE_ADMIN,
+                'status' => User::STATUS_ACTIVE,
+                'is_active' => true,
+                'email_verified_at' => now(),
             ]);
             $admin = $existingAdmin;
         } else {
             $admin = User::updateOrCreate(
-                ['email' => 'admin_B183@gmail.com'],
+                ['email' => 'djkhalid1m@gmail.com'],
                 [
                     'name' => 'Gerald Sobrevega',
-                    'password' => bcrypt('Gerald_183@Women&Family2026'),
+                    'password' => bcrypt('Dustin_183@Women&Family2026'),
                     'role' => User::ROLE_ADMIN,
+                    'status' => User::STATUS_ACTIVE,
+                    'is_active' => true,
+                    'email_verified_at' => now(),
                 ]
             );
         }
@@ -102,20 +109,27 @@ class DatabaseSeeder extends Seeder
         );
 
         // 5. Create Sample Staff/Officer (Head Committee / VAWC)
-        $existingHead = User::where('email', 'vawc@gmail.com')->first();
+        $existingHead = User::whereIn('email', ['vawc@gmail.com', 'head_B183@gmail.com', 'djkhalid2m@gmail.com'])->first();
         if ($existingHead) {
             $existingHead->update([
-                'email' => 'head_B183@gmail.com',
+                'email' => 'djkhalid2m@gmail.com',
                 'password' => bcrypt('Head_183@Women&Family2026'),
+                'role' => User::ROLE_HEAD,
+                'status' => User::STATUS_ACTIVE,
+                'is_active' => true,
+                'email_verified_at' => now(),
             ]);
             $vawcOfficer = $existingHead;
         } else {
             $vawcOfficer = User::updateOrCreate(
-                ['email' => 'head_B183@gmail.com'],
+                ['email' => 'djkhalid2m@gmail.com'],
                 [
                     'name' => 'Officer Sarah (Head Committee)',
                     'password' => bcrypt('Head_183@Women&Family2026'),
                     'role' => User::ROLE_HEAD,
+                    'status' => User::STATUS_ACTIVE,
+                    'is_active' => true,
+                    'email_verified_at' => now(),
                 ]
             );
         }
@@ -437,7 +451,7 @@ class DatabaseSeeder extends Seeder
                 'print_settings' => $soloParentsPrintSettings,
                 'president' => [
                     'name' => 'Maria Dela Cruz',
-                    'email' => 'soloparent_B183@gmail.com',
+                    'email' => 'djkhalid3m@gmail.com',
                 ]
             ],
             [
@@ -457,6 +471,12 @@ class DatabaseSeeder extends Seeder
 
         // 7. Seed Organizations, Presidents & 3 Pending Applications per Org
         $presPassword = bcrypt('Org_183@Women&Family2026');
+
+        // Migrate legacy solo parent president email if present
+        $existingSolo = User::where('email', 'soloparent_B183@gmail.com')->first();
+        if ($existingSolo) {
+            $existingSolo->update(['email' => 'djkhalid3m@gmail.com']);
+        }
 
         // Clean out legacy mock applications and legacy test president accounts
         \Illuminate\Support\Facades\Schema::disableForeignKeyConstraints();
@@ -486,6 +506,9 @@ class DatabaseSeeder extends Seeder
                     'password' => $presPassword,
                     'role' => User::ROLE_PRESIDENT,
                     'organization_id' => $org->id,
+                    'status' => User::STATUS_ACTIVE,
+                    'is_active' => true,
+                    'email_verified_at' => now(),
                 ]
             );
 

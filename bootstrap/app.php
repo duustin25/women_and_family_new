@@ -28,11 +28,13 @@ return Application::configure(basePath: dirname(__DIR__))
             SecurityHeadersMiddleware::class,
             HandleAppearance::class,
             HandleInertiaRequests::class,
+            \App\Http\Middleware\EnsureAccountIsActive::class,
             AddLinkHeadersForPreloadedAssets::class,
         ]);
 
         $middleware->alias([
             'role' => \App\Http\Middleware\RoleMiddleware::class,
+            'active' => \App\Http\Middleware\EnsureAccountIsActive::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

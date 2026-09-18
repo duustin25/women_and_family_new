@@ -1,10 +1,10 @@
 import { Badge } from '@/components/ui/badge';
 
 interface RoleBadgeProps {
-    role: string;
+    role?: string;
 }
 
-export function RoleBadge({ role }: RoleBadgeProps) {
+export function RoleBadge({ role = 'resident' }: RoleBadgeProps) {
     const config: Record<string, string> = {
         'admin': 'bg-red-50 text-red-600 border-red-200',
         'head': 'bg-blue-50 text-blue-600 border-blue-200',

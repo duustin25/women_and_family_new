@@ -1,16 +1,15 @@
 import { Head, useForm, Link } from '@inertiajs/react';
-import React, { useState } from 'react';
+import React from 'react';
 import AppLayout from '@/layouts/app-layout';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Save, UserCheck, Loader2, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, Save, UserCheck, Loader2 } from 'lucide-react';
 import { dashboard } from '@/routes';
 import type { BreadcrumbItem } from '@/types';
 import { OrganizationSelector } from '@/components/Admin/OrganizationSelector';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 interface Organization {
     id: number;
@@ -25,26 +24,27 @@ interface User {
     organization_id: number | null;
 }
 
+interface EditProps {
+    user: User;
+    organizations: Organization[];
+}
+
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Dashboard', href: dashboard().url },
-    { title: 'System Users', href: '/admin/system-users' },
-    { title: 'Edit', href: '#' },
+    { title: 'System Users', href: '/admin/settings?tab=users' },
+    { title: 'Edit User', href: '#' },
 ];
 
-export default function Edit({ user, organizations }: { user: User, organizations: Organization[] }) {
+export default function Edit({ user, organizations }: EditProps) {
     const { data, setData, put, processing, errors } = useForm({
         name: user.name,
         email: user.email,
-        password: '',
-        password_confirmation: '',
         role: user.role,
         organization_id: user.organization_id ? String(user.organization_id) : '',
-        current_admin_password: '',
+        password: '',
+        password_confirmation: '',
     });
 
-    const [isSubmitting, setIsSubmitting] = useState(false);
-
-    // Reset organization_id if role changes from president
     React.useEffect(() => {
         if (data.role !== 'president' && data.organization_id !== '') {
             setData('organization_id', '');
@@ -53,42 +53,42 @@ export default function Edit({ user, organizations }: { user: User, organization
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        setIsSubmitting(true);
         put(`/admin/system-users/${user.id}`, {
-            onFinish: () => {
-                setIsSubmitting(false);
-                setData('current_admin_password', '');
-            },
+            preserveScroll: true,
         });
     };
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Edit System User" />
+            <Head title={`Edit User - ${user.name}`} />
 
             <div className="p-6 max-w-4xl mx-auto space-y-6">
                 <div className="flex items-center justify-between">
                     <Button variant="ghost" size="sm" asChild className="-ml-2 text-muted-foreground">
-                        <Link href={'/admin/system-users' + location.search} className="flex items-center gap-2">
+                        <Link href="/admin/settings?tab=users" className="flex items-center gap-2">
                             <ArrowLeft className="w-4 h-4" />
-                            Back to Registry
+                            Back to System Users Registry
                         </Link>
                     </Button>
                 </div>
 
                 <div className="flex flex-col gap-1">
-                    <h1 className="text-2xl font-bold tracking-tight">Edit Official Profile</h1>
-                    <p className="text-muted-foreground text-sm">Update account details, security credentials, and system access levels.</p>
+                    <h1 className="text-2xl font-bold tracking-tight">Edit System User</h1>
+                    <p className="text-muted-foreground text-sm">
+                        Update account details, role assignments, or reset password.
+                    </p>
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-6">
                     <Card>
                         <CardHeader>
                             <CardTitle className="text-lg font-semibold flex items-center gap-2">
-                                <UserCheck className="w-5 h-5 text-green-500" />
+                                <UserCheck className="w-5 h-5 text-primary" />
                                 Account Information
                             </CardTitle>
-                            <CardDescription>Update the primary identification and role for this system user.</CardDescription>
+                            <CardDescription>
+                                Update the identification, role, and credentials for this system user.
+                            </CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-6">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -116,31 +116,7 @@ export default function Edit({ user, organizations }: { user: User, organization
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-muted/50">
-                                <div className="space-y-4">
-                                    <div className="space-y-2">
-                                        <Label htmlFor="password">Change Password (Optional)</Label>
-                                        <Input
-                                            id="password"
-                                            type="password"
-                                            placeholder="Leave blank to keep current"
-                                            value={data.password}
-                                            onChange={e => setData('password', e.target.value)}
-                                        />
-                                        {errors.password && <p className="text-destructive text-xs font-bold">{errors.password}</p>}
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <Label htmlFor="password_confirmation">Confirm New Password</Label>
-                                        <Input
-                                            id="password_confirmation"
-                                            type="password"
-                                            value={data.password_confirmation}
-                                            onChange={e => setData('password_confirmation', e.target.value)}
-                                        />
-                                    </div>
-                                </div>
-
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t">
                                 <div className="space-y-2">
                                     <Label htmlFor="role">Update System Role</Label>
                                     <Select value={data.role} onValueChange={(val) => setData('role', val)}>
@@ -155,58 +131,60 @@ export default function Edit({ user, organizations }: { user: User, organization
                                     </Select>
                                     {errors.role && <p className="text-destructive text-xs font-bold">{errors.role}</p>}
                                 </div>
+
+                                <div>
+                                    <OrganizationSelector
+                                        role={data.role}
+                                        organizationId={data.organization_id}
+                                        onOrganizationChange={(val) => setData('organization_id', val)}
+                                        organizations={organizations}
+                                        error={errors.organization_id}
+                                    />
+                                </div>
                             </div>
 
-                            {/* CONDITIONAL ORGANIZATION DROPDOWN */}
-                            <div className="pt-2">
-                                <OrganizationSelector
-                                    role={data.role}
-                                    organizationId={data.organization_id}
-                                    onOrganizationChange={(val) => setData('organization_id', val)}
-                                    organizations={organizations}
-                                    error={errors.organization_id}
-                                />
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t">
+                                <div className="space-y-2">
+                                    <Label htmlFor="password">Reset Password (Optional)</Label>
+                                    <Input
+                                        id="password"
+                                        type="password"
+                                        placeholder="Leave blank to keep current password"
+                                        value={data.password}
+                                        onChange={e => setData('password', e.target.value)}
+                                    />
+                                    {errors.password && <p className="text-destructive text-xs font-bold">{errors.password}</p>}
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label htmlFor="password_confirmation">Confirm New Password</Label>
+                                    <Input
+                                        id="password_confirmation"
+                                        type="password"
+                                        placeholder="Confirm new password"
+                                        value={data.password_confirmation}
+                                        onChange={e => setData('password_confirmation', e.target.value)}
+                                    />
+                                </div>
                             </div>
                         </CardContent>
                     </Card>
 
-                    {/* ADMINISTRATIVE VERIFICATION */}
-                    {data.password && (
-                        <Alert className="bg-muted/50 border-muted-foreground/10">
-                            <ShieldCheck className="h-4 w-4 text-amber-500" />
-                            <AlertTitle className="text-sm font-bold uppercase tracking-tight">Security Authorization</AlertTitle>
-                            <AlertDescription className="text-xs text-muted-foreground mt-1">
-                                Finalizing these changes requires **your** (Super Admin) current password for verification.
-                            </AlertDescription>
-                            <div className="mt-4 max-w-sm">
-                                <Input
-                                    id="current_admin_password"
-                                    type="password"
-                                    value={data.current_admin_password}
-                                    onChange={e => setData('current_admin_password', e.target.value)}
-                                    placeholder="Verify your Identity..."
-                                    required={!!data.password}
-                                />
-                                {errors.current_admin_password && <p className="text-destructive text-xs font-bold mt-1">{errors.current_admin_password}</p>}
-                            </div>
-                        </Alert>
-                    )}
-
-                    <div className="flex items-center justify-end gap-3 pt-4">
+                    <div className="flex items-center justify-end gap-3 pt-2">
                         <Button variant="ghost" type="button" asChild>
-                            <Link href={'/admin/system-users' + location.search}>Cancel</Link>
+                            <Link href="/admin/settings?tab=users">Cancel</Link>
                         </Button>
                         <Button
                             type="submit"
-                            disabled={processing || isSubmitting}
-                            className="px-8"
+                            disabled={processing}
+                            className="px-6"
                         >
-                            {(processing || isSubmitting) ? (
+                            {processing ? (
                                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                             ) : (
                                 <Save className="w-4 h-4 mr-2" />
                             )}
-                            {isSubmitting ? 'Saving Changes...' : 'Update Account'}
+                            Save Changes
                         </Button>
                     </div>
                 </form>

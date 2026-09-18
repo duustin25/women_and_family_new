@@ -100,10 +100,69 @@ The system enforces strict multi-tier access through `RoleMiddleware` (`app/Http
 | **President (Organization President)** | Scoped multi-tenant portal restricted exclusively to their assigned community organization (`organization_id`). | Member Application Review + Reject/Reason Form + Organization Event Proposals + Member Roster |
 | **Public / Resident** | Unauthenticated and authenticated citizen portal for emergency information, applications, status lookup, and AI assistance. | Public Landing + News + AI Chatbot + Status Lookup + Public Appeals + Dynamic Application Forms |
 
-### 3.2 Security Countermeasures
-* **Confidentiality Guardrails:** Strict server-side route grouping ensures VAWC and BCPC child records cannot be accessed or queried by Organization Presidents or unauthenticated actors (`role:admin,head`).
-* **Rate Limiting & Anti-Brute Force:** Chatbot queries (`throttle:10,1`), user administration (`throttle:10,1`), and public application submissions (`throttle:3,1`) prevent denial-of-service and enumeration attacks.
-* **Database Backtrack & Audit Logging:** Model changes across all key entities trigger `AuditObserver` to record actor IDs, IP addresses, old/new states, and timestamped actions in `audit_logs`.
+### 3.2 Core Security Principles & Defense-in-Depth Model
+The system enforces a multi-layered defense-in-depth model engineered specifically for highly confidential government child protection and violence against women records (RA 9262 and RA 10173 compliant):
+* **Confidentiality Guardrails:** Strict server-side route grouping ensures VAWC and BCPC child records cannot be accessed or queried by Organization Presidents, public guests, or unauthorized roles (`role:admin,head`).
+* **Rate Limiting & Anti-Brute Force:** Chatbot queries (`throttle:10,1`), user administration (`throttle:10,1`), OTP verification (`throttle:6,1`), and public application submissions (`throttle:3,1`) prevent denial-of-service, enumeration, and automated dictionary attacks.
+* **Immutable Audit Logging:** Model changes across all key entities trigger `AuditObserver` to record actor IDs, IP addresses, old/new states, user agents, and timestamped actions in `audit_logs`.
+
+### 3.3 Two-Phase Provisional User Onboarding (Zero-Knowledge Admin Provisioning)
+To prevent cleartext password leakage and credential interception during account creation, the system eliminates administrative password assignment in favor of a two-phase provisional verification workflow:
+1. **Phase 1: Admin Provisioning**:
+   * The Super Administrator enters the new user's name, email, system role, and optional organization.
+   * The backend generates a **64-character high-entropy temporary password** (`Hash::make(Str::random(64))`), completely preventing password guessing or cleartext leakage in admin UI forms.
+   * Account lifecycle fields are initialized: `status = 'pending_verification'` and `is_active = false`.
+   * The system generates a cryptographically secure 6-digit random OTP (`random_int(100000, 999999)`) and saves an HMAC-SHA256 hash using the application encryption key (`hash_hmac('sha256', $rawOtp, config('app.key'))`) in `email_otps` with a 10-minute expiration window.
+   * An official invitation email (`App\Mail\UserInvitationMail`) is dispatched to the user containing the OTP and direct activation link.
+2. **Phase 2: User Activation & Password Initialization**:
+   * The invited official accesses the public activation portal (`/verify-account?email=...`).
+   * Upon submitting the correct 6-digit OTP alongside their desired permanent password, the backend verifies the code, burns the single-use token, activates the account (`is_active = true`, `status = 'active'`), and timestamps `email_verified_at`.
+
+### 3.4 Step-Up Authentication & Target-Value Quarantine Model
+To prevent Account Takeover (ATO) resulting from session hijacking or physical workstation tampering:
+* **Target-Value Quarantine**: When an authenticated user submits an email address change in profile settings, the primary `users.email` column is **never modified immediately**.
+* The proposed new email is quarantined in `email_otps.target_value`.
+* **Out-of-Band Security Alert**: A Step-Up Security OTP (`App\Mail\SecurityOtpMail`) is dispatched to the user's **current, already verified email address**, alerting them of the requested update.
+* **Step-Up Verification Modal**: An interactive modal (`SecurityOtpModal.tsx`) prompts the user to input the 6-digit code. Only upon successful cryptographic validation does `users.email` update to the quarantined value.
+
+### 3.5 Emergency "Panic Link" Session Kill-Switch
+If an attacker compromises an active user session or browser and attempts to change credentials, the legitimate user immediately receives the Step-Up Security Email.
+* Every security email features an **Emergency Panic Link**: `/auth/security/panic/{rawToken}`.
+* **Pessimistic Concurrency**: `OtpSecurityService::triggerPanicKillSwitch()` executes within a database transaction using row-level locking (`lockForUpdate()`) to prevent race conditions.
+* **Immediate Session Purge**: The system instantly queries and flushes all active browser sessions for the user from the database `sessions` table.
+* **Account Lockdown**: Sets `status = 'locked'`, wipes `remember_token`, burns all active OTP records, and displays the `PanicConfirmation` screen. The attacker's active session is immediately terminated.
+
+### 3.6 Timing Attack Resistance & 3-Strike Brute-Force Lockout
+* **Constant-Time Verification**: All OTP comparisons are executed using PHP's native `hash_equals()` function:
+  $$\text{hash\_equals}(\text{stored\_hash}, \text{hash\_hmac}(\text{'sha256'}, \text{input\_code}, \text{APP\_KEY}))$$
+  This prevents timing side-channel attacks by ensuring execution time is independent of input character correctness.
+* **3-Strike Hard Lockout**: If an incorrect OTP is entered 3 times, the OTP is burned and the user account automatically transitions to `status = 'locked'`.
+* **Single-Use Burning**: Validated OTPs are immediately marked `is_used = true` within the database transaction, preventing token replay attacks.
+
+### 3.7 Active Session Eviction Middleware (`EnsureAccountIsActive`)
+Registered in the core `web` middleware pipeline (`App\Http\Middleware\EnsureAccountIsActive`):
+* Intercepts every authenticated HTTP request.
+* If the user's status is `locked` or `pending_verification`, or if `is_active == false`, the middleware immediately calls `Auth::logout()`, invalidates the session, regenerates the CSRF token, and redirects to the login portal with a clear security lockout notification.
+
+### 3.8 Administrative SecOps & Account Recovery Workflow
+To eliminate the need for manual, risky database edits during security incidents, the **Admin Settings > System Users** interface (`UsersTab.tsx`) includes automated SecOps tools:
+* **Real-time Lifecycle Status Badges**:
+  * `Active` (Emerald Badge): Fully verified and operational account.
+  * `Pending Verification` (Amber Badge): Awaiting OTP verification and password setup.
+  * `Locked / Frozen` (Destructive Red Badge): Account locked due to failed OTP attempts or panic kill-switch invocation.
+* **SecOps Action Controls**:
+  * **Resend Activation OTP**: Generates a fresh code with a 60-second rate-limiting cooldown and emails the user.
+  * **Unlock & Resend OTP**: Unlocks a locked user, resets lifecycle to `pending_verification`, and issues a new code.
+
+### 3.9 Additional Core Hardening (UUID Masking, Backup Encryption, Security Headers)
+* **UUID Route Obfuscation**: All public and operational routes for sensitive VAWC dossiers and cases (`/admin/vawc/{uuid}`) use UUIDv4 identifiers rather than sequential integer IDs, neutralizing Insecure Direct Object Reference (IDOR) attacks and database scraping.
+* **AES-256 Envelope Backup Encryption**: System database backups generated via `DatabaseBackupService` are encrypted using AES-256-CBC with HMAC-SHA256 payload integrity hashing.
+* **Enterprise Security Headers**: Enforced across all HTTP responses via `SecurityHeadersMiddleware`:
+  * `X-Frame-Options: DENY` (Anti-Clickjacking)
+  * `X-Content-Type-Options: nosniff` (MIME Sniffing Prevention)
+  * `Referrer-Policy: strict-origin-when-cross-origin`
+  * `Permissions-Policy: geolocation=(), microphone=(), camera=()`
+  * `Content-Security-Policy (CSP)` (Restricting unauthorized script execution and object embedding)
 
 ---
 

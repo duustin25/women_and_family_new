@@ -202,6 +202,9 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.', 'middleware' => ['auth', 'v
     // System Users Management (ADMIN ONLY + THROTTLED)
     Route::get('system-users/archives', [\App\Http\Controllers\Admin\SystemUserController::class, 'archives'])->name('system-users.archives');
     Route::post('system-users/{id}/restore', [\App\Http\Controllers\Admin\SystemUserController::class, 'restore'])->name('system-users.restore');
+    Route::post('system-users/{system_user}/resend-invitation', [\App\Http\Controllers\Admin\SystemUserController::class, 'resendInvitation'])->name('system-users.resend-invitation');
+    Route::post('system-users/{system_user}/unlock', [\App\Http\Controllers\Admin\SystemUserController::class, 'unlockUser'])->name('system-users.unlock');
+    Route::post('system-users/{system_user}/credentials', [\App\Http\Controllers\Admin\SystemUserController::class, 'updateCredentials'])->name('system-users.update-credentials');
     Route::get('system-users', function (\Illuminate\Http\Request $request) {
         return redirect()->route('admin.settings.index', array_merge(['tab' => 'users'], $request->query()));
     })->name('system-users.index');
@@ -218,5 +221,12 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.', 'middleware' => ['auth', 'v
     Route::delete('backup-recovery/{filename}', [DatabaseBackupController::class, 'destroy'])->name('backups.destroy');
 });
 
+// Account Activation & Emergency Security Portal Routes
+Route::get('/verify-account', [\App\Http\Controllers\Auth\AccountActivationController::class, 'showVerifyForm'])->name('verify-account.show');
+Route::post('/verify-account', [\App\Http\Controllers\Auth\AccountActivationController::class, 'activateAccount'])->middleware('throttle:6,1')->name('verify-account.submit');
+Route::post('/verify-account/resend', [\App\Http\Controllers\Auth\AccountActivationController::class, 'resendOtp'])->middleware('throttle:3,1')->name('verify-account.resend');
+
+Route::get('/auth/security/panic/{token}', [\App\Http\Controllers\Auth\OtpSecurityController::class, 'emergencyPanic'])->middleware('throttle:10,1')->name('security.panic');
 
 require __DIR__ . '/settings.php';
+

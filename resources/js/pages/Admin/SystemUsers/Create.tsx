@@ -27,8 +27,6 @@ export default function Create({ organizations }: { organizations: Organization[
     const { data, setData, post, processing, errors } = useForm({
         name: '',
         email: '',
-        password: '',
-        password_confirmation: '',
         role: 'head',
         organization_id: '',
     });
@@ -108,30 +106,13 @@ export default function Create({ organizations }: { organizations: Organization[
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div className="space-y-2">
-                                    <Label htmlFor="password">Temporary Password</Label>
-                                    <Input
-                                        id="password"
-                                        type="password"
-                                        value={data.password}
-                                        onChange={e => setData('password', e.target.value)}
-                                        required
-                                    />
-                                    {errors.password && <p className="text-destructive text-xs font-bold">{errors.password}</p>}
-                                </div>
-
-                                <div className="space-y-2">
-                                    <Label htmlFor="password_confirmation">Confirm Password</Label>
-                                    <Input
-                                        id="password_confirmation"
-                                        type="password"
-                                        value={data.password_confirmation}
-                                        onChange={e => setData('password_confirmation', e.target.value)}
-                                        required
-                                    />
-                                </div>
-                            </div>
+                            <Alert className="border-blue-200 bg-blue-50/60 dark:bg-blue-950/20 text-blue-900 dark:text-blue-200">
+                                <ShieldCheck className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                                <AlertTitle className="text-xs font-bold uppercase tracking-wider">Two-Phase Provisional Onboarding</AlertTitle>
+                                <AlertDescription className="text-xs mt-1">
+                                    This user will be provisionally created in <strong>Pending Verification</strong> status. A cryptographically secure, single-use 6-digit activation OTP and verification link will be automatically emailed to them. They will initialize their own permanent password upon verification.
+                                </AlertDescription>
+                            </Alert>
 
                             <div className="space-y-2 max-w-sm">
                                 <Label htmlFor="role">Assign System Role</Label>

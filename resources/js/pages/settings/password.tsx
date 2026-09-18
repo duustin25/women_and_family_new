@@ -1,17 +1,17 @@
 import PasswordController from '@/actions/App/Http/Controllers/Settings/PasswordController';
 import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
+import { SecurityOtpModal, type StepUpData } from '@/components/security-otp-modal';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import AppLayout from '@/layouts/app-layout';
 import SettingsLayout from '@/layouts/settings/layout';
 import { edit } from '@/routes/user-password';
-import type { BreadcrumbItem } from '@/types';
+import type { BreadcrumbItem, SharedData } from '@/types';
 import { Transition } from '@headlessui/react';
-import { Form, Head } from '@inertiajs/react';
-import { useRef } from 'react';
-
+import { Form, Head, usePage } from '@inertiajs/react';
+import { useEffect, useRef, useState } from 'react';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -23,6 +23,16 @@ const breadcrumbs: BreadcrumbItem[] = [
 export default function Password() {
     const passwordInput = useRef<HTMLInputElement>(null);
     const currentPasswordInput = useRef<HTMLInputElement>(null);
+    const { flash } = usePage<SharedData & { flash?: { step_up_required?: StepUpData } }>().props;
+    const [stepUpOpen, setStepUpOpen] = useState(false);
+    const [stepUpData, setStepUpData] = useState<StepUpData | null>(null);
+
+    useEffect(() => {
+        if (flash?.step_up_required) {
+            setStepUpData(flash.step_up_required);
+            setStepUpOpen(true);
+        }
+    }, [flash?.step_up_required]);
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -143,6 +153,12 @@ export default function Password() {
                         )}
                     </Form>
                 </div>
+
+                <SecurityOtpModal
+                    isOpen={stepUpOpen}
+                    onClose={() => setStepUpOpen(false)}
+                    stepUpData={stepUpData}
+                />
             </SettingsLayout>
         </AppLayout>
     );

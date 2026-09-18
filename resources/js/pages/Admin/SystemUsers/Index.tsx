@@ -1,4 +1,4 @@
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -14,6 +14,7 @@ import { useConfirm } from '@/hooks/use-confirm';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RoleBadge } from '@/components/Admin/RoleBadge';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { route } from 'ziggy-js';
 
 interface SystemUser {
     id: number;
@@ -42,6 +43,8 @@ interface PageProps {
 }
 
 export default function Index({ users, filters }: PageProps) {
+    const { auth } = usePage<any>().props;
+    const currentUserId = auth?.user?.id;
     const [searchQuery, setSearchQuery] = useState(filters?.search ?? '');
     const [roleFilter, setRoleFilter] = useState(filters?.role ?? 'all');
     const confirm = useConfirm();
@@ -169,7 +172,10 @@ export default function Index({ users, filters }: PageProps) {
                                         </TableCell>
                                     </TableRow>
                                 ) : (
-                                    users.data.map((user) => (
+                                    users.data.map((user) => {
+                                        const isSelf = user.id === currentUserId;
+
+                                        return (
                                         <TableRow key={user.id} className="hover:bg-muted/5">
                                             <TableCell>
                                                 <div className="flex items-center gap-3">
@@ -177,7 +183,14 @@ export default function Index({ users, filters }: PageProps) {
                                                         {user.name.charAt(0)}
                                                     </div>
                                                     <div className="flex flex-col">
-                                                        <span className="font-bold text-sm tracking-tight">{user.name}</span>
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="font-bold text-sm tracking-tight">{user.name}</span>
+                                                            {isSelf && (
+                                                                <Badge variant="secondary" className="text-[10px] py-0 px-1.5 font-normal">
+                                                                    You
+                                                                </Badge>
+                                                            )}
+                                                        </div>
                                                         <span className="text-[10px] text-muted-foreground flex items-center gap-1 font-mono">
                                                             <Mail className="h-2.5 w-2.5" /> {user.email}
                                                         </span>
@@ -207,22 +220,33 @@ export default function Index({ users, filters }: PageProps) {
                                                         </Button>
                                                     </DropdownMenuTrigger>
                                                     <DropdownMenuContent align="end">
-                                                        <DropdownMenuItem asChild>
-                                                            <Link href={`/admin/system-users/${user.id}/edit${location.search}`} className="flex items-center gap-2">
-                                                                <Pencil className="h-3.5 w-3.5" /> Edit Profile
-                                                            </Link>
-                                                        </DropdownMenuItem>
-                                                        <DropdownMenuItem 
-                                                            className="text-destructive focus:text-destructive cursor-pointer" 
-                                                            onClick={() => handleDelete(user)}
-                                                        >
-                                                            <Trash2 className="h-3.5 w-3.5 mr-2" /> Archive Account
-                                                        </DropdownMenuItem>
+                                                        {isSelf ? (
+                                                            <DropdownMenuItem asChild>
+                                                                <Link href={route('profile.edit')} className="flex items-center gap-2 cursor-pointer">
+                                                                    <Pencil className="h-3.5 w-3.5 text-muted-foreground" /> Manage in Personal Settings
+                                                                </Link>
+                                                            </DropdownMenuItem>
+                                                        ) : (
+                                                            <>
+                                                                <DropdownMenuItem asChild>
+                                                                    <Link href={`/admin/system-users/${user.id}/edit${location.search}`} className="flex items-center gap-2">
+                                                                        <Pencil className="h-3.5 w-3.5" /> Edit Profile
+                                                                    </Link>
+                                                                </DropdownMenuItem>
+                                                                <DropdownMenuItem 
+                                                                    className="text-destructive focus:text-destructive cursor-pointer" 
+                                                                    onClick={() => handleDelete(user)}
+                                                                >
+                                                                    <Trash2 className="h-3.5 w-3.5 mr-2" /> Archive Account
+                                                                </DropdownMenuItem>
+                                                            </>
+                                                        )}
                                                     </DropdownMenuContent>
                                                 </DropdownMenu>
                                             </TableCell>
                                         </TableRow>
-                                    ))
+                                        );
+                                    })
                                 )}
                             </TableBody>
                         </Table>

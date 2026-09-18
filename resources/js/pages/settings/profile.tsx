@@ -1,7 +1,7 @@
 import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileController';
-import DeleteUser from '@/components/delete-user';
 import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
+import { SecurityOtpModal, type StepUpData } from '@/components/security-otp-modal';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -12,6 +12,7 @@ import { send } from '@/routes/verification';
 import type { BreadcrumbItem, SharedData } from '@/types';
 import { Transition } from '@headlessui/react';
 import { Form, Head, Link, usePage } from '@inertiajs/react';
+import { useEffect, useState } from 'react';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -23,11 +24,22 @@ const breadcrumbs: BreadcrumbItem[] = [
 export default function Profile({
     mustVerifyEmail,
     status,
+    pending_email,
 }: {
     mustVerifyEmail: boolean;
     status?: string;
+    pending_email?: string | null;
 }) {
-    const { auth } = usePage<SharedData>().props;
+    const { auth, flash } = usePage<SharedData & { flash?: { step_up_required?: StepUpData } }>().props;
+    const [stepUpOpen, setStepUpOpen] = useState(false);
+    const [stepUpData, setStepUpData] = useState<StepUpData | null>(null);
+
+    useEffect(() => {
+        if (flash?.step_up_required) {
+            setStepUpData(flash.step_up_required);
+            setStepUpOpen(true);
+        }
+    }, [flash?.step_up_required]);
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -89,6 +101,12 @@ export default function Profile({
                                         className="mt-2"
                                         message={errors.email}
                                     />
+
+                                    {pending_email && (
+                                        <p className="text-sm text-muted-foreground">
+                                            Pending verification: {pending_email}
+                                        </p>
+                                    )}
                                 </div>
 
                                 {mustVerifyEmail &&
@@ -109,12 +127,12 @@ export default function Profile({
 
                                             {status ===
                                                 'verification-link-sent' && (
-                                                <div className="mt-2 text-sm font-medium text-green-600">
-                                                    A new verification link has
-                                                    been sent to your email
-                                                    address.
-                                                </div>
-                                            )}
+                                                    <div className="mt-2 text-sm font-medium text-green-600">
+                                                        A new verification link has
+                                                        been sent to your email
+                                                        address.
+                                                    </div>
+                                                )}
                                         </div>
                                     )}
 
@@ -143,7 +161,11 @@ export default function Profile({
                     </Form>
                 </div>
 
-                <DeleteUser />
+                <SecurityOtpModal
+                    isOpen={stepUpOpen}
+                    onClose={() => setStepUpOpen(false)}
+                    stepUpData={stepUpData}
+                />
             </SettingsLayout>
         </AppLayout>
     );

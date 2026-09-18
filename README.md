@@ -55,6 +55,14 @@ A customizable portal for community groups (KALIPI, Solo Parents, ERPAT, etc.).
 Enforces accountability for Barangay 183 Pasay City's Gender and Development funds.
 *   **HGDG Score Calculator:** Evaluates project proposals using Harmonized Gender and Development Guidelines (HGDG) box scores, automatically attributing 25%, 50%, 75%, or 100% of the project budget based on gender responsiveness.
 
+### 🛡️ 6. Defense-in-Depth Identity & OTP Security Architecture
+Built specifically to protect confidential survivor and child case records from account takeover (ATO) and session hijacking:
+*   **Two-Phase Provisional Onboarding:** Zero-knowledge admin provisioning sets 64-character high-entropy temporary passwords and emails single-use 6-digit OTPs for users to initialize their own permanent passwords.
+*   **Target-Value Quarantine & Step-Up Auth:** Account email updates never modify the database immediately; proposed changes are quarantined until confirmed with a 6-digit OTP sent to the current verified email.
+*   **Emergency Panic Kill-Switch:** Security alert emails feature a 1-tap kill-switch (`/auth/security/panic/{token}`) that instantly flushes active database sessions and freezes the compromised account using pessimistic row locking.
+*   **Timing Attack & Brute-Force Immunity:** Native constant-time `hash_equals()` comparisons and automatic 3-strike account lockouts.
+*   *Detailed production security manual:* [SYSTEM_SECURITY_ARCHITECTURE.md](docs/SYSTEM_SECURITY_ARCHITECTURE.md)
+
 ---
 
 ## 🛠️ Senior Technical Implementation & SOLID Principles
