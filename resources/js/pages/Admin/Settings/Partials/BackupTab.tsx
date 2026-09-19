@@ -1,20 +1,20 @@
-import React, { useState } from 'react';
 import { router, useForm } from '@inertiajs/react';
 import {
     Database, Download, RefreshCw, Trash2, ShieldCheck,
     AlertTriangle, Server, HardDrive, Eye, EyeOff, Upload, Lock
 } from 'lucide-react';
+import React, { useState } from 'react';
 import { toast } from 'sonner';
 
 // Shadcn UI Components
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { route } from 'ziggy-js';
 import { Badge } from '@/components/ui/badge';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { route } from 'ziggy-js';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 export interface BackupFile {
     filename: string;
@@ -116,58 +116,58 @@ export default function BackupTab({ backups = [] }: BackupTabProps) {
     };
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 w-full">
             {/* Top Status & Action Bar */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Card className="border shadow-sm">
-                    <CardHeader className="pb-2">
-                        <CardDescription className="text-xs font-semibold uppercase">Total Snapshots</CardDescription>
-                        <CardTitle className="text-2xl font-black flex items-center gap-2">
-                            <Database className="w-5 h-5 text-primary" />
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full">
+                <Card className="shadow-2xs border-t-2 border-t-primary w-full">
+                    <CardHeader className="p-4 sm:p-5 pb-1">
+                        <CardDescription className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Total Snapshots</CardDescription>
+                        <CardTitle className="text-3xl sm:text-4xl font-extrabold tracking-tight font-mono flex items-center gap-2 mt-1">
+                            <Database className="w-6 h-6 text-primary" />
                             {backups.length}
                         </CardTitle>
                     </CardHeader>
-                    <CardContent>
-                        <p className="text-xs text-muted-foreground">Stored securely in protected system storage</p>
+                    <CardContent className="p-4 sm:p-5 pt-1">
+                        <p className="text-xs sm:text-sm font-medium text-muted-foreground">Stored securely in protected system storage</p>
                     </CardContent>
                 </Card>
 
-                <Card className="border shadow-sm">
-                    <CardHeader className="pb-2">
-                        <CardDescription className="text-xs font-semibold uppercase">Security Standard</CardDescription>
-                        <CardTitle className="text-2xl font-black flex items-center gap-2 text-emerald-600">
-                            <ShieldCheck className="w-5 h-5" />
+                <Card className="shadow-2xs border-t-2 border-t-emerald-600 w-full">
+                    <CardHeader className="p-4 sm:p-5 pb-1">
+                        <CardDescription className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Security Standard</CardDescription>
+                        <CardTitle className="text-3xl sm:text-4xl font-extrabold tracking-tight font-mono flex items-center gap-2 text-emerald-600 mt-1">
+                            <ShieldCheck className="w-6 h-6" />
                             AES-256
                         </CardTitle>
                     </CardHeader>
-                    <CardContent>
-                        <p className="text-xs text-muted-foreground">Full at-rest file encryption with disaster recovery</p>
+                    <CardContent className="p-4 sm:p-5 pt-1">
+                        <p className="text-xs sm:text-sm font-medium text-muted-foreground">Full at-rest file encryption with disaster recovery</p>
                     </CardContent>
                 </Card>
 
-                <Card className="border shadow-sm">
-                    <CardHeader className="pb-2">
-                        <CardDescription className="text-xs font-semibold uppercase">Disaster Readiness</CardDescription>
-                        <CardTitle className="text-2xl font-black flex items-center gap-2 text-blue-600">
-                            <HardDrive className="w-5 h-5" />
+                <Card className="shadow-2xs border-t-2 border-t-blue-600 w-full">
+                    <CardHeader className="p-4 sm:p-5 pb-1">
+                        <CardDescription className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Disaster Readiness</CardDescription>
+                        <CardTitle className="text-3xl sm:text-4xl font-extrabold tracking-tight font-mono flex items-center gap-2 text-blue-600 mt-1">
+                            <HardDrive className="w-6 h-6" />
                             Point-in-Time
                         </CardTitle>
                     </CardHeader>
-                    <CardContent>
-                        <p className="text-xs text-muted-foreground">Single-click rollback with full integrity check</p>
+                    <CardContent className="p-4 sm:p-5 pt-1">
+                        <p className="text-xs sm:text-sm font-medium text-muted-foreground">Single-click rollback with full integrity check</p>
                     </CardContent>
                 </Card>
             </div>
 
             {/* Main Action & Table Card */}
-            <Card className="border shadow-sm">
-                <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4">
+            <Card className="border shadow-sm w-full">
+                <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b">
                     <div>
                         <CardTitle className="text-lg font-bold flex items-center gap-2">
                             <Server className="w-5 h-5 text-primary" />
-                            Disaster Recovery & Snapshots
+                            Disaster Recovery & Point-in-Time Snapshots
                         </CardTitle>
-                        <CardDescription>
+                        <CardDescription className="text-sm text-muted-foreground">
                             Create automated point-in-time database archives or restore from previously encrypted state.
                         </CardDescription>
                     </div>
@@ -180,9 +180,9 @@ export default function BackupTab({ backups = [] }: BackupTabProps) {
                                 onChange={handleFileUpload}
                                 disabled={isUploading}
                             />
-                            <Button variant="outline" size="sm" asChild disabled={isUploading} className="text-xs font-semibold">
+                            <Button variant="outline" size="sm" asChild disabled={isUploading} className="text-sm font-semibold min-h-[40px] sm:min-h-[38px]">
                                 <span className="flex items-center gap-1.5">
-                                    <Upload className={`w-3.5 h-3.5 ${isUploading ? 'animate-spin' : ''}`} />
+                                    <Upload className={`w-4 h-4 ${isUploading ? 'animate-spin' : ''}`} />
                                     <span>{isUploading ? 'Uploading...' : 'Upload SQL'}</span>
                                 </span>
                             </Button>
@@ -192,23 +192,23 @@ export default function BackupTab({ backups = [] }: BackupTabProps) {
                             size="sm"
                             onClick={handleCreateBackup}
                             disabled={isCreating}
-                            className="text-xs font-semibold flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white"
+                            className="text-sm font-semibold flex items-center gap-1.5 min-h-[40px] sm:min-h-[38px] bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs"
                         >
-                            <RefreshCw className={`w-3.5 h-3.5 ${isCreating ? 'animate-spin' : ''}`} />
+                            <RefreshCw className={`w-4 h-4 ${isCreating ? 'animate-spin' : ''}`} />
                             <span>{isCreating ? 'Creating Snapshot...' : 'Create Backup Snapshot'}</span>
                         </Button>
                     </div>
                 </CardHeader>
-                <CardContent>
-                    <div className="rounded-md border overflow-hidden">
+                <CardContent className="pt-4">
+                    <div className="rounded-md border overflow-x-auto">
                         <Table>
                             <TableHeader>
                                 <TableRow className="bg-muted/40">
-                                    <TableHead className="font-bold text-xs uppercase">Snapshot Filename</TableHead>
-                                    <TableHead className="font-bold text-xs uppercase">Size</TableHead>
-                                    <TableHead className="font-bold text-xs uppercase">Creation Timestamp</TableHead>
-                                    <TableHead className="font-bold text-xs uppercase">Security</TableHead>
-                                    <TableHead className="text-right font-bold text-xs uppercase">Actions</TableHead>
+                                    <TableHead className="font-semibold text-xs uppercase tracking-wider">Snapshot Filename</TableHead>
+                                    <TableHead className="font-semibold text-xs uppercase tracking-wider">Archive Size</TableHead>
+                                    <TableHead className="font-semibold text-xs uppercase tracking-wider">Creation Timestamp</TableHead>
+                                    <TableHead className="font-semibold text-xs uppercase tracking-wider">Security</TableHead>
+                                    <TableHead className="text-right font-semibold text-xs uppercase tracking-wider w-44">Actions</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -221,17 +221,17 @@ export default function BackupTab({ backups = [] }: BackupTabProps) {
                                 ) : (
                                     backups.map((backup) => (
                                         <TableRow key={backup.filename} className="hover:bg-muted/30">
-                                            <TableCell className="font-mono text-xs font-semibold">
+                                            <TableCell className="font-mono text-xs font-semibold text-foreground">
                                                 {backup.filename}
                                             </TableCell>
-                                            <TableCell className="text-xs font-medium">
+                                            <TableCell className="text-xs font-medium font-mono text-muted-foreground">
                                                 {backup.size}
                                             </TableCell>
-                                            <TableCell className="text-xs text-muted-foreground">
+                                            <TableCell className="text-xs text-muted-foreground font-mono">
                                                 {backup.created_at}
                                             </TableCell>
                                             <TableCell>
-                                                <Badge variant="outline" className="text-emerald-600 border-emerald-300 bg-emerald-50 dark:bg-emerald-950/20 text-[11px]">
+                                                <Badge variant="outline" className="text-emerald-600 border-emerald-300 bg-emerald-50 dark:bg-emerald-950/20 text-xs font-semibold">
                                                     Encrypted
                                                 </Badge>
                                             </TableCell>
@@ -240,7 +240,7 @@ export default function BackupTab({ backups = [] }: BackupTabProps) {
                                                     <Button
                                                         variant="outline"
                                                         size="sm"
-                                                        className="h-8 px-2.5 text-xs font-medium flex items-center gap-1 text-blue-600 border-blue-200 hover:bg-blue-50 dark:hover:bg-blue-950/30"
+                                                        className="h-9 px-2.5 text-xs font-medium flex items-center gap-1 text-blue-600 border-blue-200 hover:bg-blue-50 dark:hover:bg-blue-950/30"
                                                         onClick={() => setSelectedDownloadFile(backup.filename)}
                                                     >
                                                         <Download className="w-3.5 h-3.5" />
@@ -249,7 +249,7 @@ export default function BackupTab({ backups = [] }: BackupTabProps) {
                                                     <Button
                                                         variant="outline"
                                                         size="sm"
-                                                        className="h-8 px-2.5 text-xs font-medium flex items-center gap-1 text-amber-600 border-amber-200 hover:bg-amber-50 dark:hover:bg-amber-950/30"
+                                                        className="h-9 px-2.5 text-xs font-medium flex items-center gap-1 text-amber-600 border-amber-200 hover:bg-amber-50 dark:hover:bg-amber-950/30"
                                                         onClick={() => {
                                                             setSelectedRestoreFile(backup.filename);
                                                             reset('password');
@@ -261,7 +261,7 @@ export default function BackupTab({ backups = [] }: BackupTabProps) {
                                                     <Button
                                                         variant="ghost"
                                                         size="icon"
-                                                        className="h-8 w-8 text-destructive hover:text-destructive"
+                                                        className="h-9 w-9 text-destructive hover:text-destructive"
                                                         onClick={() => handleDeleteBackup(backup.filename)}
                                                     >
                                                         <Trash2 className="w-4 h-4" />

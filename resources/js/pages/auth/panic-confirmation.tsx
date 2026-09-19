@@ -1,8 +1,8 @@
 import { Head, Link } from '@inertiajs/react';
-import AuthWomenFamilyLayout from '@/layouts/auth/auth-women-family-layout';
-import { Button } from '@/components/ui/button';
 import { ShieldAlert, CheckCircle2, Lock, ArrowRight, PhoneCall } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import AuthWomenFamilyLayout from '@/layouts/auth/auth-women-family-layout';
 
 interface Props {
     success: boolean;

@@ -1,16 +1,16 @@
-import AppLayout from '@/layouts/app-layout';
-import React, { useState } from 'react';
 import { Head, Link, useForm } from '@inertiajs/react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { ArrowLeft, User, Calendar, MapPin, Phone, Scale, RefreshCw, FileText, CheckCircle2, History, Activity, Heart, AlertCircle, PlusCircle, Check, Info, ShieldAlert, AlertTriangle } from 'lucide-react';
+import React, { useState } from 'react';
+import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, User, Calendar, MapPin, Phone, Scale, RefreshCw, FileText, CheckCircle2, History, Activity, Heart, AlertCircle, PlusCircle, Check, Info, ShieldAlert, AlertTriangle } from 'lucide-react';
-import { toast } from 'sonner';
+import AppLayout from '@/layouts/app-layout';
 
 export default function BcpcShow({ child, computedAge }: any) {
     const [isModalOpen, setIsModalOpen] = useState(false);

@@ -11,7 +11,7 @@ class AuditLogController extends Controller
     public function index(Request $request)
     {
         $user = $request->user();
-        $query = \App\Models\AuditLog::with(['user:id,name,role', 'auditable'])
+        $query = \App\Models\AuditLog::with(['user:id,name,role'])
             ->latest();
 
         // RBAC: President Scoping
@@ -32,11 +32,78 @@ class AuditLogController extends Controller
             $query->where('user_id', $request->user_id);
         }
 
+        if ($request->filled('module')) {
+            $mod = $request->module;
+            if ($mod === 'vawc') {
+                $query->where(function ($q) {
+                    $q->where('auditable_type', 'like', '%Vawc%')
+                      ->orWhere('auditable_type', 'like', '%CaseReport%')
+                      ->orWhere('action', 'like', '%VAWC%');
+                });
+            } elseif ($mod === 'bcpc') {
+                $query->where(function ($q) {
+                    $q->where('auditable_type', 'like', '%Bcpc%')
+                      ->orWhere('action', 'like', '%BCPC%');
+                });
+            } elseif ($mod === 'backup') {
+                $query->where(function ($q) {
+                    $q->where('auditable_type', 'like', '%Backup%')
+                      ->orWhere('action', 'like', '%BACKUP%');
+                });
+            } elseif ($mod === 'security') {
+                $query->where(function ($q) {
+                    $q->where('auditable_type', 'like', '%User%')
+                      ->orWhere('auditable_type', 'like', '%Route%')
+                      ->orWhere('auditable_type', 'like', '%SecurityEvent%')
+                      ->orWhere('action', 'like', '%USER%')
+                      ->orWhere('action', 'like', '%UNAUTHORIZED%')
+                      ->orWhere('action', 'like', '%OTP%');
+                });
+            } elseif ($mod === 'organizations') {
+                $query->where(function ($q) {
+                    $q->where('auditable_type', 'like', '%Organization%')
+                      ->orWhere('auditable_type', 'like', '%Membership%')
+                      ->orWhere('action', 'like', '%ORG%');
+                });
+            }
+        }
+
+        if ($request->filled('event_type')) {
+            $type = $request->event_type;
+            if ($type === 'read') {
+                $query->where(function ($q) {
+                    $q->where('action', 'like', '%VIEW%')
+                      ->orWhere('action', 'like', '%ACCESSED%')
+                      ->orWhere('action', 'like', '%PRINT%')
+                      ->orWhere('action', 'like', '%EXPORT%');
+                });
+            } elseif ($type === 'alert') {
+                $query->where(function ($q) {
+                    $q->where('action', 'like', '%UNAUTHORIZED%')
+                      ->orWhere('action', 'like', '%PANIC%')
+                      ->orWhere('action', 'like', '%FAIL%')
+                      ->orWhere('action', 'like', '%ALERT%');
+                });
+            } elseif ($type === 'mutation') {
+                $query->where(function ($q) {
+                    $q->where('action', 'not like', '%VIEW%')
+                      ->where('action', 'not like', '%ACCESSED%')
+                      ->where('action', 'not like', '%PRINT%')
+                      ->where('action', 'not like', '%EXPORT%')
+                      ->where('action', 'not like', '%UNAUTHORIZED%')
+                      ->where('action', 'not like', '%PANIC%')
+                      ->where('action', 'not like', '%FAIL%')
+                      ->where('action', 'not like', '%ALERT%');
+                });
+            }
+        }
+
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('action', 'like', "%{$search}%")
                   ->orWhere('auditable_type', 'like', "%{$search}%")
+                  ->orWhere('user_agent', 'like', "%{$search}%")
                   ->orWhereHas('user', function ($uq) use ($search) {
                       $uq->where('name', 'like', "%{$search}%");
                   });
@@ -54,14 +121,14 @@ class AuditLogController extends Controller
 
         return Inertia::render('Admin/AuditLogs/Index', [
             'logs' => $logs,
-            'filters' => $request->only(['action', 'user_id', 'search', 'date_start', 'date_end'])
+            'filters' => $request->only(['action', 'user_id', 'search', 'date_start', 'date_end', 'module', 'event_type'])
         ]);
     }
 
     public function export(Request $request)
     {
         $user = $request->user();
-        $query = \App\Models\AuditLog::with(['user:id,name,role', 'auditable'])
+        $query = \App\Models\AuditLog::with(['user:id,name,role'])
             ->latest();
 
         // RBAC: President Scoping
@@ -78,11 +145,78 @@ class AuditLogController extends Controller
             $query->where('user_id', $request->user_id);
         }
 
+        if ($request->filled('module')) {
+            $mod = $request->module;
+            if ($mod === 'vawc') {
+                $query->where(function ($q) {
+                    $q->where('auditable_type', 'like', '%Vawc%')
+                      ->orWhere('auditable_type', 'like', '%CaseReport%')
+                      ->orWhere('action', 'like', '%VAWC%');
+                });
+            } elseif ($mod === 'bcpc') {
+                $query->where(function ($q) {
+                    $q->where('auditable_type', 'like', '%Bcpc%')
+                      ->orWhere('action', 'like', '%BCPC%');
+                });
+            } elseif ($mod === 'backup') {
+                $query->where(function ($q) {
+                    $q->where('auditable_type', 'like', '%Backup%')
+                      ->orWhere('action', 'like', '%BACKUP%');
+                });
+            } elseif ($mod === 'security') {
+                $query->where(function ($q) {
+                    $q->where('auditable_type', 'like', '%User%')
+                      ->orWhere('auditable_type', 'like', '%Route%')
+                      ->orWhere('auditable_type', 'like', '%SecurityEvent%')
+                      ->orWhere('action', 'like', '%USER%')
+                      ->orWhere('action', 'like', '%UNAUTHORIZED%')
+                      ->orWhere('action', 'like', '%OTP%');
+                });
+            } elseif ($mod === 'organizations') {
+                $query->where(function ($q) {
+                    $q->where('auditable_type', 'like', '%Organization%')
+                      ->orWhere('auditable_type', 'like', '%Membership%')
+                      ->orWhere('action', 'like', '%ORG%');
+                });
+            }
+        }
+
+        if ($request->filled('event_type')) {
+            $type = $request->event_type;
+            if ($type === 'read') {
+                $query->where(function ($q) {
+                    $q->where('action', 'like', '%VIEW%')
+                      ->orWhere('action', 'like', '%ACCESSED%')
+                      ->orWhere('action', 'like', '%PRINT%')
+                      ->orWhere('action', 'like', '%EXPORT%');
+                });
+            } elseif ($type === 'alert') {
+                $query->where(function ($q) {
+                    $q->where('action', 'like', '%UNAUTHORIZED%')
+                      ->orWhere('action', 'like', '%PANIC%')
+                      ->orWhere('action', 'like', '%FAIL%')
+                      ->orWhere('action', 'like', '%ALERT%');
+                });
+            } elseif ($type === 'mutation') {
+                $query->where(function ($q) {
+                    $q->where('action', 'not like', '%VIEW%')
+                      ->where('action', 'not like', '%ACCESSED%')
+                      ->where('action', 'not like', '%PRINT%')
+                      ->where('action', 'not like', '%EXPORT%')
+                      ->where('action', 'not like', '%UNAUTHORIZED%')
+                      ->where('action', 'not like', '%PANIC%')
+                      ->where('action', 'not like', '%FAIL%')
+                      ->where('action', 'not like', '%ALERT%');
+                });
+            }
+        }
+
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('action', 'like', "%{$search}%")
                   ->orWhere('auditable_type', 'like', "%{$search}%")
+                  ->orWhere('user_agent', 'like', "%{$search}%")
                   ->orWhereHas('user', function ($uq) use ($search) {
                       $uq->where('name', 'like', "%{$search}%");
                   });
@@ -107,9 +241,9 @@ class AuditLogController extends Controller
         ];
 
         $columns = [
-            'Log ID', 'Action', 'User Responsible', 'User Role', 
-            'Target Record Name/Identifier', 'Record Type', 'Record ID', 
-            'IP Address', 'User Agent', 'Timestamp'
+            'Log ID', 'Timestamp (ISO)', 'Action', 'Module Category', 'Event Type', 
+            'Actor / Initiator', 'Actor Role', 'Target Entity (Protected)', 'Record Type', 
+            'IP Address', 'Process / User Agent'
         ];
 
         $callback = function() use($logs, $columns) {
@@ -117,36 +251,22 @@ class AuditLogController extends Controller
             fputcsv($file, $columns);
 
             foreach ($logs as $log) {
-                $recordIdentifier = 'System/N/A';
-                if ($log->auditable) {
-                    $a = $log->auditable;
-                    $recordIdentifier = $a->name 
-                        ?: ($a->title 
-                        ?: (isset($a->first_name) ? trim("{$a->first_name} " . ($a->last_name ?? '')) 
-                        : (isset($a->case_number) ? "Case #{$a->case_number}" 
-                        : 'Record ID: ' . $log->auditable_id)));
-                } else {
-                    $data = $log->new_values ?: ($log->old_values ?: []);
-                    if (isset($data['path'])) {
-                        $recordIdentifier = ($data['method'] ?? 'GET') . ' /' . ltrim($data['path'], '/');
-                    } else {
-                        $recordIdentifier = ($data['name'] ?? null) ?: (($data['title'] ?? null) ?: ((isset($data['first_name']) ? trim("{$data['first_name']} " . ($data['last_name'] ?? '')) : null) ?: 'Deleted Record'));
-                    }
-                }
-
                 $modelName = $log->auditable_type ? class_basename($log->auditable_type) : 'System';
+                $actorName = $log->actor_name ?: ($log->user ? $log->user->name : ($log->system_process_name ?? 'System Process'));
+                $actorRole = $log->actor_role ?: ($log->user ? $log->user->role : 'Automated Daemon');
 
                 fputcsv($file, [
                     $log->id,
+                    $log->created_at ? $log->created_at->toISOString() : 'N/A',
                     $log->action,
-                    $log->user ? $log->user->name : 'System Generated',
-                    $log->user ? $log->user->role : 'Automated',
-                    $recordIdentifier,
+                    $log->module_category,
+                    strtoupper($log->event_type),
+                    $actorName,
+                    $actorRole,
+                    $log->formatted_entity,
                     $modelName,
-                    $log->auditable_id ?: 'N/A',
-                    $log->ip_address ?: 'N/A',
-                    $log->user_agent ?: 'N/A',
-                    $log->created_at ? $log->created_at->toDateTimeString() : 'N/A',
+                    $log->ip_address ?: '127.0.0.1',
+                    $log->user_agent ?: 'System',
                 ]);
             }
 

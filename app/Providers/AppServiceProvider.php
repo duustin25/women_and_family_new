@@ -37,6 +37,8 @@ class AppServiceProvider extends ServiceProvider
         // Resolve polymorphic relation for custom non-model types
         \Illuminate\Database\Eloquent\Relations\Relation::morphMap([
             'Route' => \App\Models\AuditLog::class,
+            'DatabaseBackup' => \App\Models\AuditLog::class,
+            'SecurityEvent' => \App\Models\AuditLog::class,
         ]);
     }
 

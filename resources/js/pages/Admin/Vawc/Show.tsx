@@ -1,27 +1,27 @@
-import AppLayout from '@/layouts/app-layout';
 import { Head, Link, useForm, router } from '@inertiajs/react';
-import React from 'react';
-import { route } from 'ziggy-js';
-import { toast } from 'sonner';
-import { useConfirm } from '@/hooks/use-confirm';
-import { cn } from '@/lib/utils';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Separator } from '@/components/ui/separator';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import {
     CheckCircle2, Gavel, Printer, Search, ShieldCheck, MapPin, ClipboardList,
     Info, ArchiveX, Lock, AlertTriangle, Activity, HelpCircle, ArrowLeft, ShieldAlert, Save,
     Folder, FolderOpen, Layers, Plus, Clock, Calendar, ExternalLink, ChevronRight, Eye, EyeOff,
     Check, Scale, Building2, UserX, FileText, Send
 } from 'lucide-react';
+import React from 'react';
+import { toast } from 'sonner';
+import { route } from 'ziggy-js';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Separator } from '@/components/ui/separator';
+import { Textarea } from '@/components/ui/textarea';
+import { useConfirm } from '@/hooks/use-confirm';
+import AppLayout from '@/layouts/app-layout';
+import { cn } from '@/lib/utils';
 
 interface Props {
     case: any;
@@ -590,7 +590,6 @@ export default function Show({ case: vawcCase, crossStats, survivorStats }: Prop
         }, {
             onSuccess: () => {
                 setShowCloseModal(false);
-                toast.success('Case file officially closed and archived.');
             },
             onError: () => toast.error('Failed to close case file.')
         });
@@ -599,7 +598,6 @@ export default function Show({ case: vawcCase, crossStats, survivorStats }: Prop
     const handleAssessCase = (e: React.FormEvent) => {
         e.preventDefault();
         assessForm.post(route('admin.vawc.assess', caseRouteKey), {
-            onSuccess: () => toast.success('Triage Assessment calculated and risk score updated!'),
             onError: () => toast.error('Failed to submit triage assessment.')
         });
     };

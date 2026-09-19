@@ -1,3 +1,4 @@
+import { Form, Head } from '@inertiajs/react';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -6,7 +7,6 @@ import { Spinner } from '@/components/ui/spinner';
 import AuthWomenFamilyLayout from '@/layouts/auth/auth-women-family-layout';
 // import { register } from '@/routes';
 import { store } from '@/routes/login';
-import { Form, Head } from '@inertiajs/react';
 
 type Props = {
     status?: string;

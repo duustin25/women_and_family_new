@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react';
 import { Head } from '@inertiajs/react';
+import React, { useEffect } from 'react';
 import DynamicFields from '@/components/DynamicFields';
 
 interface PrintProps {
@@ -12,7 +12,7 @@ export default function Print({ application, organization }: PrintProps) {
     const org = organization.data;
 
     // Parse form_data
-    let formData = typeof record.form_data === 'string'
+    const formData = typeof record.form_data === 'string'
         ? JSON.parse(record.form_data)
         : record.form_data || {};
 

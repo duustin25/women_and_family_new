@@ -1,11 +1,11 @@
 import { Head, useForm, Link } from '@inertiajs/react';
+import { ArrowLeft, Save, LayoutDashboard, Image as ImageIcon, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import RichTextEditor from "@/components/ui/RichTextEditor";
-import { ArrowLeft, Save, LayoutDashboard, Image as ImageIcon, Trash2 } from "lucide-react";
 import AppLayout from '@/layouts/app-layout';
-import type { BreadcrumbItem } from '@/types';
 import { dashboard } from '@/routes';
+import type { BreadcrumbItem } from '@/types';
 
 
 const breadcrumbs: BreadcrumbItem[] = [

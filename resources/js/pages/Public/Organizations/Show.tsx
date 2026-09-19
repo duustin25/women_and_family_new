@@ -1,4 +1,3 @@
-import PublicLayout from '@/layouts/PublicLayout';
 import { Head, Link } from '@inertiajs/react';
 import {
     Building2, Users, ArrowLeft, CheckCircle2,
@@ -6,6 +5,7 @@ import {
     Briefcase, Calendar
 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
+import PublicLayout from '@/layouts/PublicLayout';
 
 
 export default function Show({ organization }: { organization: any }) {

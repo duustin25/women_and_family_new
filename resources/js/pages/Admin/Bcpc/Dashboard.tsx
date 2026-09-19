@@ -1,15 +1,15 @@
-import AppLayout from '@/layouts/app-layout';
-import React, { useState } from 'react';
 import { Head, Link } from '@inertiajs/react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
     AlertCircle, UserPlus, FileText, Cake, Activity,
     ChevronRight, ChevronLeft, Scale, Clock, ShieldAlert, HeartHandshake, MapPin, Users, Printer, CheckCircle2, ArrowRight,
     TrendingUp, BarChart3, Info, Sparkles, Layers, UserCheck
 } from 'lucide-react';
+import React, { useState } from 'react';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
+import AppLayout from '@/layouts/app-layout';
 
 export default function BcpcDashboard({
     monitoredChildren = [],

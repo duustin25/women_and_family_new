@@ -1,22 +1,26 @@
 import { Head, router } from '@inertiajs/react';
-import AppLayout from '@/layouts/app-layout';
 import {
     Settings, Sliders, Users, Award, ToggleLeft,
-    Database, History, Palette
+    Database, History, Palette,
+    Settings2Icon
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import { cn } from "@/lib/utils";
 import { route } from 'ziggy-js';
+
+import { Badge } from "@/components/ui/badge";
+import AppLayout from '@/layouts/app-layout';
+import { cn } from "@/lib/utils";
 
 // Partials
 import AbuseTypesTable from './Partials/AbuseTypesTable';
-import ZonesTable from './Partials/ZonesTable';
-import FeatureToggles from './Partials/FeatureToggles';
 import AppearanceSettings from './Partials/AppearanceSettings';
-import UsersTab from './Partials/UsersTab';
-import OfficialsTab from './Partials/OfficialsTab';
-import BackupTab, { BackupFile } from './Partials/BackupTab';
 import AuditTab from './Partials/AuditTab';
+import type { BackupFile } from './Partials/BackupTab';
+import BackupTab from './Partials/BackupTab';
+import FeatureToggles from './Partials/FeatureToggles';
+import OfficialsTab from './Partials/OfficialsTab';
+import UsersTab from './Partials/UsersTab';
+import ZonesTable from './Partials/ZonesTable';
 
 interface PageProps {
     currentTab?: string;
@@ -43,6 +47,8 @@ export default function Index({
     logs = null,
     logFilters = {},
 }: PageProps) {
+    const resolvedCurrentTab = currentTab === 'case_categories' ? 'taxonomies' : (currentTab || 'taxonomies');
+    const [prevCurrentTab, setPrevCurrentTab] = useState(currentTab);
     const [activeTab, setActiveTab] = useState(() => {
         if (typeof window !== 'undefined') {
             const params = new URLSearchParams(window.location.search);
@@ -50,15 +56,13 @@ export default function Index({
             if (tabParam === 'case_categories') return 'taxonomies';
             if (tabParam) return tabParam;
         }
-        return currentTab || 'taxonomies';
+        return resolvedCurrentTab;
     });
 
-    useEffect(() => {
-        if (currentTab) {
-            const normalized = currentTab === 'case_categories' ? 'taxonomies' : currentTab;
-            setActiveTab(normalized);
-        }
-    }, [currentTab]);
+    if (prevCurrentTab !== currentTab) {
+        setPrevCurrentTab(currentTab);
+        setActiveTab(resolvedCurrentTab);
+    }
 
     const tabs = [
         { id: 'taxonomies', label: 'Management & Zones', icon: Sliders },
@@ -85,30 +89,31 @@ export default function Index({
 
     return (
         <AppLayout breadcrumbs={[
-            { title: 'Dashboard', href: '/admin/dashboard' },
+            { title: 'Dashboard', href: '/dashboard' },
             { title: 'System Settings', href: route('admin.settings.index') }
         ]}>
             <Head title="System Settings & Governance Hub" />
 
-            <div className="flex h-full flex-1 flex-col gap-6 p-4 sm:p-6 max-w-7xl mx-auto w-full">
-                {/* Header */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b pb-4">
+            {/* ── FULL-WIDTH CANVAS CONTAINER ── */}
+            <div className="flex h-full flex-1 flex-col gap-5 sm:gap-6 p-4 sm:p-6 w-full">
+                {/* ── UNBOXED CANONICAL HEADER ── */}
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                     <div>
-                        <h1 className="text-2xl sm:text-3xl font-black tracking-tight flex items-center gap-2.5">
-                            <div className="p-2 rounded-xl bg-primary/10 text-primary">
-                                <Settings className="w-6 h-6" />
-                            </div>
-                            System Administration Hub
-                        </h1>
-                        <p className="text-xs sm:text-sm text-muted-foreground mt-1">
-                            Centralized command center for system users, database backups, taxonomies, and compliance audit trails.
+                        <div className="flex items-center gap-2.5 flex-wrap">
+                            <Settings className="text-primary" size={30} />
+                            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
+                                System Settings
+                            </h1>
+                        </div>
+                        <p className="text-sm sm:text-base text-muted-foreground mt-0.5">
+                            Centralized administration for user access, disaster recovery, zone taxonomies, and compliance audit records.
                         </p>
                     </div>
                 </div>
 
-                {/* Tab Navigation - Responsive & Accessible */}
-                <div className="w-full">
-                    <div className="flex items-center gap-1.5 p-1.5 bg-muted/60 dark:bg-muted/30 rounded-xl border overflow-x-auto no-scrollbar">
+                {/* ── CLEAN SHADCN TAB NAVIGATION ── */}
+                <div className="w-full space-y-5">
+                    <div className="flex items-center gap-1.5 p-1 bg-muted/70 dark:bg-muted/40 rounded-xl border border-border/60 overflow-x-auto no-scrollbar">
                         {tabs.map((tab) => {
                             const Icon = tab.icon;
                             const isActive = activeTab === tab.id;
@@ -119,10 +124,10 @@ export default function Index({
                                     aria-selected={isActive}
                                     onClick={() => handleTabChange(tab.id)}
                                     className={cn(
-                                        "inline-flex items-center gap-2 whitespace-nowrap rounded-lg px-3.5 py-2 text-xs sm:text-sm font-semibold transition-all duration-150 shrink-0",
+                                        "inline-flex items-center gap-2 whitespace-nowrap rounded-lg px-3.5 sm:px-4 py-2 text-sm font-medium transition-all duration-150 shrink-0 min-h-[40px] sm:min-h-[38px]",
                                         isActive
-                                            ? "bg-background text-foreground shadow-sm font-bold dark:bg-neutral-800"
-                                            : "text-muted-foreground hover:text-foreground hover:bg-muted/80"
+                                            ? "bg-background text-foreground shadow-xs font-semibold dark:bg-neutral-800"
+                                            : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
                                     )}
                                 >
                                     <Icon className={cn("w-4 h-4 shrink-0", isActive ? "text-primary" : "text-muted-foreground")} />
@@ -132,11 +137,11 @@ export default function Index({
                         })}
                     </div>
 
-                    {/* Tab Panels */}
-                    <div className="mt-6 animate-in fade-in-50 duration-200">
+                    {/* ── TAB CONTENT PANELS ── */}
+                    <div className="w-full animate-in fade-in-50 duration-200">
                         {/* 1. Taxonomies & Zones */}
                         {activeTab === 'taxonomies' && (
-                            <div className="space-y-6">
+                            <div className="space-y-6 w-full">
                                 <AbuseTypesTable caseAbuseTypes={abuseTypes || []} />
                                 <ZonesTable zones={zones || []} />
                             </div>
@@ -144,32 +149,44 @@ export default function Index({
 
                         {/* 2. System Users & RBAC */}
                         {activeTab === 'users' && (
-                            <UsersTab users={users} filters={userFilters} />
+                            <div className="w-full">
+                                <UsersTab users={users} filters={userFilters} />
+                            </div>
                         )}
 
                         {/* 3. Barangay Officials Directory */}
                         {activeTab === 'officials' && (
-                            <OfficialsTab officials={officials} availableUsers={availableUsers} />
+                            <div className="w-full">
+                                <OfficialsTab officials={officials} availableUsers={availableUsers} />
+                            </div>
                         )}
 
                         {/* 4. System Feature Switches */}
                         {activeTab === 'features' && (
-                            <FeatureToggles />
+                            <div className="w-full">
+                                <FeatureToggles />
+                            </div>
                         )}
 
                         {/* 5. Database Disaster Recovery & Backups */}
                         {activeTab === 'backup' && (
-                            <BackupTab backups={backups} />
+                            <div className="w-full">
+                                <BackupTab backups={backups} />
+                            </div>
                         )}
 
                         {/* 6. Security & Mutation Audit Logs */}
                         {activeTab === 'audit' && (
-                            <AuditTab logs={logs} filters={logFilters} />
+                            <div className="w-full">
+                                <AuditTab logs={logs} filters={logFilters} />
+                            </div>
                         )}
 
                         {/* 7. Display & Appearance Theme */}
                         {activeTab === 'appearance' && (
-                            <AppearanceSettings />
+                            <div className="w-full">
+                                <AppearanceSettings />
+                            </div>
                         )}
                     </div>
                 </div>

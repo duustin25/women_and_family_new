@@ -1,3 +1,6 @@
+import { Transition } from '@headlessui/react';
+import { Form, Head, usePage } from '@inertiajs/react';
+import { useEffect, useRef, useState } from 'react';
 import PasswordController from '@/actions/App/Http/Controllers/Settings/PasswordController';
 import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
@@ -9,9 +12,6 @@ import AppLayout from '@/layouts/app-layout';
 import SettingsLayout from '@/layouts/settings/layout';
 import { edit } from '@/routes/user-password';
 import type { BreadcrumbItem, SharedData } from '@/types';
-import { Transition } from '@headlessui/react';
-import { Form, Head, usePage } from '@inertiajs/react';
-import { useEffect, useRef, useState } from 'react';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {

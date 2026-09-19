@@ -1,6 +1,6 @@
 import { Head, usePage } from '@inertiajs/react';
-import { Button } from "@/components/ui/button";
 import { Printer } from 'lucide-react';
+import { Button } from "@/components/ui/button";
 
 interface ChartData {
     month: string;
@@ -17,6 +17,41 @@ interface RibbonStats {
     total_bcpc: number;
     total_gad: number;
     total_orgs: number;
+    total_dossiers?: number;
+    active_bpos?: number;
+    recidivism_rate?: number;
+}
+
+interface DossierAnalytics {
+    total_dossiers: number;
+    active_dossiers: number;
+    closed_dossiers: number;
+    recidivism_count: number;
+    recidivism_rate: number;
+    repeat_incidents_count: number;
+    serial_perpetrators_count: number;
+    compound_survivors_count: number;
+    threat_level_distribution: { name: string; count: number }[];
+    lifecycle_distribution: { name: string; count: number }[];
+}
+
+interface BpoMetrics {
+    total_applied: number;
+    total_issued: number;
+    total_served: number;
+    active_monitoring: number;
+    peaceful_archived: number;
+    violations_recorded: number;
+    court_escalations: number;
+    sla_compliant_count: number;
+    sla_rate: number;
+    service_methods: { method: string; count: number }[];
+}
+
+interface RelationshipAnalytics {
+    relationships: { name: string; value: number; fill: string }[];
+    protocols: { name: string; description: string; count: number; fill: string }[];
+    intake_modes: { name: string; count: number }[];
 }
 
 interface BcpcSummary {
@@ -65,13 +100,19 @@ interface Props {
     gadAnalytics?: { total_events: number; approved: number; pending: number; rejected: number };
     orgAnalytics?: any;
     selectedOrgId?: number | null;
+    dossierAnalytics?: DossierAnalytics;
+    relationshipAnalytics?: RelationshipAnalytics;
+    bpoMetrics?: BpoMetrics;
+    riskDistribution?: { name: string; value: number; fill?: string }[];
+    bpoTrends?: { month: string; applied: number; issued: number }[];
 }
 
 export default function Print({
     year, generatedAt, analyticsData, chartConfig,
     ribbonStats, bcpcSummary, vawcStatusBreakdown,
     threatPatterns, interventionGaps, ageDemographics, zoneDistribution,
-    gadAnalytics, orgAnalytics, selectedOrgId
+    gadAnalytics, orgAnalytics, selectedOrgId,
+    dossierAnalytics, relationshipAnalytics, bpoMetrics, riskDistribution, bpoTrends
 }: Props) {
     const { auth } = usePage<any>().props;
     const isPresident = auth.user.role === 'president';
@@ -171,6 +212,26 @@ export default function Print({
                         ))
                     ) : null}
                 </div>
+                {!isPresident && (dossierAnalytics || bpoMetrics) && (
+                    <div className="grid grid-cols-4 gap-3 mt-3">
+                        <div className="border border-slate-300 rounded p-2 text-center bg-slate-50/50">
+                            <p className="text-[8px] font-black uppercase text-slate-500 tracking-widest mb-1">Master Dossiers</p>
+                            <p className="text-xl font-black text-slate-900">{dossierAnalytics?.total_dossiers ?? ribbonStats?.total_dossiers ?? 0}</p>
+                        </div>
+                        <div className="border border-slate-300 rounded p-2 text-center bg-slate-50/50">
+                            <p className="text-[8px] font-black uppercase text-slate-500 tracking-widest mb-1">Recidivism Rate</p>
+                            <p className="text-xl font-black text-rose-700">{dossierAnalytics?.recidivism_rate ?? ribbonStats?.recidivism_rate ?? 0}%</p>
+                        </div>
+                        <div className="border border-slate-300 rounded p-2 text-center bg-slate-50/50">
+                            <p className="text-[8px] font-black uppercase text-slate-500 tracking-widest mb-1">24-Hr SLA Compliance</p>
+                            <p className="text-xl font-black text-emerald-700">{bpoMetrics?.sla_rate ?? 100}%</p>
+                        </div>
+                        <div className="border border-slate-300 rounded p-2 text-center bg-slate-50/50">
+                            <p className="text-[8px] font-black uppercase text-slate-500 tracking-widest mb-1">Active 15-Day BPO</p>
+                            <p className="text-xl font-black text-blue-700">{bpoMetrics?.active_monitoring ?? ribbonStats?.active_bpos ?? 0}</p>
+                        </div>
+                    </div>
+                )}
             </div>
 
             {/* ── SECTION II: VAWC Cases OR Organization Applications ── */}
@@ -332,9 +393,14 @@ export default function Print({
                 </>
             ) : (
                 <>
-                    {/* SECTION II: VAWC Monthly Distribution (Admin/Head) */}
+                    {/* SECTION II: Comprehensive VAWC Tactical & Statutory Intelligence (Admin/Head) */}
+                    
+                    {/* II-A: Monthly Abuse Case Distribution */}
                     <div className="mb-8 overflow-hidden break-inside-avoid">
-                        <h3 className="text-xs font-black uppercase text-slate-700 mb-2">II. Monthly Abuse Case Distribution (Incidence Trends)</h3>
+                        <h3 className="text-xs font-black uppercase text-slate-700 mb-2 border-b border-slate-300 pb-1 flex justify-between">
+                            <span>II-A. Monthly Abuse Case Distribution (Incidence Trends)</span>
+                            <span className="text-[8px] text-slate-400">RA 9262 Crime Category Classification</span>
+                        </h3>
                         <table className="w-full text-[10px] border border-slate-900">
                             <thead>
                                 <tr className="bg-slate-100 border-b border-slate-900 text-center">
@@ -367,6 +433,296 @@ export default function Print({
                             </tfoot>
                         </table>
                     </div>
+
+                    {/* II-B: Master Dossier & Longitudinal Recidivism Intelligence */}
+                    {dossierAnalytics && (
+                        <div className="mb-8 break-inside-avoid">
+                            <h3 className="text-xs font-black uppercase text-slate-700 mb-2 border-b border-slate-300 pb-1 flex justify-between">
+                                <span>II-B. Master Dossier & Longitudinal Recidivism Intelligence</span>
+                                <span className="text-[8px] text-slate-400">RA 9262 Sec. 32 Longitudinal Records</span>
+                            </h3>
+                            <div className="grid grid-cols-6 gap-2 mb-3">
+                                {[
+                                    { label: 'Master Dossiers', value: dossierAnalytics.total_dossiers },
+                                    { label: 'Active Master Files', value: dossierAnalytics.active_dossiers },
+                                    { label: 'Recidivism Rate', value: `${dossierAnalytics.recidivism_rate}%` },
+                                    { label: 'Repeat Incidents', value: dossierAnalytics.repeat_incidents_count },
+                                    { label: 'Serial Perpetrators', value: dossierAnalytics.serial_perpetrators_count },
+                                    { label: 'Compound Survivors', value: dossierAnalytics.compound_survivors_count },
+                                ].map((kpi, i) => (
+                                    <div key={i} className="border border-slate-300 rounded p-1.5 text-center bg-slate-50/50">
+                                        <p className="text-[7.5px] font-black uppercase text-slate-500 tracking-wider mb-0.5">{kpi.label}</p>
+                                        <p className="text-xs font-black text-slate-900">{kpi.value}</p>
+                                    </div>
+                                ))}
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-8">
+                                <div>
+                                    <h4 className="text-[9px] font-black uppercase text-slate-500 mb-1.5">Threat Level Stratification</h4>
+                                    <table className="w-full text-[8.5px] border border-slate-300">
+                                        <thead className="bg-slate-50">
+                                            <tr className="border-b border-slate-300">
+                                                <th className="p-1 text-left uppercase">Threat Tier</th>
+                                                <th className="p-1 text-center uppercase">Active Dossiers</th>
+                                                <th className="p-1 text-right uppercase">Ratio</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {dossierAnalytics.threat_level_distribution.map((item, i) => {
+                                                const totalD = dossierAnalytics.total_dossiers || 1;
+                                                const pct = Math.round((item.count / totalD) * 100);
+                                                return (
+                                                    <tr key={i} className="border-t border-slate-200">
+                                                        <td className="p-1 font-bold uppercase">{item.name} Threat</td>
+                                                        <td className="p-1 text-center font-black">{item.count}</td>
+                                                        <td className="p-1 text-right font-medium text-slate-600">{pct}%</td>
+                                                    </tr>
+                                                );
+                                            })}
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <div>
+                                    <h4 className="text-[9px] font-black uppercase text-slate-500 mb-1.5">Longitudinal Lifecycle State</h4>
+                                    <table className="w-full text-[8.5px] border border-slate-300">
+                                        <thead className="bg-slate-50">
+                                            <tr className="border-b border-slate-300">
+                                                <th className="p-1 text-left uppercase">Lifecycle Stage</th>
+                                                <th className="p-1 text-center uppercase">Dossier Count</th>
+                                                <th className="p-1 text-right uppercase">Share</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {dossierAnalytics.lifecycle_distribution.map((item, i) => {
+                                                const totalD = dossierAnalytics.total_dossiers || 1;
+                                                const pct = Math.round((item.count / totalD) * 100);
+                                                return (
+                                                    <tr key={i} className="border-t border-slate-200">
+                                                        <td className="p-1 font-bold uppercase">{item.name}</td>
+                                                        <td className="p-1 text-center font-black">{item.count}</td>
+                                                        <td className="p-1 text-right font-medium text-slate-600">{pct}%</td>
+                                                    </tr>
+                                                );
+                                            })}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* II-C: VAWC-RAVE Algorithmic Triage Risk Severity Distribution */}
+                    {riskDistribution && riskDistribution.length > 0 && (
+                        <div className="mb-8 break-inside-avoid">
+                            <h3 className="text-xs font-black uppercase text-slate-700 mb-2 border-b border-slate-300 pb-1 flex justify-between">
+                                <span>II-C. VAWC-RAVE Algorithmic Triage & Risk Severity Distribution</span>
+                                <span className="text-[8px] text-slate-400">Standardized Risk & Lethality Assessment Model</span>
+                            </h3>
+                            <table className="w-full text-[8.5px] border border-slate-300">
+                                <thead className="bg-slate-50">
+                                    <tr className="border-b border-slate-300">
+                                        <th className="p-1.5 text-left uppercase w-28">Severity Tier</th>
+                                        <th className="p-1.5 text-left uppercase">Mandated Statutory Response Protocol</th>
+                                        <th className="p-1.5 text-center uppercase w-24">Cases Count</th>
+                                        <th className="p-1.5 text-right uppercase w-20">Distribution</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {riskDistribution.map((tier, i) => {
+                                        const totalRiskCases = riskDistribution.reduce((acc, r) => acc + r.value, 0) || 1;
+                                        const pct = Math.round((tier.value / totalRiskCases) * 100);
+                                        const descriptions: Record<string, string> = {
+                                            CRITICAL: 'Lethality detected. Mandatory immediate Police Inquest referral, temporary shelter refuge, and expedited BPO.',
+                                            HIGH: 'Severe coercive control / violence threat. Rapid BPO issuance within statutory 24-hr mandate and security escort.',
+                                            MODERATE: 'Domestic conflict with physical/economic injury. Regular 15-day BPO, DSWD counseling, and mediation prohibition.',
+                                            LOW: 'Dispute / verbal harassment. Peace officer watch, voluntary psychosocial intake, and bar of amicable settlement.',
+                                            PENDING: 'Intake statement recorded. Formal RAVE assessment pending survivor stabilization / follow-up.',
+                                        };
+                                        return (
+                                            <tr key={i} className="border-t border-slate-200">
+                                                <td className="p-1.5 font-bold uppercase">{tier.name}</td>
+                                                <td className="p-1.5 text-slate-700">{descriptions[tier.name] || 'Standard case evaluation and protection protocol.'}</td>
+                                                <td className="p-1.5 text-center font-black">{tier.value}</td>
+                                                <td className="p-1.5 text-right font-medium text-slate-600">{pct}%</td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+
+                    {/* II-D: Barangay Protection Order (BPO) Milestones & 24-Hour SLA Compliance */}
+                    {bpoMetrics && (
+                        <div className="mb-8 break-inside-avoid">
+                            <h3 className="text-xs font-black uppercase text-slate-700 mb-2 border-b border-slate-300 pb-1 flex justify-between">
+                                <span>II-D. Barangay Protection Order (BPO) Milestones & 24-Hour Statutory SLA Compliance</span>
+                                <span className="text-[8px] text-slate-400">RA 9262 Section 14 Legal Mandate</span>
+                            </h3>
+                            <div className="grid grid-cols-7 gap-2 mb-3">
+                                {[
+                                    { label: 'BPOs Applied', value: bpoMetrics.total_applied },
+                                    { label: 'Issued by PB', value: bpoMetrics.total_issued },
+                                    { label: 'Served to Resp.', value: bpoMetrics.total_served },
+                                    { label: '24-Hr SLA Rate', value: `${bpoMetrics.sla_rate}%` },
+                                    { label: 'Active 15-Day Watch', value: bpoMetrics.active_monitoring },
+                                    { label: 'Peaceful Exits', value: bpoMetrics.peaceful_archived },
+                                    { label: 'Violations / Court', value: bpoMetrics.violations_recorded },
+                                ].map((kpi, i) => (
+                                    <div key={i} className="border border-slate-300 rounded p-1.5 text-center bg-slate-50/50">
+                                        <p className="text-[7px] font-black uppercase text-slate-500 tracking-wider mb-0.5">{kpi.label}</p>
+                                        <p className="text-xs font-black text-slate-900">{kpi.value}</p>
+                                    </div>
+                                ))}
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-8">
+                                <div>
+                                    <h4 className="text-[9px] font-black uppercase text-slate-500 mb-1.5">Official Service Delivery Method</h4>
+                                    <table className="w-full text-[8.5px] border border-slate-300">
+                                        <thead className="bg-slate-50">
+                                            <tr className="border-b border-slate-300">
+                                                <th className="p-1 text-left uppercase">Delivery Mechanism</th>
+                                                <th className="p-1 text-center uppercase">Served Executions</th>
+                                                <th className="p-1 text-right uppercase">Ratio</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {bpoMetrics.service_methods && bpoMetrics.service_methods.length > 0 ? (
+                                                bpoMetrics.service_methods.map((method, i) => {
+                                                    const totalServ = bpoMetrics.total_served || 1;
+                                                    const pct = Math.round((method.count / totalServ) * 100);
+                                                    return (
+                                                        <tr key={i} className="border-t border-slate-200">
+                                                            <td className="p-1 font-bold uppercase">{method.method}</td>
+                                                            <td className="p-1 text-center font-black">{method.count}</td>
+                                                            <td className="p-1 text-right font-medium text-slate-600">{pct}%</td>
+                                                        </tr>
+                                                    );
+                                                })
+                                            ) : (
+                                                <tr>
+                                                    <td colSpan={3} className="p-1.5 text-center italic text-slate-400">No served BPO executions recorded.</td>
+                                                </tr>
+                                            )}
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <div>
+                                    <h4 className="text-[9px] font-black uppercase text-slate-500 mb-1.5">Statutory 24-Hour Issuance Mandate Analysis</h4>
+                                    <div className="p-2 border border-slate-300 rounded bg-slate-50/50 space-y-1 text-[8.5px]">
+                                        <div className="flex justify-between">
+                                            <span className="font-bold">Total Protection Orders Filed:</span>
+                                            <span className="font-black">{bpoMetrics.total_applied}</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span className="font-bold">Issued Within 24-Hour Statutory SLA:</span>
+                                            <span className="font-black text-emerald-700">{bpoMetrics.sla_compliant_count}</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span className="font-bold">Statutory SLA Compliance Ratio:</span>
+                                            <span className="font-black text-emerald-700">{bpoMetrics.sla_rate}%</span>
+                                        </div>
+                                        <div className="flex justify-between border-t border-slate-200 pt-1 text-[8px] text-slate-500 italic">
+                                            <span>Governed by RA 9262 Sec. 14 — Ex-parte issuance within 24 hours of application without notice or hearing.</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* II-E: Intimate Partner Relationship & Statutory Protocol Matrix */}
+                    {relationshipAnalytics && (
+                        <div className="mb-8 break-inside-avoid">
+                            <h3 className="text-xs font-black uppercase text-slate-700 mb-2 border-b border-slate-300 pb-1 flex justify-between">
+                                <span>II-E. Intimate Partner Relationship & Statutory Protocol Matrix</span>
+                                <span className="text-[8px] text-slate-400">Jurisdictional Boundary: RA 9262 vs RA 7610 vs RPC</span>
+                            </h3>
+                            <div className="grid grid-cols-2 gap-8">
+                                <div>
+                                    <h4 className="text-[9px] font-black uppercase text-slate-500 mb-1.5">Intimate Relationship Classification (RA 9262 Sec. 3)</h4>
+                                    <table className="w-full text-[8.5px] border border-slate-300">
+                                        <thead className="bg-slate-50">
+                                            <tr className="border-b border-slate-300">
+                                                <th className="p-1 text-left uppercase">Relationship Type</th>
+                                                <th className="p-1 text-center uppercase">Master Dossiers</th>
+                                                <th className="p-1 text-right uppercase">Share</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {relationshipAnalytics.relationships && relationshipAnalytics.relationships.length > 0 ? (
+                                                relationshipAnalytics.relationships.map((rel, i) => {
+                                                    const totalR = relationshipAnalytics.relationships.reduce((acc, r) => acc + r.value, 0) || 1;
+                                                    const pct = Math.round((rel.value / totalR) * 100);
+                                                    return (
+                                                        <tr key={i} className="border-t border-slate-200">
+                                                            <td className="p-1 font-bold uppercase">{rel.name}</td>
+                                                            <td className="p-1 text-center font-black">{rel.value}</td>
+                                                            <td className="p-1 text-right font-medium text-slate-600">{pct}%</td>
+                                                        </tr>
+                                                    );
+                                                })
+                                            ) : (
+                                                <tr>
+                                                    <td colSpan={3} className="p-1.5 text-center italic text-slate-400">No relationship classifications recorded.</td>
+                                                </tr>
+                                            )}
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <div>
+                                    <h4 className="text-[9px] font-black uppercase text-slate-500 mb-1.5">Statutory Protocol & Jurisdictional Pathway</h4>
+                                    <table className="w-full text-[8.5px] border border-slate-300">
+                                        <thead className="bg-slate-50">
+                                            <tr className="border-b border-slate-300">
+                                                <th className="p-1 text-left uppercase">Statutory Protocol</th>
+                                                <th className="p-1 text-center uppercase">Cases Count</th>
+                                                <th className="p-1 text-right uppercase">Description</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {relationshipAnalytics.protocols && relationshipAnalytics.protocols.map((proto, i) => (
+                                                <tr key={i} className="border-t border-slate-200">
+                                                    <td className="p-1 font-bold uppercase">{proto.name}</td>
+                                                    <td className="p-1 text-center font-black">{proto.count}</td>
+                                                    <td className="p-1 text-right font-medium text-slate-600">{proto.description}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+
+                                    <h4 className="text-[9px] font-black uppercase text-slate-500 mt-3 mb-1.5">Intake Reporting Modes</h4>
+                                    <table className="w-full text-[8.5px] border border-slate-300">
+                                        <thead className="bg-slate-50">
+                                            <tr className="border-b border-slate-300">
+                                                <th className="p-1 text-left uppercase">Intake Channel</th>
+                                                <th className="p-1 text-center uppercase">Volume</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {relationshipAnalytics.intake_modes && relationshipAnalytics.intake_modes.length > 0 ? (
+                                                relationshipAnalytics.intake_modes.map((mode, i) => (
+                                                    <tr key={i} className="border-t border-slate-200">
+                                                        <td className="p-1 font-bold uppercase">{mode.name}</td>
+                                                        <td className="p-1 text-center font-black">{mode.count}</td>
+                                                    </tr>
+                                                ))
+                                            ) : (
+                                                <tr>
+                                                    <td colSpan={2} className="p-1.5 text-center italic text-slate-400">No intake modes recorded.</td>
+                                                </tr>
+                                            )}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
                     {/* SECTION III: Operational Threat & Demographic Radar (Admin/Head) */}
                     <div className="grid grid-cols-2 gap-8 mb-8 break-inside-avoid">

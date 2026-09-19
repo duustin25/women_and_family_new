@@ -1,4 +1,3 @@
-import { useState, useEffect } from 'react';
 import { Link, usePage } from '@inertiajs/react';
 import {
     Phone, AlertCircle, Shield, Users, Info,
@@ -9,9 +8,10 @@ import {
     Sun,
     Moon
 } from "lucide-react";
+import { useState, useEffect } from 'react';
 import { toast, Toaster } from 'sonner';
-import ChatbotWidget from '@/components/ChatbotWidget';
 import AccessibilityToolbar from '@/components/AccessibilityToolbar';
+import ChatbotWidget from '@/components/ChatbotWidget';
 import { useAppearance } from '@/hooks/use-appearance';
 
 const brgyName = import.meta.env.VITE_APP_BARANGAY_NAME || 'Barangay 183';

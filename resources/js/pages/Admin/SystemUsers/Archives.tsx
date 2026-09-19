@@ -1,13 +1,13 @@
 import { Head, Link, router } from '@inertiajs/react';
-import { Button } from "@/components/ui/button";
 import {
     LayoutDashboard, X, Search, User, Undo2, Filter, ShieldAlert
 } from "lucide-react";
-import AppLayout from '@/layouts/app-layout';
 import { useState } from 'react';
-import { useConfirm } from '@/hooks/use-confirm';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RoleBadge } from '@/components/Admin/RoleBadge';
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useConfirm } from '@/hooks/use-confirm';
+import AppLayout from '@/layouts/app-layout';
 
 interface SystemUser {
     id: number;

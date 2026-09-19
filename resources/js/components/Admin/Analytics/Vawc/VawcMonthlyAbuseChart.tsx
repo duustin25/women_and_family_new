@@ -1,7 +1,7 @@
 import React from 'react';
 import AnalyticsChart from '@/components/Admin/AnalyticsChart';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 
 interface Props {
     data: any[];

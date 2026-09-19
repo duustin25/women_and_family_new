@@ -1,9 +1,9 @@
-import PublicLayout from '@/layouts/PublicLayout';
 import { Head, Link } from '@inertiajs/react';
 import { ShieldAlert, Baby, Scale, PhoneCall, AlertCircle, Clock, Phone, Info, HeartHandshake, BookOpen, ArrowRight, Activity, Calendar, Apple } from "lucide-react";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import PublicLayout from '@/layouts/PublicLayout';
 
 export default function BcpcIndex() {
 

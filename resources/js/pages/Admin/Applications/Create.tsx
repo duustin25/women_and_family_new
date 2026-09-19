@@ -1,10 +1,10 @@
 import { Head, Link } from '@inertiajs/react';
-import AppLayout from '@/layouts/app-layout';
 import { 
     Building2, Users, ArrowLeft, 
     ChevronRight, ClipboardList, Info 
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import AppLayout from '@/layouts/app-layout';
 
 interface Organization {
     id: number;

@@ -45,10 +45,13 @@ class AnalyticsController extends Controller
             'currentYear'         => $currentYear,
 
             // ── VAWC: RA 9262 (Abuse Rates by Month - CLIENT REQUIREMENT) ──
-            'vawcData'            => $isPresident ? [] : $this->analyticsService->getMonthlyCaseAnalytics('VAWC', $currentYear, $vawcTypes),
-            'vawcChartConfig'     => $isPresident ? [] : $this->analyticsService->getVawcChartConfig(),
-            'vawcStatusBreakdown' => $isPresident ? [] : $this->analyticsService->getVawcStatusBreakdown($currentYear),
-            'bpoTrends'           => $isPresident ? [] : $this->analyticsService->getVawcBpoTrends($currentYear),
+            'vawcData'              => $isPresident ? [] : $this->analyticsService->getMonthlyCaseAnalytics('VAWC', $currentYear, $vawcTypes),
+            'vawcChartConfig'       => $isPresident ? [] : $this->analyticsService->getVawcChartConfig(),
+            'vawcStatusBreakdown'   => $isPresident ? [] : $this->analyticsService->getVawcStatusBreakdown($currentYear),
+            'bpoTrends'             => $isPresident ? [] : $this->analyticsService->getVawcBpoTrends($currentYear),
+            'bpoMetrics'            => $isPresident ? null : $this->analyticsService->getVawcBpoOperationalMetrics($currentYear),
+            'dossierAnalytics'      => $isPresident ? null : $this->analyticsService->getVawcDossierAnalytics($currentYear),
+            'relationshipAnalytics' => $isPresident ? null : $this->analyticsService->getVawcRelationshipAnalytics($currentYear),
 
             // ── VAWC-RAVE Operational Intelligence ────────────────
             'threatPatterns'      => $isPresident ? [] : $this->analyticsService->getThreatIndicatorPatterns($currentYear),
@@ -100,21 +103,24 @@ class AnalyticsController extends Controller
         $isPresident = $user->isPresident();
 
         return Inertia::render('Admin/Analytics/Print', [
-            'analyticsData'    => $isPresident ? [] : $this->analyticsService->getMonthlyCaseAnalytics('VAWC', $year, $abuseTypes),
-            'year'             => $year,
-            'chartConfig'      => $isPresident ? [] : $chartConfig,
-            'generatedAt'      => Carbon::now()->format('F j, Y g:i A'),
-            'ribbonStats'      => $isPresident ? null : $this->analyticsService->getRibbonStats($year),
-            'bpoTrends'        => $isPresident ? [] : $this->analyticsService->getVawcBpoTrends($year),
-            'vawcStatusBreakdown' => $isPresident ? [] : $this->analyticsService->getVawcStatusBreakdown($year),
-            'riskDistribution' => $isPresident ? [] : $this->analyticsService->getRiskSeverityDistribution($year),
-            'threatPatterns'   => $isPresident ? [] : $this->analyticsService->getThreatIndicatorPatterns($year),
-            'interventionGaps' => $isPresident ? [] : $this->analyticsService->getInterventionGaps($year),
-            'bcpcSummary'      => $isPresident ? null : $this->analyticsService->getBcpcNutritionSummary(),
-            'gadAnalytics'     => $this->analyticsService->getGadAnalytics($year),
-            'orgSectorAnalysis' => $this->analyticsService->getOrgSectorAnalysis(),
-            'ageDemographics'  => $isPresident ? [] : $this->analyticsService->getAgeDemographics($year),
-            'zoneDistribution' => $isPresident ? [] : $this->analyticsService->getZoneDistribution($year),
+            'analyticsData'         => $isPresident ? [] : $this->analyticsService->getMonthlyCaseAnalytics('VAWC', $year, $abuseTypes),
+            'year'                  => $year,
+            'chartConfig'           => $isPresident ? [] : $chartConfig,
+            'generatedAt'           => Carbon::now()->format('F j, Y g:i A'),
+            'ribbonStats'           => $isPresident ? null : $this->analyticsService->getRibbonStats($year),
+            'bpoTrends'             => $isPresident ? [] : $this->analyticsService->getVawcBpoTrends($year),
+            'bpoMetrics'            => $isPresident ? null : $this->analyticsService->getVawcBpoOperationalMetrics($year),
+            'dossierAnalytics'      => $isPresident ? null : $this->analyticsService->getVawcDossierAnalytics($year),
+            'relationshipAnalytics' => $isPresident ? null : $this->analyticsService->getVawcRelationshipAnalytics($year),
+            'vawcStatusBreakdown'   => $isPresident ? [] : $this->analyticsService->getVawcStatusBreakdown($year),
+            'riskDistribution'      => $isPresident ? [] : $this->analyticsService->getRiskSeverityDistribution($year),
+            'threatPatterns'        => $isPresident ? [] : $this->analyticsService->getThreatIndicatorPatterns($year),
+            'interventionGaps'      => $isPresident ? [] : $this->analyticsService->getInterventionGaps($year),
+            'bcpcSummary'           => $isPresident ? null : $this->analyticsService->getBcpcNutritionSummary(),
+            'gadAnalytics'          => $this->analyticsService->getGadAnalytics($year),
+            'orgSectorAnalysis'     => $this->analyticsService->getOrgSectorAnalysis(),
+            'ageDemographics'       => $isPresident ? [] : $this->analyticsService->getAgeDemographics($year),
+            'zoneDistribution'      => $isPresident ? [] : $this->analyticsService->getZoneDistribution($year),
 
             // ── Dynamic Org & Member Analytics ───────────────────
             'orgAnalytics'     => $orgAnalytics,

@@ -1,13 +1,13 @@
-import React from 'react';
 import { Head, router, Link } from '@inertiajs/react';
-import AppLayout from '@/layouts/app-layout';
 import { ShieldAlert, CheckCircle2, XCircle, Clock, AlertTriangle, Building, User, Calendar, FileText, History, ListFilter } from 'lucide-react';
+import React from 'react';
 import { toast } from 'sonner';
 import { route } from 'ziggy-js';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import AppLayout from '@/layouts/app-layout';
 
 interface ApplicationAppeal {
     id: number;

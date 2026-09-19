@@ -1,6 +1,6 @@
-import PublicLayout from '@/layouts/PublicLayout';
 import { Head, Link } from '@inertiajs/react';
 import { Calendar, MapPin, ArrowLeft } from 'lucide-react';
+import PublicLayout from '@/layouts/PublicLayout';
 
 const formatContent = (text?: string) => {
     if (!text) return null; // or return ''

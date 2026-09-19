@@ -1,11 +1,10 @@
-import PublicLayout from '@/layouts/PublicLayout';
 import { Head } from '@inertiajs/react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import {
     Shield, Scale, BookOpen, AlertCircle, HeartHandshake,
     Users, ExternalLink, Lock, ShieldCheck, FileText
 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
     Dialog,
     DialogContent,
@@ -15,6 +14,7 @@ import {
     DialogTrigger,
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import PublicLayout from '@/layouts/PublicLayout';
 
 export default function Laws() {
     const laws = [

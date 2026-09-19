@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\CaseReport;
 use App\Models\VawcCase;
+use App\Models\VawcDossier;
 use App\Models\MembershipApplication;
 use App\Models\Zone;
 use App\Models\BcpcChild;
@@ -26,14 +27,23 @@ class AnalyticsService
      */
     public function getRibbonStats(int $year): array
     {
+        $totalCases = VawcCase::whereYear('created_at', $year)->count();
+        $totalDossiers = VawcDossier::count();
+        $activeBpos = DB::table('vawc_protection_orders')->whereIn('status', ['Issued', 'Served'])->count();
+        $repeatDossiers = VawcDossier::where('incident_count', '>', 1)->count();
+        $recidivismRate = $totalDossiers > 0 ? round(($repeatDossiers / $totalDossiers) * 100, 1) : 0.0;
+
         return [
-            'total_vawc'  => VawcCase::whereYear('created_at', $year)->count(),
-            'total_bcpc'  => BcpcChild::count(),
-            'total_gad'   => GadEvent::whereYear('event_date', $year)->count(),
-            'total_orgs'  => Organization::count(),
+            'total_vawc'       => $totalCases,
+            'total_dossiers'   => $totalDossiers,
+            'active_bpos'      => $activeBpos,
+            'recidivism_rate'  => $recidivismRate,
+            'total_bcpc'       => BcpcChild::count(),
+            'total_gad'        => GadEvent::whereYear('event_date', $year)->count(),
+            'total_orgs'       => Organization::count(),
             // Maintain shared metrics for internal use
-            'resolution_rate' => $this->calculateResolutionRate($year),
-            'sla_rate'        => $this->calculateSlaRate($year),
+            'resolution_rate'  => $this->calculateResolutionRate($year),
+            'sla_rate'         => $this->calculateSlaRate($year),
         ];
     }
 
@@ -458,14 +468,21 @@ class AnalyticsService
     public function getVawcStatusBreakdown(int $year): array
     {
         $colors = [
-            'Intake'              => '#f59e0b',
-            'Assessment'          => '#f97316',
-            'Alternative Housing' => '#6366f1',
-            'BPO Processing'      => '#a855f7',
-            'Monitoring'          => '#0ea5e9',
-            'Escalated'           => '#ef4444',
-            'Resolved'            => '#10b981',
-            'Closed'              => '#64748b',
+            'Intake'                        => '#f59e0b',
+            'Assessment'                    => '#f97316',
+            'Alternative Housing'           => '#6366f1',
+            'BPO Processing'                => '#a855f7',
+            'Monitoring'                    => '#0ea5e9',
+            'Escalated'                     => '#ef4444',
+            'Resolved'                      => '#10b981',
+            'Closed'                        => '#64748b',
+            'Intake / Assessment Pending'   => '#f59e0b',
+            'Application Pending'           => '#f97316',
+            'BPO Issuance Pending'          => '#ec4899',
+            'BPO Service Pending'           => '#a855f7',
+            'Under Monitoring (15-Day BPO)' => '#0ea5e9',
+            'Escalated to Court/PNP'        => '#ef4444',
+            'Archived / Concluded'          => '#64748b',
         ];
 
         return VawcCase::select('status', DB::raw('count(*) as total'))
@@ -482,8 +499,8 @@ class AnalyticsService
     }
 
     /**
-     * Get distribution of risk levels (CRITICAL, HIGH, MODERATE, LOW).
-     * This aggregates the VAWC-RAVE algorithm's output.
+     * Get distribution of risk levels (CRITICAL, HIGH, MODERATE, LOW, PENDING).
+     * Aggregates the VAWC-RAVE algorithm's output across all recorded cases.
      */
     public function getRiskSeverityDistribution(int $year): array
     {
@@ -492,20 +509,21 @@ class AnalyticsService
             'HIGH'     => '#f97316', // Orange 500
             'MODERATE' => '#eab308', // Yellow 500
             'LOW'      => '#3b82f6', // Blue 500
+            'PENDING'  => '#94a3b8', // Slate 400
         ];
 
-        return DB::table('vawc_assessments')
-            ->whereYear('created_at', $year)
-            ->select('risk_level', DB::raw('count(*) as total'))
+        $assessments = DB::table('vawc_cases')
+            ->leftJoin('vawc_assessments', 'vawc_cases.id', '=', 'vawc_assessments.vawc_case_id')
+            ->whereYear('vawc_cases.created_at', $year)
+            ->select(DB::raw('COALESCE(vawc_assessments.risk_level, "PENDING") as risk_level'), DB::raw('count(*) as total'))
             ->groupBy('risk_level')
-            ->get()
-            ->map(fn($row) => [
-                'name'  => $row->risk_level ?: 'Incomplete',
-                'value' => $row->total,
-                'fill'  => $colors[$row->risk_level] ?? '#94a3b8',
-            ])
-            ->values()
-            ->toArray();
+            ->get();
+
+        return $assessments->map(fn($row) => [
+            'name'  => $row->risk_level ?: 'PENDING',
+            'value' => $row->total,
+            'fill'  => $colors[$row->risk_level] ?? '#94a3b8',
+        ])->values()->toArray();
     }
 
     /**
@@ -825,7 +843,7 @@ class AnalyticsService
 
     /**
      * Strategic Threat Patterns: Aggregates risk factors from the VAWC-RAVE algorithm.
-     * Helps identified the 'Nature' of the problems in the barangay.
+     * Helps identify the nature and intensity of threats in the barangay.
      */
     public function getThreatIndicatorPatterns(int $year): array
     {
@@ -835,9 +853,253 @@ class AnalyticsService
 
         return [
             ['name' => 'Weapons Involved',     'value' => $cases->where('has_weapon_involved', true)->count(), 'color' => '#ef4444'],
+            ['name' => 'Weapons Confiscated',  'value' => $cases->where('weapons_confiscated', true)->count(), 'color' => '#10b981'],
             ['name' => 'Emergency Arrests',    'value' => $cases->where('warrantless_arrest_made', true)->count(), 'color' => '#ce1126'],
             ['name' => 'Repeat Offense',       'value' => $cases->where('is_repeat_offense', true)->count(), 'color' => '#f97316'],
             ['name' => 'Active Scene Threat',  'value' => $cases->where('perpetrator_present', true)->count(), 'color' => '#8b5cf6'],
+            ['name' => 'Children at Risk',     'value' => $cases->filter(fn($c) => ($c->children_count ?? 0) > 0)->count(), 'color' => '#06b6d4'],
+        ];
+    }
+
+    /**
+     * Master Dossier Longitudinal Intelligence:
+     * Tracks recidivism, active vs dormant legal relationships, and serial offenders.
+     */
+    public function getVawcDossierAnalytics(int $year): array
+    {
+        $dossiers = VawcDossier::with(['cases'])->get();
+        $totalDossiers = $dossiers->count();
+        $activeDossiers = $dossiers->where('current_lifecycle', '!=', 'Dormant/Closed')->count();
+        $closedDossiers = $dossiers->where('current_lifecycle', 'Dormant/Closed')->count();
+
+        // Longitudinal recidivism: Dossiers with > 1 incident recorded
+        $repeatDossiers = $dossiers->where('incident_count', '>', 1);
+        $recidivismCount = $repeatDossiers->count();
+        $recidivismRate = $totalDossiers > 0 ? round(($recidivismCount / $totalDossiers) * 100, 1) : 0.0;
+        $totalRepeatIncidents = $repeatDossiers->sum('incident_count');
+
+        // Serial Perpetrators: Distinct respondent names appearing in > 1 master dossier
+        $serialPerpNames = VawcDossier::select('respondent_name')
+            ->groupBy('respondent_name')
+            ->havingRaw('count(*) > 1')
+            ->pluck('respondent_name');
+        $serialPerpetratorsCount = $serialPerpNames->count();
+
+        // Compound Survivors: Distinct survivor names appearing in > 1 master dossier
+        $compoundSurvivorNames = VawcDossier::select('survivor_name')
+            ->groupBy('survivor_name')
+            ->havingRaw('count(*) > 1')
+            ->pluck('survivor_name');
+        $compoundSurvivorsCount = $compoundSurvivorNames->count();
+
+        // Threat level distribution across dossiers
+        $threatColors = [
+            'CRITICAL' => '#ef4444',
+            'HIGH'     => '#f97316',
+            'MODERATE' => '#eab308',
+            'LOW'      => '#3b82f6',
+            'PENDING'  => '#94a3b8',
+        ];
+
+        $threatLevelDistribution = $dossiers->groupBy('highest_threat_level')->map(function ($group, $level) use ($threatColors) {
+            return [
+                'name'  => $level ?: 'PENDING',
+                'value' => $group->count(),
+                'fill'  => $threatColors[$level] ?? '#94a3b8',
+            ];
+        })->values()->toArray();
+
+        // Lifecycle distribution
+        $lifecycleColors = [
+            'Intake / Assessment Pending' => '#f59e0b',
+            'Application Pending'         => '#f97316',
+            'BPO Issuance Pending'        => '#ec4899',
+            'BPO Service Pending'         => '#a855f7',
+            'Under Monitoring (15-Day BPO)' => '#0ea5e9',
+            'Escalated to Court/PNP'      => '#ef4444',
+            'Dormant/Closed'              => '#64748b',
+        ];
+
+        $lifecycleDistribution = $dossiers->groupBy('current_lifecycle')->map(function ($group, $cycle) use ($lifecycleColors) {
+            return [
+                'name'  => $cycle ?: 'Unassigned',
+                'value' => $group->count(),
+                'fill'  => $lifecycleColors[$cycle] ?? '#94a3b8',
+            ];
+        })->values()->toArray();
+
+        return [
+            'total_dossiers'            => $totalDossiers,
+            'active_dossiers'           => $activeDossiers,
+            'closed_dossiers'           => $closedDossiers,
+            'recidivism_count'          => $recidivismCount,
+            'recidivism_rate'           => $recidivismRate,
+            'total_repeat_incidents'    => $totalRepeatIncidents,
+            'serial_perpetrators_count' => $serialPerpetratorsCount,
+            'compound_survivors_count'  => $compoundSurvivorsCount,
+            'threat_level_distribution' => $threatLevelDistribution,
+            'lifecycle_distribution'    => $lifecycleDistribution,
+        ];
+    }
+
+    /**
+     * Statutory Relationship & Legal Protocol Classification:
+     * Analyzes intimacy qualifications under RA 9262 Sec. 3 vs RA 7610 and RPC.
+     */
+    public function getVawcRelationshipAnalytics(int $year): array
+    {
+        $dossiers = VawcDossier::all();
+        $cases = VawcCase::with(['caseReport', 'dossier'])->whereYear('created_at', $year)->get();
+
+        // 1. Relationship Distribution (RA 9262 Sec. 3 Intimate Partner Categories)
+        $relColors = [
+            'Spouse'          => '#ef4444',
+            'Ex-Spouse'       => '#f97316',
+            'Live-in Partner' => '#8b5cf6',
+            'Ex-Partner'      => '#a855f7',
+            'Dating Partner'  => '#ec4899',
+            'Co-Parent'       => '#06b6d4',
+            'Relative'        => '#3b82f6',
+            'Other'           => '#64748b',
+        ];
+
+        $normalizedRel = [
+            'Spouse'          => 0,
+            'Ex-Spouse'       => 0,
+            'Live-in Partner' => 0,
+            'Ex-Partner'      => 0,
+            'Dating Partner'  => 0,
+            'Co-Parent'       => 0,
+            'Relative'        => 0,
+            'Other'           => 0,
+        ];
+
+        foreach ($dossiers as $d) {
+            $rel = strtolower($d->relationship_type ?? '');
+            if (str_contains($rel, 'former spouse') || str_contains($rel, 'separated') || str_contains($rel, 'annulled')) {
+                $normalizedRel['Ex-Spouse']++;
+            } elseif (str_contains($rel, 'spouse') || str_contains($rel, 'husband') || str_contains($rel, 'wife')) {
+                $normalizedRel['Spouse']++;
+            } elseif (str_contains($rel, 'former live-in') || str_contains($rel, 'former dating')) {
+                $normalizedRel['Ex-Partner']++;
+            } elseif (str_contains($rel, 'common-law') || str_contains($rel, 'live-in')) {
+                $normalizedRel['Live-in Partner']++;
+            } elseif (str_contains($rel, 'dating') || str_contains($rel, 'romantic') || str_contains($rel, 'boyfriend') || str_contains($rel, 'girlfriend')) {
+                $normalizedRel['Dating Partner']++;
+            } elseif (str_contains($rel, 'common child') || str_contains($rel, 'parent')) {
+                $normalizedRel['Co-Parent']++;
+            } elseif (str_contains($rel, 'relative') || str_contains($rel, 'uncle') || str_contains($rel, 'cousin') || str_contains($rel, 'in-law')) {
+                $normalizedRel['Relative']++;
+            } else {
+                $normalizedRel['Other']++;
+            }
+        }
+
+        $relationshipDistribution = [];
+        foreach ($normalizedRel as $label => $count) {
+            if ($count > 0) {
+                $relationshipDistribution[] = [
+                    'name'  => $label,
+                    'value' => $count,
+                    'fill'  => $relColors[$label] ?? '#94a3b8',
+                ];
+            }
+        }
+
+        // 2. Statutory Legal Protocol Classification
+        $protocolCounts = [
+            'RA 9262 Protocol (Intimate Partner)' => 0,
+            'RA 7610 Protocol (Child Protection)' => 0,
+            'RPC / Non-Intimate Family Assault'   => 0,
+        ];
+
+        foreach ($cases as $c) {
+            $isChildVictim = ($c->caseReport && $c->caseReport->victim_age < 18);
+            $rel = strtolower($c->dossier?->relationship_type ?? '');
+            $isIntimate = str_contains($rel, 'spouse') || str_contains($rel, 'live-in') || str_contains($rel, 'dating') || str_contains($rel, 'common child') || str_contains($rel, 'husband') || str_contains($rel, 'wife');
+
+            if ($isIntimate) {
+                $protocolCounts['RA 9262 Protocol (Intimate Partner)']++;
+            } elseif ($isChildVictim) {
+                $protocolCounts['RA 7610 Protocol (Child Protection)']++;
+            } else {
+                $protocolCounts['RPC / Non-Intimate Family Assault']++;
+            }
+        }
+
+        $protocolDistribution = [
+            ['name' => 'RA 9262 Protocol', 'description' => 'Intimate Partner Violence', 'count' => $protocolCounts['RA 9262 Protocol (Intimate Partner)'], 'fill' => '#ce1126'],
+            ['name' => 'RA 7610 Protocol', 'description' => 'Special Child Protection', 'count' => $protocolCounts['RA 7610 Protocol (Child Protection)'], 'fill' => '#0d9488'],
+            ['name' => 'RPC / Family Law', 'description' => 'Revised Penal Code', 'count' => $protocolCounts['RPC / Non-Intimate Family Assault'], 'fill' => '#6366f1'],
+        ];
+
+        // 3. Intake Mode Distribution
+        $intakeDistribution = $cases->groupBy(fn($c) => $c->intake_type ?: 'Direct')
+            ->map(fn($group, $type) => ['name' => $type, 'count' => $group->count()])
+            ->values()
+            ->toArray();
+
+        return [
+            'relationships' => $relationshipDistribution,
+            'protocols'     => $protocolDistribution,
+            'intake_modes'  => $intakeDistribution,
+        ];
+    }
+
+    /**
+     * Comprehensive BPO Operational Metrics:
+     * Applications, Issuances, Service Records, 24-hr SLA Compliance, and 15-Day Exits.
+     */
+    public function getVawcBpoOperationalMetrics(int $year): array
+    {
+        $allBpos = DB::table('vawc_protection_orders')->where('type', 'BPO')->whereYear('created_at', $year)->get();
+        $totalApplied = $allBpos->count();
+        $totalIssued = $allBpos->whereNotNull('issued_datetime')->count();
+        
+        $totalServed = DB::table('vawc_bpo_service_records')
+            ->join('vawc_protection_orders', 'vawc_bpo_service_records.protection_order_id', '=', 'vawc_protection_orders.id')
+            ->whereYear('vawc_protection_orders.created_at', $year)
+            ->count();
+
+        // 24-Hour SLA Compliance under RA 9262 Sec. 14
+        $compliantBpos = $allBpos->filter(function ($bpo) {
+            return !$bpo->is_sla_breached && !is_null($bpo->issued_datetime);
+        })->count();
+
+        $slaRate = $totalApplied > 0 ? round(($compliantBpos / $totalApplied) * 100, 1) : 100.0;
+
+        // Current Active Monitoring (within 15 days)
+        $activeMonitoring = DB::table('vawc_protection_orders')
+            ->whereIn('status', ['Issued', 'Served'])
+            ->where(function ($q) {
+                $q->whereNull('expiration_date')->orWhere('expiration_date', '>=', now()->toDateString());
+            })
+            ->count();
+
+        // Post-15-Day Exit Outcomes
+        $peacefulArchived = DB::table('vawc_cases')->where('status', 'Closed')->whereYear('created_at', $year)->count();
+        $violationsRecorded = DB::table('vawc_compliance_logs')->where('is_compliant', false)->whereYear('created_at', $year)->count();
+        $courtEscalations = DB::table('vawc_legal_escalations')->whereYear('created_at', $year)->count();
+
+        // Service Methods breakdown (Personal vs Substituted vs Tender of Service)
+        $serviceMethods = DB::table('vawc_bpo_service_records')
+            ->select('service_method', DB::raw('count(*) as count'))
+            ->groupBy('service_method')
+            ->get()
+            ->map(fn($row) => ['method' => $row->service_method ?: 'Direct Delivery', 'count' => $row->count])
+            ->toArray();
+
+        return [
+            'total_applied'       => $totalApplied,
+            'total_issued'        => $totalIssued,
+            'total_served'        => $totalServed,
+            'active_monitoring'   => $activeMonitoring,
+            'peaceful_archived'   => $peacefulArchived,
+            'violations_recorded' => $violationsRecorded,
+            'court_escalations'   => $courtEscalations,
+            'sla_compliant_count' => $compliantBpos,
+            'sla_rate'            => $slaRate,
+            'service_methods'     => $serviceMethods,
         ];
     }
 

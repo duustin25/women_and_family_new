@@ -1,7 +1,4 @@
 import { Head, Link } from '@inertiajs/react';
-import * as React from "react";
-import PublicLayout from '@/layouts/PublicLayout';
-import { Carousel, CarouselContent, CarouselItem, type CarouselApi } from "@/components/ui/carousel";
 import Autoplay from "embla-carousel-autoplay";
 import {
     ShieldAlert, Users, Baby, ArrowRight,
@@ -9,6 +6,9 @@ import {
     ShieldCheck, Handshake, Scale, HeartHandshake, Siren,
     Mail, CreditCard, QrCode
 } from "lucide-react";
+import * as React from "react";
+import { Carousel, CarouselContent, CarouselItem, type CarouselApi } from "@/components/ui/carousel";
+import PublicLayout from '@/layouts/PublicLayout';
 
 interface WelcomeProps {
     announcements: { data: any[] };

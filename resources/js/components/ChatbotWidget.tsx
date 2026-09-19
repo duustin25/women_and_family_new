@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
-import { usePage } from '@inertiajs/react';
-import { Button } from '@/components/ui/button';
-import { MessageSquare, X, AlertTriangle, Phone } from 'lucide-react';
-import Chatbot from '@/components/Chatbot';
-import { cn } from '@/lib/utils';
 import { Transition } from '@headlessui/react';
+import { usePage } from '@inertiajs/react';
+import { MessageSquare, X, AlertTriangle, Phone } from 'lucide-react';
+import React, { useState } from 'react';
+import Chatbot from '@/components/Chatbot';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 export default function ChatbotWidget() {
     const { props } = usePage<any>();

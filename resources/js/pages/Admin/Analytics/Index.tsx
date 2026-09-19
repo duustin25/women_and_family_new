@@ -1,33 +1,37 @@
 import { Head, usePage, router } from '@inertiajs/react';
-import AppLayout from '@/layouts/app-layout';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { useState } from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
     TrendingUp, Users, Activity, FileText, Baby,
     ShieldAlert, CheckCircle, Clock, Gavel, BarChart3,
     Calendar, Building, AlertCircle, Heart, Map, Search, BrainCircuit,
     Mail, UserPlus, FolderGit2, CheckSquare, Globe, Building2, Eye, ShieldCheck
 } from 'lucide-react';
+import { useState } from 'react';
 import {
     PieChart, Pie, Cell, Tooltip, ResponsiveContainer,
     LineChart, Line, XAxis, YAxis, CartesianGrid,
     BarChart, Bar, AreaChart, Area, Legend
 } from 'recharts';
-import { cn } from '@/lib/utils';
 
 // Modular Analytics Chart Components
-import VawcMonthlyAbuseChart from '@/components/Admin/Analytics/Vawc/VawcMonthlyAbuseChart';
-import VawcGeographicalDensityChart from '@/components/Admin/Analytics/Vawc/VawcGeographicalDensityChart';
-import VawcThreatIndicatorsChart from '@/components/Admin/Analytics/Vawc/VawcThreatIndicatorsChart';
-import VawcVictimDemographicsChart from '@/components/Admin/Analytics/Vawc/VawcVictimDemographicsChart';
 import BcpcNutritionalRadarChart from '@/components/Admin/Analytics/Bcpc/BcpcNutritionalRadarChart';
 import BcpcSfpOutcomesChart from '@/components/Admin/Analytics/Bcpc/BcpcSfpOutcomesChart';
-import GadMembershipTrendsChart from '@/components/Admin/Analytics/Gad/GadMembershipTrendsChart';
 import GadMemberDemographicsChart from '@/components/Admin/Analytics/Gad/GadMemberDemographicsChart';
+import GadMembershipTrendsChart from '@/components/Admin/Analytics/Gad/GadMembershipTrendsChart';
 import OrganizationSectorBreakdown from '@/components/Admin/Analytics/Gad/OrganizationSectorBreakdown';
+import VawcGeographicalDensityChart from '@/components/Admin/Analytics/Vawc/VawcGeographicalDensityChart';
+import VawcMonthlyAbuseChart from '@/components/Admin/Analytics/Vawc/VawcMonthlyAbuseChart';
+import VawcThreatIndicatorsChart from '@/components/Admin/Analytics/Vawc/VawcThreatIndicatorsChart';
+import VawcVictimDemographicsChart from '@/components/Admin/Analytics/Vawc/VawcVictimDemographicsChart';
+import VawcDossierRecidivismCard from '@/components/Admin/Analytics/Vawc/VawcDossierRecidivismCard';
+import VawcRiskDistributionChart from '@/components/Admin/Analytics/Vawc/VawcRiskDistributionChart';
+import VawcBpoMilestonesChart from '@/components/Admin/Analytics/Vawc/VawcBpoMilestonesChart';
+import VawcRelationshipProtocolChart from '@/components/Admin/Analytics/Vawc/VawcRelationshipProtocolChart';
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import AppLayout from '@/layouts/app-layout';
+import { cn } from '@/lib/utils';
 
 interface Stats {
     total_vawc: number;
@@ -91,6 +95,9 @@ interface PageProps {
     ageDemographics: any[];
     zoneDistribution: any[];
     bpoTrends: any[];
+    bpoMetrics: any;
+    dossierAnalytics: any;
+    relationshipAnalytics: any;
     vawcStatusBreakdown: any[];
     threatPatterns: any[];
     interventionGaps: any[];
@@ -105,7 +112,9 @@ interface PageProps {
 export default function Index({
     stats, vawcData, currentYear, vawcChartConfig,
     membershipStats, ageDemographics,
-    zoneDistribution, bpoTrends, vawcStatusBreakdown,
+    zoneDistribution, bpoTrends, bpoMetrics,
+    dossierAnalytics, relationshipAnalytics,
+    vawcStatusBreakdown,
     threatPatterns, interventionGaps, riskDistribution, bcpcSummary,
     gadAnalytics, orgSectorAnalysis,
     orgAnalytics, selectedOrgId
@@ -255,18 +264,112 @@ export default function Index({
                             <>
                                 {/* SECTION 1: VAWC CASE TRIAGE & ACTION ANALYSIS */}
                                 <div className="space-y-6">
-                                    <h2 className="text-base font-black tracking-tight flex items-center gap-2 py-3 mb-2 border-b uppercase text-[#ce1126] dark:text-red-400">
-                                        <ShieldAlert className="w-4 h-4" />
-                                        VAWC Triage & Action Analysis (RA 9262)
-                                    </h2>
-
-                                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                                        <VawcMonthlyAbuseChart data={vawcData} config={vawcChartConfig} />
-                                        <VawcGeographicalDensityChart data={zoneDistribution} />
+                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 py-3 border-b">
+                                        <h2 className="text-base font-black tracking-tight flex items-center gap-2 uppercase text-[#ce1126] dark:text-red-400">
+                                            <ShieldAlert className="w-4 h-4" />
+                                            VAWC Statutory Intelligence & Judicial Analytics (RA 9262)
+                                        </h2>
+                                        <Badge variant="outline" className="text-[10px] font-mono font-bold w-fit">
+                                            Calendar Year {currentYear}
+                                        </Badge>
                                     </div>
 
+                                    {/* 6-Card Executive Ribbon for VAWC */}
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+                                        <div className="p-3 rounded-lg border bg-card text-center shadow-sm">
+                                            <span className="text-[9px] font-black uppercase text-muted-foreground block mb-1">
+                                                Total Incidents
+                                            </span>
+                                            <span className="text-xl font-black text-foreground">
+                                                {stats?.total_vawc ?? 0}
+                                            </span>
+                                            <span className="text-[8px] font-bold text-muted-foreground block mt-0.5">
+                                                Recorded Sub-Cases
+                                            </span>
+                                        </div>
+
+                                        <div className="p-3 rounded-lg border bg-card text-center shadow-sm">
+                                            <span className="text-[9px] font-black uppercase text-muted-foreground block mb-1">
+                                                Master Dossiers
+                                            </span>
+                                            <span className="text-xl font-black text-rose-600 dark:text-rose-400">
+                                                {dossierAnalytics?.total_dossiers ?? 0}
+                                            </span>
+                                            <span className="text-[8px] font-bold text-muted-foreground block mt-0.5">
+                                                {dossierAnalytics?.active_dossiers ?? 0} Active Files
+                                            </span>
+                                        </div>
+
+                                        <div className="p-3 rounded-lg border border-red-200 bg-red-50/40 dark:bg-red-950/20 text-center shadow-sm">
+                                            <span className="text-[9px] font-black uppercase text-red-700 dark:text-red-400 block mb-1">
+                                                Recidivism Rate
+                                            </span>
+                                            <span className="text-xl font-black text-red-600 dark:text-red-400">
+                                                {dossierAnalytics?.recidivism_rate ?? 0}%
+                                            </span>
+                                            <span className="text-[8px] font-bold text-red-600 dark:text-red-400 block mt-0.5">
+                                                {dossierAnalytics?.recidivism_count ?? 0} Repeat Relationships
+                                            </span>
+                                        </div>
+
+                                        <div className="p-3 rounded-lg border border-amber-200 bg-amber-50/40 dark:bg-amber-950/20 text-center shadow-sm">
+                                            <span className="text-[9px] font-black uppercase text-amber-800 dark:text-amber-400 block mb-1">
+                                                Serial Perpetrators
+                                            </span>
+                                            <span className="text-xl font-black text-amber-700 dark:text-amber-400">
+                                                {dossierAnalytics?.serial_perpetrators_count ?? 0}
+                                            </span>
+                                            <span className="text-[8px] font-bold text-amber-700 dark:text-amber-400 block mt-0.5">
+                                                Multiple Survivors
+                                            </span>
+                                        </div>
+
+                                        <div className="p-3 rounded-lg border border-emerald-200 bg-emerald-50/40 dark:bg-emerald-950/20 text-center shadow-sm">
+                                            <span className="text-[9px] font-black uppercase text-emerald-800 dark:text-emerald-400 block mb-1">
+                                                24-Hr BPO SLA
+                                            </span>
+                                            <span className="text-xl font-black text-emerald-600 dark:text-emerald-400">
+                                                {bpoMetrics?.sla_rate ?? 100}%
+                                            </span>
+                                            <span className="text-[8px] font-bold text-emerald-600 dark:text-emerald-400 block mt-0.5">
+                                                Statutory Mandate
+                                            </span>
+                                        </div>
+
+                                        <div className="p-3 rounded-lg border border-blue-200 bg-blue-50/40 dark:bg-blue-950/20 text-center shadow-sm">
+                                            <span className="text-[9px] font-black uppercase text-blue-800 dark:text-blue-400 block mb-1">
+                                                Active 15-Day BPO
+                                            </span>
+                                            <span className="text-xl font-black text-blue-600 dark:text-blue-400">
+                                                {bpoMetrics?.active_monitoring ?? 0}
+                                            </span>
+                                            <span className="text-[8px] font-bold text-blue-600 dark:text-blue-400 block mt-0.5">
+                                                Under Monitoring
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    {/* Row 1: Monthly Rates (2 cols) + RAVE Risk Severity (1 col) */}
+                                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                                        <VawcMonthlyAbuseChart data={vawcData} config={vawcChartConfig} />
+                                        <VawcRiskDistributionChart data={riskDistribution} />
+                                    </div>
+
+                                    {/* Row 2: Master Dossier Recidivism (1 col) + BPO Milestones & SLA (2 cols) */}
+                                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                                        <VawcDossierRecidivismCard data={dossierAnalytics} />
+                                        <VawcBpoMilestonesChart monthlyTrends={bpoTrends} metrics={bpoMetrics} />
+                                    </div>
+
+                                    {/* Row 3: Threat Indicators (1 col) + Relationship & Protocol Matrix (1 col) */}
                                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                                         <VawcThreatIndicatorsChart data={threatPatterns} />
+                                        <VawcRelationshipProtocolChart data={relationshipAnalytics} />
+                                    </div>
+
+                                    {/* Row 4: Geographical Density (1 col) + Victim Demographics (1 col) */}
+                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                        <VawcGeographicalDensityChart data={zoneDistribution} />
                                         <VawcVictimDemographicsChart data={ageDemographics} colors={DEMO_COLORS} />
                                     </div>
                                 </div>

@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react';
 import { Head } from '@inertiajs/react';
+import React, { useEffect } from 'react';
 
 interface PrintProps {
     application: any;

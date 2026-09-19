@@ -1,3 +1,5 @@
+import { Link } from '@inertiajs/react';
+import { ChevronRight } from 'lucide-react';
 import {
     Collapsible,
     CollapsibleContent,
@@ -15,8 +17,6 @@ import {
 } from '@/components/ui/sidebar';
 import { useCurrentUrl } from '@/hooks/use-current-url';
 import type { NavItem } from '@/types';
-import { Link } from '@inertiajs/react';
-import { ChevronRight } from 'lucide-react';
 
 export function NavMain({ title, items = [] }: { title: string; items: NavItem[] }) {
     const { isCurrentUrl } = useCurrentUrl();

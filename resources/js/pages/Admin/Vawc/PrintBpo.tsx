@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react';
 import { Head, Link } from '@inertiajs/react';
+import React, { useEffect } from 'react';
 import { route } from 'ziggy-js';
 
 interface Props {

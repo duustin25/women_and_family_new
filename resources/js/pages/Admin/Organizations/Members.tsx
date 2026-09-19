@@ -1,11 +1,11 @@
 import { Head, Link, router } from '@inertiajs/react';
-import AppLayout from '@/layouts/app-layout';
 import {
     Search, ChevronRight, Users, ArrowLeft, ArrowUp, ArrowDown, Download
 } from 'lucide-react';
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { useState, useMemo } from 'react';
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import AppLayout from '@/layouts/app-layout';
 
 declare function route(name: string, params?: any, absolute?: boolean): string;
 
@@ -73,7 +73,7 @@ export default function Members({ organization, members, filters }: PageProps) {
 
         // 2. Gather all fields from members' historical data (Legacy/Retired Fields)
         membersData.forEach((member: any) => {
-            let formData = typeof member.form_data === 'string'
+            const formData = typeof member.form_data === 'string'
                 ? JSON.parse(member.form_data)
                 : member.form_data || {};
 
@@ -296,9 +296,9 @@ export default function Members({ organization, members, filters }: PageProps) {
                                                     <span className="truncate block opacity-80">{member.address || '—'}</span>
                                                 </td>
                                                 {dynamicColumns.map(col => {
-                                                    let subData = typeof member.form_data === 'string' ? JSON.parse(member.form_data) : (member.form_data || {});
-                                                    let val = subData[col];
-                                                    let displayVal = formatDisplayValue(val, col);
+                                                    const subData = typeof member.form_data === 'string' ? JSON.parse(member.form_data) : (member.form_data || {});
+                                                    const val = subData[col];
+                                                    const displayVal = formatDisplayValue(val, col);
                                                     const retired = isFieldRetired(col);
                                                     return (
                                                         <td key={col} className={`${tdClasses} ${retired ? 'text-neutral-400 dark:text-neutral-500 bg-amber-500/[0.01] italic' : 'opacity-80'}`} title={displayVal || ''}>

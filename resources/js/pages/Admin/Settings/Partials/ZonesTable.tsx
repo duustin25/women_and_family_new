@@ -1,15 +1,15 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { useForm, router } from '@inertiajs/react';
+import { Plus, MapPin, MoreHorizontal, Pencil, Ban, CheckCircle } from 'lucide-react';
+import { useState } from 'react';
+import { route } from 'ziggy-js';
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Plus, MapPin, MoreHorizontal, Pencil, Ban, CheckCircle } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { useState } from 'react';
-import { useForm, router } from '@inertiajs/react';
-import { route } from 'ziggy-js';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 export interface Zone {
     id: number;
@@ -73,42 +73,44 @@ export default function ZonesTable({ zones }: { zones: Zone[] }) {
     };
 
     return (
-        <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
+        <Card className="border shadow-sm w-full">
+            <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b">
                 <div>
                     <CardTitle className="text-lg font-bold flex items-center gap-2">
-                        <MapPin className="w-4 h-4 text-emerald-500" />
-                        Barangay Zones
+                        <MapPin className="w-5 h-5 text-emerald-600" />
+                        Barangay Zones & Purok Mapping
                     </CardTitle>
-                    <CardDescription>
-                        Manage location zones used for demographics and case mapping.
+                    <CardDescription className="text-sm text-muted-foreground">
+                        Manage local community zones and clusters used for geographic incident dispatching and demographic analytics.
                     </CardDescription>
                 </div>
                 <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
                     <DialogTrigger asChild>
-                        <Button onClick={openCreate} className="bg-emerald-600 hover:bg-emerald-700 text-white">
-                            <Plus className="w-4 h-4 mr-2" /> Add Zone
+                        <Button onClick={openCreate} size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold min-h-[40px] sm:min-h-[38px]">
+                            <Plus className="w-4 h-4 mr-1.5" /> Add Zone
                         </Button>
                     </DialogTrigger>
-                    <DialogContent>
+                    <DialogContent className="sm:max-w-md">
                         <DialogHeader>
-                            <DialogTitle>{isEditing ? 'Edit Zone' : 'Add New Zone'}</DialogTitle>
-                            <DialogDescription>{isEditing ? 'Update existing zone details.' : 'Create a new zone for reporting locations.'}</DialogDescription>
+                            <DialogTitle className="text-lg font-bold">{isEditing ? 'Edit Zone' : 'Add New Zone'}</DialogTitle>
+                            <DialogDescription className="text-sm text-muted-foreground">{isEditing ? 'Update existing zone attributes.' : 'Register a new geographic zone or purok.'}</DialogDescription>
                         </DialogHeader>
-                        <form onSubmit={submit} className="space-y-4 py-4">
+                        <form onSubmit={submit} className="space-y-4 py-2">
                             <div className="space-y-2">
-                                <Label>Zone Name</Label>
+                                <Label htmlFor="zone_name" className="text-sm font-medium">Zone Name</Label>
                                 <Input
+                                    id="zone_name"
                                     value={form.data.name}
                                     onChange={e => form.setData('name', e.target.value)}
-                                    placeholder="e.g. Zone 1 or Purok 1"
+                                    placeholder="e.g. Zone 1 or Purok Bagong Silang"
                                     required
+                                    className="text-sm"
                                 />
-                                {form.errors.name && <span className="text-red-500 text-xs">{form.errors.name}</span>}
+                                {form.errors.name && <span className="text-destructive text-sm font-medium">{form.errors.name}</span>}
                             </div>
 
-                            <DialogFooter>
-                                <Button type="submit" disabled={form.processing}>
+                            <DialogFooter className="pt-2">
+                                <Button type="submit" disabled={form.processing} className="w-full sm:w-auto font-semibold">
                                     {isEditing ? 'Update Changes' : 'Save Zone'}
                                 </Button>
                             </DialogFooter>
@@ -116,48 +118,58 @@ export default function ZonesTable({ zones }: { zones: Zone[] }) {
                     </DialogContent>
                 </Dialog>
             </CardHeader>
-            <CardContent>
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead>Zone Name</TableHead>
-                            <TableHead>Status</TableHead>
-                            <TableHead className="text-right">Action</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {zones.map(item => (
-                            <TableRow key={item.id}>
-                                <TableCell className="font-medium text-emerald-800">{item.name}</TableCell>
-                                <TableCell>
-                                    <Badge variant={item.is_active ? 'default' : 'secondary'} className={item.is_active ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200' : ''}>
-                                        {item.is_active ? 'Active' : 'Archived'}
-                                    </Badge>
-                                </TableCell>
-                                <TableCell className="text-right">
-                                    <DropdownMenu>
-                                        <DropdownMenuTrigger asChild>
-                                            <Button variant="ghost" className="h-8 w-8 p-0">
-                                                <span className="sr-only">Open menu</span>
-                                                <MoreHorizontal className="h-4 w-4" />
-                                            </Button>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent align="end">
-                                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                            <DropdownMenuItem onClick={() => openEdit(item)}>
-                                                <Pencil className="mr-2 h-4 w-4" /> Edit Details
-                                            </DropdownMenuItem>
-                                            <DropdownMenuSeparator />
-                                            <DropdownMenuItem onClick={() => toggleStatus(item.id, item.is_active)} className={item.is_active ? "text-red-600 focus:text-red-600" : "text-emerald-600 focus:text-emerald-600"}>
-                                                {item.is_active ? <><Ban className="mr-2 h-4 w-4" /> Deactivate</> : <><CheckCircle className="mr-2 h-4 w-4" /> Activate</>}
-                                            </DropdownMenuItem>
-                                        </DropdownMenuContent>
-                                    </DropdownMenu>
-                                </TableCell>
+            <CardContent className="pt-4">
+                <div className="rounded-md border overflow-x-auto">
+                    <Table>
+                        <TableHeader>
+                            <TableRow className="bg-muted/40">
+                                <TableHead className="font-semibold text-xs uppercase tracking-wider">Zone / Purok Name</TableHead>
+                                <TableHead className="font-semibold text-xs uppercase tracking-wider">Operational Status</TableHead>
+                                <TableHead className="text-right font-semibold text-xs uppercase tracking-wider w-24">Actions</TableHead>
                             </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
+                        </TableHeader>
+                        <TableBody>
+                            {zones.length === 0 ? (
+                                <TableRow>
+                                    <TableCell colSpan={3} className="text-center py-8 text-muted-foreground text-sm">
+                                        No barangay zones recorded.
+                                    </TableCell>
+                                </TableRow>
+                            ) : (
+                                zones.map(item => (
+                                    <TableRow key={item.id} className="hover:bg-muted/30">
+                                        <TableCell className="font-medium text-sm text-foreground">{item.name}</TableCell>
+                                        <TableCell>
+                                            <Badge variant={item.is_active ? 'default' : 'secondary'} className="text-xs font-semibold">
+                                                {item.is_active ? 'Active' : 'Archived'}
+                                            </Badge>
+                                        </TableCell>
+                                        <TableCell className="text-right">
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <Button variant="ghost" size="sm" className="h-9 w-9 p-0">
+                                                        <span className="sr-only">Open menu</span>
+                                                        <MoreHorizontal className="h-4 w-4" />
+                                                    </Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent align="end">
+                                                    <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                                    <DropdownMenuItem onClick={() => openEdit(item)}>
+                                                        <Pencil className="mr-2 h-4 w-4" /> Edit Details
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuSeparator />
+                                                    <DropdownMenuItem onClick={() => toggleStatus(item.id, item.is_active)} className={item.is_active ? "text-destructive focus:text-destructive" : "text-emerald-600 focus:text-emerald-600"}>
+                                                        {item.is_active ? <><Ban className="mr-2 h-4 w-4" /> Deactivate</> : <><CheckCircle className="mr-2 h-4 w-4" /> Activate</>}
+                                                    </DropdownMenuItem>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
+                                        </TableCell>
+                                    </TableRow>
+                                ))
+                            )}
+                        </TableBody>
+                    </Table>
+                </div>
             </CardContent>
         </Card>
     );

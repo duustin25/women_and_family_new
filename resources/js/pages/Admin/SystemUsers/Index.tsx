@@ -1,20 +1,20 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import {
     MoreHorizontal, Pencil, Trash2, Mail,
     Plus, X, Search, Filter, Archive
 } from "lucide-react";
-import AppLayout from '@/layouts/app-layout';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
 import { useState } from 'react';
-import { useConfirm } from '@/hooks/use-confirm';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { RoleBadge } from '@/components/Admin/RoleBadge';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { route } from 'ziggy-js';
+import { RoleBadge } from '@/components/Admin/RoleBadge';
+import { Badge } from '@/components/ui/badge';
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { useConfirm } from '@/hooks/use-confirm';
+import AppLayout from '@/layouts/app-layout';
 
 interface SystemUser {
     id: number;

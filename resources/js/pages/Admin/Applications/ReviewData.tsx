@@ -1,15 +1,15 @@
 import { Head, useForm, Link, router } from '@inertiajs/react';
-import AppLayout from '@/layouts/app-layout';
-import { useConfirm } from '@/hooks/use-confirm';
 import { ArrowLeft, Printer, CheckCircle, XCircle, Building2, Edit, FileText, Users, DollarSign, BookOpen, Briefcase } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 
 import { useState } from 'react';
-import RejectionReasonModal from './Partials/RejectionReasonModal';
-import AppealModal from './Partials/AppealModal';
-import { route } from 'ziggy-js';
 import { toast } from 'sonner';
+import { route } from 'ziggy-js';
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { useConfirm } from '@/hooks/use-confirm';
+import AppLayout from '@/layouts/app-layout';
+import AppealModal from './Partials/AppealModal';
+import RejectionReasonModal from './Partials/RejectionReasonModal';
 
 export default function ReviewData({ application, organization }: { application: any, organization: any }) {
     const confirm = useConfirm();
@@ -19,7 +19,7 @@ export default function ReviewData({ application, organization }: { application:
     const [rejectModalOpen, setRejectModalOpen] = useState(false);
     const [appealModalOpen, setAppealModalOpen] = useState(false);
 
-    let formData = typeof record.form_data === 'string'
+    const formData = typeof record.form_data === 'string'
         ? JSON.parse(record.form_data)
         : record.form_data || {};
 

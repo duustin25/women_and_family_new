@@ -1,14 +1,14 @@
-import React, { useState } from 'react';
-import PublicLayout from '@/layouts/PublicLayout';
 import { Head } from '@inertiajs/react';
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
-
 import {
     Activity, Calendar, Briefcase, ChevronDown,
     Clock, CheckCircle2, MapPin
 } from "lucide-react";
+import React, { useState } from 'react';
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import PublicLayout from '@/layouts/PublicLayout';
+
 
 interface GadEvent {
     id: number;

@@ -12,6 +12,7 @@ use App\Services\VawcBpoService;
 use App\Services\VawcComplianceService;
 use App\Services\VawcLegalService;
 use App\Services\AnalyticsService;
+use App\Services\AuditLogger;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\DB;
@@ -398,6 +399,11 @@ class VawcController extends Controller
             return redirect()->route('admin.vawc.show', $case->uuid);
         }
 
+        AuditLogger::logRead($case, 'VAWC_CASE_ACCESSED', [
+            'sub_case_number' => $case->sub_case_number,
+            'status' => $case->status,
+        ]);
+
         $respParty = $case->involvedParties->firstWhere('role', 'Respondent');
         $respName = $respParty?->name ?? $case->dossier?->respondent_name;
 
@@ -605,6 +611,10 @@ class VawcController extends Controller
             ->latest()
             ->firstOrFail();
 
+        AuditLogger::logRead($case, 'VAWC_BPO_PRINTED', [
+            'order_number' => $order->order_number ?? 'BPO',
+        ]);
+
         return Inertia::render('Admin/Vawc/PrintBpo', [
             'case' => $case,
             'order' => $order,
@@ -628,6 +638,10 @@ class VawcController extends Controller
             ->whereIn('status', ['Issued', 'Served'])
             ->latest()
             ->firstOrFail();
+
+        AuditLogger::logRead($case, 'VAWC_PNP_TRANSMITTAL_VIEWED', [
+            'order_number' => $order->order_number ?? 'BPO',
+        ]);
 
         if ($order->transmittals()->where('agency', 'PNP Women and Children Protection')->count() === 0) {
             $this->bpoService->recordTransmittal($order);
@@ -692,6 +706,10 @@ class VawcController extends Controller
         if (!Str::isUuid($id)) {
             return redirect()->route('admin.vawc.complaint-form', $case->uuid);
         }
+
+        AuditLogger::logRead($case, 'VAWC_COMPLAINT_FORM_VIEWED', [
+            'sub_case_number' => $case->sub_case_number,
+        ]);
 
         return Inertia::render('Admin/Vawc/ComplaintForm', [
             'case' => $case,

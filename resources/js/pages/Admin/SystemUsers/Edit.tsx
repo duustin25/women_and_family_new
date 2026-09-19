@@ -1,15 +1,15 @@
 import { Head, useForm, Link } from '@inertiajs/react';
+import { ArrowLeft, Save, UserCheck, Loader2 } from 'lucide-react';
 import React from 'react';
-import AppLayout from '@/layouts/app-layout';
+import { OrganizationSelector } from '@/components/Admin/OrganizationSelector';
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Save, UserCheck, Loader2 } from 'lucide-react';
+import AppLayout from '@/layouts/app-layout';
 import { dashboard } from '@/routes';
 import type { BreadcrumbItem } from '@/types';
-import { OrganizationSelector } from '@/components/Admin/OrganizationSelector';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 
 interface Organization {
     id: number;

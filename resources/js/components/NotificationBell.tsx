@@ -1,9 +1,9 @@
-import { type SharedData } from '@/types';
 import { usePage, router, usePoll } from '@inertiajs/react';
 import { Bell, CheckCheck } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { type SharedData } from '@/types';
 
 export function NotificationBell() {
     const { auth } = usePage<SharedData>().props;

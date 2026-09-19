@@ -1,7 +1,7 @@
 import { Head } from '@inertiajs/react';
-import PublicLayout from '@/layouts/PublicLayout';
 import { ShieldCheck, User as UserIcon, Building2, Users } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import PublicLayout from '@/layouts/PublicLayout';
 
 // Match the User interface
 interface User {

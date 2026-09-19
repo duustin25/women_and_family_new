@@ -1,8 +1,4 @@
 import { Head, router } from '@inertiajs/react';
-import AppLayout from '@/layouts/app-layout';
-import { dashboard } from '@/routes';
-import { route } from 'ziggy-js';
-import type { BreadcrumbItem } from '@/types';
 import {
     Users,
     ShieldAlert,
@@ -21,10 +17,14 @@ import {
     BrainCircuit,
     CalendarCheck,
 } from 'lucide-react';
+import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from 'recharts';
+import { route } from 'ziggy-js';
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import AppLayout from '@/layouts/app-layout';
 import { cn } from '@/lib/utils';
-import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from 'recharts';
+import { dashboard } from '@/routes';
+import type { BreadcrumbItem } from '@/types';
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Dashboard', href: dashboard().url },

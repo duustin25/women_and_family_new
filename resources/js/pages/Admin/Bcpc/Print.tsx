@@ -1,6 +1,6 @@
-import React, { useEffect } from 'react';
 import { Head } from '@inertiajs/react';
 import { Baby, Printer } from 'lucide-react';
+import React, { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 
 interface Props {

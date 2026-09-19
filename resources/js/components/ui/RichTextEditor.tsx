@@ -1,13 +1,13 @@
 
+import Link from '@tiptap/extension-link';
+import TextAlign from '@tiptap/extension-text-align';
+import Underline from '@tiptap/extension-underline';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
-import Link from '@tiptap/extension-link';
-import Underline from '@tiptap/extension-underline';
-import TextAlign from '@tiptap/extension-text-align';
 import { Bold, Italic, Strikethrough, List, ListOrdered, Link as LinkIcon, Quote, Undo, Redo, AlignLeft, AlignCenter, AlignRight } from 'lucide-react';
+import { useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Toggle } from "@/components/ui/toggle";
-import { useEffect } from 'react';
 
 interface RichTextEditorProps {
     value: string;

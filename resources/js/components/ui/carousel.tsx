@@ -1,7 +1,7 @@
-import * as React from "react"
 import useEmblaCarousel, {
   type UseEmblaCarouselType,
 } from "embla-carousel-react"
+import * as React from "react"
 import { cn } from "@/lib/utils" // Ensure this file exists in resources/js/lib/utils.ts
 
 export type CarouselApi = UseEmblaCarouselType[1]

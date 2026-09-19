@@ -1,10 +1,10 @@
-import AppLayoutTemplate from '@/layouts/app/app-sidebar-layout';
-import type { AppLayoutProps } from '@/types';
 
 import { usePage } from '@inertiajs/react';
 import { useEffect } from 'react';
 import { toast } from "sonner"; // OR use shadcn's useToast()
 import { Toaster } from "@/components/ui/sonner"; // Ensure this is installed
+import AppLayoutTemplate from '@/layouts/app/app-sidebar-layout';
+import type { AppLayoutProps } from '@/types';
 
 export default function AppLayout({ children, breadcrumbs }: any) {
     // 1. Grab flash messages from Inertia props

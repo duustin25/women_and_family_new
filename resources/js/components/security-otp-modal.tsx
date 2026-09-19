@@ -1,4 +1,8 @@
+import { router } from '@inertiajs/react';
+import { Loader2 } from 'lucide-react';
 import React, { useState } from 'react';
+import InputError from '@/components/input-error';
+import { Button } from '@/components/ui/button';
 import {
     Dialog,
     DialogContent,
@@ -7,12 +11,8 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import InputError from '@/components/input-error';
-import { Loader2 } from 'lucide-react';
-import { router } from '@inertiajs/react';
 
 export interface StepUpData {
     action: string;

@@ -173,14 +173,26 @@ class SystemUserController extends Controller
             $isPasswordReset = true;
         }
 
-        $system_user->update($updateData);
+        \App\Services\AuditLogger::$suppressObserver = true;
+        try {
+            $system_user->update($updateData);
+        } finally {
+            \App\Services\AuditLogger::$suppressObserver = false;
+        }
 
+        $actor = Auth::user();
         $newValues = [
             'name' => $system_user->name,
             'email' => $system_user->email,
             'role' => $system_user->role,
             'organization_id' => $system_user->organization_id,
             'password_overridden' => $isPasswordReset,
+            '_actor_name' => $actor?->name,
+            '_actor_role' => $actor?->role,
+            '_obfuscated_target' => \App\Services\AuditLogger::obfuscateIdentifier(User::class, $system_user->id, $system_user, [
+                'name' => $system_user->name,
+                'role' => $system_user->role,
+            ]),
         ];
 
         // Audit Trail: Direct Admin Commit with full diff

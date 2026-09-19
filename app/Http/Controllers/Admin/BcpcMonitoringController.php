@@ -8,6 +8,7 @@ use App\Models\BcpcAssessment;
 use App\Models\Member;
 use App\Models\Zone;
 use App\Models\AuditLog;
+use App\Services\AuditLogger;
 use App\Services\NutritionCalculatorService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -543,6 +544,11 @@ class BcpcMonitoringController extends Controller
             $q->orderBy('date_of_weighing', 'desc')->orderBy('id', 'desc');
         }, 'zone', 'member'])->findOrFail($id);
 
+        AuditLogger::logRead($child, 'BCPC_CHILD_RECORD_ACCESSED', [
+            'status' => $child->status,
+            'sfp_status' => $child->sfp_status,
+        ]);
+
         // Auto-heal SFP state for enrollees if latest assessment recovered or completed 120 days
         if ($child->sfp_status === 'Enrolled' && $child->latestAssessment) {
             $latest = $child->latestAssessment;
@@ -766,6 +772,11 @@ class BcpcMonitoringController extends Controller
             'active_sfp' => $children->filter(fn($c) => $c->sfp_status === 'Enrolled')->count(),
             'graduated_sfp' => $children->filter(fn($c) => $c->sfp_status === 'Graduated')->count(),
         ];
+
+        AuditLogger::logSecurityEvent('BCPC_HEALTH_REPORT_EXPORTED', [
+            'total_records_printed' => $children->count(),
+            'action_type' => 'DOH/NNC e-OPT Plus Master List Print',
+        ]);
 
         return Inertia::render('Admin/Bcpc/Print', [
             'monitoredChildren' => $children,

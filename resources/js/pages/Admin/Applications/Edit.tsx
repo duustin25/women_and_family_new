@@ -1,10 +1,10 @@
 import { Head, useForm, Link } from '@inertiajs/react';
+import { ArrowLeft, CheckCircle2, Info, Users, Briefcase } from "lucide-react";
+import DynamicFields from '@/components/DynamicFields';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, CheckCircle2, Info, Users, Briefcase } from "lucide-react";
 import AppLayout from '@/layouts/app-layout';
-import DynamicFields from '@/components/DynamicFields';
 
 export default function Edit({ application, organization }: { application: any, organization: any }) {
 
@@ -13,7 +13,7 @@ export default function Edit({ application, organization }: { application: any, 
     const org = organization.data || organization;
 
     // Parse form_data correctly directly from the record
-    let initialFormData = typeof record.form_data === 'string'
+    const initialFormData = typeof record.form_data === 'string'
         ? JSON.parse(record.form_data)
         : record.form_data || {};
 

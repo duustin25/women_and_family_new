@@ -1,9 +1,9 @@
 import { Head, Link } from '@inertiajs/react';
-import PublicLayout from '@/layouts/PublicLayout';
-import * as React from "react";
 import {
     Calendar, MapPin, Search, ArrowRight
 } from "lucide-react";
+import * as React from "react";
+import PublicLayout from '@/layouts/PublicLayout';
 
 export default function Index({ announcements = { data: [] } }: any) {
     const [searchQuery, setSearchQuery] = React.useState("");

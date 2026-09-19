@@ -3,6 +3,7 @@
 namespace App\Observers;
 
 use App\Models\AuditLog;
+use App\Services\AuditLogger;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
 
@@ -13,7 +14,11 @@ class AuditObserver
      */
     public function created(Model $model): void
     {
-        $this->logAction($model, 'Created', null, $model->getAttributes());
+        if (AuditLogger::$suppressObserver) {
+            return;
+        }
+
+        $this->logAction($model, 'Created', null, AuditLogger::maskPii($model->getAttributes()));
     }
 
     /**
@@ -21,6 +26,10 @@ class AuditObserver
      */
     public function updated(Model $model): void
     {
+        if (AuditLogger::$suppressObserver) {
+            return;
+        }
+
         $dirty = $model->getDirty();
 
         // Ignore transient session fields that update automatically
@@ -34,17 +43,16 @@ class AuditObserver
 
             // Get the specific fields that were modified
             foreach ($dirty as $key => $value) {
-                // Redact sensitive fields (like passwords)
-                if (in_array(strtolower($key), ['password', 'two_factor_secret', 'two_factor_recovery_codes'])) {
-                    $oldValues[$key] = '[REDACTED]';
-                    $newValues[$key] = '[REDACTED]';
-                } else {
-                    $oldValues[$key] = $model->getOriginal($key);
-                    $newValues[$key] = $value;
-                }
+                $oldValues[$key] = $model->getOriginal($key);
+                $newValues[$key] = $value;
             }
 
-            $this->logAction($model, 'Updated', $oldValues, $newValues);
+            $this->logAction(
+                $model,
+                'Updated',
+                AuditLogger::maskPii($oldValues),
+                AuditLogger::maskPii($newValues)
+            );
         }
     }
 
@@ -53,7 +61,11 @@ class AuditObserver
      */
     public function deleted(Model $model): void
     {
-        $this->logAction($model, 'Deleted', $model->getAttributes(), null);
+        if (AuditLogger::$suppressObserver) {
+            return;
+        }
+
+        $this->logAction($model, 'Deleted', AuditLogger::maskPii($model->getAttributes()), null);
     }
 
     /**
@@ -61,7 +73,11 @@ class AuditObserver
      */
     public function restored(Model $model): void
     {
-        $this->logAction($model, 'Restored', null, $model->getAttributes());
+        if (AuditLogger::$suppressObserver) {
+            return;
+        }
+
+        $this->logAction($model, 'Restored', null, AuditLogger::maskPii($model->getAttributes()));
     }
 
     /**
@@ -69,15 +85,26 @@ class AuditObserver
      */
     private function logAction(Model $model, string $action, ?array $oldValues = null, ?array $newValues = null): void
     {
+        $user = Auth::user();
+        $processName = $user ? null : AuditLogger::resolveProcessOrigin();
+
+        $payload = $newValues ?? [];
+        if ($user) {
+            $payload['_actor_name'] = $user->name;
+            $payload['_actor_role'] = $user->role;
+        }
+        $snapshot = array_merge($model->getAttributes(), $newValues ?: ($oldValues ?: []));
+        $payload['_obfuscated_target'] = AuditLogger::obfuscateIdentifier(get_class($model), $model->id, $model, $snapshot);
+
         AuditLog::create([
-            'user_id' => Auth::id(), // Can be null if command line/system
+            'user_id' => $user?->id,
             'action' => $action,
             'auditable_type' => get_class($model),
             'auditable_id' => $model->id,
             'old_values' => $oldValues,
-            'new_values' => $newValues,
-            'ip_address' => request()->ip(),
-            'user_agent' => request()->userAgent(),
+            'new_values' => $payload,
+            'ip_address' => request()->ip() ?? '127.0.0.1',
+            'user_agent' => $processName ?: (request()->userAgent() ?? 'System'),
         ]);
     }
 }

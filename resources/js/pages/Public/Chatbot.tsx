@@ -1,6 +1,6 @@
-import PublicLayout from '@/layouts/PublicLayout';
-import Chatbot from '@/components/Chatbot';
 import { Head } from '@inertiajs/react';
+import Chatbot from '@/components/Chatbot';
+import PublicLayout from '@/layouts/PublicLayout';
 
 export default function ChatbotPage() {
     return (

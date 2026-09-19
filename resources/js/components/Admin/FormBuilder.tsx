@@ -1,10 +1,10 @@
+import { Trash2, ChevronUp, ChevronDown, Settings2, Database } from "lucide-react";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { Trash2, ChevronUp, ChevronDown, Settings2, Database } from "lucide-react";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 interface FormBuilderProps {
     schema: any[];
@@ -33,7 +33,7 @@ export default function FormBuilder({ schema, onSchemaChange }: FormBuilderProps
         const field = { ...updatedSchema[index], [key]: value };
 
         if (key === 'label' && !field.is_core && !field.id_manually_edited) {
-            let slug = value.toString().toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/(^_|_$)/g, '');
+            const slug = value.toString().toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/(^_|_$)/g, '');
             let counter = 2;
             let finalSlug = slug;
             while (updatedSchema.some((f, i) => f.id === finalSlug && i !== index)) {
@@ -306,7 +306,7 @@ export default function FormBuilder({ schema, onSchemaChange }: FormBuilderProps
                                                                     value={subField.label}
                                                                     onChange={e => {
                                                                         const updatedSchema = [...(field.schema || [])];
-                                                                        let slug = e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/(^_|_$)/g, '');
+                                                                        const slug = e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/(^_|_$)/g, '');
                                                                         updatedSchema[subIndex] = { ...subField, label: e.target.value, id: slug || `sub_${Date.now()}` };
                                                                         updateFormField(index, 'schema', updatedSchema);
                                                                     }}

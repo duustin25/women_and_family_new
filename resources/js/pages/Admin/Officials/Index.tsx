@@ -1,15 +1,15 @@
 import { Head, Link, router } from '@inertiajs/react';
-import { route } from 'ziggy-js';
-import AppLayout from '@/layouts/app-layout';
-import { Button } from '@/components/ui/button';
-import { useState } from 'react';
-import { useConfirm } from '@/hooks/use-confirm';
 import { Plus, Edit3, Trash2, User as UserIcon, Search, Shield, Briefcase, MoreHorizontal } from 'lucide-react';
+import { useState } from 'react';
+import { route } from 'ziggy-js';
 import { Badge } from '@/components/ui/badge';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { useConfirm } from '@/hooks/use-confirm';
+import AppLayout from '@/layouts/app-layout';
 
 interface User {
     id: number;

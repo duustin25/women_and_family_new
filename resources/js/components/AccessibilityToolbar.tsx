@@ -1,6 +1,6 @@
+import { Volume2, VolumeX, Eye, Type, RotateCcw, Accessibility, Check, ChevronDown, ChevronUp, X } from 'lucide-react';
 import { useState } from 'react';
 import { useAccessibilityMode } from '@/hooks/use-accessibility-mode';
-import { Volume2, VolumeX, Eye, Type, RotateCcw, Accessibility, Check, ChevronDown, ChevronUp, X } from 'lucide-react';
 
 export default function AccessibilityToolbar() {
     const { settings, updateSetting, resetAccessibility, speak } = useAccessibilityMode();

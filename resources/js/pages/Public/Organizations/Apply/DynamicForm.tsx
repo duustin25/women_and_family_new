@@ -1,10 +1,10 @@
 import { Head, useForm, Link } from '@inertiajs/react';
-import { useState, useEffect } from 'react';
-import { Button } from "@/components/ui/button";
 import { ArrowLeft, CheckCircle2 } from "lucide-react";
-import PublicLayout from '@/layouts/PublicLayout';
-import AppLayout from '@/layouts/app-layout'; // Added AppLayout
+import { useState, useEffect } from 'react';
 import DynamicFields from '@/components/DynamicFields';
+import { Button } from "@/components/ui/button";
+import AppLayout from '@/layouts/app-layout'; // Added AppLayout
+import PublicLayout from '@/layouts/PublicLayout';
 
 export default function DynamicForm({ organization, mode = 'public' }: { organization: any, mode?: 'public' | 'admin' }) {
     const { data, setData, post, processing, errors } = useForm({
