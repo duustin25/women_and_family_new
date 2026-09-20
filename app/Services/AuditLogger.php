@@ -20,7 +20,7 @@ class AuditLogger
      * under RA 10173 (DPA 2012) and RA 9262 Sec. 44 confidentiality guidelines.
      */
     protected static array $sensitiveAttributes = [
-        // VAWC & Case Reports
+        // VAWC & Case Reports (Strict Statutory RA 9262 Sec. 44 & RA 7610 Abuse Confidentiality)
         'victim_name',
         'victim_age',
         'complainant_name',
@@ -35,16 +35,7 @@ class AuditLogger
         'narrative',
         'statement',
 
-        // BCPC Child & Nutrition
-        'child_first_name',
-        'child_last_name',
-        'child_middle_name',
-        'guardian_name',
-        'address',
-        'contact_number',
-        'bns_name',
-
-        // System Users & Security
+        // System Users & Security Credentials
         'password',
         'two_factor_secret',
         'two_factor_recovery_codes',
@@ -93,30 +84,60 @@ class AuditLogger
         if ($baseClass === 'Route') {
             $path = $snapshot['path'] ?? null;
             $method = $snapshot['method'] ?? 'GET';
-            return $path ? "System Route: {$method} /" . ltrim($path, '/') : 'System Route';
+            return $path ? "Route: {$method} /" . ltrim($path, '/') : 'Route';
         }
 
         if ($baseClass === 'DatabaseBackup') {
             $file = $snapshot['filename'] ?? null;
-            return $file ? "Database Backup: {$file}" : 'Database Backup';
+            return $file ? "Backup: {$file}" : 'Backup';
         }
 
         if ($baseClass === 'SecurityEvent') {
+            if (!empty($snapshot['action_type']) && (str_contains($snapshot['action_type'], 'e-OPT') || str_contains($snapshot['action_type'], 'BCPC') || str_contains($snapshot['action_type'], 'Master List'))) {
+                return 'BCPC Masterlist';
+            }
             return 'Security Event';
         }
 
-        // 1. Sealed Legal Records & Child Protection (Strict RA 9262 & DPA 2012 Confidentiality)
+        if (in_array($baseClass, ['ReportExport', 'BcpcMasterlist'])) {
+            return $snapshot['_obfuscated_target'] ?? 'BCPC Masterlist';
+        }
+
+        // 1. Sealed Legal Records & Abuse Protection (Strict RA 9262 & DPA 2012 Confidentiality)
         if (in_array($baseClass, ['CaseReport', 'VawcCase', 'VawcDossier', 'VawcAssessment', 'VawcProtectionOrder'])) {
             $hash = substr(hash_hmac('sha256', (string)$modelId, config('app.key', 'wfps_secret')), 0, 7);
             return "VAWC Case [{$hash}]";
         }
 
-        if (in_array($baseClass, ['BcpcChild', 'BcpcAssessment'])) {
-            $hash = substr(hash_hmac('sha256', (string)$modelId, config('app.key', 'wfps_secret')), 0, 7);
-            return "BCPC Child [{$hash}]";
+        // 2. BCPC Child Nutrition Monitoring (Community Health Records: Transparent Child Identification)
+        if ($baseClass === 'BcpcChild') {
+            $name = trim(($snapshot['child_first_name'] ?? '') . ' ' . ($snapshot['child_last_name'] ?? ''));
+            if (!$name && $model instanceof \App\Models\BcpcChild) {
+                $name = trim($model->child_first_name . ' ' . $model->child_last_name);
+            }
+            if (!$name && $modelId) {
+                $child = \App\Models\BcpcChild::find($modelId);
+                if ($child) {
+                    $name = trim($child->child_first_name . ' ' . $child->child_last_name);
+                }
+            }
+            return $name ? "BCPC Child: {$name}" : "BCPC Child #{$modelId}";
         }
 
-        // 2. User Accounts (Role + Name Snapshot: Official Profile vs Staff Account vs Citizen)
+        if ($baseClass === 'BcpcAssessment') {
+            $childName = null;
+            if ($model instanceof \App\Models\BcpcAssessment && $model->child) {
+                $childName = trim($model->child->child_first_name . ' ' . $model->child->child_last_name);
+            } elseif ($modelId) {
+                $assessment = \App\Models\BcpcAssessment::with('child')->find($modelId);
+                if ($assessment && $assessment->child) {
+                    $childName = trim($assessment->child->child_first_name . ' ' . $assessment->child->child_last_name);
+                }
+            }
+            return $childName ? "BCPC Assessment: {$childName}" : "BCPC Assessment #{$modelId}";
+        }
+
+        // 2. User Accounts (Clean, compact User or Citizen identifier)
         if ($baseClass === 'User') {
             $name = $snapshot['name'] ?? null;
             $role = $snapshot['role'] ?? null;
@@ -142,26 +163,11 @@ class AuditLogger
 
                 // Category A: Citizen Accounts (Residents & Online Applicants)
                 if (in_array($roleNormalized, ['resident', 'applicant', 'citizen'])) {
-                    $roleTitle = 'Online Applicant';
-                    return "Citizen: {$name} ({$roleTitle})";
+                    return "Citizen: {$name}";
                 }
 
-                // Category B: System Users (All internal users in System Users management)
-                $roleTitle = match ($roleNormalized) {
-                    'admin', 'super_admin', 'superadmin' => 'Super Admin',
-                    'head' => 'VAW Head',
-                    'captain', 'punong_barangay' => 'Barangay Captain',
-                    'kagawad' => 'Barangay Kagawad',
-                    'official' => 'Barangay Official',
-                    'clerk' => 'Clerk',
-                    'staff' => 'Staff',
-                    'president' => 'Org President',
-                    'secretary' => 'Secretary',
-                    'treasurer' => 'Treasurer',
-                    default => !empty($role) ? ucfirst((string)$role) : 'User',
-                };
-
-                return "System User: {$name} ({$roleTitle})";
+                // Category B: System Users (All internal users)
+                return "User: {$name}";
             }
 
             // Fallback if user was permanently deleted from DB
@@ -169,7 +175,7 @@ class AuditLogger
             if (in_array($roleNormalized, ['resident', 'applicant', 'citizen'])) {
                 return "Citizen #{$modelId}";
             }
-            return "System User #{$modelId}";
+            return "User #{$modelId}";
         }
 
         // 3. Online Membership Applications
@@ -303,6 +309,29 @@ class AuditLogger
             'old_values' => null,
             'new_values' => array_merge([
                 '_obfuscated_target' => 'Security Event',
+                '_actor_name' => $user?->name,
+                '_actor_role' => $user?->role,
+            ], self::maskPii($details)),
+            'ip_address' => request()->ip() ?? '127.0.0.1',
+            'user_agent' => request()->userAgent() ?? 'System',
+        ]);
+    }
+
+    /**
+     * Log a report generation, masterlist printing, or document export event.
+     */
+    public static function logExport(string $action, string $target = 'BCPC Masterlist', array $details = []): AuditLog
+    {
+        $user = Auth::user();
+        return AuditLog::create([
+            'user_id' => $user?->id,
+            'action' => $action,
+            'auditable_type' => 'BcpcMasterlist',
+            'auditable_id' => 0,
+            'old_values' => null,
+            'new_values' => array_merge([
+                '_access_type' => 'EXPORT',
+                '_obfuscated_target' => $target,
                 '_actor_name' => $user?->name,
                 '_actor_role' => $user?->role,
             ], self::maskPii($details)),

@@ -1,10 +1,14 @@
 @props(['url'])
 @php
-    $brgyLogo = isset($message) && file_exists(public_path('Logo/barangay183LOGO.png'))
-        ? $message->embed(public_path('Logo/barangay183LOGO.png'))
+    $appUrl = config('app.url') ?? '';
+    $isLocal = app()->environment('local') || str_contains($appUrl, 'localhost') || str_contains($appUrl, '.test') || str_contains($appUrl, '127.0.0.1');
+
+    $brgyLogo = $isLocal
+        ? 'https://raw.githubusercontent.com/duustin25/women_and_family_new/main/public/Logo/barangay183LOGO.png'
         : asset('Logo/barangay183LOGO.png');
-    $wfpLogo = isset($message) && file_exists(public_path('Logo/women&family_logo.png'))
-        ? $message->embed(public_path('Logo/women&family_logo.png'))
+
+    $wfpLogo = $isLocal
+        ? 'https://raw.githubusercontent.com/duustin25/women_and_family_new/main/public/Logo/women%26family_logo.png'
         : asset('Logo/women&family_logo.png');
 @endphp
 <tr>

@@ -182,6 +182,7 @@ class OtpSecurityService
         return DB::transaction(function () use ($panicHash) {
             /** @var EmailOtp|null $record */
             $record = EmailOtp::where('panic_token_hash', $panicHash)
+                ->where('is_used', false)
                 ->where('expires_at', '>', now()->subHours(24))
                 ->lockForUpdate()
                 ->first();
@@ -196,8 +197,11 @@ class OtpSecurityService
                 return false;
             }
 
-            // Invalidate all active OTPs for this user
-            EmailOtp::where('user_id', $user->id)->update(['is_used' => true]);
+            // Invalidate all active OTPs for this user and burn the panic token (Single-Use)
+            EmailOtp::where('user_id', $user->id)->update([
+                'is_used' => true,
+                'panic_token_hash' => null,
+            ]);
 
             // Freeze user status to locked
             $user->update([
@@ -256,6 +260,111 @@ class OtpSecurityService
             ]);
 
             return $this->createProvisionalActivationOtp($user);
+        });
+    }
+
+    const UNLOCK_EXPIRY_MINUTES = 15;
+
+    /**
+     * Tier 2: Create a high-entropy, single-use account unlock token (15-min validity).
+     */
+    public function createAccountUnlockToken(User $user): string
+    {
+        // Invalidate older unused unlock tokens for this user
+        EmailOtp::where('user_id', $user->id)
+            ->where('action', EmailOtp::ACTION_ACCOUNT_UNLOCK)
+            ->where('is_used', false)
+            ->update(['is_used' => true]);
+
+        $rawToken = Str::random(64);
+
+        EmailOtp::create([
+            'user_id' => $user->id,
+            'action' => EmailOtp::ACTION_ACCOUNT_UNLOCK,
+            'target_value' => $user->email,
+            'otp_hash' => $this->hashToken($user->email),
+            'panic_token_hash' => $this->hashToken($rawToken),
+            'attempts' => 0,
+            'is_used' => false,
+            'expires_at' => now()->addMinutes(self::UNLOCK_EXPIRY_MINUTES),
+        ]);
+
+        return $rawToken;
+    }
+
+    /**
+     * Tier 2: Validate the account unlock token.
+     */
+    public function validateUnlockToken(string $rawToken): ?EmailOtp
+    {
+        $tokenHash = $this->hashToken($rawToken);
+
+        return EmailOtp::where('panic_token_hash', $tokenHash)
+            ->where('action', EmailOtp::ACTION_ACCOUNT_UNLOCK)
+            ->where('is_used', false)
+            ->where('expires_at', '>', now())
+            ->first();
+    }
+
+    /**
+     * Tier 2: Complete the account unlock and set the user's new password inside a DB transaction.
+     */
+    public function completeAccountUnlock(string $rawToken, string $newPassword): User
+    {
+        $tokenHash = $this->hashToken($rawToken);
+
+        return DB::transaction(function () use ($tokenHash, $newPassword) {
+            /** @var EmailOtp|null $record */
+            $record = EmailOtp::where('panic_token_hash', $tokenHash)
+                ->where('action', EmailOtp::ACTION_ACCOUNT_UNLOCK)
+                ->where('is_used', false)
+                ->where('expires_at', '>', now())
+                ->lockForUpdate()
+                ->first();
+
+            if (!$record) {
+                throw new Exception('The recovery link is invalid, expired, or has already been used.');
+            }
+
+            /** @var User|null $user */
+            $user = User::where('id', $record->user_id)->lockForUpdate()->first();
+            if (!$user) {
+                throw new Exception('Associated user account was not found.');
+            }
+
+            // Burn the unlock token (Single-Use)
+            $record->update([
+                'is_used' => true,
+                'panic_token_hash' => null,
+            ]);
+
+            // Reactivate user and set new password
+            $user->update([
+                'password' => \Illuminate\Support\Facades\Hash::make($newPassword),
+                'status' => User::STATUS_ACTIVE,
+                'is_active' => true,
+                'email_verified_at' => now(),
+                'remember_token' => null,
+            ]);
+
+            // Flush any existing sessions
+            if (config('session.driver') === 'database') {
+                DB::table('sessions')->where('user_id', $user->id)->delete();
+            }
+
+            // Audit Trail
+            \App\Models\AuditLog::create([
+                'user_id' => $user->id,
+                'action' => 'USER_SELF_UNLOCKED_VIA_EMAIL',
+                'auditable_type' => User::class,
+                'auditable_id' => $user->id,
+                'old_values' => ['status' => User::STATUS_LOCKED],
+                'new_values' => ['status' => User::STATUS_ACTIVE, 'password' => '***'],
+                'ip_address' => request()->ip(),
+                'user_agent' => request()->userAgent(),
+            ]);
+
+            return $user;
         });
     }
 }

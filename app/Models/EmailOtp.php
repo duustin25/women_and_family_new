@@ -12,6 +12,7 @@ class EmailOtp extends Model
     const ACTION_EMAIL_CHANGE = 'EMAIL_CHANGE';
     const ACTION_PASSWORD_CHANGE = 'PASSWORD_CHANGE';
     const ACTION_ACCOUNT_DELETION = 'ACCOUNT_DELETION';
+    const ACTION_ACCOUNT_UNLOCK = 'ACCOUNT_UNLOCK';
 
     protected $fillable = [
         'user_id',

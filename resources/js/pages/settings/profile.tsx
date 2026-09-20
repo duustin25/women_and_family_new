@@ -1,6 +1,7 @@
 import { Transition } from '@headlessui/react';
 import { Form, Head, Link, usePage } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
+import { Clock } from 'lucide-react';
 import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileController';
 import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
@@ -103,9 +104,31 @@ export default function Profile({
                                     />
 
                                     {pending_email && (
-                                        <p className="text-sm text-muted-foreground">
-                                            Pending verification: {pending_email}
-                                        </p>
+                                        <div className="mt-3 flex items-center justify-between p-3 rounded-lg border border-amber-200 bg-amber-50 dark:border-amber-900/50 dark:bg-amber-950/20 text-xs">
+                                            <div className="flex items-center gap-2 text-amber-900 dark:text-amber-200">
+                                                <Clock className="w-4 h-4 text-amber-600 shrink-0" />
+                                                <div>
+                                                    <span className="font-semibold">Pending Verification:</span>{' '}
+                                                    <span className="font-mono">{pending_email}</span>
+                                                </div>
+                                            </div>
+                                            <Button
+                                                type="button"
+                                                size="sm"
+                                                variant="outline"
+                                                onClick={() => {
+                                                    setStepUpData({
+                                                        action: 'EMAIL_CHANGE',
+                                                        target_value: pending_email,
+                                                        endpoint: '/settings/profile/verify-email-change',
+                                                    });
+                                                    setStepUpOpen(true);
+                                                }}
+                                                className="text-xs font-semibold shrink-0 ml-2 h-7 px-2.5"
+                                            >
+                                                Enter Code
+                                            </Button>
+                                        </div>
                                     )}
                                 </div>
 

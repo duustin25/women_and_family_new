@@ -773,7 +773,7 @@ class BcpcMonitoringController extends Controller
             'graduated_sfp' => $children->filter(fn($c) => $c->sfp_status === 'Graduated')->count(),
         ];
 
-        AuditLogger::logSecurityEvent('BCPC_HEALTH_REPORT_EXPORTED', [
+        AuditLogger::logExport('BCPC_HEALTH_REPORT_EXPORTED', 'BCPC Masterlist', [
             'total_records_printed' => $children->count(),
             'action_type' => 'DOH/NNC e-OPT Plus Master List Print',
         ]);

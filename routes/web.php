@@ -123,12 +123,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('analytics/print', [AnalyticsController::class, 'print'])->name('analytics.print');
         Route::get('analytics', [AnalyticsController::class, 'index'])->name('analytics.index');
 
-        // Audit Trail / Backtrack
+        // Audit Trail / Backtrack (Master Executive Ledger)
         Route::get('/audit-logs/export', [AuditLogController::class, 'export'])
             ->name('audit-logs.export');
-        Route::get('/audit-logs', function (\Illuminate\Http\Request $request) {
-            return redirect()->route('admin.settings.index', array_merge(['tab' => 'audit'], $request->query()));
-        })->name('audit-logs');
+        Route::get('/audit-logs', [AuditLogController::class, 'index'])
+            ->name('audit-logs.index');
 
         Route::get('/members', [MembersController::class, 'index'])->name('members');
         Route::post('/members/{member}/email', [MembersController::class, 'sendIndividualEmail'])->name('members.email.individual');
@@ -227,6 +226,12 @@ Route::post('/verify-account', [\App\Http\Controllers\Auth\AccountActivationCont
 Route::post('/verify-account/resend', [\App\Http\Controllers\Auth\AccountActivationController::class, 'resendOtp'])->middleware('throttle:3,1')->name('verify-account.resend');
 
 Route::get('/auth/security/panic/{token}', [\App\Http\Controllers\Auth\OtpSecurityController::class, 'emergencyPanic'])->middleware('throttle:10,1')->name('security.panic');
+
+// Tier 2: Self-Service Account Unlock Routes
+Route::get('/auth/unlock', [\App\Http\Controllers\Auth\AccountUnlockController::class, 'showRequestForm'])->name('account-unlock.request');
+Route::post('/auth/unlock', [\App\Http\Controllers\Auth\AccountUnlockController::class, 'sendUnlockLink'])->middleware('throttle:3,1')->name('account-unlock.send');
+Route::get('/auth/unlock/verify/{token}', [\App\Http\Controllers\Auth\AccountUnlockController::class, 'showResetForm'])->name('account-unlock.verify');
+Route::post('/auth/unlock/confirm', [\App\Http\Controllers\Auth\AccountUnlockController::class, 'confirmUnlock'])->middleware('throttle:5,1')->name('account-unlock.confirm');
 
 require __DIR__ . '/settings.php';
 

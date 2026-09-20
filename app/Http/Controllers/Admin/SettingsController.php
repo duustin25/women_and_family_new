@@ -71,7 +71,11 @@ class SettingsController extends Controller implements HasMiddleware
 
         // 2. Users Tab
         if ($activeTab === 'users') {
-            $query = User::with('organization')->latest();
+            $isArchive = $request->get('view') === 'archives';
+            $query = $isArchive
+                ? User::onlyTrashed()->with('organization')->latest('deleted_at')
+                : User::with('organization')->latest();
+
             if ($request->filled('search')) {
                 $search = $request->search;
                 $query->where(function ($q) use ($search) {
@@ -83,7 +87,11 @@ class SettingsController extends Controller implements HasMiddleware
                 $query->where('role', $request->role);
             }
             $data['users'] = $query->paginate(10)->withQueryString();
-            $data['userFilters'] = $request->only(['search', 'role']);
+            $data['userFilters'] = array_merge($request->only(['search', 'role']), [
+                'view' => $isArchive ? 'archives' : 'active',
+            ]);
+            $data['archivedUsersCount'] = User::onlyTrashed()->count();
+            $data['activeUsersCount'] = User::count();
             $data['organizations'] = Organization::select('id', 'name')->orderBy('name')->get();
         }
 
@@ -106,105 +114,9 @@ class SettingsController extends Controller implements HasMiddleware
             $data['backups'] = $this->backupService->getBackups();
         }
 
-        // 6. Audit Tab
+        // 6. Audit Tab (Redirect to dedicated sidebar page)
         if ($activeTab === 'audit') {
-            $query = AuditLog::with(['user:id,name,role'])->latest();
-
-            if ($request->filled('action')) {
-                $query->where('action', $request->action);
-            }
-
-            if ($request->filled('user_id')) {
-                $query->where('user_id', $request->user_id);
-            }
-
-            if ($request->filled('module')) {
-                $mod = $request->module;
-                if ($mod === 'vawc') {
-                    $query->where(function ($q) {
-                        $q->where('auditable_type', 'like', '%Vawc%')
-                          ->orWhere('auditable_type', 'like', '%CaseReport%')
-                          ->orWhere('action', 'like', '%VAWC%');
-                    });
-                } elseif ($mod === 'bcpc') {
-                    $query->where(function ($q) {
-                        $q->where('auditable_type', 'like', '%Bcpc%')
-                          ->orWhere('action', 'like', '%BCPC%');
-                    });
-                } elseif ($mod === 'backup') {
-                    $query->where(function ($q) {
-                        $q->where('auditable_type', 'like', '%Backup%')
-                          ->orWhere('action', 'like', '%BACKUP%');
-                    });
-                } elseif ($mod === 'security') {
-                    $query->where(function ($q) {
-                        $q->where('auditable_type', 'like', '%User%')
-                          ->orWhere('auditable_type', 'like', '%Route%')
-                          ->orWhere('auditable_type', 'like', '%SecurityEvent%')
-                          ->orWhere('action', 'like', '%USER%')
-                          ->orWhere('action', 'like', '%UNAUTHORIZED%')
-                          ->orWhere('action', 'like', '%OTP%');
-                    });
-                } elseif ($mod === 'organizations') {
-                    $query->where(function ($q) {
-                        $q->where('auditable_type', 'like', '%Organization%')
-                          ->orWhere('auditable_type', 'like', '%Membership%')
-                          ->orWhere('action', 'like', '%ORG%');
-                    });
-                }
-            }
-
-            if ($request->filled('event_type')) {
-                $type = $request->event_type;
-                if ($type === 'read') {
-                    $query->where(function ($q) {
-                        $q->where('action', 'like', '%VIEW%')
-                          ->orWhere('action', 'like', '%ACCESSED%')
-                          ->orWhere('action', 'like', '%PRINT%')
-                          ->orWhere('action', 'like', '%EXPORT%');
-                    });
-                } elseif ($type === 'alert') {
-                    $query->where(function ($q) {
-                        $q->where('action', 'like', '%UNAUTHORIZED%')
-                          ->orWhere('action', 'like', '%PANIC%')
-                          ->orWhere('action', 'like', '%FAIL%')
-                          ->orWhere('action', 'like', '%ALERT%');
-                    });
-                } elseif ($type === 'mutation') {
-                    $query->where(function ($q) {
-                        $q->where('action', 'not like', '%VIEW%')
-                          ->where('action', 'not like', '%ACCESSED%')
-                          ->where('action', 'not like', '%PRINT%')
-                          ->where('action', 'not like', '%EXPORT%')
-                          ->where('action', 'not like', '%UNAUTHORIZED%')
-                          ->where('action', 'not like', '%PANIC%')
-                          ->where('action', 'not like', '%FAIL%')
-                          ->where('action', 'not like', '%ALERT%');
-                    });
-                }
-            }
-
-            if ($request->filled('search')) {
-                $search = $request->search;
-                $query->where(function ($q) use ($search) {
-                    $q->where('action', 'like', "%{$search}%")
-                      ->orWhere('auditable_type', 'like', "%{$search}%")
-                      ->orWhere('user_agent', 'like', "%{$search}%")
-                      ->orWhereHas('user', function ($uq) use ($search) {
-                          $uq->where('name', 'like', "%{$search}%");
-                      });
-                });
-            }
-
-            if ($request->filled('date_start')) {
-                $query->whereDate('created_at', '>=', $request->date_start);
-            }
-            if ($request->filled('date_end')) {
-                $query->whereDate('created_at', '<=', $request->date_end);
-            }
-
-            $data['logs'] = $query->paginate(15)->withQueryString();
-            $data['logFilters'] = $request->only(['action', 'user_id', 'search', 'date_start', 'date_end', 'module', 'event_type']);
+            return redirect()->route('admin.audit-logs.index', $request->query());
         }
 
         return Inertia::render('Admin/Settings/Index', $data);

@@ -88,7 +88,11 @@ export function SecurityOtpModal({ isOpen, onClose, stepUpData, onVerify }: Secu
 
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-            <DialogContent className="sm:max-w-md">
+            <DialogContent
+                className="sm:max-w-md"
+                onPointerDownOutside={(e) => e.preventDefault()}
+                onInteractOutside={(e) => e.preventDefault()}
+            >
                 <DialogHeader>
                     <DialogTitle>{modalTitle}</DialogTitle>
                     <DialogDescription>

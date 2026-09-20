@@ -24,7 +24,7 @@ class EnsureAccountIsActive
                 $request->session()->regenerateToken();
 
                 return redirect()->route('login')->withErrors([
-                    'email' => 'Your account is locked due to security alerts or multiple failed verification attempts. Please contact an Administrator to review and unlock your account.',
+                    'email' => 'Your account has been locked for security. You may request an emergency unlock link below or contact an Administrator.',
                 ]);
             }
 

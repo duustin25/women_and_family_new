@@ -1,47 +1,55 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8">
-    <title>Account Invitation & Verification</title>
-    <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f8fafc; margin: 0; padding: 24px; color: #1e293b; }
-        .card { max-width: 580px; margin: 0 auto; background: #ffffff; border-radius: 12px; border: 1px solid #e2e8f0; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
-        .header { background: #0f172a; padding: 24px 32px; color: #ffffff; text-align: center; }
-        .header h1 { margin: 0; font-size: 20px; font-weight: 700; letter-spacing: -0.025em; }
-        .content { padding: 32px; }
-        .otp-box { background: #f1f5f9; border: 2px dashed #94a3b8; border-radius: 8px; padding: 18px; text-align: center; margin: 24px 0; }
-        .otp-code { font-family: 'Courier New', Courier, monospace; font-size: 36px; font-weight: 800; letter-spacing: 8px; color: #0f172a; margin: 0; }
-        .btn { display: inline-block; background-color: #0284c7; color: #ffffff !important; text-decoration: none; padding: 14px 28px; font-weight: 600; border-radius: 6px; text-align: center; margin-top: 16px; }
-        .footer { background: #f8fafc; border-top: 1px solid #e2e8f0; padding: 20px 32px; font-size: 12px; color: #64748b; text-align: center; }
-        .badge { display: inline-block; background: #e0f2fe; color: #0369a1; padding: 4px 10px; border-radius: 9999px; font-size: 12px; font-weight: 600; text-transform: uppercase; }
-    </style>
-</head>
-<body>
-    <div class="card">
-        <div class="header">
-            <h1>Barangay Case Management Portal</h1>
-        </div>
-        <div class="content">
-            <p>Hello <strong>{{ $user->name }}</strong>,</p>
-            <p>An official system account has been provisionally prepared for you with the assigned role of <span class="badge">{{ $user->role }}</span>.</p>
-            <p>To finalize your account setup and choose your personal password, use the 6-digit confirmation code below:</p>
+@extends('emails.layouts.master')
 
-            <div class="otp-box">
-                <div class="otp-code">{{ $otp }}</div>
-                <small style="color: #64748b; display: block; margin-top: 6px;">Valid strictly for 10 minutes (Single Use Only)</small>
-            </div>
+@section('title', 'Account Setup & Verification')
 
-            <p style="text-align: center;">
-                <a href="{{ $activationUrl }}" class="btn">Verify Account & Set Password</a>
-            </p>
+@section('content')
+    <div style="text-align: center; margin-bottom: 20px;">
+        <span class="purpose-badge">Account Setup &bull; Verification</span>
+        <h2 style="font-size: 20px; font-weight: 800; color: #1e1b4b; margin: 6px 0 0 0; text-transform: uppercase; letter-spacing: -0.02em;">
+            Account Invitation
+        </h2>
+    </div>
 
-            <p style="font-size: 13px; color: #64748b; margin-top: 24px;">
-                <strong>Security Notice:</strong> Do not share this OTP with anyone. The system administrators will never ask for your verification code.
-            </p>
-        </div>
-        <div class="footer">
-            Women & Family Protection Case Management System &bull; Confidential &bull; RA 9262 / RA 10173 Compliant
+    <!-- Objective Summary -->
+    <table class="summary-card" cellpadding="0" cellspacing="0">
+        <tr>
+            <td class="summary-label">Recipient</td>
+            <td class="summary-val">{{ $user->name }}</td>
+        </tr>
+        <tr>
+            <td class="summary-label">System Role</td>
+            <td class="summary-val">
+                <span style="display: inline-block; background-color: #6b21a8; color: #ffffff; font-size: 11px; font-weight: 800; padding: 2px 8px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.5px;">
+                    {{ $user->role }}
+                </span>
+            </td>
+        </tr>
+        <tr>
+            <td class="summary-label">Objective</td>
+            <td class="summary-val" style="color: #475569;">
+                Finalize your portal credentials and set your official password.
+            </td>
+        </tr>
+    </table>
+
+    <!-- OTP Code Display -->
+    <div class="otp-box">
+        <div class="otp-label">One-Time Confirmation Code</div>
+        <div class="otp-number">{{ $otp }}</div>
+        <div class="otp-pill">
+            ⏱ Valid strictly for 10 minutes (Single Use Only)
         </div>
     </div>
-</body>
-</html>
+
+    <!-- Action Button -->
+    <div class="btn-container">
+        <a href="{{ $activationUrl }}" class="btn-primary">
+            Verify Account & Set Password
+        </a>
+    </div>
+
+    <!-- Security Notice -->
+    <div class="notice-card">
+        <strong>Security Notice:</strong> Never share this verification code with anyone. Official system administrators will never ask for your one-time code.
+    </div>
+@endsection

@@ -2,7 +2,7 @@ import { router } from '@inertiajs/react';
 import {
     History, Search, FileText, Eye, Download,
     Shield, Lock, Server, Cpu, RotateCcw,
-    Code, Clock, User, UserCheck, Database, Globe
+    Code, Clock, User, UserCheck, Database, Globe, Heart, Printer
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { route } from 'ziggy-js';
@@ -45,18 +45,11 @@ interface AuditTabProps {
         last_page: number;
         total?: number;
     } | null;
-    filters?: {
-        search?: string;
-        action?: string;
-        date_start?: string;
-        date_end?: string;
-        user_id?: string | number;
-        module?: string;
-        event_type?: string;
-    };
+    filters?: any;
+    baseUrl?: string;
 }
 
-export default function AuditTab({ logs, filters = {} }: AuditTabProps) {
+export default function AuditTab({ logs, filters = {}, baseUrl = '/admin/audit-logs' }: AuditTabProps) {
     const [searchQuery, setSearchQuery] = useState(filters.search || '');
     const [dateStart, setDateStart] = useState(filters.date_start || '');
     const [dateEnd, setDateEnd] = useState(filters.date_end || '');
@@ -65,18 +58,19 @@ export default function AuditTab({ logs, filters = {} }: AuditTabProps) {
     const [selectedLog, setSelectedLog] = useState<AuditLog | null>(null);
     const [usePrecisionTime, setUsePrecisionTime] = useState(false);
 
+    const targetUrl = baseUrl;
+
     useEffect(() => {
         const timeoutId = setTimeout(() => {
             const hasSearchChanged = searchQuery !== (filters.search || '');
             const hasDateStartChanged = dateStart !== (filters.date_start || '');
             const hasDateEndChanged = dateEnd !== (filters.date_end || '');
-            const hasModuleChanged = (selectedModule === 'all' ? '' : selectedModule) !== (filters.module || '');
-            const hasEventChanged = (selectedEventType === 'all' ? '' : selectedEventType) !== (filters.event_type || '');
+            const hasModuleChanged = selectedModule !== (filters.module || 'all');
+            const hasEventChanged = selectedEventType !== (filters.event_type || 'all');
 
             if (hasSearchChanged || hasDateStartChanged || hasDateEndChanged || hasModuleChanged || hasEventChanged) {
-                router.get(route('admin.settings.index'), {
+                router.get(targetUrl, {
                     ...filters,
-                    tab: 'audit',
                     search: searchQuery,
                     date_start: dateStart,
                     date_end: dateEnd,
@@ -99,9 +93,7 @@ export default function AuditTab({ logs, filters = {} }: AuditTabProps) {
         setDateEnd('');
         setSelectedModule('all');
         setSelectedEventType('all');
-        router.get(route('admin.settings.index'), {
-            tab: 'audit',
-        }, {
+        router.get(targetUrl, {}, {
             preserveState: true,
             preserveScroll: true,
             replace: true,
@@ -122,10 +114,10 @@ export default function AuditTab({ logs, filters = {} }: AuditTabProps) {
 
     const getActionBadgeColor = (action: string) => {
         const act = action.toUpperCase();
-        if (act.includes('DELETE') || act.includes('DESTROY') || act.includes('REJECT') || act.includes('UNAUTHORIZED') || act.includes('PANIC')) {
+        if (act.includes('DELETE') || act.includes('DESTROY') || act.includes('REJECT') || act.includes('UNAUTHORIZED') || act.includes('PANIC') || (act.includes('LOCK') && !act.includes('UNLOCK'))) {
             return 'bg-red-500/15 text-red-700 dark:text-red-400 border-red-200 dark:border-red-900';
         }
-        if (act.includes('CREATE') || act.includes('STORE') || act.includes('APPROVE') || act.includes('RESTORE')) {
+        if (act.includes('CREATE') || act.includes('STORE') || act.includes('APPROVE') || act.includes('RESTORE') || act.includes('UNLOCK')) {
             return 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-900';
         }
         if (act.includes('UPDATE') || act.includes('EDIT') || act.includes('MUTATED') || act.includes('OVERRIDDEN')) {
@@ -189,7 +181,7 @@ export default function AuditTab({ logs, filters = {} }: AuditTabProps) {
     const isSealedRecord = (log: AuditLog) => {
         const entity = log.formatted_entity || '';
         const type = log.auditable_type || '';
-        return (entity.includes('VAWC Case [') || entity.includes('BCPC Child [') || type.includes('Vawc') || type.includes('CaseReport') || type.includes('Bcpc')) && !type.includes('User');
+        return (entity.includes('VAWC Case [') || type.includes('Vawc') || type.includes('CaseReport')) && !type.includes('User');
     };
 
     const renderTargetEntity = (log: AuditLog) => {
@@ -205,46 +197,69 @@ export default function AuditTab({ logs, filters = {} }: AuditTabProps) {
             );
         }
 
-        if (entityText.startsWith('System User:') || entityText.startsWith('Official Profile:') || entityText.startsWith('Staff Account:')) {
-            const displayTitle = entityText.replace(/^(Official Profile:|Staff Account:)/, 'System User:');
+        let cleanText = entityText
+            .replace(/^(Official Profile:|Staff Account:|System User:)/, 'User:')
+            .replace(/\s*\([^)]+\)$/, '');
+
+        if (cleanText.startsWith('User:')) {
             return (
                 <div className="flex items-center gap-1.5">
                     <UserCheck className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 shrink-0" />
-                    <span className="font-medium text-foreground text-xs">{displayTitle}</span>
+                    <span className="font-medium text-foreground text-xs">{cleanText}</span>
                 </div>
             );
         }
 
-        if (entityText.startsWith('Citizen:')) {
+        if (cleanText.startsWith('Citizen:')) {
             return (
                 <div className="flex items-center gap-1.5">
                     <User className="w-3.5 h-3.5 text-sky-600 dark:text-sky-400 shrink-0" />
-                    <span className="font-medium text-foreground text-xs">{entityText}</span>
+                    <span className="font-medium text-foreground text-xs">{cleanText}</span>
                 </div>
             );
         }
 
-        if (entityText.startsWith('Database Backup:')) {
+        if (cleanText.startsWith('BCPC Child:') || cleanText.startsWith('BCPC Assessment:')) {
+            return (
+                <div className="flex items-center gap-1.5">
+                    <Heart className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0 fill-emerald-500/20" />
+                    <span className="font-medium text-foreground text-xs">{cleanText}</span>
+                </div>
+            );
+        }
+
+        if (cleanText.startsWith('BCPC Masterlist') || cleanText.includes('Masterlist')) {
+            return (
+                <div className="flex items-center gap-1.5">
+                    <Printer className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400 shrink-0" />
+                    <span className="font-medium text-foreground text-xs">{cleanText}</span>
+                </div>
+            );
+        }
+
+        if (cleanText.startsWith('Database Backup:') || cleanText.startsWith('Backup:')) {
+            const backupText = cleanText.replace(/^Database Backup:/, 'Backup:');
             return (
                 <div className="flex items-center gap-1.5">
                     <Database className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400 shrink-0" />
-                    <span className="font-mono text-foreground text-xs">{entityText}</span>
+                    <span className="font-mono text-foreground text-xs">{backupText}</span>
                 </div>
             );
         }
 
-        if (entityText.startsWith('System Route:')) {
+        if (cleanText.startsWith('System Route:') || cleanText.startsWith('Route:')) {
+            const routeText = cleanText.replace(/^System Route:/, 'Route:');
             return (
                 <div className="flex items-center gap-1.5">
                     <Globe className="w-3.5 h-3.5 text-slate-500 shrink-0" />
-                    <span className="font-mono text-muted-foreground text-xs">{entityText}</span>
+                    <span className="font-mono text-muted-foreground text-xs">{routeText}</span>
                 </div>
             );
         }
 
         return (
             <span className="font-medium text-foreground text-xs">
-                {entityText}
+                {cleanText}
             </span>
         );
     };
@@ -256,29 +271,70 @@ export default function AuditTab({ logs, filters = {} }: AuditTabProps) {
         const excludeKeys = [
             'created_at', 'updated_at', 'deleted_at', 'id',
             '_process', '_access_type', '_obfuscated_target',
-            'remember_token', 'email_verified_at', 'two_factor_confirmed_at'
+            '_actor_name', '_actor_role', 'remember_token',
+            'email_verified_at', 'two_factor_confirmed_at'
         ];
 
         const allKeys = Array.from(
             new Set([...Object.keys(oldData), ...Object.keys(newData)])
-        ).filter(key => !excludeKeys.includes(key));
+        ).filter(key => !excludeKeys.includes(key) && !key.startsWith('_'));
 
         if (allKeys.length === 0) {
             return (
-                <div className="p-4 text-center text-xs text-muted-foreground italic bg-muted/20 rounded-md border border-dashed">
+                <div className="p-6 text-center text-xs font-medium text-muted-foreground italic bg-muted/20 rounded-xl border border-dashed">
                     No field mutations recorded for this event.
                 </div>
             );
         }
 
+        const isPiiProtected = (val: any) => {
+            return typeof val === 'string' && val.includes('CONFIDENTIAL PII');
+        };
+
+        const tryParseJson = (val: any) => {
+            if (typeof val === 'string') {
+                const trimmed = val.trim();
+                if ((trimmed.startsWith('{') && trimmed.endsWith('}')) || (trimmed.startsWith('[') && trimmed.endsWith(']'))) {
+                    try {
+                        return JSON.parse(trimmed);
+                    } catch {
+                        return val;
+                    }
+                }
+            }
+            return val;
+        };
+
+        const formatValue = (val: any) => {
+            if (val === null || val === undefined) return <span className="text-muted-foreground italic font-normal text-xs">None / Empty</span>;
+            if (typeof val === 'boolean') return <span className="text-xs font-mono">{val ? 'true' : 'false'}</span>;
+            if (isPiiProtected(val)) {
+                return (
+                    <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-300 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-800 text-xs gap-1.5 py-1 px-2.5 font-semibold">
+                        <Lock className="w-3.5 h-3.5" />
+                        <span>Confidential PII (Masked)</span>
+                    </Badge>
+                );
+            }
+            const parsed = tryParseJson(val);
+            if (typeof parsed === 'object' && parsed !== null) {
+                return (
+                    <pre className="text-xs font-mono bg-muted/70 p-2.5 rounded-md border border-border/60 max-h-48 overflow-x-auto whitespace-pre-wrap break-all leading-relaxed">
+                        {JSON.stringify(parsed, null, 2)}
+                    </pre>
+                );
+            }
+            return <span className="break-words leading-relaxed text-xs">{String(val)}</span>;
+        };
+
         return (
-            <div className="border rounded-md divide-y overflow-hidden max-h-[380px] overflow-y-auto">
+            <div className="border rounded-xl divide-y overflow-hidden max-h-[420px] overflow-y-auto shadow-2xs">
                 <table className="min-w-full divide-y text-xs text-left">
-                    <thead className="bg-muted/60 font-semibold text-muted-foreground">
+                    <thead className="bg-muted/70 font-semibold text-muted-foreground">
                         <tr>
-                            <th className="p-2.5 w-1/4">Field</th>
-                            <th className="p-2.5 w-3/8 bg-red-50/50 dark:bg-red-950/20 text-red-700 dark:text-red-400">Previous Value</th>
-                            <th className="p-2.5 w-3/8 bg-emerald-50/50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400">Mutated Value</th>
+                            <th className="p-3 w-[150px] shrink-0 text-xs uppercase tracking-wider font-bold">Field</th>
+                            <th className="p-3 w-1/2 bg-red-50/60 dark:bg-red-950/25 text-red-700 dark:text-red-400 text-xs uppercase tracking-wider font-bold">Previous Value</th>
+                            <th className="p-3 w-1/2 bg-emerald-50/60 dark:bg-emerald-950/25 text-emerald-700 dark:text-emerald-400 text-xs uppercase tracking-wider font-bold">Mutated Value</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y bg-card">
@@ -286,38 +342,19 @@ export default function AuditTab({ logs, filters = {} }: AuditTabProps) {
                             const oldVal = oldData[key];
                             const newVal = newData[key];
 
-                            const isPiiProtected = (val: any) => {
-                                return typeof val === 'string' && val.includes('CONFIDENTIAL PII');
-                            };
-
-                            const formatValue = (val: any) => {
-                                if (val === null || val === undefined) return <span className="text-muted-foreground italic font-normal">None / Empty</span>;
-                                if (typeof val === 'boolean') return val ? 'true' : 'false';
-                                if (isPiiProtected(val)) {
-                                    return (
-                                        <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-300 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-800 text-[10px] gap-1 py-0.5">
-                                            <Lock className="w-2.5 h-2.5" />
-                                            <span>Confidential PII (Masked)</span>
-                                        </Badge>
-                                    );
-                                }
-                                if (typeof val === 'object') return <pre className="text-[10px] font-mono">{JSON.stringify(val, null, 1)}</pre>;
-                                return String(val);
-                            };
-
                             const isAdded = !(key in oldData);
                             const isDeleted = !(key in newData);
-                            const isModified = !isAdded && !isDeleted && oldVal !== newVal;
+                            const isModified = !isAdded && !isDeleted && JSON.stringify(oldVal) !== JSON.stringify(newVal);
 
                             return (
-                                <tr key={key} className="hover:bg-muted/30">
-                                    <td className="p-2.5 font-sans font-semibold text-muted-foreground truncate max-w-[140px]" title={key}>
+                                <tr key={key} className="hover:bg-muted/20 transition-colors">
+                                    <td className="p-3 font-semibold text-foreground/90 align-top w-[150px]" title={key}>
                                         {formatFieldName(key)}
                                     </td>
-                                    <td className={`p-2.5 font-mono ${isModified || isDeleted ? 'bg-red-50/30 dark:bg-red-950/10 text-red-600 dark:text-red-400 font-medium' : 'text-muted-foreground/50'}`}>
+                                    <td className={`p-3 font-mono align-top ${isModified || isDeleted ? 'bg-red-50/30 dark:bg-red-950/10 text-red-700 dark:text-red-400 font-medium' : 'text-muted-foreground/60'}`}>
                                         {isAdded ? <span className="text-muted-foreground/40 italic">—</span> : formatValue(oldVal)}
                                     </td>
-                                    <td className={`p-2.5 font-mono ${isModified || isAdded ? 'bg-emerald-50/30 dark:bg-emerald-950/10 text-emerald-600 dark:text-emerald-400 font-semibold' : 'text-muted-foreground/50'}`}>
+                                    <td className={`p-3 font-mono align-top ${isModified || isAdded ? 'bg-emerald-50/30 dark:bg-emerald-950/10 text-emerald-700 dark:text-emerald-400 font-semibold' : 'text-muted-foreground/60'}`}>
                                         {isDeleted ? <span className="text-muted-foreground/40 italic">—</span> : formatValue(newVal)}
                                     </td>
                                 </tr>
@@ -624,28 +661,28 @@ export default function AuditTab({ logs, filters = {} }: AuditTabProps) {
 
                     {/* Metadata Summary Banner */}
                     {selectedLog && (
-                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 p-3 bg-muted/40 rounded-lg border text-xs">
-                            <div>
-                                <span className="text-[10px] font-bold text-muted-foreground uppercase block">Module</span>
-                                <Badge variant="outline" className={`text-[10px] mt-0.5 ${getModuleBadgeColor(selectedLog.module_category)}`}>
+                        <div className="flex flex-wrap items-center justify-between gap-3 p-3.5 bg-muted/40 rounded-xl border border-border/60 text-xs">
+                            <div className="space-y-1">
+                                <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider block">Module</span>
+                                <Badge variant="outline" className={`text-xs font-semibold px-2.5 py-0.5 ${getModuleBadgeColor(selectedLog.module_category)}`}>
                                     {selectedLog.module_category || 'General'}
                                 </Badge>
                             </div>
-                            <div>
-                                <span className="text-[10px] font-bold text-muted-foreground uppercase block">Target Record</span>
-                                <div className="mt-0.5">
+                            <div className="space-y-1 flex-1 min-w-[200px]">
+                                <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider block">Target Record</span>
+                                <div>
                                     {renderTargetEntity(selectedLog)}
                                 </div>
                             </div>
-                            <div>
-                                <span className="text-[10px] font-bold text-muted-foreground uppercase block">Event Type</span>
-                                <span className="text-xs font-semibold capitalize">
+                            <div className="space-y-1">
+                                <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider block">Event Type</span>
+                                <span className="text-xs font-semibold capitalize block">
                                     {selectedLog.event_type || 'Mutation'}
                                 </span>
                             </div>
-                            <div>
-                                <span className="text-[10px] font-bold text-muted-foreground uppercase block">IP Address</span>
-                                <span className="font-mono text-xs text-muted-foreground">
+                            <div className="space-y-1">
+                                <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider block">IP Address</span>
+                                <span className="font-mono text-xs text-muted-foreground block">
                                     {selectedLog.ip_address || '127.0.0.1'}
                                 </span>
                             </div>
@@ -655,12 +692,12 @@ export default function AuditTab({ logs, filters = {} }: AuditTabProps) {
                     <div className="overflow-y-auto flex-1 pr-1 space-y-4">
                         {/* Tab Switcher: Structured Visual Diff vs Raw Technical JSON */}
                         <Tabs defaultValue="visual" className="w-full">
-                            <TabsList className="grid w-full grid-cols-2 h-8">
-                                <TabsTrigger value="visual" className="text-xs flex items-center gap-1.5">
+                            <TabsList className="grid w-full grid-cols-2 h-9 p-1 bg-muted rounded-lg">
+                                <TabsTrigger value="visual" className="text-xs font-semibold flex items-center gap-1.5">
                                     <FileText className="w-3.5 h-3.5" />
                                     <span>Structured Visual Diff</span>
                                 </TabsTrigger>
-                                <TabsTrigger value="raw" className="text-xs flex items-center gap-1.5">
+                                <TabsTrigger value="raw" className="text-xs font-semibold flex items-center gap-1.5">
                                     <Code className="w-3.5 h-3.5" />
                                     <span>Raw Technical JSON</span>
                                 </TabsTrigger>
@@ -669,17 +706,45 @@ export default function AuditTab({ logs, filters = {} }: AuditTabProps) {
                             {/* Visual Diff Content */}
                             <TabsContent value="visual" className="space-y-3 pt-2">
                                 {selectedLog?.event_type === 'read' ? (
-                                    <div className="p-4 bg-sky-50 dark:bg-sky-950/20 border border-sky-200 dark:border-sky-900 rounded-lg text-xs space-y-2">
+                                    <div className="p-4 bg-sky-50 dark:bg-sky-950/20 border border-sky-200 dark:border-sky-900 rounded-xl text-xs space-y-3">
                                         <div className="flex items-center gap-2 font-semibold text-sky-800 dark:text-sky-300">
                                             <Shield className="w-4 h-4 text-sky-600" />
-                                            <span>Read / Access Audit Record</span>
+                                            <span>
+                                                {selectedLog.action?.includes('EXPORT') || selectedLog.action?.includes('PRINT')
+                                                    ? 'Report Generation & Export Audit Record'
+                                                    : selectedLog.module_category === 'BCPC'
+                                                        ? 'Nutrition Monitoring Access Record'
+                                                        : selectedLog.module_category === 'VAWC'
+                                                            ? 'Statutory Legal Dossier Access Record'
+                                                            : 'Read / Access Audit Record'}
+                                            </span>
                                         </div>
                                         <p className="text-sky-700 dark:text-sky-400 text-xs leading-relaxed">
-                                            This log captures an access/read operation on a sensitive or sealed legal dossier. No database rows were mutated. This verification trail ensures compliance with Republic Act 10173 (Data Privacy Act) and RA 9262 Sec. 44 to detect silent data exfiltration or unverified browsing.
+                                            {selectedLog.action?.includes('EXPORT') || selectedLog.action?.includes('PRINT')
+                                                ? 'This log captures an official masterlist generation or report export operation. No database rows were mutated. Recorded to maintain administrative transparency and report generation tracking.'
+                                                : selectedLog.module_category === 'BCPC'
+                                                    ? 'This log captures an access or clinical review operation on a child growth and nutrition record. No database rows were mutated. This verification trail ensures compliance with Republic Act 10173 (Data Privacy Act) and community healthcare standards (RA 11037 / NNC e-OPT Plus) to maintain audit accountability across child health oversight.'
+                                                    : selectedLog.module_category === 'VAWC'
+                                                        ? 'This log captures an access/read operation on a sensitive or sealed legal dossier. No database rows were mutated. This verification trail ensures compliance with Republic Act 10173 (Data Privacy Act) and RA 9262 Sec. 44 to detect silent data exfiltration or unverified browsing.'
+                                                        : 'This log captures an access/read operation. No database rows were mutated. Recorded to maintain operational transparency and access accountability.'}
                                         </p>
-                                        {selectedLog.new_values && Object.keys(selectedLog.new_values).length > 0 && (
-                                            <div className="mt-2 pt-2 border-t border-sky-200 dark:border-sky-900 font-mono text-[11px] text-sky-800 dark:text-sky-300">
-                                                Context: {JSON.stringify(selectedLog.new_values)}
+                                        {selectedLog.new_values && Object.keys(selectedLog.new_values).filter(k => !k.startsWith('_')).length > 0 && (
+                                            <div className="pt-2.5 border-t border-sky-200 dark:border-sky-900/60 flex flex-wrap items-center gap-2">
+                                                <span className="text-[11px] font-bold text-sky-900 dark:text-sky-200 uppercase tracking-wide mr-1">
+                                                    Operation Context:
+                                                </span>
+                                                {Object.entries(selectedLog.new_values)
+                                                    .filter(([k]) => !k.startsWith('_'))
+                                                    .map(([key, val]) => (
+                                                        <div key={key} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-sky-100/80 dark:bg-sky-900/40 border border-sky-300 dark:border-sky-800 text-sky-900 dark:text-sky-200 text-xs">
+                                                            <span className="font-semibold text-muted-foreground capitalize">
+                                                                {key.replace(/_/g, ' ')}:
+                                                            </span>
+                                                            <strong className="font-bold text-foreground">
+                                                                {typeof val === 'object' ? JSON.stringify(val) : String(val)}
+                                                            </strong>
+                                                        </div>
+                                                    ))}
                                             </div>
                                         )}
                                     </div>
@@ -694,18 +759,18 @@ export default function AuditTab({ logs, filters = {} }: AuditTabProps) {
                             <TabsContent value="raw" className="space-y-3 pt-2 text-xs">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                     <div>
-                                        <span className="font-bold text-muted-foreground uppercase text-[11px] block mb-1">
+                                        <span className="font-bold text-muted-foreground uppercase text-xs tracking-wider block mb-1.5">
                                             Previous State (Old Values)
                                         </span>
-                                        <pre className="p-3 bg-muted/60 rounded-md border font-mono text-[11px] overflow-x-auto max-h-56">
+                                        <pre className="p-3 bg-muted/60 rounded-xl border font-mono text-xs overflow-x-auto max-h-56 leading-relaxed">
                                             {selectedLog?.old_values ? JSON.stringify(selectedLog.old_values, null, 2) : '// No previous state recorded'}
                                         </pre>
                                     </div>
                                     <div>
-                                        <span className="font-bold text-emerald-600 uppercase text-[11px] block mb-1">
+                                        <span className="font-bold text-emerald-600 uppercase text-xs tracking-wider block mb-1.5">
                                             Mutated State (New Values)
                                         </span>
-                                        <pre className="p-3 bg-emerald-950/10 border border-emerald-200 dark:border-emerald-900 rounded-md font-mono text-[11px] overflow-x-auto max-h-56 text-emerald-900 dark:text-emerald-300">
+                                        <pre className="p-3 bg-emerald-950/10 border border-emerald-200 dark:border-emerald-900 rounded-xl font-mono text-xs overflow-x-auto max-h-56 text-emerald-900 dark:text-emerald-300 leading-relaxed">
                                             {selectedLog?.new_values ? JSON.stringify(selectedLog.new_values, null, 2) : '// No new state payload'}
                                         </pre>
                                     </div>
@@ -715,19 +780,19 @@ export default function AuditTab({ logs, filters = {} }: AuditTabProps) {
 
                         {/* User Agent / Process Origin Footer */}
                         {selectedLog?.user_agent && (
-                            <div className="p-2.5 bg-muted/30 rounded border text-[11px] flex items-start gap-2">
-                                <Server className="w-3.5 h-3.5 text-muted-foreground shrink-0 mt-0.5" />
-                                <div className="truncate">
-                                    <span className="font-bold text-muted-foreground uppercase text-[10px] block">Process Signature & User Agent</span>
-                                    <span className="font-mono text-muted-foreground break-all">{selectedLog.user_agent}</span>
+                            <div className="p-3 bg-muted/30 rounded-xl border border-border/60 text-xs flex items-start gap-2.5">
+                                <Server className="w-4 h-4 text-muted-foreground shrink-0 mt-0.5" />
+                                <div className="min-w-0 flex-1">
+                                    <span className="font-bold text-muted-foreground uppercase text-xs tracking-wider block mb-0.5">Process Signature & User Agent</span>
+                                    <span className="font-mono text-xs text-muted-foreground break-all leading-relaxed block">{selectedLog.user_agent}</span>
                                 </div>
                             </div>
                         )}
                     </div>
 
-                    <DialogFooter className="pt-3 border-t">
+                    <DialogFooter className="pt-3 border-t flex items-center justify-end">
                         <DialogClose asChild>
-                            <Button variant="outline" size="sm" className="text-xs">
+                            <Button variant="outline" size="sm" className="text-xs font-semibold px-4 min-h-[38px]">
                                 Close
                             </Button>
                         </DialogClose>

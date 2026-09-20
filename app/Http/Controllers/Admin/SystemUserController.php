@@ -240,25 +240,10 @@ class SystemUserController extends Controller
 
     public function archives(Request $request)
     {
-        $query = User::onlyTrashed()->with('organization')->latest('deleted_at');
-
-        if ($request->filled('search')) {
-            $query->where(function ($q) use ($request) {
-                $q->where('name', 'LIKE', "%{$request->search}%")
-                    ->orWhere('email', 'LIKE', "%{$request->search}%");
-            });
-        }
-
-        if ($request->filled('role') && $request->role !== 'all') {
-            $query->where('role', $request->role);
-        }
-
-        $users = $query->paginate(10)->withQueryString();
-
-        return Inertia::render('Admin/SystemUsers/Archives', [
-            'users' => $users,
-            'filters' => $request->only(['search', 'role'])
-        ]);
+        return redirect()->route('admin.settings.index', array_merge([
+            'tab' => 'users',
+            'view' => 'archives',
+        ], $request->only(['search', 'role'])));
     }
 
     public function restore(int $id)
@@ -266,6 +251,9 @@ class SystemUserController extends Controller
         $user = User::onlyTrashed()->findOrFail($id);
         $user->restore();
 
-        return redirect()->route('admin.system-users.archives')->with('success', 'User account restored successfully.');
+        return redirect()->route('admin.settings.index', [
+            'tab' => 'users',
+            'view' => 'archives',
+        ])->with('success', "User account '{$user->name}' restored successfully.");
     }
 }

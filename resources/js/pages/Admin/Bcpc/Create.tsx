@@ -186,31 +186,40 @@ export default function BcpcCreate({ members = [], zones = [] }: any) {
             { title: 'Register Child', href: '/admin/bcpc/cases/create' }
         ]}>
             <Head title="Register Child - BCPC Nutrition" />
-            <div className="flex flex-1 flex-col gap-6 p-4 md:p-6 max-w-5xl mx-auto w-full">
+            <div className="flex h-full flex-1 flex-col gap-5 sm:gap-6 p-4 sm:p-6 w-full">
                 
-                {/* 🌟 Header */}
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-gradient-to-r from-emerald-950 via-teal-900 to-emerald-900 p-6 rounded-2xl text-white shadow-xl relative overflow-hidden">
-                    <div className="flex gap-4 items-center z-10">
+                {/* ── HEADER (Minimalist VAWC Pattern) ── */}
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div className="flex items-center gap-3">
                         <Link href="/admin/bcpc/cases">
-                            <Button variant="outline" size="icon" className="bg-white/10 hover:bg-white/20 text-white border-white/20 rounded-xl">
+                            <Button variant="outline" size="icon" className="h-9 w-9 rounded-xl">
                                 <ArrowLeft className="h-4 w-4" />
                             </Button>
                         </Link>
                         <div>
-                            <h1 className="text-2xl sm:text-3xl font-black uppercase tracking-tight text-white flex items-center gap-2">
-                                <Baby className="w-7 h-7 text-emerald-300" />
-                                Register New Child Record
-                            </h1>
-                            <p className="text-emerald-100/80 text-xs sm:text-sm font-medium mt-0.5">
-                                Electronic Operation Timbang Plus (e-OPT+) Intake & Baseline Growth Measurement (0-59 Months)
+                            <div className="flex items-center gap-2.5 flex-wrap">
+                                <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
+                                    Register Child Record
+                                </h1>
+                                <Badge variant="outline" className="text-emerald-700 bg-emerald-50 border-emerald-300 dark:bg-emerald-950/30 dark:text-emerald-400 dark:border-emerald-800 text-[11px] font-semibold">
+                                    0–59 Months
+                                </Badge>
+                            </div>
+                            <p className="text-sm text-muted-foreground mt-0.5">
+                                Electronic Operation Timbang Plus (e-OPT+) intake and baseline measurement.
                             </p>
                         </div>
                     </div>
 
-                    <div className="mt-4 sm:mt-0 z-10 w-full sm:w-auto">
-                        <Button onClick={submit} size="lg" disabled={processing} className="w-full sm:w-auto bg-emerald-500 hover:bg-emerald-600 text-white font-black uppercase text-xs tracking-wider rounded-xl shadow-lg h-11 px-6">
+                    <div className="w-full sm:w-auto">
+                        <Button
+                            onClick={submit}
+                            size="sm"
+                            disabled={processing}
+                            className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white text-xs h-9 min-h-[36px] font-medium shadow-xs"
+                        >
                             {processing ? 'Evaluating...' : (
-                                <span className="flex gap-2 items-center"><Save className="w-4 h-4" /> Save & Compute Diagnostics</span>
+                                <span className="flex gap-1.5 items-center"><Save className="w-4 h-4" /> Save & Compute</span>
                             )}
                         </Button>
                     </div>
@@ -224,7 +233,7 @@ export default function BcpcCreate({ members = [], zones = [] }: any) {
                             <div className="flex items-center gap-2">
                                 <UserCheck className="w-5 h-5 text-emerald-600" />
                                 <div>
-                                    <CardTitle className="text-base font-black uppercase">Step 1: Guardian & Household Details</CardTitle>
+                                    <CardTitle className="text-base font-bold">Step 1: Guardian & Household Information</CardTitle>
                                     <CardDescription className="text-xs">Select a registered resident parent/guardian or enter manually.</CardDescription>
                                 </div>
                             </div>
@@ -289,7 +298,7 @@ export default function BcpcCreate({ members = [], zones = [] }: any) {
                             <div className="flex items-center gap-2">
                                 <Baby className="w-5 h-5 text-emerald-600" />
                                 <div>
-                                    <CardTitle className="text-base font-black uppercase">Step 2: Child Information (0-59 Months Only)</CardTitle>
+                                    <CardTitle className="text-base font-bold">Step 2: Child Identity & Demographic Profile</CardTitle>
                                     <CardDescription className="text-xs">Enter child's full name, birthdate, sex, and assigned Purok zone.</CardDescription>
                                 </div>
                             </div>
@@ -391,8 +400,8 @@ export default function BcpcCreate({ members = [], zones = [] }: any) {
                             <div className="flex items-center gap-2">
                                 <Calculator className="h-5 w-5 text-emerald-600" />
                                 <div>
-                                    <CardTitle className="text-base font-black uppercase text-emerald-800 dark:text-emerald-300">Step 3: Baseline OPT+ Growth Measurement</CardTitle>
-                                    <CardDescription className="text-xs">Record weight and height. The WHO system will automatically calculate z-scores!</CardDescription>
+                                    <CardTitle className="text-base font-bold text-emerald-800 dark:text-emerald-300">Step 3: Baseline Growth Measurements (e-OPT+)</CardTitle>
+                                    <CardDescription className="text-xs">Record weight and height. Standard WHO z-scores will be calculated automatically.</CardDescription>
                                 </div>
                             </div>
                         </CardHeader>

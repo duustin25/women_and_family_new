@@ -1,11 +1,11 @@
-import { Form, Head } from '@inertiajs/react';
+import { Form, Head, Link } from '@inertiajs/react';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import AuthWomenFamilyLayout from '@/layouts/auth/auth-women-family-layout';
-// import { register } from '@/routes';
+import { route } from 'ziggy-js';
 import { store } from '@/routes/login';
 
 type Props = {
@@ -72,6 +72,15 @@ export default function Login({
                                 {processing && <Spinner />}
                                 Log in
                             </Button>
+
+                            <div className="text-center pt-2">
+                                <Link
+                                    href={route('account-unlock.request')}
+                                    className="text-xs text-muted-foreground hover:text-foreground transition-colors underline underline-offset-4"
+                                >
+                                    Account locked? Request emergency unlock link
+                                </Link>
+                            </div>
                         </div>
 
                         {/* {canRegister && (

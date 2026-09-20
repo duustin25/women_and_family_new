@@ -1,5 +1,5 @@
 import { Head, Link, useForm } from '@inertiajs/react';
-import { ArrowLeft, User, Calendar, MapPin, Phone, Scale, RefreshCw, FileText, CheckCircle2, History, Activity, Heart, AlertCircle, PlusCircle, Check, Info, ShieldAlert, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, User, Calendar, MapPin, Phone, Scale, RefreshCw, FileText, CheckCircle2, History, Activity, Heart, AlertCircle, PlusCircle, Check, Info, ShieldAlert, AlertTriangle, Printer } from 'lucide-react';
 import React, { useState } from 'react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
@@ -341,7 +341,7 @@ export default function BcpcShow({ child, computedAge }: any) {
         ]}>
             <Head title={`Child Profile - ${child.child_first_name}`} />
 
-            <div className="flex flex-1 flex-col gap-6 p-4 md:p-6 max-w-6xl mx-auto w-full">
+            <div className="flex h-full flex-1 flex-col gap-5 sm:gap-6 p-4 sm:p-6 w-full">
 
                 {/* 🔒 0-59 MONTHS AGE-OUT LOCKOUT BANNER */}
                 {hasAgedOut && (
@@ -379,32 +379,46 @@ export default function BcpcShow({ child, computedAge }: any) {
                     </div>
                 )}
 
-                {/* 🌟 Header Section */}
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-gradient-to-r from-emerald-950 via-teal-900 to-emerald-900 p-6 rounded-2xl text-white shadow-xl relative overflow-hidden">
-                    <div className="flex gap-4 items-center z-10">
+                {/* ── HEADER (Minimalist VAWC Dossier Pattern) ── */}
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div className="flex items-center gap-3">
                         <Link href="/admin/bcpc/cases">
-                            <Button variant="outline" size="icon" className="bg-white/10 hover:bg-white/20 text-white border-white/20 rounded-xl">
+                            <Button variant="outline" size="icon" className="h-9 w-9 rounded-xl">
                                 <ArrowLeft className="h-4 w-4" />
                             </Button>
                         </Link>
                         <div>
                             <div className="flex flex-wrap items-center gap-2">
-                                <h1 className="text-2xl md:text-3xl font-black uppercase tracking-tight text-white">
+                                <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
                                     {child.child_first_name} {child.child_middle_name || ''} {child.child_last_name}
                                 </h1>
-                                <Badge className="bg-emerald-500 text-white font-black uppercase text-[10px] tracking-wider px-2.5 py-0.5 rounded-md">
-                                    Registry: {child.status}
+                                <Badge variant="outline" className="text-xs font-semibold">
+                                    {child.status}
                                 </Badge>
                                 {child.sfp_status !== 'None' && (
-                                    <Badge className="bg-teal-400 text-slate-950 font-black uppercase text-[10px] tracking-wider px-2.5 py-0.5 rounded-md">
+                                    <Badge className="bg-emerald-600 text-white text-xs font-semibold">
                                         120-Day SFP: {child.sfp_status}
                                     </Badge>
                                 )}
                             </div>
-                            <p className="text-emerald-100/80 text-xs font-semibold flex items-center gap-2 mt-1">
-                                <User className="h-3.5 w-3.5 text-emerald-300" /> Guardian: <strong className="text-white">{child.guardian_name}</strong> {child.bns_name ? `| Assigned Scholar: ${child.bns_name}` : ''}
+                            <p className="text-sm text-muted-foreground mt-0.5">
+                                Guardian: <strong className="text-foreground font-semibold">{child.guardian_name}</strong> {child.bns_name ? `• Scholar: ${child.bns_name}` : ''}
                             </p>
                         </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 w-full sm:w-auto">
+                        <Button asChild variant="outline" size="sm" className="text-xs h-9 font-medium">
+                            <a href="/admin/bcpc/print" target="_blank" rel="noopener noreferrer">
+                                <Printer className="w-4 h-4 mr-1.5 text-teal-600" />
+                                Print Masterlist
+                            </a>
+                        </Button>
+                        {!hasAgedOut && (
+                            <Button size="sm" onClick={() => setIsModalOpen(true)} className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs h-9 font-medium shadow-xs">
+                                <PlusCircle className="h-4 w-4 mr-1.5" /> Record Measurement
+                            </Button>
+                        )}
                     </div>
                 </div>
 
@@ -514,31 +528,33 @@ export default function BcpcShow({ child, computedAge }: any) {
                                     </div>
 
                                     {/* SFP 5-Milestone Timeline (120 Days) */}
-                                    <div className="relative flex justify-between items-center px-4 py-6 bg-card border rounded-xl shadow-inner">
-                                        <div className="absolute left-6 right-6 top-1/2 h-1 bg-slate-200 dark:bg-slate-800 -translate-y-1/2 z-0 rounded-full"></div>
-                                        <div
-                                            className="absolute left-6 top-1/2 h-1 bg-emerald-500 -translate-y-1/2 z-0 rounded-full transition-all duration-700"
-                                            style={{ width: `calc(${activeWidth}% - ${activeWidth > 0 ? '10px' : '0px'})` }}
-                                        ></div>
+                                    <div className="overflow-x-auto pb-2">
+                                        <div className="relative flex justify-between items-center px-4 py-6 bg-card border rounded-xl shadow-inner min-w-[400px]">
+                                            <div className="absolute left-6 right-6 top-1/2 h-1 bg-slate-200 dark:bg-slate-800 -translate-y-1/2 z-0 rounded-full"></div>
+                                            <div
+                                                className="absolute left-6 top-1/2 h-1 bg-emerald-500 -translate-y-1/2 z-0 rounded-full transition-all duration-700"
+                                                style={{ width: `calc(${activeWidth}% - ${activeWidth > 0 ? '10px' : '0px'})` }}
+                                            ></div>
 
-                                        {milestones.map((m) => {
-                                            const info = getMilestoneStatus(m.day, m.record);
-                                            return (
-                                                <div key={m.day} className="flex flex-col items-center z-10 relative">
-                                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center font-black text-[11px] border-2 ${
-                                                        info.status === 'completed'
-                                                            ? 'bg-emerald-500 text-white border-emerald-600 shadow-md'
-                                                            : info.status === 'overdue'
-                                                            ? 'bg-red-500 text-white border-red-600 animate-pulse'
-                                                            : 'bg-muted text-muted-foreground border-border'
-                                                    }`}>
-                                                        {info.status === 'completed' ? <Check className="w-3.5 h-3.5" /> : `D${m.day}`}
+                                            {milestones.map((m) => {
+                                                const info = getMilestoneStatus(m.day, m.record);
+                                                return (
+                                                    <div key={m.day} className="flex flex-col items-center z-10 relative">
+                                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center font-black text-[11px] border-2 ${
+                                                            info.status === 'completed'
+                                                                ? 'bg-emerald-500 text-white border-emerald-600 shadow-md'
+                                                                : info.status === 'overdue'
+                                                                ? 'bg-red-500 text-white border-red-600 animate-pulse'
+                                                                : 'bg-muted text-muted-foreground border-border'
+                                                        }`}>
+                                                            {info.status === 'completed' ? <Check className="w-3.5 h-3.5" /> : `D${m.day}`}
+                                                        </div>
+                                                        <span className="text-[10px] font-bold mt-1 text-foreground">Day {m.day}</span>
+                                                        <span className="text-[8px] font-semibold text-muted-foreground">{info.text}</span>
                                                     </div>
-                                                    <span className="text-[10px] font-bold mt-1 text-foreground">Day {m.day}</span>
-                                                    <span className="text-[8px] font-semibold text-muted-foreground">{info.text}</span>
-                                                </div>
-                                            );
-                                        })}
+                                                );
+                                            })}
+                                        </div>
                                     </div>
                                 </CardContent>
                             </Card>

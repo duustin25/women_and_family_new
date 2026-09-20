@@ -1,4 +1,4 @@
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, usePoll } from '@inertiajs/react';
 import {
     AlertCircle, UserPlus, FileText, Cake, Activity,
     ChevronRight, ChevronLeft, Scale, Clock, ShieldAlert, HeartHandshake, MapPin, Users, Printer, CheckCircle2, ArrowRight,
@@ -28,6 +28,23 @@ export default function BcpcDashboard({
     const [queuePage, setQueuePage] = useState(1);
     const [sfpPage, setSfpPage] = useState(1);
     const itemsPerPage = 6;
+
+    // 🔄 Real-time Autoloader: Polls BCPC metrics every 10s
+    usePoll(10000, {
+        only: [
+            'monitoredChildren',
+            'topPriority',
+            'secondPriority',
+            'thirdPriority',
+            'doubleBurden',
+            'activeSfp',
+            'overdueWeighings',
+            'upcomingBirthdays',
+            'zonesBreakdown',
+            'distributions',
+            'metrics'
+        ],
+    });
 
     // Helper for calculating percentage
     const getPercent = (value: number, total: number) => {
@@ -64,63 +81,64 @@ export default function BcpcDashboard({
     return (
         <AppLayout breadcrumbs={[{ title: 'Dashboard', href: '/admin/dashboard' }, { title: 'BCPC Nutrition Action Center', href: '/admin/bcpc/dashboard' }]}>
             <Head title="BCPC Nutrition Action Center" />
-            <div className="flex h-full w-full flex-1 flex-col gap-6 p-4 md:p-6 max-w-7xl mx-auto">
+            <div className="flex h-full flex-1 flex-col gap-5 sm:gap-6 p-4 sm:p-6 w-full">
 
-                {/* 🌟 Header Banner */}
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-gradient-to-r from-emerald-950 via-teal-900 to-emerald-900 p-6 rounded-2xl text-white shadow-xl relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-80 h-80 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
-                    <div className="z-10 space-y-1">
-                        <div className="flex items-center gap-2">
-                            <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 px-3 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider flex items-center gap-1.5">
-                                <Activity className="w-3.5 h-3.5 text-emerald-300 animate-pulse" /> Nutrition Operations Center
-                            </span>
+                {/* ── HEADER (Minimalist VAWC Pattern) ── */}
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                    <div>
+                        <div className="flex items-center gap-2.5 flex-wrap">
+                            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
+                                BCPC Action Center
+                            </h1>
+                            <Badge variant="outline" className="text-xs sm:text-sm font-semibold">
+                                RA 11037
+                            </Badge>
                         </div>
-                        <h1 className="text-2xl md:text-3xl font-black uppercase tracking-tight text-white flex items-center gap-2">
-                            Child Nutrition & Feeding Action Center
-                        </h1>
-                        <p className="text-emerald-100/80 text-xs md:text-sm font-medium">
-                            Barangay 183 Child Growth Monitoring, 120-Day Feeding Roster & Community Malnutrition Action Center.
+                        <p className="text-sm sm:text-base text-muted-foreground mt-0.5">
+                            Child growth monitoring, clinical triage queues, and 120-day feeding program oversight.
                         </p>
                     </div>
 
-                    <div className="flex flex-wrap gap-2 z-10 w-full md:w-auto">
-                        <Button asChild variant="outline" size="sm" className="bg-white/10 hover:bg-white/20 text-white border-white/20 font-bold uppercase text-[11px] rounded-xl h-10 px-4">
+                    {/* Action buttons (WCAG min-h-[44px] touch targets) */}
+                    <div className="flex items-center gap-2 sm:gap-2.5 flex-wrap">
+                        <Button asChild variant="outline" size="sm" className="text-sm min-h-[44px] sm:min-h-[40px] gap-2 font-semibold px-4">
                             <a href="/admin/bcpc/print" target="_blank" rel="noopener noreferrer">
-                                <Printer className="w-4 h-4 mr-1.5 text-teal-300" />
-                                Export Masterlist (NNC)
+                                <Printer className="w-4 h-4 text-teal-600" />
+                                <span className="hidden sm:inline">Export Masterlist</span>
+                                <span className="sm:hidden">Export</span>
                             </a>
                         </Button>
-                        <Button asChild variant="outline" size="sm" className="bg-white/10 hover:bg-white/20 text-white border-white/20 font-bold uppercase text-[11px] rounded-xl h-10 px-4">
+                        <Button asChild variant="outline" size="sm" className="text-sm min-h-[44px] sm:min-h-[40px] gap-2 font-semibold px-4">
                             <Link href="/admin/bcpc/cases">
-                                <FileText className="w-4 h-4 mr-1.5 text-emerald-300" />
-                                Master Registry Table
+                                <FileText className="w-4 h-4 text-emerald-600" />
+                                <span>Registry Table</span>
                             </Link>
                         </Button>
-                        <Button asChild size="sm" className="bg-emerald-500 hover:bg-emerald-600 text-white font-black uppercase text-[11px] tracking-wider rounded-xl h-10 px-5 shadow-lg shadow-emerald-900/40">
+                        <Button asChild size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white text-sm min-h-[44px] sm:min-h-[40px] gap-2 font-semibold px-4 shadow-xs">
                             <Link href="/admin/bcpc/cases/create">
-                                <UserPlus className="w-4 h-4 mr-1.5" />
-                                Register Child
+                                <UserPlus className="w-4 h-4" />
+                                <span>Register Child</span>
                             </Link>
                         </Button>
                     </div>
                 </div>
 
                 {/* 📊 Executive 6-KPI Summary Strip */}
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4">
+                <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-4">
 
                     {/* KPI 1: Monitored */}
                     <Card className="border-border shadow-xs hover:shadow-md transition-all rounded-2xl overflow-hidden relative">
-                        <CardHeader className="pb-1 p-3.5">
-                            <CardTitle className="text-[10px] font-black text-muted-foreground uppercase tracking-wider flex items-center gap-1">
-                                <Users className="w-3.5 h-3.5 text-slate-500" />
-                                Monitored (0-59m)
+                        <CardHeader className="pb-1 p-3 sm:p-3.5">
+                            <CardTitle className="text-[11px] sm:text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5 truncate">
+                                <Users className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+                                <span className="truncate">Monitored (0-59m)</span>
                             </CardTitle>
                         </CardHeader>
-                        <CardContent className="p-3.5 pt-0">
-                            <div className="text-2xl md:text-3xl font-black text-foreground">
+                        <CardContent className="p-3 sm:p-3.5 pt-0">
+                            <div className="text-2xl sm:text-3xl font-black text-foreground">
                                 {metrics?.total_monitored || totalChildren}
                             </div>
-                            <div className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">
+                            <div className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 mt-0.5 truncate">
                                 Active Census
                             </div>
                         </CardContent>
@@ -128,17 +146,17 @@ export default function BcpcDashboard({
 
                     {/* KPI 2: SAM */}
                     <Card className="border-red-500/30 bg-red-500/5 shadow-xs hover:shadow-md transition-all rounded-2xl overflow-hidden relative cursor-pointer" onClick={() => handleTabChange('sam')}>
-                        <CardHeader className="pb-1 p-3.5">
-                            <CardTitle className="text-[10px] font-black text-red-600 dark:text-red-400 uppercase tracking-wider flex items-center gap-1">
-                                <ShieldAlert className="w-3.5 h-3.5 text-red-500 animate-pulse" />
-                                Severe Malnutrition
+                        <CardHeader className="pb-1 p-3 sm:p-3.5">
+                            <CardTitle className="text-[11px] sm:text-xs font-bold text-red-600 dark:text-red-400 uppercase tracking-wider flex items-center gap-1.5 truncate">
+                                <ShieldAlert className="w-3.5 h-3.5 text-red-500 animate-pulse shrink-0" />
+                                <span className="truncate">Severe Malnutrition</span>
                             </CardTitle>
                         </CardHeader>
-                        <CardContent className="p-3.5 pt-0">
-                            <div className="text-2xl md:text-3xl font-black text-red-600 dark:text-red-400">
+                        <CardContent className="p-3 sm:p-3.5 pt-0">
+                            <div className="text-2xl sm:text-3xl font-black text-red-600 dark:text-red-400">
                                 {metrics?.sam_cases ?? topPriority.length}
                             </div>
-                            <div className="text-[10px] font-bold text-red-600/80 mt-0.5">
+                            <div className="text-[11px] font-bold text-red-600/80 mt-0.5 truncate">
                                 Urgent Medical Action
                             </div>
                         </CardContent>
@@ -146,17 +164,17 @@ export default function BcpcDashboard({
 
                     {/* KPI 3: MAM */}
                     <Card className="border-amber-500/30 bg-amber-500/5 shadow-xs hover:shadow-md transition-all rounded-2xl overflow-hidden relative cursor-pointer" onClick={() => handleTabChange('mam')}>
-                        <CardHeader className="pb-1 p-3.5">
-                            <CardTitle className="text-[10px] font-black text-amber-600 dark:text-amber-400 uppercase tracking-wider flex items-center gap-1">
-                                <AlertCircle className="w-3.5 h-3.5 text-amber-500" />
-                                Moderate (MAM)
+                        <CardHeader className="pb-1 p-3 sm:p-3.5">
+                            <CardTitle className="text-[11px] sm:text-xs font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider flex items-center gap-1.5 truncate">
+                                <AlertCircle className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                                <span className="truncate">Moderate (MAM)</span>
                             </CardTitle>
                         </CardHeader>
-                        <CardContent className="p-3.5 pt-0">
-                            <div className="text-2xl md:text-3xl font-black text-amber-600 dark:text-amber-400">
+                        <CardContent className="p-3 sm:p-3.5 pt-0">
+                            <div className="text-2xl sm:text-3xl font-black text-amber-600 dark:text-amber-400">
                                 {metrics?.mam_cases ?? secondPriority.length}
                             </div>
-                            <div className="text-[10px] font-bold text-amber-600/80 mt-0.5">
+                            <div className="text-[11px] font-bold text-amber-600/80 mt-0.5 truncate">
                                 Feeding Program Queue
                             </div>
                         </CardContent>
@@ -164,17 +182,17 @@ export default function BcpcDashboard({
 
                     {/* KPI 4: Double Burden */}
                     <Card className="border-purple-500/30 bg-purple-500/5 shadow-xs hover:shadow-md transition-all rounded-2xl overflow-hidden relative cursor-pointer" onClick={() => handleTabChange('double_burden')}>
-                        <CardHeader className="pb-1 p-3.5">
-                            <CardTitle className="text-[10px] font-black text-purple-600 dark:text-purple-400 uppercase tracking-wider flex items-center gap-1">
-                                <Sparkles className="w-3.5 h-3.5 text-purple-500" />
-                                Double Burden
+                        <CardHeader className="pb-1 p-3 sm:p-3.5">
+                            <CardTitle className="text-[11px] sm:text-xs font-bold text-purple-600 dark:text-purple-400 uppercase tracking-wider flex items-center gap-1.5 truncate">
+                                <Sparkles className="w-3.5 h-3.5 text-purple-500 shrink-0" />
+                                <span className="truncate">Double Burden</span>
                             </CardTitle>
                         </CardHeader>
-                        <CardContent className="p-3.5 pt-0">
-                            <div className="text-2xl md:text-3xl font-black text-purple-600 dark:text-purple-400">
+                        <CardContent className="p-3 sm:p-3.5 pt-0">
+                            <div className="text-2xl sm:text-3xl font-black text-purple-600 dark:text-purple-400">
                                 {metrics?.double_burden_cases ?? doubleBurden.length}
                             </div>
-                            <div className="text-[10px] font-bold text-purple-600/80 mt-0.5">
+                            <div className="text-[11px] font-bold text-purple-600/80 mt-0.5 truncate">
                                 Stunted + Heavy Mass
                             </div>
                         </CardContent>
@@ -182,17 +200,17 @@ export default function BcpcDashboard({
 
                     {/* KPI 5: Active Feeding */}
                     <Card className="border-emerald-500/30 bg-emerald-500/5 shadow-xs hover:shadow-md transition-all rounded-2xl overflow-hidden relative">
-                        <CardHeader className="pb-1 p-3.5">
-                            <CardTitle className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-wider flex items-center gap-1">
-                                <HeartHandshake className="w-3.5 h-3.5 text-emerald-500" />
-                                Feeding Program
+                        <CardHeader className="pb-1 p-3 sm:p-3.5">
+                            <CardTitle className="text-[11px] sm:text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider flex items-center gap-1.5 truncate">
+                                <HeartHandshake className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                                <span className="truncate">Feeding Program</span>
                             </CardTitle>
                         </CardHeader>
-                        <CardContent className="p-3.5 pt-0">
-                            <div className="text-2xl md:text-3xl font-black text-emerald-600 dark:text-emerald-400">
+                        <CardContent className="p-3 sm:p-3.5 pt-0">
+                            <div className="text-2xl sm:text-3xl font-black text-emerald-600 dark:text-emerald-400">
                                 {metrics?.active_sfp ?? activeSfp.length}
                             </div>
-                            <div className="text-[10px] font-bold text-emerald-600/80 mt-0.5">
+                            <div className="text-[11px] font-bold text-emerald-600/80 mt-0.5 truncate">
                                 {metrics?.graduated_sfp || 0} Recovered
                             </div>
                         </CardContent>
@@ -200,17 +218,17 @@ export default function BcpcDashboard({
 
                     {/* KPI 6: Overdue */}
                     <Card className="border-rose-500/30 bg-rose-500/5 shadow-xs hover:shadow-md transition-all rounded-2xl overflow-hidden relative cursor-pointer" onClick={() => handleTabChange('overdue')}>
-                        <CardHeader className="pb-1 p-3.5">
-                            <CardTitle className="text-[10px] font-black text-rose-600 dark:text-rose-400 uppercase tracking-wider flex items-center gap-1">
-                                <Clock className="w-3.5 h-3.5 text-rose-500" />
-                                Overdue Check-ins
+                        <CardHeader className="pb-1 p-3 sm:p-3.5">
+                            <CardTitle className="text-[11px] sm:text-xs font-bold text-rose-600 dark:text-rose-400 uppercase tracking-wider flex items-center gap-1.5 truncate">
+                                <Clock className="w-3.5 h-3.5 text-rose-500 shrink-0" />
+                                <span className="truncate">Overdue Check-ins</span>
                             </CardTitle>
                         </CardHeader>
-                        <CardContent className="p-3.5 pt-0">
-                            <div className="text-2xl md:text-3xl font-black text-rose-600 dark:text-rose-400">
+                        <CardContent className="p-3 sm:p-3.5 pt-0">
+                            <div className="text-2xl sm:text-3xl font-black text-rose-600 dark:text-rose-400">
                                 {metrics?.overdue_count ?? overdueWeighings.length}
                             </div>
-                            <div className="text-[10px] font-bold text-rose-600/80 mt-0.5">
+                            <div className="text-[11px] font-bold text-rose-600/80 mt-0.5 truncate">
                                 Needs Weighing (&gt;30d)
                             </div>
                         </CardContent>
@@ -218,20 +236,20 @@ export default function BcpcDashboard({
                 </div>
 
                 {/* 🧩 Main Operational Section */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
 
                     {/* Left 2-Columns: Dynamic Action Queues & SFP Progress */}
-                    <div className="lg:col-span-2 flex flex-col gap-6">
+                    <div className="xl:col-span-2 flex flex-col gap-6">
 
                         {/* 🎯 Interactive Clinical Action Queue */}
                         <Card className="border-border shadow-sm rounded-2xl overflow-hidden flex flex-col justify-between">
                             <div>
                                 <CardHeader className="pb-3 border-b bg-muted/20">
-                                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
                                         <div>
                                             <CardTitle className="text-sm font-black uppercase tracking-tight flex items-center gap-2">
-                                                <Activity className="h-4 w-4 text-emerald-600" />
-                                                Clinical Action Queue
+                                                <Activity className="h-4 w-4 text-emerald-600 shrink-0" />
+                                                <span>Clinical Action Queue</span>
                                             </CardTitle>
                                             <CardDescription className="text-xs text-muted-foreground mt-0.5">
                                                 Children requiring immediate medical referral, feeding intake, or check-in.
@@ -239,10 +257,10 @@ export default function BcpcDashboard({
                                         </div>
 
                                         {/* Queue Tab Selectors */}
-                                        <div className="flex flex-wrap gap-1 bg-muted/60 p-1 rounded-xl border">
+                                        <div className="flex flex-wrap items-center gap-1 bg-muted/60 p-1 rounded-xl border max-w-full">
                                             <button
                                                 onClick={() => handleTabChange('sam')}
-                                                className={`px-2.5 py-1 rounded-lg text-xs font-black uppercase transition-all ${activeQueueTab === 'sam'
+                                                className={`px-2.5 py-1 rounded-lg text-xs font-black uppercase transition-all whitespace-nowrap ${activeQueueTab === 'sam'
                                                         ? 'bg-red-600 text-white shadow-xs'
                                                         : 'text-muted-foreground hover:text-foreground'
                                                     }`}
@@ -251,7 +269,7 @@ export default function BcpcDashboard({
                                             </button>
                                             <button
                                                 onClick={() => handleTabChange('mam')}
-                                                className={`px-2.5 py-1 rounded-lg text-xs font-black uppercase transition-all ${activeQueueTab === 'mam'
+                                                className={`px-2.5 py-1 rounded-lg text-xs font-black uppercase transition-all whitespace-nowrap ${activeQueueTab === 'mam'
                                                         ? 'bg-amber-500 text-white shadow-xs'
                                                         : 'text-muted-foreground hover:text-foreground'
                                                     }`}
@@ -260,7 +278,7 @@ export default function BcpcDashboard({
                                             </button>
                                             <button
                                                 onClick={() => handleTabChange('double_burden')}
-                                                className={`px-2.5 py-1 rounded-lg text-xs font-black uppercase transition-all ${activeQueueTab === 'double_burden'
+                                                className={`px-2.5 py-1 rounded-lg text-xs font-black uppercase transition-all whitespace-nowrap ${activeQueueTab === 'double_burden'
                                                         ? 'bg-purple-600 text-white shadow-xs'
                                                         : 'text-muted-foreground hover:text-foreground'
                                                     }`}
@@ -269,7 +287,7 @@ export default function BcpcDashboard({
                                             </button>
                                             <button
                                                 onClick={() => handleTabChange('stunted')}
-                                                className={`px-2.5 py-1 rounded-lg text-xs font-black uppercase transition-all ${activeQueueTab === 'stunted'
+                                                className={`px-2.5 py-1 rounded-lg text-xs font-black uppercase transition-all whitespace-nowrap ${activeQueueTab === 'stunted'
                                                         ? 'bg-cyan-600 text-white shadow-xs'
                                                         : 'text-muted-foreground hover:text-foreground'
                                                     }`}
@@ -278,7 +296,7 @@ export default function BcpcDashboard({
                                             </button>
                                             <button
                                                 onClick={() => handleTabChange('overdue')}
-                                                className={`px-2.5 py-1 rounded-lg text-xs font-black uppercase transition-all ${activeQueueTab === 'overdue'
+                                                className={`px-2.5 py-1 rounded-lg text-xs font-black uppercase transition-all whitespace-nowrap ${activeQueueTab === 'overdue'
                                                         ? 'bg-rose-600 text-white shadow-xs'
                                                         : 'text-muted-foreground hover:text-foreground'
                                                     }`}
@@ -289,35 +307,37 @@ export default function BcpcDashboard({
                                     </div>
                                 </CardHeader>
 
-                                <CardContent className="p-0">
+                                <CardContent className="p-0 min-h-[360px]">
                                     {/* TAB 1: SAM Priority */}
                                     {activeQueueTab === 'sam' && (
                                         topPriority.length === 0 ? (
-                                            <div className="p-8 text-center text-muted-foreground text-xs font-semibold">
-                                                🎉 No critical Severe Acute Malnutrition (SAM) cases detected. All monitored children are in safe range!
+                                            <div className="min-h-[320px] flex flex-col items-center justify-center p-8 text-center space-y-2">
+                                                <CheckCircle2 className="w-10 h-10 text-emerald-500/40 mb-1" />
+                                                <p className="text-sm font-semibold text-foreground">No critical SAM cases detected.</p>
+                                                <p className="text-xs text-muted-foreground max-w-sm">All monitored children are in safe range or receiving proper therapeutic care.</p>
                                             </div>
                                         ) : (
                                             <div className="divide-y divide-border">
                                                 {paginatedQueue.map((child: any) => (
-                                                    <div key={child.id} className="p-3.5 flex items-center justify-between hover:bg-red-500/5 transition-colors">
-                                                        <div className="flex items-center gap-3">
-                                                            <Avatar className="h-9 w-9 border-2 border-red-400">
+                                                    <div key={child.id} className="p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-red-500/5 transition-colors">
+                                                        <div className="flex items-center gap-3 min-w-0">
+                                                            <Avatar className="h-9 w-9 border-2 border-red-400 shrink-0">
                                                                 <AvatarFallback className="bg-red-100 text-red-600 font-bold text-xs">{child.child_first_name[0]}</AvatarFallback>
                                                             </Avatar>
-                                                            <div>
-                                                                <p className="font-bold text-xs sm:text-sm text-foreground">{child.child_first_name} {child.child_last_name}</p>
-                                                                <p className="text-[11px] text-muted-foreground font-medium">
+                                                            <div className="min-w-0">
+                                                                <p className="font-bold text-xs sm:text-sm text-foreground truncate">{child.child_first_name} {child.child_last_name}</p>
+                                                                <p className="text-[11px] text-muted-foreground font-medium truncate">
                                                                     Guardian: <strong className="text-foreground">{child.guardian_name}</strong> {child.zone ? `| ${child.zone.name}` : ''}
                                                                 </p>
                                                                 {child.bns_name && (
-                                                                    <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold">
+                                                                    <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold truncate">
                                                                         Scholar: {child.bns_name}
                                                                     </p>
                                                                 )}
                                                             </div>
                                                         </div>
-                                                        <div className="flex items-center gap-2.5">
-                                                            <Badge variant="destructive" className="font-black text-[9px] uppercase px-2 py-0.5 rounded-md animate-pulse">
+                                                        <div className="flex items-center gap-2.5 shrink-0 self-end sm:self-center">
+                                                            <Badge variant="destructive" className="font-bold text-[9px] uppercase px-2 py-0.5 rounded-md animate-pulse">
                                                                 {child.latest_assessment?.wflh_status === 'Severely Wasted' ? 'Severely Wasted' : (child.latest_assessment?.wfa_status || 'SAM Alert')}
                                                             </Badge>
                                                             <Link href={`/admin/bcpc/cases/${child.id}`}>
@@ -335,31 +355,33 @@ export default function BcpcDashboard({
                                     {/* TAB 2: MAM Priority */}
                                     {activeQueueTab === 'mam' && (
                                         secondPriority.length === 0 ? (
-                                            <div className="p-8 text-center text-muted-foreground text-xs font-semibold">
-                                                No Moderate Acute Malnutrition (MAM) cases in queue.
+                                            <div className="min-h-[320px] flex flex-col items-center justify-center p-8 text-center space-y-2">
+                                                <CheckCircle2 className="w-10 h-10 text-emerald-500/40 mb-1" />
+                                                <p className="text-sm font-semibold text-foreground">No MAM cases currently queued.</p>
+                                                <p className="text-xs text-muted-foreground max-w-sm">No children with moderate acute malnutrition requiring 120-day intake at this moment.</p>
                                             </div>
                                         ) : (
                                             <div className="divide-y divide-border">
                                                 {paginatedQueue.map((child: any) => (
-                                                    <div key={child.id} className="p-3.5 flex items-center justify-between hover:bg-amber-500/5 transition-colors">
-                                                        <div className="flex items-center gap-3">
-                                                            <Avatar className="h-9 w-9 border-2 border-amber-300">
+                                                    <div key={child.id} className="p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-amber-500/5 transition-colors">
+                                                        <div className="flex items-center gap-3 min-w-0">
+                                                            <Avatar className="h-9 w-9 border-2 border-amber-300 shrink-0">
                                                                 <AvatarFallback className="bg-amber-100 text-amber-600 font-bold text-xs">{child.child_first_name[0]}</AvatarFallback>
                                                             </Avatar>
-                                                            <div>
-                                                                <p className="font-bold text-xs sm:text-sm text-foreground">{child.child_first_name} {child.child_last_name}</p>
-                                                                <p className="text-[11px] text-muted-foreground font-medium">
+                                                            <div className="min-w-0">
+                                                                <p className="font-bold text-xs sm:text-sm text-foreground truncate">{child.child_first_name} {child.child_last_name}</p>
+                                                                <p className="text-[11px] text-muted-foreground font-medium truncate">
                                                                     Guardian: <strong className="text-foreground">{child.guardian_name}</strong> {child.zone ? `| ${child.zone.name}` : ''}
                                                                 </p>
                                                                 {child.bns_name && (
-                                                                    <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold">
+                                                                    <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold truncate">
                                                                         Scholar: {child.bns_name}
                                                                     </p>
                                                                 )}
                                                             </div>
                                                         </div>
-                                                        <div className="flex items-center gap-2.5">
-                                                            <Badge className="bg-amber-500 text-white font-black text-[9px] uppercase px-2 py-0.5 rounded-md">
+                                                        <div className="flex items-center gap-2.5 shrink-0 self-end sm:self-center">
+                                                            <Badge className="bg-amber-500 text-white font-bold text-[9px] uppercase px-2 py-0.5 rounded-md">
                                                                 {child.latest_assessment?.wflh_status === 'Wasted' ? 'Wasted (MAM)' : (child.latest_assessment?.wfa_status || 'MAM Notice')}
                                                             </Badge>
                                                             <Link href={`/admin/bcpc/cases/${child.id}`}>
@@ -377,26 +399,28 @@ export default function BcpcDashboard({
                                     {/* TAB 3: Double Burden */}
                                     {activeQueueTab === 'double_burden' && (
                                         doubleBurden.length === 0 ? (
-                                            <div className="p-8 text-center text-muted-foreground text-xs font-semibold">
-                                                No Double Burden cases (Stunted + Heavy Body Mass) recorded.
+                                            <div className="min-h-[320px] flex flex-col items-center justify-center p-8 text-center space-y-2">
+                                                <CheckCircle2 className="w-10 h-10 text-emerald-500/40 mb-1" />
+                                                <p className="text-sm font-semibold text-foreground">No Double Burden cases recorded.</p>
+                                                <p className="text-xs text-muted-foreground max-w-sm">No children exhibiting concurrent chronic linear stunting and elevated body mass.</p>
                                             </div>
                                         ) : (
                                             <div className="divide-y divide-border">
                                                 {paginatedQueue.map((child: any) => (
-                                                    <div key={child.id} className="p-3.5 flex items-center justify-between hover:bg-purple-500/5 transition-colors">
-                                                        <div className="flex items-center gap-3">
-                                                            <Avatar className="h-9 w-9 border-2 border-purple-400">
+                                                    <div key={child.id} className="p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-purple-500/5 transition-colors">
+                                                        <div className="flex items-center gap-3 min-w-0">
+                                                            <Avatar className="h-9 w-9 border-2 border-purple-400 shrink-0">
                                                                 <AvatarFallback className="bg-purple-100 text-purple-600 font-bold text-xs">{child.child_first_name[0]}</AvatarFallback>
                                                             </Avatar>
-                                                            <div>
-                                                                <p className="font-bold text-xs sm:text-sm text-foreground">{child.child_first_name} {child.child_last_name}</p>
-                                                                <p className="text-[11px] text-muted-foreground font-medium">
+                                                            <div className="min-w-0">
+                                                                <p className="font-bold text-xs sm:text-sm text-foreground truncate">{child.child_first_name} {child.child_last_name}</p>
+                                                                <p className="text-[11px] text-muted-foreground font-medium truncate">
                                                                     Height: <strong className="text-amber-600">{child.latest_assessment?.hfa_status}</strong> • Weight: <strong className="text-rose-600">{child.latest_assessment?.wflh_status}</strong>
                                                                 </p>
                                                             </div>
                                                         </div>
-                                                        <div className="flex items-center gap-2.5">
-                                                            <Badge variant="outline" className="border-purple-400 bg-purple-50 text-purple-700 font-black text-[9px] uppercase px-2 py-0.5 rounded-md">
+                                                        <div className="flex items-center gap-2.5 shrink-0 self-end sm:self-center">
+                                                            <Badge variant="outline" className="border-purple-400 bg-purple-50 text-purple-700 dark:bg-purple-950/40 dark:text-purple-300 font-bold text-[9px] uppercase px-2 py-0.5 rounded-md">
                                                                 Double Burden
                                                             </Badge>
                                                             <Link href={`/admin/bcpc/cases/${child.id}`}>
@@ -414,26 +438,28 @@ export default function BcpcDashboard({
                                     {/* TAB 4: Stunting */}
                                     {activeQueueTab === 'stunted' && (
                                         thirdPriority.length === 0 ? (
-                                            <div className="p-8 text-center text-muted-foreground text-xs font-semibold">
-                                                No chronic stunting cases recorded.
+                                            <div className="min-h-[320px] flex flex-col items-center justify-center p-8 text-center space-y-2">
+                                                <CheckCircle2 className="w-10 h-10 text-emerald-500/40 mb-1" />
+                                                <p className="text-sm font-semibold text-foreground">No chronic stunting cases flagged.</p>
+                                                <p className="text-xs text-muted-foreground max-w-sm">All monitored children meet expected Height-for-Age (HFA) linear growth milestones.</p>
                                             </div>
                                         ) : (
                                             <div className="divide-y divide-border">
                                                 {paginatedQueue.map((child: any) => (
-                                                    <div key={child.id} className="p-3.5 flex items-center justify-between hover:bg-cyan-500/5 transition-colors">
-                                                        <div className="flex items-center gap-3">
-                                                            <Avatar className="h-9 w-9 border-2 border-cyan-400">
+                                                    <div key={child.id} className="p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-cyan-500/5 transition-colors">
+                                                        <div className="flex items-center gap-3 min-w-0">
+                                                            <Avatar className="h-9 w-9 border-2 border-cyan-400 shrink-0">
                                                                 <AvatarFallback className="bg-cyan-100 text-cyan-700 font-bold text-xs">{child.child_first_name[0]}</AvatarFallback>
                                                             </Avatar>
-                                                            <div>
-                                                                <p className="font-bold text-xs sm:text-sm text-foreground">{child.child_first_name} {child.child_last_name}</p>
-                                                                <p className="text-[11px] text-muted-foreground font-medium">
+                                                            <div className="min-w-0">
+                                                                <p className="font-bold text-xs sm:text-sm text-foreground truncate">{child.child_first_name} {child.child_last_name}</p>
+                                                                <p className="text-[11px] text-muted-foreground font-medium truncate">
                                                                     Height: {child.latest_assessment?.height_cm} cm ({child.latest_assessment?.hfa_status})
                                                                 </p>
                                                             </div>
                                                         </div>
-                                                        <div className="flex items-center gap-2.5">
-                                                            <Badge variant="outline" className="border-cyan-400 bg-cyan-50 text-cyan-800 font-black text-[9px] uppercase px-2 py-0.5 rounded-md">
+                                                        <div className="flex items-center gap-2.5 shrink-0 self-end sm:self-center">
+                                                            <Badge variant="outline" className="border-cyan-400 bg-cyan-50 text-cyan-800 dark:bg-cyan-950/40 dark:text-cyan-300 font-bold text-[9px] uppercase px-2 py-0.5 rounded-md">
                                                                 {child.latest_assessment?.hfa_status}
                                                             </Badge>
                                                             <Link href={`/admin/bcpc/cases/${child.id}`}>
@@ -451,8 +477,10 @@ export default function BcpcDashboard({
                                     {/* TAB 5: Overdue */}
                                     {activeQueueTab === 'overdue' && (
                                         overdueWeighings.length === 0 ? (
-                                            <div className="p-8 text-center text-muted-foreground text-xs font-semibold">
-                                                🎉 All child health check-ins are up to date within the past 30 days!
+                                            <div className="min-h-[320px] flex flex-col items-center justify-center p-8 text-center space-y-2">
+                                                <CheckCircle2 className="w-10 h-10 text-emerald-500/40 mb-1" />
+                                                <p className="text-sm font-semibold text-foreground">All health check-ins are up to date.</p>
+                                                <p className="text-xs text-muted-foreground max-w-sm">Every enrolled child has a recorded measurement within the past 30 days.</p>
                                             </div>
                                         ) : (
                                             <div className="divide-y divide-border">
@@ -460,26 +488,26 @@ export default function BcpcDashboard({
                                                     const lastDate = child.latest_assessment ? new Date(child.latest_assessment.date_of_weighing) : null;
                                                     const daysOverdue = lastDate ? Math.floor((new Date().getTime() - lastDate.getTime()) / (1000 * 3600 * 24)) : 0;
                                                     return (
-                                                        <div key={child.id} className="p-3.5 flex items-center justify-between hover:bg-rose-500/5 transition-colors">
-                                                            <div className="flex items-center gap-3">
-                                                                <Avatar className="h-9 w-9 border-2 border-rose-300">
+                                                        <div key={child.id} className="p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-rose-500/5 transition-colors">
+                                                            <div className="flex items-center gap-3 min-w-0">
+                                                                <Avatar className="h-9 w-9 border-2 border-rose-300 shrink-0">
                                                                     <AvatarFallback className="bg-rose-100 text-rose-600 font-bold text-xs">{child.child_first_name[0]}</AvatarFallback>
                                                                 </Avatar>
-                                                                <div>
-                                                                    <p className="font-bold text-xs sm:text-sm text-foreground">{child.child_first_name} {child.child_last_name}</p>
-                                                                    <p className="text-[11px] text-muted-foreground font-medium">
+                                                                <div className="min-w-0">
+                                                                    <p className="font-bold text-xs sm:text-sm text-foreground truncate">{child.child_first_name} {child.child_last_name}</p>
+                                                                    <p className="text-[11px] text-muted-foreground font-medium truncate">
                                                                         Last Checked: {lastDate ? lastDate.toLocaleDateString() : 'N/A'} {child.zone ? `| ${child.zone.name}` : ''}
                                                                     </p>
                                                                     <div className="flex items-center gap-1 mt-0.5">
-                                                                        <UserCheck className="w-3 h-3 text-emerald-600" />
-                                                                        <span className="text-[10px] font-bold text-foreground">
+                                                                        <UserCheck className="w-3 h-3 text-emerald-600 shrink-0" />
+                                                                        <span className="text-[10px] font-bold text-foreground truncate">
                                                                             Scholar: <strong className="text-emerald-700 dark:text-emerald-300">{child.bns_name || 'Unassigned'}</strong>
                                                                         </span>
                                                                     </div>
                                                                 </div>
                                                             </div>
-                                                            <div className="flex items-center gap-2.5">
-                                                                <Badge variant="outline" className="text-rose-700 border-rose-400 bg-rose-50 font-black text-[9px] px-2 py-0.5 rounded-md">
+                                                            <div className="flex items-center gap-2.5 shrink-0 self-end sm:self-center">
+                                                                <Badge variant="outline" className="text-rose-700 border-rose-400 bg-rose-50 dark:bg-rose-950/40 dark:text-rose-300 font-bold text-[9px] px-2 py-0.5 rounded-md">
                                                                     {daysOverdue}d Overdue
                                                                 </Badge>
                                                                 <Link href={`/admin/bcpc/cases/${child.id}`}>
@@ -536,7 +564,7 @@ export default function BcpcDashboard({
                                 <CardHeader className="pb-3 border-b bg-emerald-500/10">
                                     <div className="flex items-center justify-between">
                                         <div>
-                                            <CardTitle className="text-sm font-black uppercase text-emerald-800 dark:text-emerald-300 flex items-center gap-2">
+                                            <CardTitle className="text-sm font-bold uppercase text-emerald-800 dark:text-emerald-300 flex items-center gap-2">
                                                 <HeartHandshake className="h-4 w-4 text-emerald-600" />
                                                 Active 120-Day Feeding Program
                                             </CardTitle>
@@ -549,9 +577,9 @@ export default function BcpcDashboard({
                                         </Badge>
                                     </div>
                                 </CardHeader>
-                                <CardContent className="p-0">
+                                <CardContent className="p-0 min-h-[160px]">
                                     {activeSfp.length === 0 ? (
-                                        <div className="p-6 text-center text-muted-foreground text-xs font-semibold">
+                                        <div className="min-h-[160px] flex flex-col items-center justify-center p-6 text-center text-muted-foreground text-xs font-semibold">
                                             No children currently enrolled in the Supplemental Feeding Program.
                                         </div>
                                     ) : (
@@ -559,34 +587,36 @@ export default function BcpcDashboard({
                                             {paginatedSfp.map((child: any) => {
                                                 const daysElapsed = child.sfp_start_date ? Math.min(120, Math.floor((new Date().getTime() - new Date(child.sfp_start_date).getTime()) / (1000 * 60 * 60 * 24))) : 0;
                                                 const percent = Math.min(100, Math.max(0, (daysElapsed / 120) * 100));
+                                                const isSAM = child.latest_assessment?.wfa_status === 'Severely Underweight' || child.latest_assessment?.wflh_status === 'Severely Wasted';
+                                                const isStalledSAM = isSAM && daysElapsed >= 40;
 
                                                 return (
-                                                    <div key={child.id} className="p-3.5 flex items-center justify-between hover:bg-muted/40 transition-colors">
-                                                        <div className="flex items-center gap-3">
-                                                            <Avatar className="h-9 w-9 border-2 border-emerald-300">
+                                                    <div key={child.id} className="p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-muted/40 transition-colors">
+                                                        <div className="flex items-center gap-3 min-w-0">
+                                                            <Avatar className="h-9 w-9 border-2 border-emerald-300 shrink-0">
                                                                 <AvatarFallback className="bg-emerald-100 text-emerald-600 font-bold text-xs">{child.child_first_name[0]}</AvatarFallback>
                                                             </Avatar>
-                                                            <div>
-                                                                <p className="font-bold text-xs sm:text-sm text-foreground">{child.child_first_name} {child.child_last_name}</p>
-                                                                <p className="text-[11px] text-muted-foreground font-medium">
+                                                            <div className="min-w-0">
+                                                                <p className="font-bold text-xs sm:text-sm text-foreground truncate">{child.child_first_name} {child.child_last_name}</p>
+                                                                <p className="text-[11px] text-muted-foreground font-medium truncate">
                                                                     Started: {child.sfp_start_date ? new Date(child.sfp_start_date).toLocaleDateString() : 'N/A'} {child.bns_name ? `| Scholar: ${child.bns_name}` : ''}
                                                                 </p>
                                                             </div>
                                                         </div>
 
-                                                        <div className="flex items-center gap-4">
-                                                            <div className="w-28 text-right hidden sm:block">
+                                                        <div className="flex items-center justify-between sm:justify-end gap-3 sm:gap-4 w-full sm:w-auto shrink-0">
+                                                            <div className="w-28 text-right">
                                                                 <div className="flex justify-between items-center text-[9px] font-black uppercase text-emerald-600 mb-1">
-                                                                    <span>Progress</span>
+                                                                    <span>{isStalledSAM ? 'Slow Gain' : 'Progress'}</span>
                                                                     <span>Day {daysElapsed}/120</span>
                                                                 </div>
                                                                 <div className="w-full bg-slate-200 dark:bg-slate-800 rounded-full h-1.5 overflow-hidden">
-                                                                    <div className="bg-emerald-500 h-full rounded-full transition-all duration-500" style={{ width: `${percent}%` }}></div>
+                                                                    <div className={`${isStalledSAM ? 'bg-amber-500' : 'bg-emerald-500'} h-full rounded-full transition-all duration-500`} style={{ width: `${percent}%` }}></div>
                                                                 </div>
                                                             </div>
 
                                                             <Link href={`/admin/bcpc/cases/${child.id}`}>
-                                                                <Button variant="outline" size="sm" className="font-bold text-xs border-2 hover:bg-emerald-500/10 rounded-xl h-8 px-3">
+                                                                <Button variant="outline" size="sm" className="font-bold text-xs border hover:bg-emerald-500/10 rounded-xl h-8 px-3">
                                                                     Velocity <ChevronRight className="h-3.5 w-3.5 ml-1 text-emerald-600" />
                                                                 </Button>
                                                             </Link>
@@ -635,7 +665,7 @@ export default function BcpcDashboard({
                     </div>
 
                     {/* Right Column: Spatial Hotspots, Multi-Axis Visualizations, & Birthdays */}
-                    <div className="flex flex-col gap-6">
+                    <div className="flex flex-col lg:grid lg:grid-cols-2 xl:flex xl:flex-col gap-6">
 
                         {/* 📍 Spatial Intelligence: Purok Malnutrition Hotspots */}
                         <Card className="border-border shadow-sm rounded-2xl overflow-hidden">
@@ -659,19 +689,19 @@ export default function BcpcDashboard({
                                 ) : (
                                     <div className="divide-y divide-border">
                                         {zonesBreakdown.map((zone: any) => (
-                                            <div key={zone.id} className="p-3.5 flex items-center justify-between hover:bg-muted/40 transition-colors">
-                                                <div>
-                                                    <p className="font-bold text-xs text-foreground flex items-center gap-1.5">
-                                                        <span>{zone.name}</span>
+                                            <div key={zone.id} className="p-3.5 flex items-center justify-between gap-3 hover:bg-muted/40 transition-colors">
+                                                <div className="min-w-0 flex-1">
+                                                    <p className="font-bold text-xs text-foreground flex items-center gap-1.5 truncate">
+                                                        <span className="truncate">{zone.name}</span>
                                                         {zone.prevalence_rate > 15 && (
-                                                            <span className="h-2 w-2 rounded-full bg-red-600 animate-pulse" title="High Prevalence Hotspot" />
+                                                            <span className="h-2 w-2 rounded-full bg-red-600 animate-pulse shrink-0" title="High Prevalence Hotspot" />
                                                         )}
                                                     </p>
-                                                    <p className="text-[11px] text-muted-foreground font-medium">
+                                                    <p className="text-[11px] text-muted-foreground font-medium truncate">
                                                         Total: <strong className="text-foreground">{zone.total_monitored}</strong> | Malnourished: <strong className="text-red-600">{zone.total_malnourished}</strong>
                                                     </p>
                                                 </div>
-                                                <div className="flex flex-col items-end gap-1">
+                                                <div className="flex flex-col items-end gap-1 shrink-0">
                                                     <Badge className={`font-black text-[10px] px-2 py-0.5 rounded-md ${zone.prevalence_rate > 15
                                                             ? 'bg-red-600 text-white'
                                                             : zone.prevalence_rate > 5
@@ -767,7 +797,7 @@ export default function BcpcDashboard({
                         </Card>
 
                         {/* 🎂 Birthdays Widget */}
-                        <Card className="border-border shadow-sm rounded-2xl overflow-hidden">
+                        <Card className="border-border shadow-sm rounded-2xl overflow-hidden lg:col-span-2 xl:col-span-1">
                             <CardHeader className="pb-3 border-b bg-muted/20">
                                 <CardTitle className="text-sm font-black uppercase tracking-tight flex items-center gap-2">
                                     <Cake className="h-4 w-4 text-emerald-600" />

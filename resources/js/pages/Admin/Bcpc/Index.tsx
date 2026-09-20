@@ -100,39 +100,38 @@ export default function Index({ monitoredChildren = [], zones = [], filters, met
         <AppLayout breadcrumbs={[{ title: 'Dashboard', href: '/admin/dashboard' }, { title: 'Child Health Registry', href: '#' }]}>
             <Head title="BCPC Child Nutrition Registry" />
 
-            <div className="p-4 md:p-6 space-y-6 max-w-7xl mx-auto w-full">
+            <div className="flex h-full flex-1 flex-col gap-5 sm:gap-6 p-4 sm:p-6 w-full">
 
-                {/* 🌟 Header Banner */}
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-gradient-to-r from-emerald-950 via-teal-900 to-emerald-900 p-6 rounded-2xl text-white shadow-xl relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-80 h-80 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
-                    <div className="z-10 space-y-1">
-                        <div className="flex items-center gap-2">
-                            <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 px-3 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider flex items-center gap-1.5">
-                                <Baby className="w-3.5 h-3.5" /> Official e-OPT Plus Registry
-                            </span>
+                {/* ── HEADER (Minimalist VAWC Pattern) ── */}
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div>
+                        <div className="flex items-center gap-2.5 flex-wrap">
+                            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
+                                Child Nutrition Registry
+                            </h1>
+                            <Badge variant="outline" className="text-emerald-700 bg-emerald-50 border-emerald-300 dark:bg-emerald-950/30 dark:text-emerald-400 dark:border-emerald-800 text-[11px] font-semibold">
+                                e-OPT+
+                            </Badge>
                         </div>
-                        <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white uppercase flex items-center gap-2">
-                            Child Health & Nutrition Master Registry
-                        </h1>
-                        <p className="text-emerald-100/80 text-xs sm:text-sm font-medium">
-                            Barangay 183 e-OPT Plus Longitudinal Records, Growth Diagnostics & Feeding Rosters.
+                        <p className="text-sm text-muted-foreground mt-1">
+                            Barangay 183 e-OPT Plus longitudinal records, growth diagnostics, and 120-day feeding rosters.
                         </p>
                     </div>
 
-                    <div className="flex flex-wrap gap-2 z-10 w-full sm:w-auto">
-                        <Button asChild variant="outline" size="sm" className="bg-white/10 hover:bg-white/20 text-white border-white/20 font-bold uppercase text-[11px] rounded-xl h-10 px-4">
+                    <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+                        <Button asChild variant="outline" size="sm" className="text-xs h-9 min-h-[36px] font-medium">
                             <Link href="/admin/bcpc/dashboard">
-                                <BarChart3 className="w-4 h-4 mr-1.5 text-emerald-300" />
-                                Action Dashboard
+                                <BarChart3 className="w-4 h-4 mr-1.5 text-emerald-600" />
+                                Action Center
                             </Link>
                         </Button>
-                        <Button asChild variant="outline" size="sm" className="bg-white/10 hover:bg-white/20 text-white border-white/20 font-bold uppercase text-[11px] rounded-xl h-10 px-4">
+                        <Button asChild variant="outline" size="sm" className="text-xs h-9 min-h-[36px] font-medium">
                             <a href="/admin/bcpc/print" target="_blank" rel="noopener noreferrer">
-                                <Printer className="w-4 h-4 mr-1.5 text-teal-300" />
+                                <Printer className="w-4 h-4 mr-1.5 text-teal-600" />
                                 Print Masterlist
                             </a>
                         </Button>
-                        <Button asChild size="sm" className="bg-emerald-500 hover:bg-emerald-600 text-white font-black uppercase text-[11px] tracking-wider rounded-xl h-10 px-5 shadow-lg shadow-emerald-900/40">
+                        <Button asChild size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs h-9 min-h-[36px] font-medium shadow-xs">
                             <Link href="/admin/bcpc/cases/create">
                                 <Plus className="w-4 h-4 mr-1.5" />
                                 Register Child
@@ -142,92 +141,96 @@ export default function Index({ monitoredChildren = [], zones = [], filters, met
                 </div>
 
                 {/* 🟢 Synchronized Executive KPI Triage Strip (Interactive Filters) */}
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4">
+                <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-4">
 
                     {/* Filter 1: All Active Records */}
                     <button
                         onClick={() => { setTriage('all'); setSfpStatus('all'); }}
-                        className={`p-3.5 rounded-2xl border text-left transition-all duration-200 shadow-xs relative overflow-hidden ${triage === 'all' && sfpStatus === 'all'
+                        className={`p-3 sm:p-3.5 rounded-2xl border text-left transition-all duration-200 shadow-xs relative overflow-hidden ${triage === 'all' && sfpStatus === 'all'
                                 ? 'border-emerald-500 bg-emerald-500/10 ring-2 ring-emerald-500 dark:bg-emerald-950/30'
                                 : 'border-border bg-card hover:bg-muted/40'
                             }`}
                     >
-                        <span className="text-[10px] font-black uppercase tracking-wider text-muted-foreground block">All Monitored</span>
-                        <span className="text-2xl font-black text-foreground block mt-0.5">{metrics?.total_monitored || 0}</span>
-                        <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold mt-0.5 block">Active Census</span>
+                        <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-muted-foreground block truncate">All Monitored</span>
+                        <span className="text-2xl sm:text-3xl font-black text-foreground block mt-0.5">{metrics?.total_monitored || 0}</span>
+                        <span className="text-[10px] sm:text-[11px] text-emerald-600 dark:text-emerald-400 font-bold mt-0.5 block truncate">Active Census</span>
                     </button>
 
                     {/* Filter 2: SAM (Severe Acute Malnutrition) */}
                     <button
                         onClick={() => setTriage(triage === 'sam' ? 'all' : 'sam')}
-                        className={`p-3.5 rounded-2xl border text-left transition-all duration-200 shadow-xs relative overflow-hidden ${triage === 'sam'
+                        className={`p-3 sm:p-3.5 rounded-2xl border text-left transition-all duration-200 shadow-xs relative overflow-hidden ${triage === 'sam'
                                 ? 'border-red-500 bg-red-500/10 ring-2 ring-red-500 dark:bg-red-950/30'
                                 : 'border-border bg-card hover:bg-muted/40'
                             }`}
                     >
-                        <span className="text-[10px] font-black uppercase tracking-wider text-red-600 flex items-center gap-1">
-                            <ShieldAlert className="w-3.5 h-3.5 text-red-500 animate-pulse" /> SAM Priority
+                        <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-red-600 flex items-center gap-1 truncate">
+                            <ShieldAlert className="w-3.5 h-3.5 text-red-500 animate-pulse shrink-0" />
+                            <span className="truncate">SAM Priority</span>
                         </span>
-                        <span className="text-2xl font-black text-red-600 block mt-0.5">{metrics?.sam_cases || 0}</span>
-                        <span className="text-[10px] text-red-500 font-bold mt-0.5 block">Urgent RUTF Referral</span>
+                        <span className="text-2xl sm:text-3xl font-black text-red-600 block mt-0.5">{metrics?.sam_cases || 0}</span>
+                        <span className="text-[10px] sm:text-[11px] text-red-500 font-bold mt-0.5 block truncate">Urgent Referral</span>
                     </button>
 
                     {/* Filter 3: MAM (Moderate Acute Malnutrition) */}
                     <button
                         onClick={() => setTriage(triage === 'mam' ? 'all' : 'mam')}
-                        className={`p-3.5 rounded-2xl border text-left transition-all duration-200 shadow-xs relative overflow-hidden ${triage === 'mam'
+                        className={`p-3 sm:p-3.5 rounded-2xl border text-left transition-all duration-200 shadow-xs relative overflow-hidden ${triage === 'mam'
                                 ? 'border-amber-500 bg-amber-500/10 ring-2 ring-amber-500 dark:bg-amber-950/30'
                                 : 'border-border bg-card hover:bg-muted/40'
                             }`}
                     >
-                        <span className="text-[10px] font-black uppercase tracking-wider text-amber-600 block">MAM Priority</span>
-                        <span className="text-2xl font-black text-amber-600 block mt-0.5">{metrics?.mam_cases || 0}</span>
-                        <span className="text-[10px] text-amber-500 font-bold mt-0.5 block">120-Day SFP Queue</span>
+                        <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-amber-600 block truncate">MAM Priority</span>
+                        <span className="text-2xl sm:text-3xl font-black text-amber-600 block mt-0.5">{metrics?.mam_cases || 0}</span>
+                        <span className="text-[10px] sm:text-[11px] text-amber-500 font-bold mt-0.5 block truncate">120-Day SFP</span>
                     </button>
 
                     {/* Filter 4: Double Burden */}
                     <button
                         onClick={() => setTriage(triage === 'double_burden' ? 'all' : 'double_burden')}
-                        className={`p-3.5 rounded-2xl border text-left transition-all duration-200 shadow-xs relative overflow-hidden ${triage === 'double_burden'
+                        className={`p-3 sm:p-3.5 rounded-2xl border text-left transition-all duration-200 shadow-xs relative overflow-hidden ${triage === 'double_burden'
                                 ? 'border-purple-500 bg-purple-500/10 ring-2 ring-purple-500 dark:bg-purple-950/30'
                                 : 'border-border bg-card hover:bg-muted/40'
                             }`}
                     >
-                        <span className="text-[10px] font-black uppercase tracking-wider text-purple-600 flex items-center gap-1">
-                            <Sparkles className="w-3.5 h-3.5" /> Double Burden
+                        <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-purple-600 flex items-center gap-1 truncate">
+                            <Sparkles className="w-3.5 h-3.5 shrink-0" />
+                            <span className="truncate">Double Burden</span>
                         </span>
-                        <span className="text-2xl font-black text-purple-600 block mt-0.5">{metrics?.double_burden_cases || 0}</span>
-                        <span className="text-[10px] text-purple-500 font-bold mt-0.5 block">Stunted + Heavy Mass</span>
+                        <span className="text-2xl sm:text-3xl font-black text-purple-600 block mt-0.5">{metrics?.double_burden_cases || 0}</span>
+                        <span className="text-[10px] sm:text-[11px] text-purple-500 font-bold mt-0.5 block truncate">Stunted + Heavy</span>
                     </button>
 
                     {/* Filter 5: Active SFP Feeding */}
                     <button
                         onClick={() => setSfpStatus(sfpStatus === 'Enrolled' ? 'all' : 'Enrolled')}
-                        className={`p-3.5 rounded-2xl border text-left transition-all duration-200 shadow-xs relative overflow-hidden ${sfpStatus === 'Enrolled'
+                        className={`p-3 sm:p-3.5 rounded-2xl border text-left transition-all duration-200 shadow-xs relative overflow-hidden ${sfpStatus === 'Enrolled'
                                 ? 'border-emerald-500 bg-emerald-500/10 ring-2 ring-emerald-500 dark:bg-emerald-950/30'
                                 : 'border-border bg-card hover:bg-muted/40'
                             }`}
                     >
-                        <span className="text-[10px] font-black uppercase tracking-wider text-emerald-600 block flex items-center gap-1">
-                            <Heart className="w-3.5 h-3.5 fill-emerald-600/20" /> Active SFP
+                        <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-emerald-600 flex items-center gap-1 truncate">
+                            <Heart className="w-3.5 h-3.5 fill-emerald-600/20 shrink-0" />
+                            <span className="truncate">Active SFP</span>
                         </span>
-                        <span className="text-2xl font-black text-emerald-600 block mt-0.5">{metrics?.active_sfp || 0}</span>
-                        <span className="text-[10px] text-emerald-500 font-bold mt-0.5 block">{metrics?.graduated_sfp || 0} Recovered</span>
+                        <span className="text-2xl sm:text-3xl font-black text-emerald-600 block mt-0.5">{metrics?.active_sfp || 0}</span>
+                        <span className="text-[10px] sm:text-[11px] text-emerald-500 font-bold mt-0.5 block truncate">{metrics?.graduated_sfp || 0} Recovered</span>
                     </button>
 
                     {/* Filter 6: Overdue Check-ins */}
                     <button
                         onClick={() => setTriage(triage === 'overdue' ? 'all' : 'overdue')}
-                        className={`p-3.5 rounded-2xl border text-left transition-all duration-200 shadow-xs relative overflow-hidden ${triage === 'overdue'
+                        className={`p-3 sm:p-3.5 rounded-2xl border text-left transition-all duration-200 shadow-xs relative overflow-hidden ${triage === 'overdue'
                                 ? 'border-rose-500 bg-rose-500/10 ring-2 ring-rose-500 dark:bg-rose-950/30'
                                 : 'border-border bg-card hover:bg-muted/40'
                             }`}
                     >
-                        <span className="text-[10px] font-black uppercase tracking-wider text-rose-600 flex items-center gap-1">
-                            <Clock className="w-3.5 h-3.5" /> Overdue Check-ins
+                        <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-rose-600 flex items-center gap-1 truncate">
+                            <Clock className="w-3.5 h-3.5 shrink-0" />
+                            <span className="truncate">Overdue</span>
                         </span>
-                        <span className="text-2xl font-black text-rose-600 block mt-0.5">{metrics?.overdue_count || 0}</span>
-                        <span className="text-[10px] text-rose-500 font-bold mt-0.5 block">Needs Weighing (&gt;30d)</span>
+                        <span className="text-2xl sm:text-3xl font-black text-rose-600 block mt-0.5">{metrics?.overdue_count || 0}</span>
+                        <span className="text-[10px] sm:text-[11px] text-rose-500 font-bold mt-0.5 block truncate">Needs Weighing</span>
                     </button>
                 </div>
 
@@ -345,196 +348,291 @@ export default function Index({ monitoredChildren = [], zones = [], filters, met
                     </CardHeader>
 
                     <CardContent className="p-0">
-                        <Table>
-                            <TableHeader className="bg-muted/50">
-                                <TableRow>
-                                    <TableHead className="font-bold py-4 pl-6 uppercase text-[10px] tracking-wider text-muted-foreground">Child & Parent Information</TableHead>
-                                    <TableHead className="font-bold uppercase text-[10px] tracking-wider text-muted-foreground">Age & Purok Zone</TableHead>
-                                    <TableHead className="font-bold uppercase text-[10px] tracking-wider text-muted-foreground text-center">WHO 3-Axis Diagnostics</TableHead>
-                                    <TableHead className="font-bold uppercase text-[10px] tracking-wider text-muted-foreground">120-Day Feeding Progress</TableHead>
-                                    <TableHead className="font-bold uppercase text-[10px] tracking-wider text-muted-foreground">Last Checked</TableHead>
-                                    <TableHead className="text-right font-bold uppercase text-[10px] tracking-wider text-muted-foreground pr-6">Action</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {paginatedChildren.length === 0 && (
-                                    <TableRow>
-                                        <TableCell colSpan={6} className="h-48 text-center text-muted-foreground italic font-medium">
-                                            <div className="flex flex-col items-center justify-center space-y-2">
-                                                <Info className="w-8 h-8 text-muted-foreground/40" />
-                                                <p className="text-sm font-semibold">No child records match your current search/filter criteria.</p>
-                                                <Button size="sm" variant="outline" onClick={resetFilters} className="rounded-xl font-bold text-xs">
-                                                    Clear Filters
-                                                </Button>
-                                            </div>
-                                        </TableCell>
-                                    </TableRow>
-                                )}
-
-                                {paginatedChildren.map((child: any) => {
+                        {/* 📱 Mobile Card View (md:hidden) with >= 44px tap targets */}
+                        <div className="md:hidden divide-y divide-border">
+                            {paginatedChildren.length === 0 ? (
+                                <div className="p-8 text-center text-muted-foreground italic text-xs">
+                                    No child records match your criteria.
+                                </div>
+                            ) : (
+                                paginatedChildren.map((child: any) => {
                                     const latest = child.latest_assessment;
                                     const wfa = latest?.wfa_status ?? 'Normal';
                                     const hfa = latest?.hfa_status ?? 'Normal';
                                     const wflh = latest?.wflh_status ?? 'Normal';
                                     const logs = latest?.intervention_logs ?? [];
                                     const hasOedema = logs.includes('Bilateral Oedema (Fluid Retention) [SAM PIMAM]');
-
-                                    const isOverweight = (wflh === 'Overweight' || wfa === 'Overweight');
-                                    const isObese = (wflh === 'Obese');
-                                    const isElevatedBodyMass = isOverweight || isObese;
+                                    const isElevatedBodyMass = (wflh === 'Overweight' || wflh === 'Obese' || wfa === 'Overweight');
                                     const isStunted = ['Stunted', 'Severely Stunted'].includes(hfa);
-
                                     const isSAM = !isElevatedBodyMass && (hasOedema || wfa === 'Severely Underweight' || wflh === 'Severely Wasted');
                                     const isMAM = !isSAM && !isElevatedBodyMass && (wfa === 'Underweight' || wflh === 'Wasted');
                                     const isDoubleBurden = isStunted && isElevatedBodyMass;
 
-                                    // SFP Progress calculation
                                     const daysElapsed = child.sfp_start_date ? Math.min(120, Math.floor((new Date().getTime() - new Date(child.sfp_start_date).getTime()) / (1000 * 60 * 60 * 24))) : 0;
                                     const percent = Math.min(100, Math.max(0, (daysElapsed / 120) * 100));
-
-                                    // Overdue check (>30 days)
-                                    const lastDate = latest ? new Date(latest.date_of_weighing) : null;
-                                    const daysSinceWeighed = lastDate ? Math.floor((new Date().getTime() - lastDate.getTime()) / (1000 * 3600 * 24)) : 0;
-                                    const isOverdue = (isSAM || isMAM || isDoubleBurden || isStunted || child.sfp_status === 'Enrolled') && daysSinceWeighed > 30;
+                                    const isStalledSAM = isSAM && daysElapsed >= 40;
 
                                     return (
-                                        <TableRow key={child.id} className={`transition-all hover:bg-muted/40 ${isSAM ? 'bg-red-500/5 hover:bg-red-500/10' : isDoubleBurden ? 'bg-purple-500/5 hover:bg-purple-500/10' : ''}`}>
-
-                                            {/* Child & Parent */}
-                                            <TableCell className="pl-6 py-3.5">
+                                        <div key={child.id} className="p-4 space-y-3">
+                                            <div className="flex items-start justify-between gap-2">
                                                 <div className="flex items-center gap-3">
-                                                    <Avatar className={`h-9 w-9 border-2 ${isSAM ? 'border-red-400' : isDoubleBurden ? 'border-purple-400' : 'border-emerald-300'}`}>
+                                                    <Avatar className={`h-10 w-10 border-2 ${isSAM ? 'border-red-400' : isDoubleBurden ? 'border-purple-400' : 'border-emerald-300'}`}>
                                                         <AvatarFallback className={`font-bold text-xs ${isSAM ? 'bg-red-100 text-red-600' : isDoubleBurden ? 'bg-purple-100 text-purple-600' : 'bg-emerald-100 text-emerald-700'}`}>
                                                             {child.child_first_name[0]}
                                                         </AvatarFallback>
                                                     </Avatar>
-                                                    <div className="flex flex-col">
-                                                        <div className="flex items-center gap-2">
-                                                            {isSAM && <span className="h-2 w-2 rounded-full bg-red-600 animate-pulse shrink-0" title="SAM Urgent Alert" />}
-                                                            {isDoubleBurden && <span className="h-2 w-2 rounded-full bg-purple-600 shrink-0" title="Double Burden Alert" />}
-                                                            <span className="font-bold text-xs sm:text-sm text-foreground group-hover:text-emerald-600 transition-colors">
-                                                                {child.child_first_name} {child.child_last_name}
-                                                            </span>
-                                                        </div>
-                                                        <span className="text-[11px] text-muted-foreground font-medium mt-0.5">
-                                                            Guardian: <strong className="text-foreground font-bold">{child.guardian_name}</strong>
-                                                        </span>
-                                                        {child.bns_name && (
-                                                            <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold mt-0.5 uppercase tracking-wide flex items-center gap-1">
-                                                                <UserCheck className="w-3 h-3 text-emerald-600" />
-                                                                BNS: {child.bns_name}
-                                                            </span>
-                                                        )}
+                                                    <div>
+                                                        <p className="font-bold text-sm text-foreground">
+                                                            {child.child_first_name} {child.child_last_name}
+                                                        </p>
+                                                        <p className="text-xs text-muted-foreground">
+                                                            {child.sex} • {calculateAge(child.date_of_birth)} {child.zone ? `• ${child.zone.name}` : ''}
+                                                        </p>
                                                     </div>
                                                 </div>
-                                            </TableCell>
-
-                                            {/* Age & Zone */}
-                                            <TableCell className="py-3.5">
-                                                <div className="flex flex-col gap-1">
-                                                    <div className="flex items-center gap-1.5 text-xs font-bold text-foreground">
-                                                        <span>{child.sex}</span>
-                                                        <span>•</span>
-                                                        <span>{calculateAge(child.date_of_birth)}</span>
-                                                    </div>
-                                                    {child.zone && (
-                                                        <Badge variant="outline" className="text-[9px] font-extrabold border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 w-fit uppercase px-2 py-0.5 rounded-md">
-                                                            {child.zone.name}
-                                                        </Badge>
-                                                    )}
-                                                </div>
-                                            </TableCell>
-
-                                            {/* WHO 3-Axis Diagnostics */}
-                                            <TableCell className="py-3.5 text-center">
-                                                <div className="flex flex-col items-center gap-1">
-
-                                                    {/* Primary Triage Badge */}
-                                                    {isSAM ? (
-                                                        <Badge variant="destructive" className="text-[9px] uppercase font-black px-2.5 py-0.5 rounded-md animate-pulse">
-                                                            SAM Priority
-                                                        </Badge>
-                                                    ) : isDoubleBurden ? (
-                                                        <Badge variant="outline" className="text-[9px] uppercase font-black px-2.5 py-0.5 rounded-md border-purple-400 bg-purple-50 text-purple-700">
-                                                            Double Burden
-                                                        </Badge>
-                                                    ) : isMAM ? (
-                                                        <Badge className="text-[9px] uppercase font-black px-2.5 py-0.5 rounded-md bg-amber-500 text-white">
-                                                            MAM Priority
-                                                        </Badge>
-                                                    ) : (
-                                                        <Badge variant="outline" className="text-[9px] uppercase font-black px-2.5 py-0.5 rounded-md text-emerald-700 bg-emerald-50 border-emerald-300">
-                                                            Normal Range
-                                                        </Badge>
-                                                    )}
-
-                                                    {/* 3-Axis Detail Line */}
-                                                    <div className="flex flex-wrap items-center justify-center gap-1 text-[8.5px] font-bold mt-0.5">
-                                                        <span className="text-muted-foreground">WFA: {wfa}</span>
-                                                        <span>•</span>
-                                                        <span className={hfa !== 'Normal' ? 'text-cyan-700 dark:text-cyan-300 font-black' : 'text-muted-foreground'}>HFA: {hfa}</span>
-                                                        <span>•</span>
-                                                        <span className={wflh !== 'Normal' ? 'text-rose-700 dark:text-rose-300 font-black' : 'text-muted-foreground'}>WFL: {wflh}</span>
-                                                    </div>
-                                                </div>
-                                            </TableCell>
-
-                                            {/* 120-Day SFP Progress */}
-                                            <TableCell className="py-3.5 min-w-[160px]">
-                                                {child.sfp_status === 'Enrolled' ? (
-                                                    <div className="space-y-1.5 max-w-[150px]">
-                                                        <div className="flex justify-between items-center text-[10px] font-black uppercase text-emerald-600">
-                                                            <span>Active Feeding</span>
-                                                            <span>Day {daysElapsed}/120</span>
-                                                        </div>
-                                                        <div className="w-full bg-slate-200 dark:bg-slate-800 rounded-full h-1.5 overflow-hidden">
-                                                            <div className="bg-emerald-500 h-full rounded-full transition-all duration-500" style={{ width: `${percent}%` }} />
-                                                        </div>
-                                                    </div>
-                                                ) : child.sfp_status === 'Graduated' ? (
-                                                    <div className="flex items-center gap-1.5 text-teal-600 font-bold text-xs uppercase">
-                                                        <CheckCircle2 className="w-4 h-4 shrink-0" />
-                                                        <span>SFP Graduate</span>
-                                                    </div>
-                                                ) : child.sfp_status === 'Completed' ? (
-                                                    <div className="flex items-center gap-1.5 text-blue-600 font-bold text-xs uppercase">
-                                                        <Award className="w-4 h-4 shrink-0" />
-                                                        <span>Completed Cycle</span>
-                                                    </div>
+                                                {isSAM ? (
+                                                    <Badge variant="destructive" className="text-[10px] uppercase font-bold">SAM</Badge>
+                                                ) : isDoubleBurden ? (
+                                                    <Badge variant="outline" className="text-[10px] uppercase font-bold border-purple-400 text-purple-700 dark:text-purple-300">Double Burden</Badge>
+                                                ) : isMAM ? (
+                                                    <Badge className="text-[10px] uppercase font-bold bg-amber-500 text-white">MAM</Badge>
                                                 ) : (
-                                                    <span className="text-xs font-semibold text-muted-foreground">
-                                                        Not Enrolled
-                                                    </span>
+                                                    <Badge variant="outline" className="text-[10px] uppercase font-bold text-emerald-700 bg-emerald-50 border-emerald-300 dark:bg-emerald-950/30 dark:text-emerald-300">Normal</Badge>
                                                 )}
-                                            </TableCell>
+                                            </div>
 
-                                            {/* Last Checked */}
-                                            <TableCell className="text-xs font-semibold py-3.5">
-                                                <div className="flex flex-col">
-                                                    <span className="text-foreground">
-                                                        {lastDate ? lastDate.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : 'No record'}
-                                                    </span>
-                                                    {isOverdue && (
-                                                        <Badge variant="outline" className="w-fit text-[8px] font-black uppercase border-rose-400 bg-rose-50 text-rose-700 mt-1">
-                                                            {daysSinceWeighed}d Overdue
-                                                        </Badge>
-                                                    )}
+                                            <div className="flex items-center justify-between text-xs text-muted-foreground pt-1 border-t border-dashed">
+                                                <span>Guardian: <strong className="text-foreground">{child.guardian_name}</strong></span>
+                                                <div className="flex items-center gap-1.5 text-[10px]">
+                                                    <span title={`WFA: ${wfa}`} className="flex items-center gap-0.5">W <span className={`h-2 w-2 rounded-full inline-block ${wfa.includes('Severely') ? 'bg-red-500' : wfa.includes('Underweight') ? 'bg-amber-500' : 'bg-emerald-500'}`} /></span>
+                                                    <span title={`HFA: ${hfa}`} className="flex items-center gap-0.5">H <span className={`h-2 w-2 rounded-full inline-block ${hfa.includes('Severely') ? 'bg-red-500' : hfa.includes('Stunted') ? 'bg-amber-500' : 'bg-emerald-500'}`} /></span>
+                                                    <span title={`WFL: ${wflh}`} className="flex items-center gap-0.5">L <span className={`h-2 w-2 rounded-full inline-block ${wflh.includes('Severely') ? 'bg-red-500' : wflh.includes('Wasted') ? 'bg-amber-500' : (wflh === 'Overweight' || wflh === 'Obese') ? 'bg-purple-500' : 'bg-emerald-500'}`} /></span>
                                                 </div>
-                                            </TableCell>
+                                            </div>
 
-                                            {/* Action Button */}
-                                            <TableCell className="text-right pr-6 py-3.5">
-                                                <Button variant="outline" size="sm" asChild className="font-bold text-xs hover:bg-emerald-500/10 hover:text-emerald-600 border-2 rounded-xl h-8 px-3">
-                                                    <Link href={`/admin/bcpc/cases/${child.id}`}>
-                                                        Profile <ChevronRight className="w-3.5 h-3.5 ml-1" />
-                                                    </Link>
-                                                </Button>
+                                            {child.sfp_status === 'Enrolled' && (
+                                                <div className="space-y-1 bg-muted/40 p-2.5 rounded-xl">
+                                                    <div className="flex justify-between text-[10px] font-bold text-emerald-600">
+                                                        <span>120-Day Feeding</span>
+                                                        <span>Day {daysElapsed}/120</span>
+                                                    </div>
+                                                    <div className="w-full bg-slate-200 dark:bg-slate-800 rounded-full h-1.5 overflow-hidden">
+                                                        <div className={`${isStalledSAM ? 'bg-amber-500' : 'bg-emerald-500'} h-full rounded-full transition-all`} style={{ width: `${percent}%` }} />
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            <Button asChild variant="outline" className="w-full h-11 min-h-[44px] text-xs font-semibold rounded-xl">
+                                                <Link href={`/admin/bcpc/cases/${child.id}`}>
+                                                    View Profile & Diagnostic Dossier <ChevronRight className="w-4 h-4 ml-1" />
+                                                </Link>
+                                            </Button>
+                                        </div>
+                                    );
+                                })
+                            )}
+                        </div>
+
+                        {/* 💻 Desktop Table View (hidden md:block) */}
+                        <div className="hidden md:block overflow-x-auto">
+                            <Table>
+                                <TableHeader className="bg-muted/50">
+                                    <TableRow>
+                                        <TableHead className="font-bold py-4 pl-6 uppercase text-[10px] tracking-wider text-muted-foreground">Child & Parent Information</TableHead>
+                                        <TableHead className="font-bold uppercase text-[10px] tracking-wider text-muted-foreground">Age & Purok Zone</TableHead>
+                                        <TableHead className="font-bold uppercase text-[10px] tracking-wider text-muted-foreground text-center">WHO 3-Axis Diagnostics</TableHead>
+                                        <TableHead className="font-bold uppercase text-[10px] tracking-wider text-muted-foreground">120-Day Feeding Progress</TableHead>
+                                        <TableHead className="font-bold uppercase text-[10px] tracking-wider text-muted-foreground">Last Checked</TableHead>
+                                        <TableHead className="text-right font-bold uppercase text-[10px] tracking-wider text-muted-foreground pr-6">Action</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {paginatedChildren.length === 0 && (
+                                        <TableRow>
+                                            <TableCell colSpan={6} className="h-48 text-center text-muted-foreground italic font-medium">
+                                                <div className="flex flex-col items-center justify-center space-y-2">
+                                                    <Info className="w-8 h-8 text-muted-foreground/40" />
+                                                    <p className="text-sm font-semibold">No child records match your current search/filter criteria.</p>
+                                                    <Button size="sm" variant="outline" onClick={resetFilters} className="rounded-xl font-bold text-xs">
+                                                        Clear Filters
+                                                    </Button>
+                                                </div>
                                             </TableCell>
                                         </TableRow>
-                                    );
-                                })}
-                            </TableBody>
-                        </Table>
+                                    )}
+
+                                    {paginatedChildren.map((child: any) => {
+                                        const latest = child.latest_assessment;
+                                        const wfa = latest?.wfa_status ?? 'Normal';
+                                        const hfa = latest?.hfa_status ?? 'Normal';
+                                        const wflh = latest?.wflh_status ?? 'Normal';
+                                        const logs = latest?.intervention_logs ?? [];
+                                        const hasOedema = logs.includes('Bilateral Oedema (Fluid Retention) [SAM PIMAM]');
+
+                                        const isOverweight = (wflh === 'Overweight' || wfa === 'Overweight');
+                                        const isObese = (wflh === 'Obese');
+                                        const isElevatedBodyMass = isOverweight || isObese;
+                                        const isStunted = ['Stunted', 'Severely Stunted'].includes(hfa);
+
+                                        const isSAM = !isElevatedBodyMass && (hasOedema || wfa === 'Severely Underweight' || wflh === 'Severely Wasted');
+                                        const isMAM = !isSAM && !isElevatedBodyMass && (wfa === 'Underweight' || wflh === 'Wasted');
+                                        const isDoubleBurden = isStunted && isElevatedBodyMass;
+
+                                        // SFP Progress calculation
+                                        const daysElapsed = child.sfp_start_date ? Math.min(120, Math.floor((new Date().getTime() - new Date(child.sfp_start_date).getTime()) / (1000 * 60 * 60 * 24))) : 0;
+                                        const percent = Math.min(100, Math.max(0, (daysElapsed / 120) * 100));
+                                        const isStalledSAM = isSAM && daysElapsed >= 40;
+
+                                        // Overdue check (>30 days)
+                                        const lastDate = latest ? new Date(latest.date_of_weighing) : null;
+                                        const daysSinceWeighed = lastDate ? Math.floor((new Date().getTime() - lastDate.getTime()) / (1000 * 3600 * 24)) : 0;
+                                        const isOverdue = (isSAM || isMAM || isDoubleBurden || isStunted || child.sfp_status === 'Enrolled') && daysSinceWeighed > 30;
+
+                                        return (
+                                            <TableRow key={child.id} className={`transition-all hover:bg-muted/40 ${isSAM ? 'bg-red-500/5 hover:bg-red-500/10' : isDoubleBurden ? 'bg-purple-500/5 hover:bg-purple-500/10' : ''}`}>
+
+                                                {/* Child & Parent */}
+                                                <TableCell className="pl-6 py-3.5">
+                                                    <div className="flex items-center gap-3">
+                                                        <Avatar className={`h-9 w-9 border-2 ${isSAM ? 'border-red-400' : isDoubleBurden ? 'border-purple-400' : 'border-emerald-300'}`}>
+                                                            <AvatarFallback className={`font-bold text-xs ${isSAM ? 'bg-red-100 text-red-600' : isDoubleBurden ? 'bg-purple-100 text-purple-600' : 'bg-emerald-100 text-emerald-700'}`}>
+                                                                {child.child_first_name[0]}
+                                                            </AvatarFallback>
+                                                        </Avatar>
+                                                        <div className="flex flex-col">
+                                                            <div className="flex items-center gap-2">
+                                                                {isSAM && <span className="h-2 w-2 rounded-full bg-red-600 animate-pulse shrink-0" title="SAM Urgent Alert" />}
+                                                                {isDoubleBurden && <span className="h-2 w-2 rounded-full bg-purple-600 shrink-0" title="Double Burden Alert" />}
+                                                                <span className="font-bold text-xs sm:text-sm text-foreground group-hover:text-emerald-600 transition-colors">
+                                                                    {child.child_first_name} {child.child_last_name}
+                                                                </span>
+                                                            </div>
+                                                            <span className="text-[11px] text-muted-foreground font-medium mt-0.5">
+                                                                Guardian: <strong className="text-foreground font-bold">{child.guardian_name}</strong>
+                                                            </span>
+                                                            {child.bns_name && (
+                                                                <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold mt-0.5 uppercase tracking-wide flex items-center gap-1">
+                                                                    <UserCheck className="w-3 h-3 text-emerald-600" />
+                                                                    BNS: {child.bns_name}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </TableCell>
+
+                                                {/* Age & Zone */}
+                                                <TableCell className="py-3.5">
+                                                    <div className="flex flex-col gap-1">
+                                                        <div className="flex items-center gap-1.5 text-xs font-bold text-foreground">
+                                                            <span>{child.sex}</span>
+                                                            <span>•</span>
+                                                            <span>{calculateAge(child.date_of_birth)}</span>
+                                                        </div>
+                                                        {child.zone && (
+                                                            <Badge variant="outline" className="text-[9px] font-extrabold border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 w-fit uppercase px-2 py-0.5 rounded-md">
+                                                                {child.zone.name}
+                                                            </Badge>
+                                                        )}
+                                                    </div>
+                                                </TableCell>
+
+                                                {/* WHO 3-Axis Diagnostics (Micro-dot indicators) */}
+                                                <TableCell className="py-3.5 text-center">
+                                                    <div className="flex flex-col items-center gap-1">
+
+                                                        {/* Primary Triage Badge */}
+                                                        {isSAM ? (
+                                                            <Badge variant="destructive" className="text-[9px] uppercase font-bold px-2.5 py-0.5 rounded-md animate-pulse">
+                                                                SAM Priority
+                                                            </Badge>
+                                                        ) : isDoubleBurden ? (
+                                                            <Badge variant="outline" className="text-[9px] uppercase font-bold px-2.5 py-0.5 rounded-md border-purple-400 bg-purple-50 text-purple-700 dark:bg-purple-950/40 dark:text-purple-300">
+                                                                Double Burden
+                                                            </Badge>
+                                                        ) : isMAM ? (
+                                                            <Badge className="text-[9px] uppercase font-bold px-2.5 py-0.5 rounded-md bg-amber-500 text-white">
+                                                                MAM Priority
+                                                            </Badge>
+                                                        ) : (
+                                                            <Badge variant="outline" className="text-[9px] uppercase font-bold px-2.5 py-0.5 rounded-md text-emerald-700 bg-emerald-50 border-emerald-300 dark:bg-emerald-950/30 dark:text-emerald-300">
+                                                                Normal Range
+                                                            </Badge>
+                                                        )}
+
+                                                        {/* Micro-dot WHO Indicator Grid */}
+                                                        <div className="flex items-center justify-center gap-1.5 text-[10px] font-medium text-muted-foreground mt-0.5">
+                                                            <span title={`Weight-for-Age: ${wfa}`} className="flex items-center gap-1 cursor-help">
+                                                                WFA <span className={`h-2 w-2 rounded-full inline-block ${wfa.includes('Severely') ? 'bg-red-500' : wfa.includes('Underweight') ? 'bg-amber-500' : 'bg-emerald-500'}`} />
+                                                            </span>
+                                                            <span>•</span>
+                                                            <span title={`Height-for-Age: ${hfa}`} className="flex items-center gap-1 cursor-help">
+                                                                HFA <span className={`h-2 w-2 rounded-full inline-block ${hfa.includes('Severely') ? 'bg-red-500' : hfa.includes('Stunted') ? 'bg-amber-500' : 'bg-emerald-500'}`} />
+                                                            </span>
+                                                            <span>•</span>
+                                                            <span title={`Weight-for-Length: ${wflh}`} className="flex items-center gap-1 cursor-help">
+                                                                WFL <span className={`h-2 w-2 rounded-full inline-block ${wflh.includes('Severely') ? 'bg-red-500' : wflh.includes('Wasted') ? 'bg-amber-500' : (wflh === 'Overweight' || wflh === 'Obese') ? 'bg-purple-500' : 'bg-emerald-500'}`} />
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </TableCell>
+
+                                                {/* 120-Day SFP Progress */}
+                                                <TableCell className="py-3.5 min-w-[160px]">
+                                                    {child.sfp_status === 'Enrolled' ? (
+                                                        <div className="space-y-1.5 max-w-[150px]">
+                                                            <div className="flex justify-between items-center text-[10px] font-black uppercase text-emerald-600">
+                                                                <span>Active Feeding</span>
+                                                                <span>Day {daysElapsed}/120</span>
+                                                            </div>
+                                                            <div className="w-full bg-slate-200 dark:bg-slate-800 rounded-full h-1.5 overflow-hidden">
+                                                                <div className={`${isStalledSAM ? 'bg-amber-500' : 'bg-emerald-500'} h-full rounded-full transition-all duration-500`} style={{ width: `${percent}%` }} />
+                                                            </div>
+                                                        </div>
+                                                    ) : child.sfp_status === 'Graduated' ? (
+                                                        <div className="flex items-center gap-1.5 text-teal-600 font-bold text-xs uppercase">
+                                                            <CheckCircle2 className="w-4 h-4 shrink-0" />
+                                                            <span>SFP Graduate</span>
+                                                        </div>
+                                                    ) : child.sfp_status === 'Completed' ? (
+                                                        <div className="flex items-center gap-1.5 text-blue-600 font-bold text-xs uppercase">
+                                                            <Award className="w-4 h-4 shrink-0" />
+                                                            <span>Completed Cycle</span>
+                                                        </div>
+                                                    ) : (
+                                                        <span className="text-xs font-semibold text-muted-foreground">
+                                                            Not Enrolled
+                                                        </span>
+                                                    )}
+                                                </TableCell>
+
+                                                {/* Last Checked */}
+                                                <TableCell className="text-xs font-semibold py-3.5">
+                                                    <div className="flex flex-col">
+                                                        <span className="text-foreground">
+                                                            {lastDate ? lastDate.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : 'No record'}
+                                                        </span>
+                                                        {isOverdue && (
+                                                            <Badge variant="outline" className="w-fit text-[8px] font-black uppercase border-rose-400 bg-rose-50 text-rose-700 mt-1">
+                                                                {daysSinceWeighed}d Overdue
+                                                            </Badge>
+                                                        )}
+                                                    </div>
+                                                </TableCell>
+
+                                                {/* Action Button */}
+                                                <TableCell className="text-right pr-6 py-3.5">
+                                                    <Button variant="outline" size="sm" asChild className="font-bold text-xs hover:bg-emerald-500/10 hover:text-emerald-600 border-2 rounded-xl h-8 px-3">
+                                                        <Link href={`/admin/bcpc/cases/${child.id}`}>
+                                                            Profile <ChevronRight className="w-3.5 h-3.5 ml-1" />
+                                                        </Link>
+                                                    </Button>
+                                                </TableCell>
+                                            </TableRow>
+                                        );
+                                    })}
+                                </TableBody>
+                            </Table>
+                        </div>
                     </CardContent>
 
                     {/* Master Registry Table Pagination Footer */}

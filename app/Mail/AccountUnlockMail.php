@@ -9,32 +9,30 @@ use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
-class UserInvitationMail extends Mailable
+class AccountUnlockMail extends Mailable
 {
     use Queueable, SerializesModels;
 
     public User $user;
-    public string $otp;
-    public string $activationUrl;
+    public string $unlockUrl;
 
-    public function __construct(User $user, string $otp)
+    public function __construct(User $user, string $rawUnlockToken)
     {
         $this->user = $user;
-        $this->otp = $otp;
-        $this->activationUrl = url('/verify-account?email=' . urlencode($user->email ?? ''));
+        $this->unlockUrl = url('/auth/unlock/verify/' . $rawUnlockToken);
     }
 
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Official System Invitation: Verify Your Account & Set Password',
+            subject: 'Account Recovery: Secure Unlock Link',
         );
     }
 
     public function content(): Content
     {
         return new Content(
-            view: 'emails.user_invitation',
+            view: 'emails.account_unlock',
         );
     }
 

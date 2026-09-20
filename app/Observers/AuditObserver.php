@@ -47,9 +47,20 @@ class AuditObserver
                 $newValues[$key] = $value;
             }
 
+            $action = 'Updated';
+
+            // High-severity security detection: Account lockdown or activation
+            if ($model instanceof \App\Models\User && isset($dirty['status'])) {
+                if ($dirty['status'] === \App\Models\User::STATUS_LOCKED) {
+                    $action = 'ACCOUNT_LOCKED';
+                } elseif ($dirty['status'] === \App\Models\User::STATUS_ACTIVE && $model->getOriginal('status') === \App\Models\User::STATUS_LOCKED) {
+                    $action = 'ACCOUNT_UNLOCKED';
+                }
+            }
+
             $this->logAction(
                 $model,
-                'Updated',
+                $action,
                 AuditLogger::maskPii($oldValues),
                 AuditLogger::maskPii($newValues)
             );

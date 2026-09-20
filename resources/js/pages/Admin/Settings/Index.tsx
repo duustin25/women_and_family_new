@@ -14,7 +14,6 @@ import { cn } from "@/lib/utils";
 // Partials
 import AbuseTypesTable from './Partials/AbuseTypesTable';
 import AppearanceSettings from './Partials/AppearanceSettings';
-import AuditTab from './Partials/AuditTab';
 import type { BackupFile } from './Partials/BackupTab';
 import BackupTab from './Partials/BackupTab';
 import FeatureToggles from './Partials/FeatureToggles';
@@ -28,6 +27,8 @@ interface PageProps {
     zones?: any[];
     users?: any;
     userFilters?: any;
+    archivedUsersCount?: number;
+    activeUsersCount?: number;
     officials?: any[];
     availableUsers?: any[];
     backups?: BackupFile[];
@@ -41,6 +42,8 @@ export default function Index({
     zones = [],
     users = null,
     userFilters = {},
+    archivedUsersCount = 0,
+    activeUsersCount = 0,
     officials = [],
     availableUsers = [],
     backups = [],
@@ -70,7 +73,6 @@ export default function Index({
         { id: 'officials', label: 'Barangay Officials', icon: Award },
         { id: 'features', label: 'Feature Switches', icon: ToggleLeft },
         { id: 'backup', label: 'Disaster Recovery', icon: Database },
-        { id: 'audit', label: 'Audit Trail', icon: History },
         { id: 'appearance', label: 'Display & Theme', icon: Palette },
     ];
 
@@ -150,7 +152,12 @@ export default function Index({
                         {/* 2. System Users & RBAC */}
                         {activeTab === 'users' && (
                             <div className="w-full">
-                                <UsersTab users={users} filters={userFilters} />
+                                <UsersTab
+                                    users={users}
+                                    filters={userFilters}
+                                    archivedCount={archivedUsersCount}
+                                    activeCount={activeUsersCount}
+                                />
                             </div>
                         )}
 
@@ -175,12 +182,7 @@ export default function Index({
                             </div>
                         )}
 
-                        {/* 6. Security & Mutation Audit Logs */}
-                        {activeTab === 'audit' && (
-                            <div className="w-full">
-                                <AuditTab logs={logs} filters={logFilters} />
-                            </div>
-                        )}
+
 
                         {/* 7. Display & Appearance Theme */}
                         {activeTab === 'appearance' && (

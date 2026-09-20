@@ -10,7 +10,8 @@ import {
     Settings,
     ShieldAlert,
     Users,
-    Wallpaper
+    Wallpaper,
+    History
 } from 'lucide-react';
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
@@ -110,8 +111,13 @@ const navGroups: NavGroup[] = [
         ],
     },
     {
-        title: 'Governance & Administration',
+        title: 'Governance & Security',
         items: [
+            {
+                title: 'Audit Trails',
+                href: '/admin/audit-logs',
+                icon: History,
+            },
             {
                 title: 'System Settings',
                 href: '/admin/settings',
@@ -130,8 +136,13 @@ export function AppSidebar() {
     // Filter dynamic groups based on roles
     const filteredGroups = navGroups.map((group) => {
         const filteredItems = group.items.filter((item) => {
-            // System Settings is strictly Admin ONLY (Option A)
+            // System Settings is strictly Admin ONLY
             if (item.title === 'System Settings' && role !== 'admin') {
+                return false;
+            }
+
+            // Audit Trails is strictly Executive (Admin & Head Committee)
+            if (item.title === 'Audit Trails' && !['admin', 'head'].includes(role)) {
                 return false;
             }
 
