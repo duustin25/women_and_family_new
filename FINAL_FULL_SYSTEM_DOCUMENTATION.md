@@ -202,30 +202,42 @@ Each criterion is evaluated on an integer scale from $1$ (Low/Minimal) to $3$ (C
 3. **Severity / Physical Harm:** If `requires_medical == true` or `perpetrator_present == true` $\rightarrow \text{Severity} = 3$; elseif `incident_veracity == true` $\rightarrow 2$; else $1$.
 4. **Lethality / Threat:** If `warrantless_arrest_made == true` $\rightarrow \text{LethalityThreat} = 3$; elseif `children_count > 0` or `requires_alternative_housing == true` $\rightarrow 2$; else $1$.
 
-### 4.3 15-Day BPO Full Lifecycle Workflow
+### 4.3 15-Day BPO Full Lifecycle Workflow & Modular Frontend Architecture
 ```
-[Survivor Intake] ---> [VAWC-RAVE Smart Triage] ---> [BPO Application (SLA Timer Starts)]
-                                                                    |
-                                                     [Same-Day BPO Issuance]
-                                                                    |
-                                                  [Proof of Service to Respondent]
-                                                                    |
-                                                +-------------------+--------------------+
-                                                |                                        |
-                                     [15-Day SLA Monitoring]                  [PNP WCPC Transmittal]
-                                                |                                        |
-                                     [Compliance Log Entries]                 [Legal Escalation / TPO]
-                                                |
-                                          [Case Closure]
+[Master Dossier Gateway] ---> [Intake Wizard (Steps 1-4)] ---> [VAWC-RAVE Smart Triage]
+                                                                        |
+                                                         [BPO Application (24h SLA Starts)]
+                                                                        |
+                                                             [Same-Day BPO Issuance]
+                                                                        |
+                                                          [Proof of Service to Respondent]
+                                                                        |
+                                                    +-------------------+--------------------+
+                                                    |                                        |
+                                         [15-Day SLA Monitoring]                  [PNP WCPD Transmittal]
+                                                    |                                        |
+                                         [Compliance Log Entries]                 [Legal Escalation / TPO]
+                                                    |                                        |
+                                        [Administrative Closure]                  [Judicial Docket Resolution]
 ```
 
-1. **Step 1: Intake & Evidence Recording:** Officer records victim/survivor details, perpetrator data, incident narrative, abuse categories (Physical, Psychological, Financial, Sexual), and photographic evidence.
-2. **Step 2: Automated Risk Triage:** System executes `autoAssessRisk()` and flags priority status on the Admin Dashboard.
-3. **Step 3: BPO Application:** `VawcBpoService::fileApplication()` records application timestamp and starts the same-day SLA monitor.
-4. **Step 4: Same-Day Issuance:** `VawcBpoService::issueOrder()` verifies whether issuance matches application date (`is_sla_breached = false` if same day) and sets the exact 15-day expiration date ($Date_{\text{issue}} + 15\text{ days}$).
-5. **Step 5: Service Execution:** `VawcBpoService::recordService()` logs service methodology (Personally Received, Substituted Service), server officer ID, and recipient signature verification.
-6. **Step 6: Compliance & Violation Monitoring:** Case enters active 15-day surveillance. Any violation logged by the officer enables immediate legal escalation to the MTC/RTC for a Temporary Protection Order (TPO).
-7. **Step 7: PNP Agency Transmittal:** `VawcBpoService::recordTransmittal()` transmits official BPO documentation to the PNP Women and Children Protection Center (WCPC).
+1. **Step 0: Master Dossier Gateway & Search First Policy:** Queries live database (`/admin/vawc/dossiers/search`). If an existing dossier is linked, survivor and respondent identities are legally locked to maintain evidentiary integrity across sequential incidents.
+2. **Step 1: Intake Wizard & Legal Relationship Qualification:**
+   - Evaluates qualifying intimate relationships under RA 9262 Sec. 3 (7 statutory categories: Spouse, Former Spouse, Live-in Partner, Former Live-in, Common Child Co-Parent, Dating Partner, Former Dating Partner). Legally excluded: "Other Household Relative" (must be filed under RA 7610 or RPC).
+   - Enforces Sec. 44 Whistleblower Anonymity switch and includes RA 7610 Minor Children coverage (Names, Ages, Daycare/School stay-away radii).
+3. **Step 2: Automated Risk Triage:** System computes `autoAssessRisk()` via the VAWC-RAVE matrix (0-12 score) and flags priority status on the Admin Dashboard.
+4. **Step 3: BPO Application Filing:** `VawcBpoService::fileApplication()` records application timestamp, sets status to `Application Pending`, and initiates the 24-hour statutory SLA monitor.
+5. **Step 4: Same-Day Issuance:** `VawcBpoService::issueOrder()` evaluates whether issuance occurs within 24 hours (`is_sla_breached = false` if compliant) and sets the exact 15-day protective expiration ($Date_{\text{issue}} + 15\text{ days}$).
+6. **Step 5: Service Execution:** `VawcBpoService::recordService()` logs service methodology (Personally Received, Substituted Service) and transitions the case strictly to `Under Monitoring`.
+7. **Step 6: Compliance & Violation Monitoring:** Case enters active 15-day surveillance. Any violation logged enables immediate legal escalation to PNP WCPD or Court.
+8. **Step 7: Inter-Agency Transmittals & Judicial Resolution Gate:**
+   - Under RA 9262 Sec. 33, conciliation/amicable settlement is strictly prohibited.
+   - For escalated cases, local barangay closure is blocked until official Court/Prosecutor docket numbers, issuing bodies, and formal resolution orders are entered.
+
+### 4.4 Hook-Driven Component Hierarchy
+The VAWC frontend is refactored from monolithic files into decoupled, maintainable components:
+- **Case Intake (`Create.tsx` < 240 lines):** Driven by `useVawcCreateWorkflow()`, with partials for header, Master Dossier search gateway, survivor profile, incident facts with RA 7610 minor safeguards, respondent profile with serial perpetrator alerts, and statutory remedy verifications.
+- **Case Control Center (`Show.tsx` < 240 lines):** Driven by `useVawcCaseWorkflow()`, with partials for algorithmic triage scoring, BPO application, 24h SLA issuance analyzer, proof of service, 15-day monitoring logs, referral modals, and anti-conciliation closure modals.
 
 ---
 

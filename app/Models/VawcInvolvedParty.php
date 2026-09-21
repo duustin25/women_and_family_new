@@ -17,10 +17,15 @@ class VawcInvolvedParty extends Model
         'role',
         'relationship_to_victim',
         'name',
+        'alias',
         'age',
+        'birthdate',
+        'birthplace',
+        'nationality',
         'gender',
         'contact_number',
         'address',
+        'work_address',
         'is_minor',
         'civil_status',
         'educational_attainment',
@@ -30,9 +35,11 @@ class VawcInvolvedParty extends Model
 
     protected $casts = [
         'age' => 'integer',
+        'birthdate' => 'date',
         'is_minor' => 'boolean',
         'contact_number' => 'encrypted',
         'address' => 'encrypted',
+        'work_address' => 'encrypted',
     ];
 
     /**

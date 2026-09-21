@@ -17,7 +17,25 @@ Unlike generic blotter reports, VAWC cases require immediate legal action, conti
 
 ---
 
-## 🔄 2. The VAWC Lifecycle (State Machine)
+## ⚖️ 2. Legal Bases & Qualifying Relationship Categories (RA 9262 Sec. 3)
+
+### Statutory Exclusion of Non-Qualifying Relatives
+Under Section 3 of Republic Act 9262, the crime of VAWC can only be committed against a woman who is the offender's wife, former wife, or with whom the offender has or had an intimate/dating relationship, or with whom he has a common child.
+
+> [!IMPORTANT]
+> **Defending the Removal of "Other Household Relative":**
+> In older prototypes, "Other Household Relative (with custody/care)" was incorrectly included. Under Philippine legal jurisprudence, if an uncle, cousin, or in-law abuses a household member without an intimate or marital relationship, it does **not** fall under RA 9262. It must be charged under **RA 7610** (Child Abuse) or Physical Injuries under the Revised Penal Code (RPC). The system strictly enforces the 7 legally recognized intimate relationships:
+> 1. `Spouse (Legal Husband/Wife)`
+> 2. `Former Spouse (Separated/Annulled)`
+> 3. `Common-Law / Live-in Partner`
+> 4. `Former Live-in Partner`
+> 5. `Parent of Common Child`
+> 6. `Dating / Romantic / Sexual Partner`
+> 7. `Former Dating Partner`
+
+---
+
+## 🔄 3. The VAWC Lifecycle (State Machine)
 
 A `VawcCase` progresses through a strict, linear state machine to prevent procedural errors. The `status` field strictly enforces the following ENUM values:
 
@@ -35,7 +53,7 @@ A `VawcCase` progresses through a strict, linear state machine to prevent proced
 
 ---
 
-## ⚖️ 3. Alignment with DILG Official Flowcharts
+## ⚖️ 4. Alignment with DILG Official Flowcharts
 
 The system's database schema and state machine were carefully analyzed and designed to perfectly synchronize with the **DILG National Barangay Operations Office Flowcharts** for "Handling VAWC Cases" and the "Issuance and Enforcement of BPOs".
 
@@ -47,9 +65,9 @@ The system's database schema and state machine were carefully analyzed and desig
 
 ---
 
-## 🛠️ 4. Service-Oriented Architecture (SOA)
+## 🛠️ 5. Backend Service-Oriented Architecture (SOA)
 
-To prevent the `VawcController` from becoming a "Fat Controller," business logic is strictly compartmentalized into distinct Services. This ensures SOLID principles, specifically the Single Responsibility Principle.
+To prevent the `VawcController` from becoming a "Fat Controller," business logic is strictly compartmentalized into distinct Services adhering to the Single Responsibility Principle:
 
 ### `VawcCaseService`
 - **Purpose:** Handles the complex creation logic of a new VAWC case.
@@ -59,7 +77,7 @@ To prevent the `VawcController` from becoming a "Fat Controller," business logic
 - **Purpose:** Manages the legal protection timeline.
 - **Methods:**
   - `fileApplication()`: Starts the SLA timer.
-  - `issueOrder()`: Checks if the issuance occurred on the same day as the application. Calculates the 15-day expiration.
+  - `issueOrder()`: Checks if the issuance occurred within 24 hours of application. Calculates the 15-day expiration.
   - `recordService()`: Logs *when* and *who* received the physical BPO and automatically transitions the parent setup strictly to the `Monitoring` state.
   - `recordTransmittal()`: Logs the handover of the document to the PNP.
 
@@ -73,53 +91,64 @@ To prevent the `VawcController` from becoming a "Fat Controller," business logic
 
 ---
 
-## 📊 5. Real-Time Analytics Dashboard
+## ⚛️ 6. Frontend Clean Architecture & Component Hierarchy
+
+To avoid monolithic codebases (where single files exceeded 2,000 lines), the frontend was refactored into modular sub-components powered by custom React hooks:
+
+### A. Case Intake (`Create.tsx` < 240 lines)
+- Coordinated by `resources/js/hooks/useVawcCreateWorkflow.ts`.
+- **Partials Decomposition (`resources/js/pages/Admin/Vawc/Partials/Create/`)**:
+  - `CreateHeader.tsx`: Title, badge, and cancellation navigation.
+  - `DossierSearchGateway.tsx`: Step 0 "Search First, Encode Second" Master Dossier gateway.
+  - `Step1Survivor.tsx`: Demographics, intake mode, and Sec. 44 informant anonymity.
+  - `Step2Incident.tsx`: Facts, date/time boundaries, zone, and RA 7610 minor children coverage.
+  - `Step3Respondent.tsx`: Perpetrator demographics, serial perpetrator warning, intimate relationship selector.
+  - `Step4Verify.tsx`: Inter-agency transmittals (PNP, DSWD, PAO), desired statutory actions, witness affidavits.
+  - `CreateConfirmModal.tsx`: Legal review modal before final database submission.
+
+### B. Case Management & BPO Control Center (`Show.tsx` < 240 lines)
+- Coordinated by `resources/js/hooks/useVawcCaseWorkflow.ts`.
+- **Partials Decomposition (`resources/js/pages/Admin/Vawc/Partials/Show/`)**:
+  - `Stages/Step1TriageChecklist.tsx`: Algorithmic risk evaluation (0-12 points) and emergency bypasses.
+  - `Stages/Step2BpoApplication.tsx`: BPO application filing with chronological boundary checks.
+  - `Stages/Step3BpoIssuance.tsx`: 24h SLA compliance analyzer with visual health alerts.
+  - `Stages/Step4BpoService.tsx`: Substituted / Personal service logging.
+  - `Stages/Step5Resolution.tsx`: 15-day compliance monitoring and legal escalation.
+  - `Stages/VawcMonitoringLogSection.tsx`: Log history of home visits and wellness checks.
+  - `Modals/VawcCloseCaseModal.tsx`: Sec. 33 anti-conciliation enforcement & judicial resolution requirement.
+  - `Modals/VawcReferralModal.tsx`: Agency transmittal slip generator.
+
+---
+
+## 📊 7. Real-Time Analytics Dashboard
 
 The VAWC Dashboard (`VawcController@dashboard`) parses the complex relationship data into actionable insights for the Women and Family Desk Officer.
 
 ### Key Metrics Tracked
 - **Total Cases & Distribution:** Tracks the volume and current state of all incidents.
-- **SLA Compliance Rate:** A critical KPI calculating the percentage of BPOs successfully issued on the same day they were requested.
+- **SLA Compliance Rate:** A critical KPI calculating the percentage of BPOs successfully issued within 24 hours of application.
 - **Incident Hotspots:** Analyzes cases by mapping `CaseReport` zone IDs. To prevent data loss, `LEFT JOIN` operations are used to ensure even unassigned cases appear under "Unknown Zone."
 
 ---
 
-## 🔍 6. Recent System Hardening & Fixes
-
-During the final development phase, several critical enhancements were applied to patch procedural holes:
-
-1.  **Strict ENUM Adherence:** Corrected status transitions in the compliance and legal services to use the unified `Escalated` status, completely eliminating SQL truncation exceptions.
-2.  **Date-Time Precision:** Validations for `incident_date`, `violation_datetime`, `served_datetime`, and `monitor_date` were restructured to natively accept React's generic `datetime-local` output format without triggering "invalid date format" errors.
-3.  **Detailed Auditing Constraints:** 
-    - Forced `notes` to be strictly required when logging a compliance check.
-    - Added explicit timestamps for Service of BPO (`served_datetime`) rather than relying on automated background timers, giving officers control to log backdated documents accurately.
-4.  **UI Feedback Binding:** All forms within the BPO Workflow Control Center (`Show.tsx`) now directly render backend Laravel validation exceptions directly beneath their respective input fields, preventing silent submission failures.
-
----
-
-## 🏛️ 7. Software Engineering Principles (Defense Ready)
-
-To ensure a highly maintainable, efficient, and professional-grade codebase, the VAWC Management System is built upon several core software engineering principles. This section provides a technical defense for panel reviews.
+## 🏛️ 8. Software Engineering Principles (Defense Ready)
 
 ### SOLID Principles Applied
 1. **Single Responsibility Principle (SRP):** 
-   - Controllers solely handle HTTP requests/responses. All complex business rules (e.g., creating cases, calculating BPO SLA times) are isolated within dedicated Services (`VawcCaseService`, `VawcBpoService`).
+   - Backend: Controllers solely handle HTTP requests/responses. All complex business rules reside in dedicated Services (`VawcCaseService`, `VawcBpoService`).
+   - Frontend: Page entry files (`Create.tsx`, `Show.tsx`) act as orchestrators, while individual wizard steps and stage cards live in dedicated partial components.
 2. **Open/Closed Principle (OCP):** 
    - The workflow uses structured state transitions (via the `status` enum). We can introduce new legal procedures or referral pathways without rewriting the core transitioning engine.
 3. **Liskov Substitution & Interface Segregation:** 
    - Eloquent Relationships strictly define boundaries. Relying on abstracted parent models (like `CaseReport`) allows the VAWC system to securely add localized metadata without breaking the global blotter system.
 4. **Dependency Inversion Principle (DIP):**
-   - Business services are injected or orchestrated elegantly, decoupling the high-level workflow logic from direct, low-level SQL queries.
-
-### Object-Oriented Programming (OOP) Paradigms
-- **Encapsulation:** Sensitive fields (like victim identities and compliance notes) are firmly encapsulated within their respective Models. 
-- **Inheritance & Composition:** `VawcCase` uses composition over inheritance by strictly associating itself with a base `CaseReport`. It "has a" base report, allowing modular expansion without creating monolithic tables.
+   - Business services and custom React hooks decouple UI rendering from underlying database schemas and API request payload assembly.
 
 ### Clean Code & Senior Developer Practices
-- **Database Transactions (`DB::transaction`):** Absolute necessity for data integrity. Creating a case or escalating a BPO inserts data across 3-4 separate tables. Transactions ensure that if one step fails, the entire operation rolls back, preventing orphaned or corrupt records.
-- **Strict Typing & Casting:** The `$casts` array in Laravel models enforces type safety at the database boundary (e.g., coercing tinyints into booleans and formatting timestamp strings to `Carbon` objects). This massively reduces frontend-backend type coercion bugs.
-- **Thin Controllers / Fat Models:** Relationships, scopes, and simple mutators reside in the Models. The Controller is kept ultra-thin, acting purely as an orchestrator.
-- **Immutable Audit Trails (Soft Deletes):** Physical row deletions are disabled via the `SoftDeletes` trait. This ensures every critical action retains a digital footprint (`deleted_at`, `created_at`, `updated_at`), maintaining the absolute legal integrity required for court proceedings.
+- **Database Transactions (`DB::transaction`):** Wrapping case creation and status changes in atomic database transactions prevents orphaned or corrupted rows if a partial insert fails.
+- **Strict Typing & Casting:** Laravel model `$casts` and TypeScript interfaces (`useVawcCreateWorkflow`, `types.ts`) guarantee end-to-end type safety, verified via `npx tsc --noEmit` with zero errors.
+- **Immutable Audit Trails (Soft Deletes):** Physical row deletions are disabled via the `SoftDeletes` trait, preserving complete chains of custody required for judicial proceedings.
+- **Dual-Timestamp Audit Standard:** Captures both `process_timestamp` (occurrence date) and `created_at` (system server entry) to detect retroactive back-encoding.
 
 ---
-*End of Documentation - Prepared by Antigravity*
+*End of Documentation - Updated for WFPIS VAWC Management Module*

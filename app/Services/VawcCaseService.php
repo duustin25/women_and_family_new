@@ -68,20 +68,27 @@ class VawcCaseService
                     'relationship_type' => $relationship,
                     'survivor_demographics' => [
                         'name' => $victimName,
+                        'alias' => $data['victim']['alias'] ?? null,
                         'age' => $data['victim']['age'] ?? null,
+                        'birthdate' => $data['victim']['birthdate'] ?? null,
+                        'birthplace' => $data['victim']['birthplace'] ?? null,
+                        'nationality' => $data['victim']['nationality'] ?? 'Filipino',
                         'gender' => $data['victim']['gender'] ?? 'Female',
                         'contact' => $data['victim']['contact'] ?? null,
                         'address' => $data['victim']['address'] ?? null,
                         'civil_status' => $data['victim']['civil_status'] ?? null,
                         'educational_attainment' => $data['victim']['educational_attainment'] ?? null,
                         'occupation' => $data['victim']['occupation'] ?? null,
+                        'is_minor' => (!empty($data['victim']['age']) && (int)$data['victim']['age'] < 18),
                     ],
                     'respondent_demographics' => [
                         'name' => $respName,
+                        'alias' => $data['respondent']['alias'] ?? null,
                         'age' => $data['respondent']['age'] ?? null,
                         'gender' => $data['respondent']['gender'] ?? 'Male',
                         'contact' => $data['respondent']['contact'] ?? null,
                         'address' => $data['respondent']['address'] ?? null,
+                        'work_address' => $data['respondent']['work_address'] ?? null,
                         'relationship' => $relationship,
                         'civil_status' => $data['respondent']['civil_status'] ?? null,
                         'educational_attainment' => $data['respondent']['educational_attainment'] ?? null,
@@ -104,10 +111,13 @@ class VawcCaseService
                 $survivorDemo = $dossier->survivor_demographics ?? [];
                 if (!empty($data['victim']['contact'])) $survivorDemo['contact'] = $data['victim']['contact'];
                 if (!empty($data['victim']['address'])) $survivorDemo['address'] = $data['victim']['address'];
+                if (!empty($data['victim']['alias'])) $survivorDemo['alias'] = $data['victim']['alias'];
                 
                 $respondentDemo = $dossier->respondent_demographics ?? [];
                 if (!empty($data['respondent']['contact'])) $respondentDemo['contact'] = $data['respondent']['contact'];
                 if (!empty($data['respondent']['address'])) $respondentDemo['address'] = $data['respondent']['address'];
+                if (!empty($data['respondent']['work_address'])) $respondentDemo['work_address'] = $data['respondent']['work_address'];
+                if (!empty($data['respondent']['alias'])) $respondentDemo['alias'] = $data['respondent']['alias'];
 
                 $dossier->update([
                     'survivor_demographics' => $survivorDemo,
@@ -129,6 +139,7 @@ class VawcCaseService
                 'victim_gender' => $data['victim']['gender'] ?? 'Female',
                 'complainant_name' => $data['complainant']['name'] ?? $victimName,
                 'complainant_contact' => $data['complainant']['contact'] ?? null,
+                'complainant_address' => $data['complainant']['address'] ?? null,
                 'relation_to_victim' => $data['complainant']['relation_to_victim'] ?? ($data['intake_type'] === 'Direct' ? 'Self (Victim)' : null),
                 'is_anonymous' => $data['is_anonymous'] ?? false,
                 'incident_date' => $data['incident_date'] ?? now(),
@@ -141,6 +152,8 @@ class VawcCaseService
             $caseReport = $this->caseManagementService->createCase($baseData, 'VAWC');
 
             // 3. Create the VawcCase extension
+            $hasWeapon = !empty($data['has_weapon_involved']) || !empty($data['is_offender_armed']) || !empty($data['weapons_confiscated']);
+
             $vawcCase = VawcCase::create([
                 'dossier_id' => $dossier->id,
                 'incident_sequence' => $incidentSequence,
@@ -149,12 +162,22 @@ class VawcCaseService
                 'intake_type' => $data['intake_type'] ?? 'Direct',
                 'children_count' => $data['children_count'] ?? 0,
                 'children_details' => $data['children_details'] ?? null,
+                'incident_location_details' => $data['incident_location_details'] ?? null,
                 'is_repeat_offense' => $isRepeat,
-                'has_weapon_involved' => $data['has_weapon_involved'] ?? $data['weapons_confiscated'] ?? false,
+                'is_offender_armed' => !empty($data['is_offender_armed']),
+                'has_weapon_involved' => $hasWeapon,
+                'weapons_used' => $data['weapons_used'] ?? [],
+                'substance_abuse' => $data['substance_abuse'] ?? [],
                 'incident_veracity' => $data['incident_veracity'] ?? false,
                 'perpetrator_present' => $data['perpetrator_present'] ?? false,
                 'warrantless_arrest_made' => $data['warrantless_arrest_made'] ?? false,
                 'weapons_confiscated' => $data['weapons_confiscated'] ?? false,
+                'requires_medical' => !empty($data['requires_medical']),
+                'medical_facility_name' => $data['medical_facility_name'] ?? null,
+                'requires_alternative_housing' => !empty($data['requires_alternative_housing']),
+                'victim_shelter_choice' => $data['victim_shelter_choice'] ?? null,
+                'immediate_emergency_actions' => $data['immediate_emergency_actions'] ?? [],
+                'is_bpo_consented_by_guardian' => $data['is_bpo_consented_by_guardian'] ?? true,
                 'referral_status' => $data['referral_status'] ?? [],
                 'action_sought' => $data['action_sought'] ?? [],
                 'witness_info' => $data['witness_info'] ?? null,
@@ -167,14 +190,18 @@ class VawcCaseService
                 'vawc_case_id' => $vawcCase->id,
                 'role' => 'Victim',
                 'name' => $victimName,
+                'alias' => $data['victim']['alias'] ?? null,
                 'age' => $data['victim']['age'] ?? null,
+                'birthdate' => $data['victim']['birthdate'] ?? null,
+                'birthplace' => $data['victim']['birthplace'] ?? null,
+                'nationality' => $data['victim']['nationality'] ?? 'Filipino',
                 'gender' => $data['victim']['gender'] ?? 'Female',
                 'contact_number' => $data['victim']['contact'] ?? null,
                 'address' => $data['victim']['address'] ?? null,
                 'civil_status' => $data['victim']['civil_status'] ?? null,
                 'educational_attainment' => $data['victim']['educational_attainment'] ?? null,
                 'occupation' => $data['victim']['occupation'] ?? null,
-                'is_minor' => ($data['victim']['age'] ?? 0) < 18 && ($data['victim']['age'] ?? 0) > 0,
+                'is_minor' => (!empty($data['victim']['age']) && (int)$data['victim']['age'] < 18),
             ]);
 
             // Respondent (Perpetrator)
@@ -184,14 +211,28 @@ class VawcCaseService
                     'role' => 'Respondent',
                     'relationship_to_victim' => $relationship,
                     'name' => $respName,
+                    'alias' => $data['respondent']['alias'] ?? null,
                     'age' => $data['respondent']['age'] ?? null,
                     'gender' => $data['respondent']['gender'] ?? 'Male',
                     'contact_number' => $data['respondent']['contact'] ?? null,
                     'address' => $data['respondent']['address'] ?? null,
+                    'work_address' => $data['respondent']['work_address'] ?? null,
                     'civil_status' => $data['respondent']['civil_status'] ?? null,
                     'educational_attainment' => $data['respondent']['educational_attainment'] ?? null,
                     'occupation' => $data['respondent']['occupation'] ?? null,
                     'physical_description' => $data['respondent']['physical_description'] ?? null,
+                ]);
+            }
+
+            // Reporter (if Third-Party Complaint)
+            if (($data['intake_type'] ?? '') === 'Third-Party' && !empty($data['complainant']['name'])) {
+                VawcInvolvedParty::create([
+                    'vawc_case_id' => $vawcCase->id,
+                    'role' => 'Reporter',
+                    'relationship_to_victim' => $data['complainant']['relation_to_victim'] ?? 'Third-Party',
+                    'name' => $data['complainant']['name'],
+                    'contact_number' => $data['complainant']['contact'] ?? null,
+                    'address' => $data['complainant']['address'] ?? null,
                 ]);
             }
 

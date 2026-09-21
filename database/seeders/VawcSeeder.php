@@ -23,15 +23,15 @@ class VawcSeeder extends Seeder
 {
     /**
      * Run the database seeds with precise Philippine Standard Time (Asia/Manila) dates and processes.
-     * Fully aligned with latest RA 9262 statutory features:
-     * - Inter-Agency Transmittals (referral_status)
-     * - Survivor Desired Actions (action_sought)
-     * - Corroborating Witness Statements (witness_info)
-     * - Confidential Informant / Whistleblower Shield (is_anonymous = true)
-     * - Unassessed Fresh Intake for Triage Assessment testing (status = 'Intake', no assessment)
-     * - Full 15-Day BPO Completion without Violation (Expired BPO, Step 7 Case Archival & Closure)
-     * - Live Lapsed BPO ready for real-time closure testing in Step 5
-     * - Standard statutory closure reasons and active BPO compliance logs
+     * Fully aligned with latest RA 9262 statutory features and DILG NBOO flowcharts:
+     * - Complete Demographic Profiles (Addresses, Aliases, DOB, Auto-Age, Workplaces, Birthplaces, Nationalities)
+     * - Physical Premise & Weapons Threat Assessment (Exact spots, Armed Offender flags, Weapons brandished, Substance abuse)
+     * - Emergency Interventions & Alternative Housing (Medical facility targets, Shelter choices, Tanod emergency actions)
+     * - Child-Survivor Safeguards & DILG Node B Guardian Consent (Minor victim age < 18, Mother/Guardian BPO consent)
+     * - Confidential Informant / Whistleblower Shield (is_anonymous = true, separate complainant home address)
+     * - Recidivist Dossier History & Cross-Dossier Serial Perpetrator Detection
+     * - Strictly 20-Year Prescriptive Period under RA 9262 Sec. 24 / People v. Purisima
+     * - Tender of Service & Acting Kagawad Signatory SLA workflows
      */
     public function run(): void
     {
@@ -67,6 +67,7 @@ class VawcSeeder extends Seeder
         // =============================================================
         // DOSSIER 1: Multi-Incident Recidivist Case (Active BPO - 3 Incidents)
         // Survivor: Shane Miller vs. Respondent: Lance Dicki (Spouse)
+        // Demonstrates 3 escalating incidents, weapon brandished, critical lethality.
         // =============================================================
         $d1_incident3_date = Carbon::parse('2026-08-28 20:45:00', $tz);
 
@@ -77,23 +78,32 @@ class VawcSeeder extends Seeder
             'relationship_type' => 'Spouse (Legal Husband)',
             'survivor_demographics' => [
                 'name' => 'Shane Miller',
+                'alias' => 'Shane',
                 'age' => 29,
+                'birthdate' => '1997-04-12',
+                'birthplace' => 'Pasay City',
+                'nationality' => 'Filipino',
                 'gender' => 'Female',
                 'contact' => '0917-888-1234',
-                'address' => 'Block 4 Lot 12, Sunrise Village, Zone 1',
+                'address' => 'Block 4 Lot 12, Sunrise Village, Zone 1, Pasay City',
                 'civil_status' => 'Married',
-                'educational_attainment' => 'College',
+                'educational_attainment' => 'College Graduate',
                 'occupation' => 'Online Merchant',
             ],
             'respondent_demographics' => [
                 'name' => 'Lance Dicki',
+                'alias' => 'Lance',
                 'age' => 32,
+                'birthdate' => '1994-08-19',
+                'birthplace' => 'Manila',
+                'nationality' => 'Filipino',
                 'gender' => 'Male',
                 'contact' => '0928-555-6789',
-                'address' => 'Block 4 Lot 12, Sunrise Village, Zone 1',
+                'address' => 'Block 4 Lot 12, Sunrise Village, Zone 1, Pasay City',
+                'work_address' => 'Metro Logistics Warehouse, Terminal 3 Access Rd., Pasay City',
                 'relationship' => 'Spouse (Legal Husband)',
                 'civil_status' => 'Married',
-                'educational_attainment' => 'College',
+                'educational_attainment' => 'College Undergraduate',
                 'occupation' => 'Logistics Driver',
                 'physical_description' => '5\'9", medium build, scar on left eyebrow',
             ],
@@ -117,9 +127,10 @@ class VawcSeeder extends Seeder
             'victim_gender' => 'Female',
             'complainant_name' => 'Shane Miller',
             'complainant_contact' => '0917-888-1234',
+            'complainant_address' => 'Block 4 Lot 12, Sunrise Village, Zone 1, Pasay City',
             'relation_to_victim' => 'Self (Victim)',
             'incident_date' => $cr1_1_date,
-            'incident_location' => 'Block 4 Lot 12, Sunrise Village',
+            'incident_location' => 'Block 4 Lot 12, Sunrise Village, Zone 1',
             'description' => 'Repeated verbal harassment, threats of kicking victim out of the conjugal home, and public humiliation.',
             'lifecycle_status' => 'Resolved',
             'handled_by_id' => $officer->id,
@@ -132,8 +143,18 @@ class VawcSeeder extends Seeder
             'case_report_id' => $cr1_1->id,
             'intake_type' => 'Direct',
             'children_count' => 1,
+            'children_details' => [
+                ['name' => 'Liam Miller Dicki', 'age' => '4', 'school_or_daycare' => 'Barangay 183 Daycare']
+            ],
+            'incident_location_details' => 'Shared living room of the conjugal residence',
             'is_repeat_offense' => false,
             'has_weapon_involved' => false,
+            'is_offender_armed' => false,
+            'substance_abuse' => ['Alcohol / Drunkenness'],
+            'requires_medical' => false,
+            'requires_alternative_housing' => false,
+            'immediate_emergency_actions' => ['Temporary Safe Custody at Barangay Hall'],
+            'is_bpo_consented_by_guardian' => true,
             'incident_veracity' => true,
             'status' => 'Closed',
             'referral_status' => ['Barangay VAW Desk', 'PAO / Legal Aid'],
@@ -148,18 +169,38 @@ class VawcSeeder extends Seeder
             'vawc_case_id' => $c1_1->id,
             'role' => 'Victim',
             'name' => 'Shane Miller',
+            'alias' => 'Shane',
+            'birthdate' => '1997-04-12',
+            'birthplace' => 'Pasay City',
+            'nationality' => 'Filipino',
             'age' => 28,
+            'is_minor' => false,
             'gender' => 'Female',
             'contact_number' => '0917-888-1234',
-            'address' => 'Block 4 Lot 12, Sunrise Village',
+            'address' => 'Block 4 Lot 12, Sunrise Village, Zone 1, Pasay City',
+            'civil_status' => 'Married',
+            'educational_attainment' => 'College Graduate',
+            'occupation' => 'Online Merchant',
         ]);
         VawcInvolvedParty::create([
             'vawc_case_id' => $c1_1->id,
             'role' => 'Respondent',
             'relationship_to_victim' => 'Spouse (Legal Husband)',
             'name' => 'Lance Dicki',
+            'alias' => 'Lance',
+            'birthdate' => '1994-08-19',
+            'birthplace' => 'Manila',
+            'nationality' => 'Filipino',
             'age' => 31,
+            'is_minor' => false,
             'gender' => 'Male',
+            'contact_number' => '0928-555-6789',
+            'address' => 'Block 4 Lot 12, Sunrise Village, Zone 1, Pasay City',
+            'work_address' => 'Metro Logistics Warehouse, Pasay City',
+            'civil_status' => 'Married',
+            'educational_attainment' => 'College Undergraduate',
+            'occupation' => 'Logistics Driver',
+            'physical_description' => '5\'9", medium build, scar on left eyebrow',
         ]);
         VawcAssessment::create([
             'vawc_case_id' => $c1_1->id,
@@ -199,22 +240,8 @@ class VawcSeeder extends Seeder
             'notes' => 'Day 3 Check: Respondent complied with 15-day stay-away mandate. Residing at temporary location.',
         ]);
 
-        VawcComplianceLog::create([
-            'vawc_case_id' => $c1_1->id,
-            'monitor_date' => Carbon::parse('2026-01-24 15:00:00', $tz),
-            'is_compliant' => true,
-            'notes' => 'Day 8 Check: Survivor reported no communication or disturbance from respondent.',
-        ]);
-
-        VawcComplianceLog::create([
-            'vawc_case_id' => $c1_1->id,
-            'monitor_date' => Carbon::parse('2026-01-31 16:00:00', $tz),
-            'is_compliant' => true,
-            'notes' => 'Day 15 Check: Final monitoring check. 15-day protective order completed without incident. Survivor expressed security.',
-        ]);
-
         // Dossier 1 - Incident #2 (Physical Abuse, Resolved Intervention)
-        $cr1_2_date = Carbon::parse('2026-05-20 21:30:00', $tz);
+        $cr1_2_date = Carbon::parse('2026-05-20 18:30:00', $tz);
         $cr1_2 = CaseReport::create([
             'user_id' => $admin->id,
             'zone_id' => $defaultZone->id,
@@ -226,10 +253,11 @@ class VawcSeeder extends Seeder
             'victim_gender' => 'Female',
             'complainant_name' => 'Shane Miller',
             'complainant_contact' => '0917-888-1234',
+            'complainant_address' => 'Block 4 Lot 12, Sunrise Village, Zone 1, Pasay City',
             'relation_to_victim' => 'Self (Victim)',
             'incident_date' => $cr1_2_date,
-            'incident_location' => 'Block 4 Lot 12, Sunrise Village',
-            'description' => 'Physical altercation resulting in contusions on arms. Respondent threw household items in presence of minor child.',
+            'incident_location' => 'Block 4 Lot 12, Sunrise Village, Zone 1',
+            'description' => 'Respondent physically shoved victim against kitchen counter, inflicting contusions to the right upper arm and wrist.',
             'lifecycle_status' => 'Resolved',
             'handled_by_id' => $officer->id,
         ]);
@@ -241,20 +269,63 @@ class VawcSeeder extends Seeder
             'case_report_id' => $cr1_2->id,
             'intake_type' => 'Direct',
             'children_count' => 1,
+            'children_details' => [
+                ['name' => 'Liam Miller Dicki', 'age' => '4', 'school_or_daycare' => 'Barangay 183 Daycare']
+            ],
+            'incident_location_details' => 'Inside the conjugal kitchen and hallway',
             'is_repeat_offense' => true,
             'has_weapon_involved' => false,
+            'is_offender_armed' => false,
+            'substance_abuse' => ['Alcohol / Drunkenness'],
+            'requires_medical' => true,
+            'medical_facility_name' => 'Pasay City General Hospital',
+            'requires_alternative_housing' => false,
+            'immediate_emergency_actions' => ['First-Aid Rendered / EMS Responded'],
+            'is_bpo_consented_by_guardian' => true,
             'incident_veracity' => true,
             'status' => 'Closed',
-            'referral_status' => ['DSWD / MSWDO', 'Hospital / Medico-Legal'],
-            'action_sought' => ['Medico-Legal Examination & Care', 'Temporary Custody / Emergency Shelter'],
-            'witness_info' => 'Attending barangay health worker documented bilateral forearm contusions and treated minor abrasion.',
-            'closure_reason' => 'Referred to Social Welfare for Sustained Intervention (Monitoring Complete)',
-            'closure_remarks' => 'MSWDO social worker conducted 3 home follow-ups and enrolled couple in specialized counseling.',
-            'closed_at' => Carbon::parse('2026-06-19 16:30:00', $tz),
+            'referral_status' => ['Barangay VAW Desk', 'Hospital / Medico-Legal', 'DSWD / MSWDO'],
+            'action_sought' => ['Barangay Protection Order (BPO)', 'Medico-Legal Examination & Care'],
+            'witness_info' => 'Responding Tanod Corporal Perez documented arm contusions on site.',
+            'closure_reason' => '15-Day Protection Order Lapsed Successfully (No Violation)',
+            'closure_remarks' => 'Respondent complied with 15-day protective stay-away order and attended MSWDO counseling sessions.',
+            'closed_at' => Carbon::parse('2026-06-05 17:00:00', $tz),
         ]);
 
-        VawcInvolvedParty::create(['vawc_case_id' => $c1_2->id, 'role' => 'Victim', 'name' => 'Shane Miller', 'age' => 29]);
-        VawcInvolvedParty::create(['vawc_case_id' => $c1_2->id, 'role' => 'Respondent', 'name' => 'Lance Dicki', 'age' => 32]);
+        VawcInvolvedParty::create([
+            'vawc_case_id' => $c1_2->id,
+            'role' => 'Victim',
+            'name' => 'Shane Miller',
+            'alias' => 'Shane',
+            'birthdate' => '1997-04-12',
+            'birthplace' => 'Pasay City',
+            'nationality' => 'Filipino',
+            'age' => 29,
+            'is_minor' => false,
+            'gender' => 'Female',
+            'contact_number' => '0917-888-1234',
+            'address' => 'Block 4 Lot 12, Sunrise Village, Zone 1, Pasay City',
+            'civil_status' => 'Married',
+            'occupation' => 'Online Merchant',
+        ]);
+        VawcInvolvedParty::create([
+            'vawc_case_id' => $c1_2->id,
+            'role' => 'Respondent',
+            'relationship_to_victim' => 'Spouse (Legal Husband)',
+            'name' => 'Lance Dicki',
+            'alias' => 'Lance',
+            'birthdate' => '1994-08-19',
+            'birthplace' => 'Manila',
+            'nationality' => 'Filipino',
+            'age' => 32,
+            'is_minor' => false,
+            'gender' => 'Male',
+            'contact_number' => '0928-555-6789',
+            'address' => 'Block 4 Lot 12, Sunrise Village, Zone 1, Pasay City',
+            'work_address' => 'Metro Logistics Warehouse, Pasay City',
+            'civil_status' => 'Married',
+            'occupation' => 'Logistics Driver',
+        ]);
         VawcAssessment::create([
             'vawc_case_id' => $c1_2->id,
             'requires_medical' => true,
@@ -264,6 +335,26 @@ class VawcSeeder extends Seeder
             'life_threat_level' => 2,
             'risk_score' => 7,
             'risk_level' => 'MODERATE',
+        ]);
+
+        $po1_2 = VawcProtectionOrder::create([
+            'vawc_case_id' => $c1_2->id,
+            'type' => 'BPO',
+            'order_number' => 'BPO-2026-0001-02',
+            'status' => 'Expired',
+            'application_datetime' => Carbon::parse('2026-05-21 08:30:00', $tz),
+            'issued_datetime' => Carbon::parse('2026-05-21 10:30:00', $tz),
+            'expiration_date' => Carbon::parse('2026-06-05 23:59:59', $tz),
+            'is_sla_breached' => false,
+            'issued_by_id' => $admin->id,
+        ]);
+
+        VawcBpoServiceRecord::create([
+            'protection_order_id' => $po1_2->id,
+            'service_method' => 'Personally Received',
+            'served_datetime' => Carbon::parse('2026-05-21 13:45:00', $tz),
+            'served_by_id' => $officer->id,
+            'receiver_name' => 'Lance Dicki',
         ]);
 
         // Dossier 1 - Incident #3 (ACTIVE BPO: Day 4 of 15 Days, Weapon Threat, Critical Risk)
@@ -278,10 +369,11 @@ class VawcSeeder extends Seeder
             'victim_gender' => 'Female',
             'complainant_name' => 'Shane Miller',
             'complainant_contact' => '0917-888-1234',
+            'complainant_address' => 'Block 4 Lot 12, Sunrise Village, Zone 1, Pasay City',
             'relation_to_victim' => 'Self (Victim)',
             'incident_date' => $d1_incident3_date,
-            'incident_location' => 'Block 4 Lot 12, Sunrise Village',
-            'description' => 'Respondent arrived intoxicated, brandished a kitchen knife threatening victim and child. Tanod responded and confiscated weapon.',
+            'incident_location' => 'Block 4 Lot 12, Sunrise Village, Zone 1',
+            'description' => 'Respondent arrived intoxicated, brandished an 8-inch kitchen knife threatening victim and child. Tanod responded to emergency 911 dispatch and disarmed respondent.',
             'lifecycle_status' => 'Action Plan',
             'handled_by_id' => $officer->id,
         ]);
@@ -293,9 +385,22 @@ class VawcSeeder extends Seeder
             'case_report_id' => $cr1_3->id,
             'intake_type' => 'Direct',
             'children_count' => 1,
+            'children_details' => [
+                ['name' => 'Liam Miller Dicki', 'age' => '4', 'school_or_daycare' => 'Barangay 183 Daycare']
+            ],
+            'incident_location_details' => 'Kitchen doorway and shared master bedroom entryway',
             'is_repeat_offense' => true,
             'has_weapon_involved' => true,
+            'is_offender_armed' => true,
+            'weapons_used' => ['Bladed Weapon / Knife'],
             'weapons_confiscated' => true,
+            'substance_abuse' => ['Alcohol / Drunkenness', 'Illegal Drugs / Narcotics'],
+            'requires_medical' => true,
+            'medical_facility_name' => 'Pasay City General Hospital',
+            'requires_alternative_housing' => true,
+            'victim_shelter_choice' => 'Relatives / Friends (Private Haven)',
+            'immediate_emergency_actions' => ['Tactical Rescue by Tanods / PNP', 'Weapon Confiscated on Site'],
+            'is_bpo_consented_by_guardian' => true,
             'perpetrator_present' => true,
             'incident_veracity' => true,
             'status' => 'Monitoring',
@@ -304,8 +409,41 @@ class VawcSeeder extends Seeder
             'witness_info' => 'Barangay Tanod Patrol Officer Roberto Perez responded directly to distress call and disarmed respondent.',
         ]);
 
-        VawcInvolvedParty::create(['vawc_case_id' => $c1_3->id, 'role' => 'Victim', 'name' => 'Shane Miller', 'age' => 29, 'contact_number' => '0917-888-1234', 'address' => 'Block 4 Lot 12, Sunrise Village']);
-        VawcInvolvedParty::create(['vawc_case_id' => $c1_3->id, 'role' => 'Respondent', 'relationship_to_victim' => 'Spouse (Legal Husband)', 'name' => 'Lance Dicki', 'age' => 32, 'contact_number' => '0928-555-6789', 'address' => 'Block 4 Lot 12, Sunrise Village']);
+        VawcInvolvedParty::create([
+            'vawc_case_id' => $c1_3->id,
+            'role' => 'Victim',
+            'name' => 'Shane Miller',
+            'alias' => 'Shane',
+            'birthdate' => '1997-04-12',
+            'birthplace' => 'Pasay City',
+            'nationality' => 'Filipino',
+            'age' => 29,
+            'is_minor' => false,
+            'gender' => 'Female',
+            'contact_number' => '0917-888-1234',
+            'address' => 'Block 4 Lot 12, Sunrise Village, Zone 1, Pasay City',
+            'civil_status' => 'Married',
+            'occupation' => 'Online Merchant',
+        ]);
+        VawcInvolvedParty::create([
+            'vawc_case_id' => $c1_3->id,
+            'role' => 'Respondent',
+            'relationship_to_victim' => 'Spouse (Legal Husband)',
+            'name' => 'Lance Dicki',
+            'alias' => 'Lance',
+            'birthdate' => '1994-08-19',
+            'birthplace' => 'Manila',
+            'nationality' => 'Filipino',
+            'age' => 32,
+            'is_minor' => false,
+            'gender' => 'Male',
+            'contact_number' => '0928-555-6789',
+            'address' => 'Block 4 Lot 12, Sunrise Village, Zone 1, Pasay City',
+            'work_address' => 'Metro Logistics Warehouse, Pasay City',
+            'civil_status' => 'Married',
+            'occupation' => 'Logistics Driver',
+            'physical_description' => '5\'9", medium build, scar on left eyebrow',
+        ]);
         
         VawcAssessment::create([
             'vawc_case_id' => $c1_3->id,
@@ -356,33 +494,43 @@ class VawcSeeder extends Seeder
 
         // =============================================================
         // DOSSIER 2: Under Active Monitoring (2 Incidents)
-        // Survivor: Maria Santos vs. Respondent: Roberto Santos (Common-Law Partner)
+        // Survivor: Catherine Santos vs. Respondent: Eduardo Santos (Spouse)
+        // Incident 2: Live Lapsed BPO ready for real-time closure testing in Step 5
         // =============================================================
         $d2_lastIncident = Carbon::parse('2026-08-24 19:30:00', $tz);
 
         $dossier2 = VawcDossier::create([
             'dossier_number' => 'DOS-2026-0002',
-            'survivor_name' => 'Maria Santos',
-            'respondent_name' => 'Roberto Santos',
-            'relationship_type' => 'Common-Law / Live-in Partner',
+            'survivor_name' => 'Catherine Santos',
+            'respondent_name' => 'Eduardo Santos',
+            'relationship_type' => 'Spouse (Legal Husband)',
             'survivor_demographics' => [
-                'name' => 'Maria Santos',
+                'name' => 'Catherine Santos',
+                'alias' => 'Cathy',
                 'age' => 26,
+                'birthdate' => '2000-05-14',
+                'birthplace' => 'Pasay City',
+                'nationality' => 'Filipino',
                 'gender' => 'Female',
                 'contact' => '0919-111-2233',
-                'address' => 'Purok 3, Riverside, Zone 2',
-                'civil_status' => 'Live-in',
+                'address' => 'Purok 3, Riverside, Zone 2, Pasay City',
+                'civil_status' => 'Married',
                 'occupation' => 'Barangay Health Worker',
             ],
             'respondent_demographics' => [
-                'name' => 'Roberto Santos',
+                'name' => 'Eduardo Santos',
+                'alias' => 'Eddie',
                 'age' => 28,
+                'birthdate' => '1998-02-10',
+                'birthplace' => 'Pasay City',
+                'nationality' => 'Filipino',
                 'gender' => 'Male',
                 'contact' => '0920-444-5566',
-                'address' => 'Purok 3, Riverside, Zone 2',
-                'relationship' => 'Common-Law / Live-in Partner',
-                'civil_status' => 'Live-in',
-                'occupation' => 'Construction Worker',
+                'address' => 'Purok 3, Riverside, Zone 2, Pasay City',
+                'work_address' => 'Zone 2 Mechanical Workshop, Pasay City',
+                'relationship' => 'Spouse (Legal Husband)',
+                'civil_status' => 'Married',
+                'occupation' => 'Auto Mechanic',
             ],
             'incident_count' => 2,
             'highest_threat_level' => 'HIGH',
@@ -398,13 +546,15 @@ class VawcSeeder extends Seeder
             'abuse_type_id' => $economicAbuse?->id ?? 1,
             'type' => 'VAWC',
             'case_number' => 'VAWC-2026-0002-01',
-            'victim_name' => 'Maria Santos',
+            'victim_name' => 'Catherine Santos',
             'victim_age' => 25,
             'victim_gender' => 'Female',
-            'complainant_name' => 'Maria Santos',
+            'complainant_name' => 'Catherine Santos',
+            'complainant_contact' => '0919-111-2233',
+            'complainant_address' => 'Purok 3, Riverside, Zone 2, Pasay City',
             'relation_to_victim' => 'Self (Victim)',
             'incident_date' => $cr2_1_date,
-            'incident_location' => 'Purok 3, Riverside',
+            'incident_location' => 'Purok 3, Riverside, Zone 2',
             'description' => 'Withholding of financial support for common child, demanding victim\'s earnings.',
             'lifecycle_status' => 'Resolved',
             'handled_by_id' => $officer->id,
@@ -417,6 +567,18 @@ class VawcSeeder extends Seeder
             'case_report_id' => $cr2_1->id,
             'intake_type' => 'Direct',
             'children_count' => 1,
+            'children_details' => [
+                ['name' => 'Mikayla Santos', 'age' => '2', 'school_or_daycare' => 'Home']
+            ],
+            'incident_location_details' => 'Family dining table and living area',
+            'is_repeat_offense' => false,
+            'has_weapon_involved' => false,
+            'is_offender_armed' => false,
+            'substance_abuse' => [],
+            'requires_medical' => false,
+            'requires_alternative_housing' => false,
+            'immediate_emergency_actions' => ['Temporary Safe Custody at Barangay Hall'],
+            'is_bpo_consented_by_guardian' => true,
             'status' => 'Closed',
             'referral_status' => ['PAO / Legal Aid', 'Barangay VAW Desk'],
             'action_sought' => ['Psychosocial Support & Counseling'],
@@ -425,8 +587,40 @@ class VawcSeeder extends Seeder
             'closure_remarks' => 'Respondent agreed to formal voluntary child support agreement via PAO intervention.',
             'closed_at' => Carbon::parse('2026-03-26 17:00:00', $tz),
         ]);
-        VawcInvolvedParty::create(['vawc_case_id' => $c2_1->id, 'role' => 'Victim', 'name' => 'Maria Santos']);
-        VawcInvolvedParty::create(['vawc_case_id' => $c2_1->id, 'role' => 'Respondent', 'name' => 'Roberto Santos']);
+        VawcInvolvedParty::create([
+            'vawc_case_id' => $c2_1->id,
+            'role' => 'Victim',
+            'name' => 'Catherine Santos',
+            'alias' => 'Cathy',
+            'birthdate' => '2000-05-14',
+            'birthplace' => 'Pasay City',
+            'nationality' => 'Filipino',
+            'age' => 25,
+            'is_minor' => false,
+            'gender' => 'Female',
+            'contact_number' => '0919-111-2233',
+            'address' => 'Purok 3, Riverside, Zone 2, Pasay City',
+            'civil_status' => 'Married',
+            'occupation' => 'Barangay Health Worker',
+        ]);
+        VawcInvolvedParty::create([
+            'vawc_case_id' => $c2_1->id,
+            'role' => 'Respondent',
+            'relationship_to_victim' => 'Spouse (Legal Husband)',
+            'name' => 'Eduardo Santos',
+            'alias' => 'Eddie',
+            'birthdate' => '1998-02-10',
+            'birthplace' => 'Pasay City',
+            'nationality' => 'Filipino',
+            'age' => 27,
+            'is_minor' => false,
+            'gender' => 'Male',
+            'contact_number' => '0920-444-5566',
+            'address' => 'Purok 3, Riverside, Zone 2, Pasay City',
+            'work_address' => 'Zone 2 Mechanical Workshop, Pasay City',
+            'civil_status' => 'Married',
+            'occupation' => 'Auto Mechanic',
+        ]);
         VawcAssessment::create(['vawc_case_id' => $c2_1->id, 'requires_medical' => false, 'risk_score' => 4, 'risk_level' => 'LOW']);
 
         $cr2_2 = CaseReport::create([
@@ -435,14 +629,16 @@ class VawcSeeder extends Seeder
             'abuse_type_id' => $physicalAbuse?->id ?? 1,
             'type' => 'VAWC',
             'case_number' => 'VAWC-2026-0002-02',
-            'victim_name' => 'Maria Santos',
+            'victim_name' => 'Catherine Santos',
             'victim_age' => 26,
             'victim_gender' => 'Female',
-            'complainant_name' => 'Maria Santos',
+            'complainant_name' => 'Catherine Santos',
+            'complainant_contact' => '0919-111-2233',
+            'complainant_address' => 'Purok 3, Riverside, Zone 2, Pasay City',
             'relation_to_victim' => 'Self (Victim)',
             'incident_date' => $d2_lastIncident,
-            'incident_location' => 'Purok 3, Riverside',
-            'description' => 'Slapping and verbal assault following argument over household finances.',
+            'incident_location' => 'Purok 3, Riverside, Zone 2',
+            'description' => 'Slapping and verbal assault following argument over household finances, causing facial swelling.',
             'lifecycle_status' => 'Action Plan',
             'handled_by_id' => $officer->id,
         ]);
@@ -454,18 +650,62 @@ class VawcSeeder extends Seeder
             'case_report_id' => $cr2_2->id,
             'intake_type' => 'Direct',
             'children_count' => 1,
+            'children_details' => [
+                ['name' => 'Mikayla Santos', 'age' => '2', 'school_or_daycare' => 'Home']
+            ],
+            'incident_location_details' => 'Living room and porch area',
             'is_repeat_offense' => true,
+            'has_weapon_involved' => false,
+            'is_offender_armed' => false,
+            'substance_abuse' => ['Alcohol / Drunkenness'],
+            'requires_medical' => true,
+            'medical_facility_name' => 'Barangay 183 Health Center',
+            'requires_alternative_housing' => false,
+            'immediate_emergency_actions' => ['First-Aid Rendered / EMS Responded'],
+            'is_bpo_consented_by_guardian' => true,
             'incident_veracity' => true,
             'status' => 'Monitoring',
             'referral_status' => ['Barangay VAW Desk', 'Hospital / Medico-Legal'],
             'action_sought' => ['Barangay Protection Order (BPO)', 'Barangay Tanod Security & Patrols'],
             'witness_info' => 'Purok leader intervened after hearing screams and observed victim with facial bruising.',
         ]);
-        VawcInvolvedParty::create(['vawc_case_id' => $c2_2->id, 'role' => 'Victim', 'name' => 'Maria Santos', 'age' => 26]);
-        VawcInvolvedParty::create(['vawc_case_id' => $c2_2->id, 'role' => 'Respondent', 'name' => 'Roberto Santos', 'age' => 28]);
+        VawcInvolvedParty::create([
+            'vawc_case_id' => $c2_2->id,
+            'role' => 'Victim',
+            'name' => 'Catherine Santos',
+            'alias' => 'Cathy',
+            'birthdate' => '2000-05-14',
+            'birthplace' => 'Pasay City',
+            'nationality' => 'Filipino',
+            'age' => 26,
+            'is_minor' => false,
+            'gender' => 'Female',
+            'contact_number' => '0919-111-2233',
+            'address' => 'Purok 3, Riverside, Zone 2, Pasay City',
+            'civil_status' => 'Married',
+            'occupation' => 'Barangay Health Worker',
+        ]);
+        VawcInvolvedParty::create([
+            'vawc_case_id' => $c2_2->id,
+            'role' => 'Respondent',
+            'relationship_to_victim' => 'Spouse (Legal Husband)',
+            'name' => 'Eduardo Santos',
+            'alias' => 'Eddie',
+            'birthdate' => '1998-02-10',
+            'birthplace' => 'Pasay City',
+            'nationality' => 'Filipino',
+            'age' => 28,
+            'is_minor' => false,
+            'gender' => 'Male',
+            'contact_number' => '0920-444-5566',
+            'address' => 'Purok 3, Riverside, Zone 2, Pasay City',
+            'work_address' => 'Zone 2 Mechanical Workshop, Pasay City',
+            'civil_status' => 'Married',
+            'occupation' => 'Auto Mechanic',
+        ]);
         VawcAssessment::create([
             'vawc_case_id' => $c2_2->id,
-            'requires_medical' => false,
+            'requires_medical' => true,
             'abuse_frequency' => 2,
             'abuse_severity' => 2,
             'weapon_access' => 1,
@@ -474,10 +714,6 @@ class VawcSeeder extends Seeder
             'risk_level' => 'MODERATE',
         ]);
 
-        // Dossier 2 - Incident #2 Live Lapsed BPO
-        // Expiration was Sep 9, 2026 (15 days from Aug 25).
-        // Today is Sep 11, 2026 -> Case stays in 'Monitoring' (Step 5) with '15-Day BPO Lapsed' badge
-        // perfectly ready for the user to click 'Close Case File' and test BPO closure!
         $po2_2 = VawcProtectionOrder::create([
             'vawc_case_id' => $c2_2->id,
             'type' => 'BPO',
@@ -495,7 +731,7 @@ class VawcSeeder extends Seeder
             'service_method' => 'Personally Received',
             'served_datetime' => Carbon::parse('2026-08-25 14:00:00', $tz),
             'served_by_id' => $officer->id,
-            'receiver_name' => 'Roberto Santos',
+            'receiver_name' => 'Eduardo Santos',
         ]);
 
         VawcComplianceLog::create([
@@ -509,7 +745,7 @@ class VawcSeeder extends Seeder
             'vawc_case_id' => $c2_2->id,
             'monitor_date' => Carbon::parse('2026-09-02 14:15:00', $tz),
             'is_compliant' => true,
-            'notes' => 'Day 8 Check: Survivor Maria Santos reports zero threats or physical appearances. Respondent attending counseling sessions.',
+            'notes' => 'Day 8 Check: Survivor Catherine Santos reports zero threats or physical appearances. Respondent attending counseling sessions.',
             'referral_type' => 'DSWD (Counseling)',
             'referral_details' => 'Enrolled in Family Welfare Counseling',
         ]);
@@ -525,30 +761,39 @@ class VawcSeeder extends Seeder
 
         // =============================================================
         // DOSSIER 3: Court Escalation Case (Severe Breach - TPO Filing)
-        // Survivor: Elena Cruz vs. Respondent: Mark Cruz (Spouse)
+        // Survivor: Maria Teresa Roxas vs. Respondent: Danilo Roxas (Spouse)
         // =============================================================
         $d3_lastIncident = Carbon::parse('2026-08-26 22:15:00', $tz);
 
         $dossier3 = VawcDossier::create([
             'dossier_number' => 'DOS-2026-0003',
-            'survivor_name' => 'Elena Cruz',
-            'respondent_name' => 'Mark Cruz',
+            'survivor_name' => 'Maria Teresa Roxas',
+            'respondent_name' => 'Danilo Roxas',
             'relationship_type' => 'Spouse (Legal Husband)',
             'survivor_demographics' => [
-                'name' => 'Elena Cruz',
+                'name' => 'Maria Teresa Roxas',
+                'alias' => 'Tess',
                 'age' => 34,
+                'birthdate' => '1992-03-20',
+                'birthplace' => 'Quezon City',
+                'nationality' => 'Filipino',
                 'gender' => 'Female',
                 'contact' => '0918-333-7788',
-                'address' => 'House 12, Sampaguita St., Zone 3',
+                'address' => 'House 12, Sampaguita St., Zone 3, Pasay City',
                 'civil_status' => 'Married',
                 'occupation' => 'Teacher',
             ],
             'respondent_demographics' => [
-                'name' => 'Mark Cruz',
+                'name' => 'Danilo Roxas',
+                'alias' => 'Danny',
                 'age' => 36,
+                'birthdate' => '1990-11-05',
+                'birthplace' => 'Cavite',
+                'nationality' => 'Filipino',
                 'gender' => 'Male',
                 'contact' => '0919-999-0011',
-                'address' => 'House 12, Sampaguita St., Zone 3',
+                'address' => 'House 12, Sampaguita St., Zone 3, Pasay City',
+                'work_address' => 'Grand Security Agency, Roxas Blvd., Pasay City',
                 'relationship' => 'Spouse (Legal Husband)',
                 'civil_status' => 'Married',
                 'occupation' => 'Security Guard',
@@ -567,14 +812,16 @@ class VawcSeeder extends Seeder
             'abuse_type_id' => $physicalAbuse?->id ?? 1,
             'type' => 'VAWC',
             'case_number' => 'VAWC-2026-0003-01',
-            'victim_name' => 'Elena Cruz',
+            'victim_name' => 'Maria Teresa Roxas',
             'victim_age' => 34,
             'victim_gender' => 'Female',
-            'complainant_name' => 'Elena Cruz',
+            'complainant_name' => 'Maria Teresa Roxas',
+            'complainant_contact' => '0918-333-7788',
+            'complainant_address' => 'House 12, Sampaguita St., Zone 3, Pasay City',
             'relation_to_victim' => 'Self (Victim)',
             'incident_date' => $d3_lastIncident,
             'incident_location' => 'House 12, Sampaguita St., Zone 3',
-            'description' => 'Severe physical battery and violation of issued BPO. Respondent entered victim\'s temporary residence with weapon.',
+            'description' => 'Severe physical battery and violation of issued BPO. Respondent entered victim\'s temporary residence with weapon brandished.',
             'lifecycle_status' => 'Investigation',
             'handled_by_id' => $officer->id,
         ]);
@@ -586,16 +833,64 @@ class VawcSeeder extends Seeder
             'case_report_id' => $cr3_1->id,
             'intake_type' => 'Direct',
             'children_count' => 2,
+            'children_details' => [
+                ['name' => 'Angelo Roxas', 'age' => '9', 'school_or_daycare' => 'Zone 3 Elementary'],
+                ['name' => 'Grace Roxas', 'age' => '6', 'school_or_daycare' => 'Zone 3 Daycare']
+            ],
+            'incident_location_details' => 'Driveway gate and front entrance',
             'is_repeat_offense' => true,
             'has_weapon_involved' => true,
+            'is_offender_armed' => true,
+            'weapons_used' => ['Bladed Weapon / Knife'],
             'warrantless_arrest_made' => true,
+            'weapons_confiscated' => true,
+            'substance_abuse' => ['Alcohol / Drunkenness'],
+            'requires_medical' => true,
+            'medical_facility_name' => 'Pasay City General Hospital',
+            'requires_alternative_housing' => true,
+            'victim_shelter_choice' => 'CSWDO / DSWD Crisis Center / LGU Safehouse',
+            'immediate_emergency_actions' => ['Tactical Rescue by Tanods / PNP', 'Weapon Confiscated on Site'],
+            'is_bpo_consented_by_guardian' => true,
             'status' => 'Escalated',
             'referral_status' => ['PNP WCPD', 'PAO / Legal Aid', 'Hospital / Medico-Legal'],
             'action_sought' => ['Criminal Investigation & Case Filing', 'Barangay Protection Order (BPO)', 'Temporary Custody / Emergency Shelter'],
             'witness_info' => 'Subdivision gate guard on duty logged respondent forcibly breaching gate with bladed tool.',
         ]);
-        VawcInvolvedParty::create(['vawc_case_id' => $c3_1->id, 'role' => 'Victim', 'name' => 'Elena Cruz', 'age' => 34]);
-        VawcInvolvedParty::create(['vawc_case_id' => $c3_1->id, 'role' => 'Respondent', 'name' => 'Mark Cruz', 'age' => 36]);
+        VawcInvolvedParty::create([
+            'vawc_case_id' => $c3_1->id,
+            'role' => 'Victim',
+            'name' => 'Maria Teresa Roxas',
+            'alias' => 'Tess',
+            'birthdate' => '1992-03-20',
+            'birthplace' => 'Quezon City',
+            'nationality' => 'Filipino',
+            'age' => 34,
+            'is_minor' => false,
+            'gender' => 'Female',
+            'contact_number' => '0918-333-7788',
+            'address' => 'House 12, Sampaguita St., Zone 3, Pasay City',
+            'civil_status' => 'Married',
+            'occupation' => 'Teacher',
+        ]);
+        VawcInvolvedParty::create([
+            'vawc_case_id' => $c3_1->id,
+            'role' => 'Respondent',
+            'relationship_to_victim' => 'Spouse (Legal Husband)',
+            'name' => 'Danilo Roxas',
+            'alias' => 'Danny',
+            'birthdate' => '1990-11-05',
+            'birthplace' => 'Cavite',
+            'nationality' => 'Filipino',
+            'age' => 36,
+            'is_minor' => false,
+            'gender' => 'Male',
+            'contact_number' => '0919-999-0011',
+            'address' => 'House 12, Sampaguita St., Zone 3, Pasay City',
+            'work_address' => 'Grand Security Agency, Pasay City',
+            'civil_status' => 'Married',
+            'occupation' => 'Security Guard',
+            'physical_description' => '6\'0", muscular build',
+        ]);
         VawcAssessment::create([
             'vawc_case_id' => $c3_1->id,
             'requires_medical' => true,
@@ -608,49 +903,20 @@ class VawcSeeder extends Seeder
             'risk_level' => 'CRITICAL',
         ]);
 
-        $po3_1 = VawcProtectionOrder::create([
-            'vawc_case_id' => $c3_1->id,
-            'type' => 'BPO',
-            'order_number' => 'BPO-2026-0003-01',
-            'status' => 'Violated',
-            'application_datetime' => Carbon::parse('2026-08-27 08:00:00', $tz),
-            'issued_datetime' => Carbon::parse('2026-08-27 09:30:00', $tz),
-            'expiration_date' => Carbon::parse('2026-09-11 23:59:59', $tz),
-            'is_sla_breached' => false,
-            'issued_by_id' => $admin->id,
-        ]);
-
-        VawcBpoServiceRecord::create([
-            'protection_order_id' => $po3_1->id,
-            'service_method' => 'Personally Received',
-            'served_datetime' => Carbon::parse('2026-08-27 11:00:00', $tz),
-            'served_by_id' => $officer->id,
-            'receiver_name' => 'Mark Cruz',
-        ]);
-
-        VawcComplianceLog::create([
-            'vawc_case_id' => $c3_1->id,
-            'monitor_date' => Carbon::parse('2026-08-27 21:00:00', $tz),
-            'is_compliant' => false,
-            'notes' => 'Direct BPO violation: Respondent forcefully entered victim\'s residence brandishing weapon. Tanod disarmed respondent and made warrantless arrest.',
-            'referral_type' => 'PNP/Prosecutor (Violation)',
-            'referral_details' => 'Immediate Inquest Referral to PNP WCPD & Family Court under RA 9262 Sec. 15',
-        ]);
-
         VawcLegalEscalation::create([
             'vawc_case_id' => $c3_1->id,
-            'violation_datetime' => Carbon::parse('2026-08-27 21:00:00', $tz),
-            'referral_target' => 'PNP Women and Children Protection Center & RTC Family Court',
+            'referral_target' => 'Family Court / RTC Branch 108',
+            'violation_datetime' => Carbon::parse('2026-08-27 09:00:00', $tz),
+            'violation_description' => 'Respondent committed grave BPO violation by entering safehouse perimeter with weapon. Warrantless arrest executed by Tanod Patrol and PNP WCPD. Transmitted to RTC Branch 108 Pasay Family Court under Docket TPO-2026-0889-PASAY.',
+            'status' => 'Pending',
             'escorted_by_pb' => true,
-            'status' => 'Transmitted',
-            'violation_description' => 'Direct violation of BPO Section 15. Inquest filing for criminal offense under RA 9262.',
         ]);
 
         $dossier3->syncDossierAggregates();
 
         // =============================================================
         // DOSSIER 4: Single Incident Fresh Intake (Pending Assessment / Triage)
-        // Survivor: Ana Reyes vs. Respondent: Marco Valderama (Former Dating Partner)
+        // Survivor: Kimberly Reyes vs. Respondent: Jason Valderama (Dating / Romantic / Sexual Partner)
         // NOTICE: NO VawcAssessment is seeded here intentionally so that the user
         // can immediately test "Step 1: Perform Triage Assessment" in Show.tsx!
         // =============================================================
@@ -658,23 +924,35 @@ class VawcSeeder extends Seeder
 
         $dossier4 = VawcDossier::create([
             'dossier_number' => 'DOS-2026-0004',
-            'survivor_name' => 'Ana Reyes',
-            'respondent_name' => 'Marco Valderama',
-            'relationship_type' => 'Former Dating Partner',
+            'survivor_name' => 'Kimberly Reyes',
+            'respondent_name' => 'Jason Valderama',
+            'relationship_type' => 'Dating / Romantic / Sexual Partner',
             'survivor_demographics' => [
-                'name' => 'Ana Reyes',
+                'name' => 'Kimberly Reyes',
+                'alias' => 'Kim',
                 'age' => 22,
+                'birthdate' => '2004-03-15',
+                'birthplace' => 'Pasay City',
+                'nationality' => 'Filipino',
                 'gender' => 'Female',
                 'contact' => '0935-777-8899',
-                'address' => 'Corner Rizal St., Zone 1',
+                'address' => 'Corner Rizal St., Zone 1, Pasay City',
                 'civil_status' => 'Single',
                 'occupation' => 'College Student',
             ],
             'respondent_demographics' => [
-                'name' => 'Marco Valderama',
+                'name' => 'Jason Valderama',
+                'alias' => 'Jase',
                 'age' => 25,
+                'birthdate' => '2001-07-22',
+                'birthplace' => 'Makati City',
+                'nationality' => 'Filipino',
                 'gender' => 'Male',
-                'relationship' => 'Former Dating Partner',
+                'contact' => '0921-333-4455',
+                'address' => '12 Mabini St., Barangay 183, Pasay City',
+                'work_address' => 'Express Logistics Hub, Taguig City',
+                'relationship' => 'Dating / Romantic / Sexual Partner',
+                'civil_status' => 'Single',
                 'physical_description' => '5\'8", slim build, rides black motorcycle with dark helmet',
             ],
             'incident_count' => 1,
@@ -690,15 +968,16 @@ class VawcSeeder extends Seeder
             'abuse_type_id' => $psychAbuse?->id ?? 1,
             'type' => 'VAWC',
             'case_number' => 'VAWC-2026-0004-01',
-            'victim_name' => 'Ana Reyes',
+            'victim_name' => 'Kimberly Reyes',
             'victim_age' => 22,
             'victim_gender' => 'Female',
-            'complainant_name' => 'Ana Reyes',
+            'complainant_name' => 'Kimberly Reyes',
             'complainant_contact' => '0935-777-8899',
+            'complainant_address' => 'Corner Rizal St., Zone 1, Pasay City',
             'relation_to_victim' => 'Self (Victim)',
             'incident_date' => $d4_lastIncident,
             'incident_location' => 'Corner Rizal St., Zone 1',
-            'description' => 'Victim was stalked and harassed outside boarding house by former dating partner threatening non-consensual image distribution.',
+            'description' => 'Victim was stalked and harassed outside boarding house by dating partner threatening non-consensual image distribution and intimidation.',
             'lifecycle_status' => 'New',
             'handled_by_id' => $officer->id,
         ]);
@@ -710,48 +989,96 @@ class VawcSeeder extends Seeder
             'case_report_id' => $cr4_1->id,
             'intake_type' => 'Direct',
             'children_count' => 0,
+            'incident_location_details' => 'Outside boarding house gate and adjacent sidewalk',
             'is_repeat_offense' => false,
             'has_weapon_involved' => false,
+            'is_offender_armed' => false,
+            'substance_abuse' => [],
+            'requires_medical' => false,
+            'requires_alternative_housing' => false,
+            'immediate_emergency_actions' => ['Temporary Safe Custody at Barangay Hall'],
+            'is_bpo_consented_by_guardian' => true,
             'incident_veracity' => true,
-            'status' => 'Intake', // Ready for Phase 1 Triage Assessment in Show.tsx
+            'status' => 'Intake', // Ready for Phase 1 Triage Assessment in Show.tsx!
             'referral_status' => ['PNP WCPD', 'Barangay VAW Desk'],
             'action_sought' => ['Barangay Protection Order (BPO)', 'Barangay Tanod Security & Patrols'],
             'witness_info' => 'Boarding house landlady Aling Nena witnessed respondent circling the premises on a black motorcycle and shouting threats.',
         ]);
 
-        VawcInvolvedParty::create(['vawc_case_id' => $c4_1->id, 'role' => 'Victim', 'name' => 'Ana Reyes', 'age' => 22, 'contact_number' => '0935-777-8899', 'address' => 'Corner Rizal St., Zone 1']);
-        VawcInvolvedParty::create(['vawc_case_id' => $c4_1->id, 'role' => 'Respondent', 'name' => 'Marco Valderama', 'relationship_to_victim' => 'Former Dating Partner', 'physical_description' => '5\'8", slim build, rides black motorcycle']);
+        VawcInvolvedParty::create([
+            'vawc_case_id' => $c4_1->id,
+            'role' => 'Victim',
+            'name' => 'Kimberly Reyes',
+            'alias' => 'Kim',
+            'birthdate' => '2004-03-15',
+            'birthplace' => 'Pasay City',
+            'nationality' => 'Filipino',
+            'age' => 22,
+            'is_minor' => false,
+            'gender' => 'Female',
+            'contact_number' => '0935-777-8899',
+            'address' => 'Corner Rizal St., Zone 1, Pasay City',
+            'civil_status' => 'Single',
+            'occupation' => 'College Student',
+        ]);
+        VawcInvolvedParty::create([
+            'vawc_case_id' => $c4_1->id,
+            'role' => 'Respondent',
+            'relationship_to_victim' => 'Dating / Romantic / Sexual Partner',
+            'name' => 'Jason Valderama',
+            'alias' => 'Jase',
+            'birthdate' => '2001-07-22',
+            'birthplace' => 'Makati City',
+            'nationality' => 'Filipino',
+            'age' => 25,
+            'is_minor' => false,
+            'gender' => 'Male',
+            'contact_number' => '0921-333-4455',
+            'address' => '12 Mabini St., Barangay 183, Pasay City',
+            'work_address' => 'Express Logistics Hub, Taguig City',
+            'civil_status' => 'Single',
+            'physical_description' => '5\'8", slim build, rides black motorcycle',
+        ]);
         // Note: No VawcAssessment is created here to leave case in Step 1 Triage Assessment!
 
         $dossier4->syncDossierAggregates();
 
         // =============================================================
         // DOSSIER 5: Dormant / Safely Closed Master Dossier
-        // Survivor: Clarissa Diaz vs. Respondent: Juan Diaz (Former Spouse)
+        // Survivor: Elena Dela Cruz vs. Respondent: Roberto Dela Cruz (Former Live-in Partner)
         // =============================================================
         $d5_lastIncident = Carbon::parse('2026-02-14 14:00:00', $tz);
 
         $dossier5 = VawcDossier::create([
             'dossier_number' => 'DOS-2026-0005',
-            'survivor_name' => 'Clarissa Diaz',
-            'respondent_name' => 'Juan Diaz',
-            'relationship_type' => 'Former Spouse (Separated)',
+            'survivor_name' => 'Elena Dela Cruz',
+            'respondent_name' => 'Roberto Dela Cruz',
+            'relationship_type' => 'Former Live-in Partner',
             'survivor_demographics' => [
-                'name' => 'Clarissa Diaz',
+                'name' => 'Elena Dela Cruz',
+                'alias' => 'Elena',
                 'age' => 38,
+                'birthdate' => '1988-06-10',
+                'birthplace' => 'Bataan',
+                'nationality' => 'Filipino',
                 'gender' => 'Female',
                 'contact' => '0922-333-4455',
-                'address' => 'Purok 5, Maligaya Compound, Zone 2',
+                'address' => 'Purok 5, Maligaya Compound, Zone 2, Pasay City',
                 'civil_status' => 'Separated',
                 'occupation' => 'Store Owner',
             ],
             'respondent_demographics' => [
-                'name' => 'Juan Diaz',
+                'name' => 'Roberto Dela Cruz',
+                'alias' => 'Berting',
                 'age' => 41,
+                'birthdate' => '1985-09-18',
+                'birthplace' => 'Manila',
+                'nationality' => 'Filipino',
                 'gender' => 'Male',
                 'contact' => '0922-888-9900',
-                'address' => 'Purok 5, Maligaya Compound, Zone 2',
-                'relationship' => 'Former Spouse (Separated)',
+                'address' => 'Purok 5, Maligaya Compound, Zone 2, Pasay City',
+                'work_address' => 'Pasay Electrical Services, Zone 2',
+                'relationship' => 'Former Live-in Partner',
                 'civil_status' => 'Separated',
                 'occupation' => 'Electrician',
             ],
@@ -768,14 +1095,16 @@ class VawcSeeder extends Seeder
             'abuse_type_id' => $psychAbuse?->id ?? 1,
             'type' => 'VAWC',
             'case_number' => 'VAWC-2026-0005-01',
-            'victim_name' => 'Clarissa Diaz',
+            'victim_name' => 'Elena Dela Cruz',
             'victim_age' => 38,
             'victim_gender' => 'Female',
-            'complainant_name' => 'Clarissa Diaz',
+            'complainant_name' => 'Elena Dela Cruz',
+            'complainant_contact' => '0922-333-4455',
+            'complainant_address' => 'Purok 5, Maligaya Compound, Zone 2, Pasay City',
             'relation_to_victim' => 'Self (Victim)',
             'incident_date' => $d5_lastIncident,
             'incident_location' => 'Purok 5, Maligaya Compound',
-            'description' => 'Unsolicited late-night knocking and nuisance at victim\'s store premises.',
+            'description' => 'Unsolicited late-night knocking and nuisance at victim\'s store premises causing psychological distress.',
             'lifecycle_status' => 'Closed',
             'handled_by_id' => $officer->id,
         ]);
@@ -787,8 +1116,19 @@ class VawcSeeder extends Seeder
             'case_report_id' => $cr5_1->id,
             'intake_type' => 'Direct',
             'children_count' => 2,
+            'children_details' => [
+                ['name' => 'Carlo Dela Cruz', 'age' => '11', 'school_or_daycare' => 'Zone 2 Elementary'],
+                ['name' => 'Joy Dela Cruz', 'age' => '8', 'school_or_daycare' => 'Zone 2 Elementary']
+            ],
+            'incident_location_details' => 'Front porch and store roll-up shutter',
             'is_repeat_offense' => false,
             'has_weapon_involved' => false,
+            'is_offender_armed' => false,
+            'substance_abuse' => [],
+            'requires_medical' => false,
+            'requires_alternative_housing' => false,
+            'immediate_emergency_actions' => ['Temporary Safe Custody at Barangay Hall'],
+            'is_bpo_consented_by_guardian' => true,
             'status' => 'Closed',
             'referral_status' => ['Barangay VAW Desk'],
             'action_sought' => ['Barangay Protection Order (BPO)'],
@@ -797,8 +1137,40 @@ class VawcSeeder extends Seeder
             'closure_remarks' => 'Respondent complied with 15-day stay away order and agreed to sustainable child custody arrangement.',
             'closed_at' => Carbon::parse('2026-03-02 17:00:00', $tz),
         ]);
-        VawcInvolvedParty::create(['vawc_case_id' => $c5_1->id, 'role' => 'Victim', 'name' => 'Clarissa Diaz', 'age' => 38]);
-        VawcInvolvedParty::create(['vawc_case_id' => $c5_1->id, 'role' => 'Respondent', 'name' => 'Juan Diaz', 'age' => 41]);
+        VawcInvolvedParty::create([
+            'vawc_case_id' => $c5_1->id,
+            'role' => 'Victim',
+            'name' => 'Elena Dela Cruz',
+            'alias' => 'Elena',
+            'birthdate' => '1988-06-10',
+            'birthplace' => 'Bataan',
+            'nationality' => 'Filipino',
+            'age' => 38,
+            'is_minor' => false,
+            'gender' => 'Female',
+            'contact_number' => '0922-333-4455',
+            'address' => 'Purok 5, Maligaya Compound, Zone 2, Pasay City',
+            'civil_status' => 'Separated',
+            'occupation' => 'Store Owner',
+        ]);
+        VawcInvolvedParty::create([
+            'vawc_case_id' => $c5_1->id,
+            'role' => 'Respondent',
+            'relationship_to_victim' => 'Former Live-in Partner',
+            'name' => 'Roberto Dela Cruz',
+            'alias' => 'Berting',
+            'birthdate' => '1985-09-18',
+            'birthplace' => 'Manila',
+            'nationality' => 'Filipino',
+            'age' => 41,
+            'is_minor' => false,
+            'gender' => 'Male',
+            'contact_number' => '0922-888-9900',
+            'address' => 'Purok 5, Maligaya Compound, Zone 2, Pasay City',
+            'work_address' => 'Pasay Electrical Services, Zone 2',
+            'civil_status' => 'Separated',
+            'occupation' => 'Electrician',
+        ]);
         VawcAssessment::create(['vawc_case_id' => $c5_1->id, 'requires_medical' => false, 'risk_score' => 4, 'risk_level' => 'LOW']);
 
         $po5_1 = VawcProtectionOrder::create([
@@ -818,7 +1190,7 @@ class VawcSeeder extends Seeder
             'service_method' => 'Personally Received',
             'served_datetime' => Carbon::parse('2026-02-15 15:00:00', $tz),
             'served_by_id' => $officer->id,
-            'receiver_name' => 'Juan Diaz',
+            'receiver_name' => 'Roberto Dela Cruz',
         ]);
 
         VawcComplianceLog::create([
@@ -828,50 +1200,45 @@ class VawcSeeder extends Seeder
             'notes' => 'Day 3 Check: Respondent complied with 15-day stay-away mandate. Did not approach store premises.',
         ]);
 
-        VawcComplianceLog::create([
-            'vawc_case_id' => $c5_1->id,
-            'monitor_date' => Carbon::parse('2026-02-23 14:00:00', $tz),
-            'is_compliant' => true,
-            'notes' => 'Day 8 Check: Routine check-in. Survivor affirms no disturbance or harassment.',
-        ]);
-
-        VawcComplianceLog::create([
-            'vawc_case_id' => $c5_1->id,
-            'monitor_date' => Carbon::parse('2026-03-02 16:00:00', $tz),
-            'is_compliant' => true,
-            'notes' => 'Day 15 Check: 15-day protection order successfully completed with zero violations. Survivor safe.',
-        ]);
-
         $dossier5->syncDossierAggregates();
 
         // =============================================================
         // DOSSIER 6: Cross-Dossier Serial Perpetrator Case
-        // Survivor: Elena Cruz vs. Respondent: Lance Dicki (Former Live-in Partner)
+        // Survivor: Patricia Cruz vs. Respondent: Lance Dicki (Former Dating Partner)
         // (Cross-linked to Dossier 1: Shane Miller vs Lance Dicki)
         // =============================================================
         $d6_lastIncident = Carbon::parse('2026-08-30 18:45:00', $tz);
 
         $dossier6 = VawcDossier::create([
             'dossier_number' => 'DOS-2026-0006',
-            'survivor_name' => 'Elena Cruz',
+            'survivor_name' => 'Patricia Cruz',
             'respondent_name' => 'Lance Dicki',
-            'relationship_type' => 'Former Live-in Partner',
+            'relationship_type' => 'Former Dating Partner',
             'survivor_demographics' => [
-                'name' => 'Elena Cruz',
+                'name' => 'Patricia Cruz',
+                'alias' => 'Patty',
                 'age' => 27,
+                'birthdate' => '1999-01-25',
+                'birthplace' => 'Pasay City',
+                'nationality' => 'Filipino',
                 'gender' => 'Female',
                 'contact' => '0918-999-3344',
-                'address' => 'Purok 7, Sampaguita St., Zone 3',
+                'address' => 'Purok 7, Sampaguita St., Zone 3, Pasay City',
                 'civil_status' => 'Single',
                 'occupation' => 'Call Center Agent',
             ],
             'respondent_demographics' => [
                 'name' => 'Lance Dicki',
+                'alias' => 'Lance',
                 'age' => 32,
+                'birthdate' => '1994-08-19',
+                'birthplace' => 'Manila',
+                'nationality' => 'Filipino',
                 'gender' => 'Male',
                 'contact' => '0928-555-6789',
-                'address' => 'Block 4 Lot 12, Sunrise Village, Zone 1',
-                'relationship' => 'Former Live-in Partner',
+                'address' => 'Block 4 Lot 12, Sunrise Village, Zone 1, Pasay City',
+                'work_address' => 'Metro Logistics Warehouse, Pasay City',
+                'relationship' => 'Former Dating Partner',
                 'civil_status' => 'Married',
                 'occupation' => 'Logistics Driver',
                 'physical_description' => '5\'9", medium build, scar on left eyebrow',
@@ -889,10 +1256,12 @@ class VawcSeeder extends Seeder
             'abuse_type_id' => $psychAbuse?->id ?? 1,
             'type' => 'VAWC',
             'case_number' => 'VAWC-2026-0006-01',
-            'victim_name' => 'Elena Cruz',
+            'victim_name' => 'Patricia Cruz',
             'victim_age' => 27,
             'victim_gender' => 'Female',
-            'complainant_name' => 'Elena Cruz',
+            'complainant_name' => 'Patricia Cruz',
+            'complainant_contact' => '0918-999-3344',
+            'complainant_address' => 'Purok 7, Sampaguita St., Zone 3, Pasay City',
             'relation_to_victim' => 'Self (Victim)',
             'incident_date' => $d6_lastIncident,
             'incident_location' => 'Purok 7, Sampaguita St., Zone 3',
@@ -908,22 +1277,62 @@ class VawcSeeder extends Seeder
             'case_report_id' => $cr6_1->id,
             'intake_type' => 'Direct',
             'children_count' => 0,
+            'incident_location_details' => 'Front lobby and sidewalk outside call center building',
             'is_repeat_offense' => true, // Serial cross-dossier repeat offender
             'has_weapon_involved' => false,
+            'is_offender_armed' => false,
+            'substance_abuse' => ['Alcohol / Drunkenness'],
+            'requires_medical' => false,
+            'requires_alternative_housing' => false,
+            'immediate_emergency_actions' => ['Temporary Safe Custody at Barangay Hall'],
+            'is_bpo_consented_by_guardian' => true,
             'incident_veracity' => true,
             'status' => 'Monitoring',
             'referral_status' => ['PNP WCPD', 'Barangay VAW Desk'],
             'action_sought' => ['Barangay Protection Order (BPO)', 'Criminal Investigation & Case Filing'],
             'witness_info' => 'Building security logged respondent attempting unauthorized entry 4 times in 3 days.',
         ]);
-        VawcInvolvedParty::create(['vawc_case_id' => $c6_1->id, 'role' => 'Victim', 'name' => 'Elena Cruz', 'age' => 27]);
-        VawcInvolvedParty::create(['vawc_case_id' => $c6_1->id, 'role' => 'Respondent', 'name' => 'Lance Dicki', 'relationship_to_victim' => 'Former Live-in Partner', 'age' => 32]);
+        VawcInvolvedParty::create([
+            'vawc_case_id' => $c6_1->id,
+            'role' => 'Victim',
+            'name' => 'Patricia Cruz',
+            'alias' => 'Patty',
+            'birthdate' => '1999-01-25',
+            'birthplace' => 'Pasay City',
+            'nationality' => 'Filipino',
+            'age' => 27,
+            'is_minor' => false,
+            'gender' => 'Female',
+            'contact_number' => '0918-999-3344',
+            'address' => 'Purok 7, Sampaguita St., Zone 3, Pasay City',
+            'civil_status' => 'Single',
+            'occupation' => 'Call Center Agent',
+        ]);
+        VawcInvolvedParty::create([
+            'vawc_case_id' => $c6_1->id,
+            'role' => 'Respondent',
+            'relationship_to_victim' => 'Former Dating Partner',
+            'name' => 'Lance Dicki',
+            'alias' => 'Lance',
+            'birthdate' => '1994-08-19',
+            'birthplace' => 'Manila',
+            'nationality' => 'Filipino',
+            'age' => 32,
+            'is_minor' => false,
+            'gender' => 'Male',
+            'contact_number' => '0928-555-6789',
+            'address' => 'Block 4 Lot 12, Sunrise Village, Zone 1, Pasay City',
+            'work_address' => 'Metro Logistics Warehouse, Pasay City',
+            'civil_status' => 'Married',
+            'occupation' => 'Logistics Driver',
+            'physical_description' => '5\'9", medium build, scar on left eyebrow',
+        ]);
         
         VawcAssessment::create([
             'vawc_case_id' => $c6_1->id,
             'requires_medical' => false,
             'requires_alternative_housing' => false,
-            'abuse_frequency' => 3, // Elevated to 3 because perpetrator has 3 prior incidents under Shane Miller
+            'abuse_frequency' => 3, // Elevated to 3 because perpetrator has prior incidents under Shane Miller
             'abuse_severity' => 2,
             'weapon_access' => 1,
             'life_threat_level' => 2,
@@ -935,7 +1344,7 @@ class VawcSeeder extends Seeder
 
         // =============================================================
         // DOSSIER 7: Compound Victimization Case
-        // Survivor: Shane Miller vs. Respondent: Larry Dicki (Other Household Relative / Uncle)
+        // Survivor: Shane Miller vs. Respondent: Victor Magno (Former Dating Partner)
         // (Cross-linked to Dossier 1: Shane Miller vs Lance Dicki)
         // =============================================================
         $d7_lastIncident = Carbon::parse('2026-08-31 13:15:00', $tz);
@@ -943,28 +1352,37 @@ class VawcSeeder extends Seeder
         $dossier7 = VawcDossier::create([
             'dossier_number' => 'DOS-2026-0007',
             'survivor_name' => 'Shane Miller',
-            'respondent_name' => 'Larry Dicki',
-            'relationship_type' => 'Other Household Relative (with custody/care)',
+            'respondent_name' => 'Victor Magno',
+            'relationship_type' => 'Former Dating Partner',
             'survivor_demographics' => [
                 'name' => 'Shane Miller',
+                'alias' => 'Shane',
                 'age' => 29,
+                'birthdate' => '1997-04-12',
+                'birthplace' => 'Pasay City',
+                'nationality' => 'Filipino',
                 'gender' => 'Female',
                 'contact' => '0917-888-1234',
-                'address' => 'Block 4 Lot 12, Sunrise Village, Zone 1',
+                'address' => 'Block 4 Lot 12, Sunrise Village, Zone 1, Pasay City',
                 'civil_status' => 'Married',
-                'educational_attainment' => 'College',
+                'educational_attainment' => 'College Graduate',
                 'occupation' => 'Online Merchant',
             ],
             'respondent_demographics' => [
-                'name' => 'Larry Dicki',
-                'age' => 54,
+                'name' => 'Victor Magno',
+                'alias' => 'Vic',
+                'age' => 33,
+                'birthdate' => '1993-06-11',
+                'birthplace' => 'Pasay City',
+                'nationality' => 'Filipino',
                 'gender' => 'Male',
                 'contact' => '0919-222-7788',
-                'address' => 'Block 4 Lot 12, Sunrise Village, Zone 1',
-                'relationship' => 'Other Household Relative (with custody/care)',
+                'address' => 'Zone 1 Commercial Center, Pasay City',
+                'work_address' => 'Magno Auto Repair, Zone 1',
+                'relationship' => 'Former Dating Partner',
                 'civil_status' => 'Single',
-                'occupation' => 'Unemployed',
-                'physical_description' => '5\'6", heavy build, graying hair',
+                'occupation' => 'Mechanic Shop Owner',
+                'physical_description' => '5\'6", heavy build',
             ],
             'incident_count' => 1,
             'highest_threat_level' => 'CRITICAL',
@@ -983,10 +1401,12 @@ class VawcSeeder extends Seeder
             'victim_age' => 29,
             'victim_gender' => 'Female',
             'complainant_name' => 'Shane Miller',
+            'complainant_contact' => '0917-888-1234',
+            'complainant_address' => 'Block 4 Lot 12, Sunrise Village, Zone 1, Pasay City',
             'relation_to_victim' => 'Self (Victim)',
             'incident_date' => $d7_lastIncident,
             'incident_location' => 'Block 4 Lot 12, Sunrise Village, Zone 1',
-            'description' => 'Respondent (Uncle of husband) engaged in verbal harassment and aggressive intimidation inside the shared family compound.',
+            'description' => 'Respondent (Former Dating Partner) engaged in verbal harassment, persistent stalking, and aggressive intimidation outside victim\'s residence.',
             'lifecycle_status' => 'Action Plan',
             'handled_by_id' => $officer->id,
         ]);
@@ -998,25 +1418,66 @@ class VawcSeeder extends Seeder
             'case_report_id' => $cr7_1->id,
             'intake_type' => 'Direct',
             'children_count' => 1,
+            'incident_location_details' => 'Front gate perimeter of Sunrise Village',
             'is_repeat_offense' => false,
             'has_weapon_involved' => false,
+            'is_offender_armed' => false,
+            'substance_abuse' => [],
+            'requires_medical' => false,
+            'requires_alternative_housing' => true, // Compound threat triggers emergency shelter option
+            'victim_shelter_choice' => 'Relatives / Friends (Private Haven)',
+            'immediate_emergency_actions' => ['Temporary Safe Custody at Barangay Hall'],
+            'is_bpo_consented_by_guardian' => true,
             'incident_veracity' => true,
             'status' => 'Monitoring',
             'referral_status' => ['DSWD / MSWDO', 'LGU Crisis Center'],
             'action_sought' => ['Temporary Custody / Emergency Shelter', 'Barangay Protection Order (BPO)'],
-            'witness_info' => 'Adjacent compound neighbor testified hearing respondent yelling death threats during property dispute.',
+            'witness_info' => 'Adjacent compound neighbor testified hearing respondent yelling threats outside residence.',
         ]);
-        VawcInvolvedParty::create(['vawc_case_id' => $c7_1->id, 'role' => 'Victim', 'name' => 'Shane Miller', 'age' => 29, 'address' => 'Block 4 Lot 12, Sunrise Village, Zone 1']);
-        VawcInvolvedParty::create(['vawc_case_id' => $c7_1->id, 'role' => 'Respondent', 'name' => 'Larry Dicki', 'relationship_to_victim' => 'Other Household Relative (with custody/care)', 'age' => 54, 'address' => 'Block 4 Lot 12, Sunrise Village, Zone 1']);
+        VawcInvolvedParty::create([
+            'vawc_case_id' => $c7_1->id,
+            'role' => 'Victim',
+            'name' => 'Shane Miller',
+            'alias' => 'Shane',
+            'birthdate' => '1997-04-12',
+            'birthplace' => 'Pasay City',
+            'nationality' => 'Filipino',
+            'age' => 29,
+            'is_minor' => false,
+            'gender' => 'Female',
+            'contact_number' => '0917-888-1234',
+            'address' => 'Block 4 Lot 12, Sunrise Village, Zone 1, Pasay City',
+            'civil_status' => 'Married',
+            'occupation' => 'Online Merchant',
+        ]);
+        VawcInvolvedParty::create([
+            'vawc_case_id' => $c7_1->id,
+            'role' => 'Respondent',
+            'relationship_to_victim' => 'Former Dating Partner',
+            'name' => 'Victor Magno',
+            'alias' => 'Vic',
+            'birthdate' => '1993-06-11',
+            'birthplace' => 'Pasay City',
+            'nationality' => 'Filipino',
+            'age' => 33,
+            'is_minor' => false,
+            'gender' => 'Male',
+            'contact_number' => '0919-222-7788',
+            'address' => 'Zone 1 Commercial Center, Pasay City',
+            'work_address' => 'Magno Auto Repair, Zone 1',
+            'civil_status' => 'Single',
+            'occupation' => 'Mechanic Shop Owner',
+            'physical_description' => '5\'6", heavy build',
+        ]);
         
         VawcAssessment::create([
             'vawc_case_id' => $c7_1->id,
             'requires_medical' => false,
-            'requires_alternative_housing' => true, // Multi-perpetrator shared household triggers emergency shelter
+            'requires_alternative_housing' => true,
             'abuse_frequency' => 2,
             'abuse_severity' => 2,
             'weapon_access' => 1,
-            'life_threat_level' => 3, // Elevated to 3 due to Compound Multi-Perpetrator Co-Habitation Risk
+            'life_threat_level' => 3, // Elevated due to Compound Multi-Perpetrator Threat
             'risk_score' => 8,
             'risk_level' => 'HIGH',
         ]);
@@ -1027,7 +1488,7 @@ class VawcSeeder extends Seeder
         // DOSSIER 8: Whistleblower / Confidential Third-Party Informant Case
         // Demonstrates RA 9262 Section 44 Sealed Confidential Informant Feature
         // Survivor: Carmela Bautista vs. Respondent: Danilo Bautista (Spouse)
-        // Complainant: Aling Remedios (Concerned Neighbor - Shielded by Law)
+        // Complainant: Aling Remedios (Concerned Neighbor - Separate Address & Shielded by Law)
         // =============================================================
         $d8_lastIncident = Carbon::parse('2026-08-31 23:30:00', $tz);
 
@@ -1038,20 +1499,29 @@ class VawcSeeder extends Seeder
             'relationship_type' => 'Spouse (Legal Husband)',
             'survivor_demographics' => [
                 'name' => 'Carmela Bautista',
+                'alias' => 'Carmel',
                 'age' => 31,
+                'birthdate' => '1995-07-08',
+                'birthplace' => 'Pasay City',
+                'nationality' => 'Filipino',
                 'gender' => 'Female',
                 'contact' => '0917-444-9988',
-                'address' => 'Apartment 3B, San Jose St., Zone 1',
+                'address' => 'Apartment 3B, San Jose St., Zone 1, Pasay City',
                 'civil_status' => 'Married',
                 'educational_attainment' => 'High School',
                 'occupation' => 'Housewife',
             ],
             'respondent_demographics' => [
                 'name' => 'Danilo Bautista',
+                'alias' => 'Danny',
                 'age' => 35,
+                'birthdate' => '1991-04-14',
+                'birthplace' => 'Batangas',
+                'nationality' => 'Filipino',
                 'gender' => 'Male',
                 'contact' => '0918-222-1133',
-                'address' => 'Apartment 3B, San Jose St., Zone 1',
+                'address' => 'Apartment 3B, San Jose St., Zone 1, Pasay City',
+                'work_address' => 'San Jose Tricycle Terminal, Zone 1',
                 'relationship' => 'Spouse (Legal Husband)',
                 'civil_status' => 'Married',
                 'educational_attainment' => 'High School',
@@ -1076,6 +1546,7 @@ class VawcSeeder extends Seeder
             'victim_gender' => 'Female',
             'complainant_name' => 'Aling Remedios (Neighbor / Informant)',
             'complainant_contact' => '0918-777-6655',
+            'complainant_address' => 'Apartment 3A, San Jose St., Zone 1, Pasay City',
             'relation_to_victim' => 'Concerned Neighbor (Whistleblower)',
             'is_anonymous' => true, // Triggers Section 44 Confidential Informant Shield
             'incident_date' => $d8_lastIncident,
@@ -1092,55 +1563,101 @@ class VawcSeeder extends Seeder
             'case_report_id' => $cr8_1->id,
             'intake_type' => 'Third-Party',
             'children_count' => 2,
+            'children_details' => [
+                ['name' => 'Paolo Bautista', 'age' => '7', 'school_or_daycare' => 'Zone 1 Elementary'],
+                ['name' => 'Mia Bautista', 'age' => '4', 'school_or_daycare' => 'Zone 1 Daycare']
+            ],
+            'incident_location_details' => 'Inside master bedroom behind barricaded door',
             'is_repeat_offense' => false,
             'has_weapon_involved' => false,
+            'is_offender_armed' => false,
+            'substance_abuse' => ['Alcohol / Drunkenness'],
+            'requires_medical' => true,
+            'medical_facility_name' => 'Pasay City General Hospital',
+            'requires_alternative_housing' => true,
+            'victim_shelter_choice' => 'CSWDO / DSWD Crisis Center / LGU Safehouse',
+            'immediate_emergency_actions' => ['Tactical Rescue by Tanods / PNP', 'Temporary Safe Custody at Barangay Hall'],
+            'is_bpo_consented_by_guardian' => true,
             'perpetrator_present' => true,
             'incident_veracity' => true,
             'status' => 'Monitoring',
             'referral_status' => ['DSWD / MSWDO', 'PNP WCPD', 'Hospital / Medico-Legal'],
-            'action_sought' => ['Barangay Protection Order (BPO)', 'Temporary Custody / Emergency Shelter', 'Barangay Tanod Security & Patrols'],
-            'witness_info' => 'Confidential Informant Aling Remedios and 2 adjacent apartment tenants provided corroborating statements regarding recurring late-night domestic violence.',
+            'action_sought' => ['Barangay Protection Order (BPO)', 'Temporary Custody / Emergency Shelter', 'Medico-Legal Examination & Care'],
+            'witness_info' => 'Reporting neighbor Aling Remedios (Apartment 3A) corroborated hearing blunt impacts and distress cries through the wall.',
         ]);
 
         VawcInvolvedParty::create([
             'vawc_case_id' => $c8_1->id,
             'role' => 'Victim',
             'name' => 'Carmela Bautista',
+            'alias' => 'Carmel',
+            'birthdate' => '1995-07-08',
+            'birthplace' => 'Pasay City',
+            'nationality' => 'Filipino',
             'age' => 31,
+            'is_minor' => false,
             'gender' => 'Female',
             'contact_number' => '0917-444-9988',
-            'address' => 'Apartment 3B, San Jose St., Zone 1',
+            'address' => 'Apartment 3B, San Jose St., Zone 1, Pasay City',
+            'civil_status' => 'Married',
+            'occupation' => 'Housewife',
         ]);
         VawcInvolvedParty::create([
             'vawc_case_id' => $c8_1->id,
             'role' => 'Respondent',
             'relationship_to_victim' => 'Spouse (Legal Husband)',
             'name' => 'Danilo Bautista',
+            'alias' => 'Danny',
+            'birthdate' => '1991-04-14',
+            'birthplace' => 'Batangas',
+            'nationality' => 'Filipino',
             'age' => 35,
+            'is_minor' => false,
             'gender' => 'Male',
             'contact_number' => '0918-222-1133',
-            'address' => 'Apartment 3B, San Jose St., Zone 1',
+            'address' => 'Apartment 3B, San Jose St., Zone 1, Pasay City',
+            'work_address' => 'San Jose Tricycle Terminal, Zone 1',
+            'civil_status' => 'Married',
+            'occupation' => 'Tricycle Driver',
+            'physical_description' => '5\'7", stout build, tattoo on right forearm',
+        ]);
+        VawcInvolvedParty::create([
+            'vawc_case_id' => $c8_1->id,
+            'role' => 'Reporter',
+            'relationship_to_victim' => 'Concerned Neighbor (Whistleblower)',
+            'name' => 'Aling Remedios',
+            'alias' => 'Remedios',
+            'birthdate' => '1975-10-02',
+            'birthplace' => 'Pangasinan',
+            'nationality' => 'Filipino',
+            'age' => 50,
+            'is_minor' => false,
+            'gender' => 'Female',
+            'contact_number' => '0918-777-6655',
+            'address' => 'Apartment 3A, San Jose St., Zone 1, Pasay City',
+            'civil_status' => 'Widowed',
+            'occupation' => 'Sari-Sari Store Owner',
         ]);
 
         VawcAssessment::create([
             'vawc_case_id' => $c8_1->id,
             'requires_medical' => true,
             'requires_alternative_housing' => true,
-            'abuse_frequency' => 3,
+            'abuse_frequency' => 2,
             'abuse_severity' => 2,
             'weapon_access' => 1,
-            'life_threat_level' => 3,
-            'risk_score' => 9,
-            'risk_level' => 'HIGH',
+            'life_threat_level' => 2,
+            'risk_score' => 7,
+            'risk_level' => 'MODERATE',
         ]);
 
         $dossier8->syncDossierAggregates();
 
         // =============================================================
         // DOSSIER 9: Historical / Cold Case (Incident Occurred 2 Years Ago)
-        // Survivor: Elena Manalo vs. Respondent: Eduardo Santos (Former Cohabitant)
+        // Survivor: Elena Manalo vs. Respondent: Eduardo Santos (Former Live-in Partner)
         // Tests RA 9262 Section 14 (Imminent Danger requirement for BPO) vs.
-        // Section 24 (10 to 20-Year Prescriptive Period for Criminal Complaints).
+        // Section 24 (Strict 20-Year Prescriptive Period for Criminal Complaints per People v. Purisima).
         // Sits on Step 2 (BPO Application) with no prior BPO filed yet.
         // =============================================================
         $d9_incident_date = Carbon::parse('2024-08-15 14:30:00', $tz);
@@ -1149,24 +1666,33 @@ class VawcSeeder extends Seeder
             'dossier_number' => 'DOS-2026-0009',
             'survivor_name' => 'Elena Manalo',
             'respondent_name' => 'Eduardo Santos',
-            'relationship_type' => 'Former Cohabitant / Ex-Live-in Partner',
+            'relationship_type' => 'Former Live-in Partner',
             'survivor_demographics' => [
                 'name' => 'Elena Manalo',
+                'alias' => 'Elena',
                 'age' => 34,
+                'birthdate' => '1992-05-18',
+                'birthplace' => 'Pasay City',
+                'nationality' => 'Filipino',
                 'gender' => 'Female',
                 'contact' => '0922-333-7744',
-                'address' => 'House 55, Mabini Extension, Zone 2',
+                'address' => 'House 55, Mabini Extension, Zone 2, Pasay City',
                 'civil_status' => 'Single',
                 'educational_attainment' => 'Vocational',
                 'occupation' => 'Freelance Seamstress',
             ],
             'respondent_demographics' => [
                 'name' => 'Eduardo Santos',
+                'alias' => 'Eddie',
                 'age' => 38,
+                'birthdate' => '1988-08-22',
+                'birthplace' => 'Bulacan',
+                'nationality' => 'Filipino',
                 'gender' => 'Male',
                 'contact' => '0919-888-2211',
-                'address' => 'Barangay San Isidro (Relocated)',
-                'relationship' => 'Former Cohabitant / Ex-Live-in Partner',
+                'address' => 'Barangay San Isidro, Pasay City',
+                'work_address' => 'San Isidro Construction Depot',
+                'relationship' => 'Former Live-in Partner',
                 'civil_status' => 'Single',
                 'occupation' => 'Construction Foreman',
                 'physical_description' => '5\'10", heavily tattooed arms, muscular build',
@@ -1189,10 +1715,11 @@ class VawcSeeder extends Seeder
             'victim_gender' => 'Female',
             'complainant_name' => 'Elena Manalo',
             'complainant_contact' => '0922-333-7744',
+            'complainant_address' => 'House 55, Mabini Extension, Zone 2, Pasay City',
             'relation_to_victim' => 'Self (Victim)',
             'incident_date' => $d9_incident_date,
             'incident_location' => 'Former shared apartment, Zone 2',
-            'description' => 'Historical Report: Severe physical assault and economic deprivation occurring approximately two years ago before victim escaped and relocated. Survivor now seeks formal criminal prosecution and documentation for permanent legal remedies.',
+            'description' => 'Historical Report: Severe physical assault and economic deprivation occurring approximately two years ago before victim escaped and relocated. Survivor now seeks formal criminal prosecution under the 20-year prescriptive period of RA 9262.',
             'lifecycle_status' => 'Investigation',
             'handled_by_id' => $officer->id,
         ]);
@@ -1204,9 +1731,19 @@ class VawcSeeder extends Seeder
             'case_report_id' => $cr9_1->id,
             'intake_type' => 'Direct',
             'children_count' => 1,
+            'children_details' => [
+                ['name' => 'Tristan Santos', 'age' => '5', 'school_or_daycare' => 'Zone 2 Daycare']
+            ],
+            'incident_location_details' => 'Master bedroom of former rented apartment',
             'is_repeat_offense' => false,
             'has_weapon_involved' => false,
+            'is_offender_armed' => false,
+            'substance_abuse' => ['Alcohol / Drunkenness'],
             'perpetrator_present' => false,
+            'requires_medical' => false,
+            'requires_alternative_housing' => false,
+            'immediate_emergency_actions' => ['Temporary Safe Custody at Barangay Hall'],
+            'is_bpo_consented_by_guardian' => true,
             'incident_veracity' => true,
             'status' => 'Assessment', // Step 1 complete; waiting at Step 2 (BPO Application / Direct Referral)
             'referral_status' => ['PNP WCPD', 'City Prosecutor\'s Office', 'Public Attorney\'s Office (PAO)'],
@@ -1218,21 +1755,37 @@ class VawcSeeder extends Seeder
             'vawc_case_id' => $c9_1->id,
             'role' => 'Victim',
             'name' => 'Elena Manalo',
+            'alias' => 'Elena',
+            'birthdate' => '1992-05-18',
+            'birthplace' => 'Pasay City',
+            'nationality' => 'Filipino',
             'age' => 34,
+            'is_minor' => false,
             'gender' => 'Female',
             'contact_number' => '0922-333-7744',
-            'address' => 'House 55, Mabini Extension, Zone 2',
+            'address' => 'House 55, Mabini Extension, Zone 2, Pasay City',
+            'civil_status' => 'Single',
+            'occupation' => 'Freelance Seamstress',
         ]);
 
         VawcInvolvedParty::create([
             'vawc_case_id' => $c9_1->id,
             'role' => 'Respondent',
-            'relationship_to_victim' => 'Former Cohabitant / Ex-Live-in Partner',
+            'relationship_to_victim' => 'Former Live-in Partner',
             'name' => 'Eduardo Santos',
+            'alias' => 'Eddie',
+            'birthdate' => '1988-08-22',
+            'birthplace' => 'Bulacan',
+            'nationality' => 'Filipino',
             'age' => 38,
+            'is_minor' => false,
             'gender' => 'Male',
             'contact_number' => '0919-888-2211',
-            'address' => 'Barangay San Isidro (Relocated)',
+            'address' => 'Barangay San Isidro, Pasay City',
+            'work_address' => 'San Isidro Construction Depot',
+            'civil_status' => 'Single',
+            'occupation' => 'Construction Foreman',
+            'physical_description' => '5\'10", heavily tattooed arms, muscular build',
         ]);
 
         VawcAssessment::create([
@@ -1252,10 +1805,7 @@ class VawcSeeder extends Seeder
         // =============================================================
         // DOSSIER 10: Successfully Completed & Archived 15-Day BPO Case
         // Survivor: Giselle Ramirez vs. Respondent: Carlito Ramirez (Spouse)
-        // Demonstrates RA 9262 Sec. 14 Completed 15-Day BPO with Zero Violations:
-        // - Full 15-Day Compliance Cycle (Day 3, Day 8 counseling, Day 15 final check)
-        // - BPO Order 'Expired' upon completion
-        // - Step 7: Case Closed & Archived with '15-Day Protection Order Lapsed Successfully (No Violation)'
+        // Demonstrates RA 9262 Sec. 14 Completed 15-Day BPO with Zero Violations
         // =============================================================
         $d10_incident_date = Carbon::parse('2026-08-18 19:30:00', $tz);
 
@@ -1266,20 +1816,29 @@ class VawcSeeder extends Seeder
             'relationship_type' => 'Spouse (Legal Husband)',
             'survivor_demographics' => [
                 'name' => 'Giselle Ramirez',
+                'alias' => 'Gigi',
                 'age' => 30,
+                'birthdate' => '1996-02-28',
+                'birthplace' => 'Pasay City',
+                'nationality' => 'Filipino',
                 'gender' => 'Female',
                 'contact' => '0917-234-5678',
-                'address' => 'Lot 8 Block 3, Rosal St., Zone 1',
+                'address' => 'Lot 8 Block 3, Rosal St., Zone 1, Pasay City',
                 'civil_status' => 'Married',
                 'educational_attainment' => 'College Graduate',
                 'occupation' => 'High School Teacher',
             ],
             'respondent_demographics' => [
                 'name' => 'Carlito Ramirez',
+                'alias' => 'Lito',
                 'age' => 33,
+                'birthdate' => '1993-10-12',
+                'birthplace' => 'Rizal',
+                'nationality' => 'Filipino',
                 'gender' => 'Male',
                 'contact' => '0928-876-5432',
-                'address' => 'Lot 8 Block 3, Rosal St., Zone 1',
+                'address' => 'Lot 8 Block 3, Rosal St., Zone 1, Pasay City',
+                'work_address' => 'Rosal Auto Service Center, Zone 1',
                 'relationship' => 'Spouse (Legal Husband)',
                 'civil_status' => 'Married',
                 'educational_attainment' => 'Vocational',
@@ -1304,10 +1863,11 @@ class VawcSeeder extends Seeder
             'victim_gender' => 'Female',
             'complainant_name' => 'Giselle Ramirez',
             'complainant_contact' => '0917-234-5678',
+            'complainant_address' => 'Lot 8 Block 3, Rosal St., Zone 1, Pasay City',
             'relation_to_victim' => 'Self (Victim)',
             'incident_date' => $d10_incident_date,
             'incident_location' => 'Lot 8 Block 3, Rosal St., Zone 1',
-            'description' => 'Respondent arrived home in an intoxicated state, engaged in destructive behavior by smashing dinnerware, hurled profanities, and violently grabbed victim\'s arms causing bilateral contusions.',
+            'description' => 'Respondent arrived home intoxicated, smashed dinnerware, hurled profanities, and violently grabbed victim\'s arms causing bilateral contusions.',
             'lifecycle_status' => 'Resolved',
             'handled_by_id' => $officer->id,
         ]);
@@ -1319,8 +1879,19 @@ class VawcSeeder extends Seeder
             'case_report_id' => $cr10_1->id,
             'intake_type' => 'Direct',
             'children_count' => 1,
+            'children_details' => [
+                ['name' => 'Joshua Ramirez', 'age' => '6', 'school_or_daycare' => 'Zone 1 Elementary']
+            ],
+            'incident_location_details' => 'Dining area and kitchen doorway',
             'is_repeat_offense' => false,
             'has_weapon_involved' => false,
+            'is_offender_armed' => false,
+            'substance_abuse' => ['Alcohol / Drunkenness'],
+            'requires_medical' => true,
+            'medical_facility_name' => 'Barangay 183 Health Center',
+            'requires_alternative_housing' => false,
+            'immediate_emergency_actions' => ['First-Aid Rendered / EMS Responded'],
+            'is_bpo_consented_by_guardian' => true,
             'incident_veracity' => true,
             'status' => 'Closed',
             'referral_status' => ['Barangay VAW Desk', 'DSWD / MSWDO', 'Hospital / Medico-Legal'],
@@ -1335,10 +1906,17 @@ class VawcSeeder extends Seeder
             'vawc_case_id' => $c10_1->id,
             'role' => 'Victim',
             'name' => 'Giselle Ramirez',
+            'alias' => 'Gigi',
+            'birthdate' => '1996-02-28',
+            'birthplace' => 'Pasay City',
+            'nationality' => 'Filipino',
             'age' => 30,
+            'is_minor' => false,
             'gender' => 'Female',
             'contact_number' => '0917-234-5678',
-            'address' => 'Lot 8 Block 3, Rosal St., Zone 1',
+            'address' => 'Lot 8 Block 3, Rosal St., Zone 1, Pasay City',
+            'civil_status' => 'Married',
+            'occupation' => 'High School Teacher',
         ]);
 
         VawcInvolvedParty::create([
@@ -1346,10 +1924,19 @@ class VawcSeeder extends Seeder
             'role' => 'Respondent',
             'relationship_to_victim' => 'Spouse (Legal Husband)',
             'name' => 'Carlito Ramirez',
+            'alias' => 'Lito',
+            'birthdate' => '1993-10-12',
+            'birthplace' => 'Rizal',
+            'nationality' => 'Filipino',
             'age' => 33,
+            'is_minor' => false,
             'gender' => 'Male',
             'contact_number' => '0928-876-5432',
-            'address' => 'Lot 8 Block 3, Rosal St., Zone 1',
+            'address' => 'Lot 8 Block 3, Rosal St., Zone 1, Pasay City',
+            'work_address' => 'Rosal Auto Service Center, Zone 1',
+            'civil_status' => 'Married',
+            'occupation' => 'Auto Mechanic',
+            'physical_description' => '5\'7", athletic build, eagle tattoo on right shoulder',
         ]);
 
         VawcAssessment::create([
@@ -1414,9 +2001,9 @@ class VawcSeeder extends Seeder
         $dossier10->syncDossierAggregates();
 
         // =============================================================
-        // SCENARIO A: MULTI-VICTIM LEGAL-AGE SIBLINGS VS. UNCLE (NON-INTIMATE RELATIVE)
-        // Dossier 11: Luna Garcia (23 yrs old) vs. Larry Garcia (Paternal Uncle)
-        // Decoupled Master Dossier: Routed to PNP WCPD under Revised Penal Code (Sec. 3 Jurisdictional Boundary)
+        // SCENARIO A: CHILD-SURVIVOR CASE UNDER RA 9262 SEC. 3(a) & DILG FLOWCHART NODE B
+        // Dossier 11: Luna Garcia (17 yrs old, Minor) vs. Larry Garcia (Former Dating Partner)
+        // Features: Age < 18 Child Safeguard Badge + DILG Node B Guardian Consent Confirmed
         // =============================================================
         $d11_date = Carbon::parse('2026-09-08 11:30:00', $tz);
 
@@ -1424,7 +2011,35 @@ class VawcSeeder extends Seeder
             'dossier_number' => 'DOS-2026-0011',
             'survivor_name' => 'Luna Garcia',
             'respondent_name' => 'Larry Garcia',
-            'relationship_type' => 'Collateral Relative (Uncle)',
+            'relationship_type' => 'Former Dating Partner',
+            'survivor_demographics' => [
+                'name' => 'Luna Garcia',
+                'alias' => 'Luna',
+                'age' => 17,
+                'birthdate' => '2009-02-14',
+                'birthplace' => 'Pasay City',
+                'nationality' => 'Filipino',
+                'gender' => 'Female',
+                'contact' => '0917-888-1122',
+                'address' => 'Block 4 Lot 12, Mahogany Ave., Zone 2, Pasay City',
+                'civil_status' => 'Single',
+                'occupation' => 'Senior High Student',
+            ],
+            'respondent_demographics' => [
+                'name' => 'Larry Garcia',
+                'alias' => 'Larry',
+                'age' => 31,
+                'birthdate' => '1995-04-10',
+                'birthplace' => 'Pasay City',
+                'nationality' => 'Filipino',
+                'gender' => 'Male',
+                'contact' => '0922-444-9988',
+                'address' => 'Block 4 Lot 14, Mahogany Ave., Zone 2, Pasay City',
+                'work_address' => 'Garcia Construction Depot, Zone 2',
+                'relationship' => 'Former Dating Partner',
+                'civil_status' => 'Single',
+                'occupation' => 'Freelance Contractor',
+            ],
             'incident_count' => 1,
             'highest_threat_level' => 'MODERATE',
             'current_lifecycle' => 'Active',
@@ -1439,14 +2054,15 @@ class VawcSeeder extends Seeder
             'type' => 'VAWC',
             'case_number' => 'VAWC-2026-0011-01',
             'victim_name' => 'Luna Garcia',
-            'victim_age' => 23,
+            'victim_age' => 17,
             'victim_gender' => 'Female',
-            'complainant_name' => 'Luna Garcia',
+            'complainant_name' => 'Mrs. Teresa Garcia (Mother / Legal Guardian)',
             'complainant_contact' => '0917-888-1122',
-            'relation_to_victim' => 'Self (Victim)',
+            'complainant_address' => 'Block 4 Lot 12, Mahogany Ave., Zone 2, Pasay City',
+            'relation_to_victim' => 'Mother / Legal Guardian',
             'incident_date' => $d11_date,
             'incident_location' => 'Block 4 Lot 12, Mahogany Ave., Zone 2',
-            'description' => 'Adult survivor assaulted by her paternal uncle Larry Garcia following a family property dispute. Respondent physically shoved victim against a concrete wall, causing contusions to her left shoulder, and issued verbal threats.',
+            'description' => 'Child survivor (17 yrs old) assaulted by adult former dating partner Larry Garcia following persistent stalking and harassment. Mother consented to BPO application and PNP transmittal.',
             'lifecycle_status' => 'Under Investigation',
             'handled_by_id' => $officer->id,
         ]);
@@ -1456,40 +2072,77 @@ class VawcSeeder extends Seeder
             'incident_sequence' => 1,
             'sub_case_number' => 'VAWC-2026-0011-01',
             'case_report_id' => $cr11->id,
-            'intake_type' => 'Direct',
+            'intake_type' => 'Third-Party',
             'children_count' => 0,
+            'incident_location_details' => 'Front porch and exterior driveway',
             'is_repeat_offense' => false,
             'has_weapon_involved' => false,
+            'is_offender_armed' => false,
+            'substance_abuse' => ['Alcohol / Drunkenness'],
+            'requires_medical' => true,
+            'medical_facility_name' => 'Pasay City General Hospital',
+            'requires_alternative_housing' => false,
+            'immediate_emergency_actions' => ['First-Aid Rendered / EMS Responded'],
+            'is_bpo_consented_by_guardian' => true, // Enforces DILG Flowchart Node B
             'incident_veracity' => true,
             'status' => 'Escalated',
             'referral_status' => ['Barangay VAW Desk', 'PNP WCPD (Women & Children Protection Desk)', 'Public Attorney\'s Office (PAO)'],
             'action_sought' => ['Police Inquest Referral', 'Medico-Legal Examination', 'Legal Aid Assistance'],
-            'witness_info' => 'Twin sister Jamie Garcia witnessed the assault and attempted to intervene before also being attacked by respondent.',
+            'witness_info' => 'Mother Teresa Garcia and neighbor Romeo Reyes witnessed respondent Larry Garcia confronting and shoving the 17-year-old survivor.',
         ]);
 
         VawcInvolvedParty::create([
             'vawc_case_id' => $c11->id,
             'role' => 'Victim',
             'name' => 'Luna Garcia',
-            'age' => 23,
+            'alias' => 'Luna',
+            'birthdate' => '2009-02-14',
+            'birthplace' => 'Pasay City',
+            'nationality' => 'Filipino',
+            'age' => 17,
+            'is_minor' => true, // Triggers RA 9262 Sec. 3(a) Child-Victim Safeguard Badge
             'gender' => 'Female',
             'contact_number' => '0917-888-1122',
-            'address' => 'Block 4 Lot 12, Mahogany Ave., Zone 2',
+            'address' => 'Block 4 Lot 12, Mahogany Ave., Zone 2, Pasay City',
             'civil_status' => 'Single',
-            'occupation' => 'Customer Support Associate',
+            'occupation' => 'Senior High Student',
         ]);
 
         VawcInvolvedParty::create([
             'vawc_case_id' => $c11->id,
             'role' => 'Respondent',
-            'relationship_to_victim' => 'Collateral Relative (Uncle)',
+            'relationship_to_victim' => 'Former Dating Partner',
             'name' => 'Larry Garcia',
-            'age' => 51,
+            'alias' => 'Larry',
+            'birthdate' => '1995-04-10',
+            'birthplace' => 'Pasay City',
+            'nationality' => 'Filipino',
+            'age' => 31,
+            'is_minor' => false,
             'gender' => 'Male',
             'contact_number' => '0922-444-9988',
-            'address' => 'Block 4 Lot 14, Mahogany Ave., Zone 2',
-            'civil_status' => 'Married',
+            'address' => 'Block 4 Lot 14, Mahogany Ave., Zone 2, Pasay City',
+            'work_address' => 'Garcia Construction Depot, Zone 2',
+            'civil_status' => 'Single',
             'occupation' => 'Freelance Contractor',
+        ]);
+
+        VawcInvolvedParty::create([
+            'vawc_case_id' => $c11->id,
+            'role' => 'Reporter',
+            'relationship_to_victim' => 'Mother / Legal Guardian',
+            'name' => 'Mrs. Teresa Garcia',
+            'alias' => 'Teresa',
+            'birthdate' => '1976-08-11',
+            'birthplace' => 'Pasay City',
+            'nationality' => 'Filipino',
+            'age' => 50,
+            'is_minor' => false,
+            'gender' => 'Female',
+            'contact_number' => '0917-888-1122',
+            'address' => 'Block 4 Lot 12, Mahogany Ave., Zone 2, Pasay City',
+            'civil_status' => 'Married',
+            'occupation' => 'Accountant',
         ]);
 
         VawcAssessment::create([
@@ -1508,22 +2161,50 @@ class VawcSeeder extends Seeder
             'vawc_case_id' => $c11->id,
             'referral_target' => 'PNP Women and Children Protection',
             'violation_datetime' => Carbon::parse('2026-09-08 14:00:00', $tz),
-            'violation_description' => 'Physical assault and intimidation committed by non-intimate adult relative (paternal uncle). Under RA 9262 Section 3, uncle-niece disputes fall under the Revised Penal Code rather than an intimate-partner BPO. Case formally transmitted to PNP WCPD for criminal inquest.',
+            'violation_description' => 'Physical battery and stalking committed by adult former dating partner against minor survivor under RA 9262 Section 3(a), 5(a), and 5(i). Formally transmitted to PNP WCPD for criminal inquest.',
             'escorted_by_pb' => true,
         ]);
 
         $dossier11->syncDossierAggregates();
 
         // =============================================================
-        // SCENARIO A (CONTINUED): MULTI-VICTIM LEGAL-AGE SIBLING 2
-        // Dossier 12: Jamie Garcia (23 yrs old) vs. Larry Garcia (Same Uncle!)
-        // Triggers Cross-Dossier Serial Perpetrator Alert (2 Victims Linked to Larry Garcia)
+        // SCENARIO A (CONTINUED): MULTI-VICTIM SERIAL DATING PERPETRATOR
+        // Dossier 12: Jamie Perez (24 yrs old) vs. Larry Garcia (Same Perpetrator!)
+        // Triggers Cross-Dossier Serial Perpetrator Alert (2 Dating Victims Linked to Larry Garcia)
         // =============================================================
         $dossier12 = VawcDossier::create([
             'dossier_number' => 'DOS-2026-0012',
-            'survivor_name' => 'Jamie Garcia',
+            'survivor_name' => 'Jamie Perez',
             'respondent_name' => 'Larry Garcia',
-            'relationship_type' => 'Collateral Relative (Uncle)',
+            'relationship_type' => 'Former Live-in Partner',
+            'survivor_demographics' => [
+                'name' => 'Jamie Perez',
+                'alias' => 'Jamie',
+                'age' => 24,
+                'birthdate' => '2002-01-19',
+                'birthplace' => 'Pasay City',
+                'nationality' => 'Filipino',
+                'gender' => 'Female',
+                'contact' => '0917-888-3344',
+                'address' => 'Block 8 Lot 3, Sampaguita St., Zone 2, Pasay City',
+                'civil_status' => 'Single',
+                'occupation' => 'Bank Teller',
+            ],
+            'respondent_demographics' => [
+                'name' => 'Larry Garcia',
+                'alias' => 'Larry',
+                'age' => 31,
+                'birthdate' => '1995-04-10',
+                'birthplace' => 'Pasay City',
+                'nationality' => 'Filipino',
+                'gender' => 'Male',
+                'contact' => '0922-444-9988',
+                'address' => 'Block 4 Lot 14, Mahogany Ave., Zone 2, Pasay City',
+                'work_address' => 'Garcia Construction Depot, Zone 2',
+                'relationship' => 'Former Live-in Partner',
+                'civil_status' => 'Single',
+                'occupation' => 'Freelance Contractor',
+            ],
             'incident_count' => 1,
             'highest_threat_level' => 'MODERATE',
             'current_lifecycle' => 'Active',
@@ -1537,15 +2218,16 @@ class VawcSeeder extends Seeder
             'abuse_type_id' => $physicalAbuse?->id ?? 1,
             'type' => 'VAWC',
             'case_number' => 'VAWC-2026-0012-01',
-            'victim_name' => 'Jamie Garcia',
-            'victim_age' => 23,
+            'victim_name' => 'Jamie Perez',
+            'victim_age' => 24,
             'victim_gender' => 'Female',
-            'complainant_name' => 'Jamie Garcia',
+            'complainant_name' => 'Jamie Perez',
             'complainant_contact' => '0917-888-3344',
+            'complainant_address' => 'Block 8 Lot 3, Sampaguita St., Zone 2, Pasay City',
             'relation_to_victim' => 'Self (Victim)',
             'incident_date' => $d11_date,
-            'incident_location' => 'Block 4 Lot 12, Mahogany Ave., Zone 2',
-            'description' => 'Sister of Luna Garcia assaulted during the same household altercation by uncle Larry Garcia when attempting to protect her sister. Sustained blunt force trauma to wrist and grave threats of recurring violence.',
+            'incident_location' => 'Block 8 Lot 3, Sampaguita St., Zone 2',
+            'description' => 'Former live-in partner of Larry Garcia assaulted during a heated argument when victim ended cohabitation, triggering the Cross-Dossier Serial Perpetrator Alert linking Larry Garcia across multiple survivor dossiers.',
             'lifecycle_status' => 'Under Investigation',
             'handled_by_id' => $officer->id,
         ]);
@@ -1557,37 +2239,56 @@ class VawcSeeder extends Seeder
             'case_report_id' => $cr12->id,
             'intake_type' => 'Direct',
             'children_count' => 0,
-            'is_repeat_offense' => false,
+            'incident_location_details' => 'Inside living room and kitchen area',
+            'is_repeat_offense' => true, // Serial cross-dossier repeat offender
             'has_weapon_involved' => false,
+            'is_offender_armed' => false,
+            'substance_abuse' => ['Alcohol / Drunkenness'],
+            'requires_medical' => true,
+            'medical_facility_name' => 'Pasay City General Hospital',
+            'requires_alternative_housing' => false,
+            'immediate_emergency_actions' => ['First-Aid Rendered / EMS Responded'],
+            'is_bpo_consented_by_guardian' => true,
             'incident_veracity' => true,
             'status' => 'Escalated',
-            'referral_status' => ['Barangay VAW Desk', 'PNP WCPD (Women & Children Protection Desk)', 'City Prosecutor\'s Office'],
-            'action_sought' => ['Criminal Complaint Assistance', 'Police Protection & Patrols', 'PAO Legal Aid'],
-            'witness_info' => 'Sister Luna Garcia and neighbor Romeo Reyes corroborating the sudden assault by Larry Garcia.',
+            'referral_status' => ['Barangay VAW Desk', 'PNP WCPD (Women & Children Protection Desk)'],
+            'action_sought' => ['Barangay Protection Order (BPO)', 'PNP Criminal Prosecution'],
+            'witness_info' => 'Boarding house landlord heard loud commotion and physical struggle inside unit.',
         ]);
 
         VawcInvolvedParty::create([
             'vawc_case_id' => $c12->id,
             'role' => 'Victim',
-            'name' => 'Jamie Garcia',
-            'age' => 23,
+            'name' => 'Jamie Perez',
+            'alias' => 'Jamie',
+            'birthdate' => '2002-01-19',
+            'birthplace' => 'Pasay City',
+            'nationality' => 'Filipino',
+            'age' => 24,
+            'is_minor' => false,
             'gender' => 'Female',
             'contact_number' => '0917-888-3344',
-            'address' => 'Block 4 Lot 12, Mahogany Ave., Zone 2',
+            'address' => 'Block 8 Lot 3, Sampaguita St., Zone 2, Pasay City',
             'civil_status' => 'Single',
-            'occupation' => 'Graphic Designer',
+            'occupation' => 'Bank Teller',
         ]);
 
         VawcInvolvedParty::create([
             'vawc_case_id' => $c12->id,
             'role' => 'Respondent',
-            'relationship_to_victim' => 'Collateral Relative (Uncle)',
+            'relationship_to_victim' => 'Former Live-in Partner',
             'name' => 'Larry Garcia',
-            'age' => 51,
+            'alias' => 'Larry',
+            'birthdate' => '1995-04-10',
+            'birthplace' => 'Pasay City',
+            'nationality' => 'Filipino',
+            'age' => 31,
+            'is_minor' => false,
             'gender' => 'Male',
             'contact_number' => '0922-444-9988',
-            'address' => 'Block 4 Lot 14, Mahogany Ave., Zone 2',
-            'civil_status' => 'Married',
+            'address' => 'Block 4 Lot 14, Mahogany Ave., Zone 2, Pasay City',
+            'work_address' => 'Garcia Construction Depot, Zone 2',
+            'civil_status' => 'Single',
             'occupation' => 'Freelance Contractor',
         ]);
 
@@ -1595,26 +2296,26 @@ class VawcSeeder extends Seeder
             'vawc_case_id' => $c12->id,
             'requires_medical' => true,
             'requires_alternative_housing' => false,
-            'abuse_frequency' => 1,
+            'abuse_frequency' => 3, // Elevated to 3 due to cross-dossier serial history
             'abuse_severity' => 2,
             'weapon_access' => 1,
             'life_threat_level' => 2,
-            'risk_score' => 6,
-            'risk_level' => 'MODERATE',
+            'risk_score' => 8,
+            'risk_level' => 'HIGH',
         ]);
 
         VawcLegalEscalation::create([
             'vawc_case_id' => $c12->id,
             'referral_target' => 'PNP Women and Children Protection',
-            'violation_datetime' => Carbon::parse('2026-09-08 14:30:00', $tz),
-            'violation_description' => 'Corroborating physical assault against second sibling by same respondent Larry Garcia. Forwarded to PNP WCPD for joint criminal inquest while preserving distinct survivor affidavits.',
+            'violation_datetime' => Carbon::parse('2026-09-08 15:00:00', $tz),
+            'violation_description' => 'Serial perpetrator battery by Larry Garcia under RA 9262 Sec. 5(a). Transmitted to PNP WCPD with cross-dossier alert docket attached.',
             'escorted_by_pb' => true,
         ]);
 
         $dossier12->syncDossierAggregates();
 
         // =============================================================
-        // SCENARIO B: MINOR SIBLINGS COVERED UNDER RA 7610 & RA 9262
+        // SCENARIO B: MINOR CHILDREN COVERED UNDER RA 7610 & RA 9262
         // Dossier 13: Clarisse Mendoza vs. Rodrigo Mendoza (Spouse)
         // Features: 2 Minor Children Covered with School/Daycare Stay-Away & Tender of Service
         // =============================================================
@@ -1625,6 +2326,34 @@ class VawcSeeder extends Seeder
             'survivor_name' => 'Clarisse Mendoza',
             'respondent_name' => 'Rodrigo Mendoza',
             'relationship_type' => 'Spouse (Legal Husband)',
+            'survivor_demographics' => [
+                'name' => 'Clarisse Mendoza',
+                'alias' => 'Claire',
+                'age' => 32,
+                'birthdate' => '1994-06-18',
+                'birthplace' => 'Pasay City',
+                'nationality' => 'Filipino',
+                'gender' => 'Female',
+                'contact' => '0919-555-7788',
+                'address' => 'Unit 3B, Sunshine Residences, Zone 2, Pasay City',
+                'civil_status' => 'Married',
+                'occupation' => 'High School Teacher',
+            ],
+            'respondent_demographics' => [
+                'name' => 'Rodrigo Mendoza',
+                'alias' => 'Rod',
+                'age' => 35,
+                'birthdate' => '1991-03-24',
+                'birthplace' => 'Laguna',
+                'nationality' => 'Filipino',
+                'gender' => 'Male',
+                'contact' => '0920-111-2233',
+                'address' => 'Unit 3B, Sunshine Residences, Zone 2, Pasay City',
+                'work_address' => 'Pasay Logistics Hub, Terminal 3, Pasay City',
+                'relationship' => 'Spouse (Legal Husband)',
+                'civil_status' => 'Married',
+                'occupation' => 'Logistics Driver',
+            ],
             'incident_count' => 1,
             'highest_threat_level' => 'HIGH',
             'current_lifecycle' => 'Active',
@@ -1643,10 +2372,11 @@ class VawcSeeder extends Seeder
             'victim_gender' => 'Female',
             'complainant_name' => 'Clarisse Mendoza',
             'complainant_contact' => '0919-555-7788',
+            'complainant_address' => 'Unit 3B, Sunshine Residences, Zone 2, Pasay City',
             'relation_to_victim' => 'Self (Victim)',
             'incident_date' => $d13_date,
             'incident_location' => 'Unit 3B, Sunshine Residences, Zone 2',
-            'description' => 'Respondent engaged in violent emotional and physical terrorization in the presence of their two minor children (ages 8 and 5). Threatening to abduct the children from their elementary school and daycare center.',
+            'description' => 'Respondent engaged in violent emotional and physical terrorization in the presence of their two minor children (ages 8 and 5), threatening to abduct the children from their elementary school and daycare center.',
             'lifecycle_status' => 'Under Investigation',
             'handled_by_id' => $officer->id,
         ]);
@@ -1659,19 +2389,18 @@ class VawcSeeder extends Seeder
             'intake_type' => 'Direct',
             'children_count' => 2,
             'children_details' => [
-                [
-                    'name' => 'Bea Mendoza',
-                    'age' => 8,
-                    'school_or_daycare' => 'Zone 2 Elementary School',
-                ],
-                [
-                    'name' => 'Lucas Mendoza',
-                    'age' => 5,
-                    'school_or_daycare' => 'Zone 2 Daycare Center',
-                ],
+                ['name' => 'Bea Mendoza', 'age' => '8', 'school_or_daycare' => 'Zone 2 Elementary School'],
+                ['name' => 'Lucas Mendoza', 'age' => '5', 'school_or_daycare' => 'Zone 2 Daycare Center'],
             ],
+            'incident_location_details' => 'Living room and residential hallway of Unit 3B',
             'is_repeat_offense' => false,
             'has_weapon_involved' => false,
+            'is_offender_armed' => false,
+            'substance_abuse' => ['Alcohol / Drunkenness'],
+            'requires_medical' => false,
+            'requires_alternative_housing' => false,
+            'immediate_emergency_actions' => ['Temporary Safe Custody at Barangay Hall'],
+            'is_bpo_consented_by_guardian' => true,
             'incident_veracity' => true,
             'status' => 'Monitoring',
             'referral_status' => ['Barangay VAW Desk', 'BCPC (Child Protection Committee)', 'DepEd Child Protection Desk'],
@@ -1683,10 +2412,15 @@ class VawcSeeder extends Seeder
             'vawc_case_id' => $c13->id,
             'role' => 'Victim',
             'name' => 'Clarisse Mendoza',
+            'alias' => 'Claire',
+            'birthdate' => '1994-06-18',
+            'birthplace' => 'Pasay City',
+            'nationality' => 'Filipino',
             'age' => 32,
+            'is_minor' => false,
             'gender' => 'Female',
             'contact_number' => '0919-555-7788',
-            'address' => 'Unit 3B, Sunshine Residences, Zone 2',
+            'address' => 'Unit 3B, Sunshine Residences, Zone 2, Pasay City',
             'civil_status' => 'Married',
             'occupation' => 'High School Teacher',
         ]);
@@ -1696,10 +2430,16 @@ class VawcSeeder extends Seeder
             'role' => 'Respondent',
             'relationship_to_victim' => 'Spouse (Legal Husband)',
             'name' => 'Rodrigo Mendoza',
+            'alias' => 'Rod',
+            'birthdate' => '1991-03-24',
+            'birthplace' => 'Laguna',
+            'nationality' => 'Filipino',
             'age' => 35,
+            'is_minor' => false,
             'gender' => 'Male',
             'contact_number' => '0920-111-2233',
-            'address' => 'Unit 3B, Sunshine Residences, Zone 2',
+            'address' => 'Unit 3B, Sunshine Residences, Zone 2, Pasay City',
+            'work_address' => 'Pasay Logistics Hub, Terminal 3, Pasay City',
             'civil_status' => 'Married',
             'occupation' => 'Logistics Driver',
         ]);
@@ -1768,6 +2508,34 @@ class VawcSeeder extends Seeder
             'survivor_name' => 'Jessie Lucia',
             'respondent_name' => 'Marco Alcantara',
             'relationship_type' => 'Spouse (Legal Husband)',
+            'survivor_demographics' => [
+                'name' => 'Jessie Lucia',
+                'alias' => 'Jess',
+                'age' => 26,
+                'birthdate' => '2000-08-03',
+                'birthplace' => 'Pasay City',
+                'nationality' => 'Filipino',
+                'gender' => 'Female',
+                'contact' => '0918-333-5566',
+                'address' => 'House #45, Narra St., Zone 3, Pasay City',
+                'civil_status' => 'Married',
+                'occupation' => 'Administrative Assistant',
+            ],
+            'respondent_demographics' => [
+                'name' => 'Marco Alcantara',
+                'alias' => 'Marco',
+                'age' => 29,
+                'birthdate' => '1997-01-15',
+                'birthplace' => 'Pasay City',
+                'nationality' => 'Filipino',
+                'gender' => 'Male',
+                'contact' => '0929-777-4455',
+                'address' => 'House #45, Narra St., Zone 3, Pasay City',
+                'work_address' => 'Alcantara Auto Sales, Pasay City',
+                'relationship' => 'Spouse (Legal Husband)',
+                'civil_status' => 'Married',
+                'occupation' => 'Sales Executive',
+            ],
             'incident_count' => 1,
             'highest_threat_level' => 'HIGH',
             'current_lifecycle' => 'Active',
@@ -1786,10 +2554,11 @@ class VawcSeeder extends Seeder
             'victim_gender' => 'Female',
             'complainant_name' => 'Jessie Lucia',
             'complainant_contact' => '0918-333-5566',
+            'complainant_address' => 'House #45, Narra St., Zone 3, Pasay City',
             'relation_to_victim' => 'Self (Victim)',
             'incident_date' => $d14_date,
             'incident_location' => 'House #45, Narra St., Zone 3',
-            'description' => 'Respondent husband engaged in severe domestic physical assault against wife Jessie Lucia inside their shared home, inflicting lacerations and bruising. Sister-in-law Rina Lucia was also injured while trying to separate them.',
+            'description' => 'Respondent husband engaged in severe domestic physical assault against wife Jessie Lucia inside their shared home, inflicting lacerations and severe bruising.',
             'lifecycle_status' => 'Under Investigation',
             'handled_by_id' => $officer->id,
         ]);
@@ -1801,23 +2570,36 @@ class VawcSeeder extends Seeder
             'case_report_id' => $cr14->id,
             'intake_type' => 'Direct',
             'children_count' => 0,
+            'incident_location_details' => 'Inside master bedroom of the conjugal residence',
             'is_repeat_offense' => false,
             'has_weapon_involved' => false,
+            'is_offender_armed' => false,
+            'substance_abuse' => ['Alcohol / Drunkenness'],
+            'requires_medical' => true,
+            'medical_facility_name' => 'Pasay City General Hospital',
+            'requires_alternative_housing' => false,
+            'immediate_emergency_actions' => ['First-Aid Rendered / EMS Responded'],
+            'is_bpo_consented_by_guardian' => true,
             'incident_veracity' => true,
             'status' => 'Monitoring',
             'referral_status' => ['Barangay VAW Desk', 'Barangay Tanod Patrol Outpost', 'Hospital / Medico-Legal'],
             'action_sought' => ['Barangay Protection Order (BPO)', 'Order to Vacate Shared Residence', 'Tanod Security Patrols'],
-            'witness_info' => 'Sister Rina Lucia and next-door neighbor witnessed the domestic violence at House #45 Narra St.',
+            'witness_info' => 'Next-door neighbor witnessed the domestic violence and heard loud distress calls at House #45 Narra St.',
         ]);
 
         VawcInvolvedParty::create([
             'vawc_case_id' => $c14->id,
             'role' => 'Victim',
             'name' => 'Jessie Lucia',
+            'alias' => 'Jess',
+            'birthdate' => '2000-08-03',
+            'birthplace' => 'Pasay City',
+            'nationality' => 'Filipino',
             'age' => 26,
+            'is_minor' => false,
             'gender' => 'Female',
             'contact_number' => '0918-333-5566',
-            'address' => 'House #45, Narra St., Zone 3',
+            'address' => 'House #45, Narra St., Zone 3, Pasay City',
             'civil_status' => 'Married',
             'occupation' => 'Administrative Assistant',
         ]);
@@ -1827,10 +2609,16 @@ class VawcSeeder extends Seeder
             'role' => 'Respondent',
             'relationship_to_victim' => 'Spouse (Legal Husband)',
             'name' => 'Marco Alcantara',
+            'alias' => 'Marco',
+            'birthdate' => '1997-01-15',
+            'birthplace' => 'Pasay City',
+            'nationality' => 'Filipino',
             'age' => 29,
+            'is_minor' => false,
             'gender' => 'Male',
             'contact_number' => '0929-777-4455',
-            'address' => 'House #45, Narra St., Zone 3',
+            'address' => 'House #45, Narra St., Zone 3, Pasay City',
+            'work_address' => 'Alcantara Auto Sales, Pasay City',
             'civil_status' => 'Married',
             'occupation' => 'Sales Executive',
         ]);
@@ -1884,16 +2672,43 @@ class VawcSeeder extends Seeder
         $dossier14->syncDossierAggregates();
 
         // =============================================================
-        // SCENARIO C (CONTINUED): DUAL-TRACK HOUSEHOLD SPLIT (TRACK 2 - SISTER-IN-LAW)
-        // Dossier 15: Rina Lucia (22 yrs old) vs. Marco Alcantara (Brother-in-Law)
-        // Same Household, Non-Intimate Relative -> Routed to PNP WCPD Criminal Transmittal (RPC Battery)
-        // Cross-Dossier Intelligence Links Both Sisters to Marco Alcantara at Narra St.
+        // SCENARIO C (CONTINUED): CROSS-DOSSIER SERIAL ABUSER (TRACK 2 - COMMON CHILD CO-PARENT)
+        // Dossier 15: Rina Gomez (25 yrs old) vs. Marco Alcantara (Parent of Common Child)
+        // Qualifying Intimate Relationship under RA 9262 Sec. 3 -> Transmitted for Criminal Prosecution
         // =============================================================
         $dossier15 = VawcDossier::create([
             'dossier_number' => 'DOS-2026-0015',
-            'survivor_name' => 'Rina Lucia',
+            'survivor_name' => 'Rina Gomez',
             'respondent_name' => 'Marco Alcantara',
-            'relationship_type' => 'In-Law (Brother-in-Law / Shared Household Relative)',
+            'relationship_type' => 'Parent of Common Child',
+            'survivor_demographics' => [
+                'name' => 'Rina Gomez',
+                'alias' => 'Rina',
+                'age' => 25,
+                'birthdate' => '2001-04-20',
+                'birthplace' => 'Pasay City',
+                'nationality' => 'Filipino',
+                'gender' => 'Female',
+                'contact' => '0918-333-9900',
+                'address' => 'Block 12 Lot 5, Camia St., Zone 3, Pasay City',
+                'civil_status' => 'Single',
+                'occupation' => 'Freelance Accountant',
+            ],
+            'respondent_demographics' => [
+                'name' => 'Marco Alcantara',
+                'alias' => 'Marco',
+                'age' => 29,
+                'birthdate' => '1997-01-15',
+                'birthplace' => 'Pasay City',
+                'nationality' => 'Filipino',
+                'gender' => 'Male',
+                'contact' => '0929-777-4455',
+                'address' => 'House #45, Narra St., Zone 3, Pasay City',
+                'work_address' => 'Alcantara Auto Sales, Pasay City',
+                'relationship' => 'Parent of Common Child',
+                'civil_status' => 'Married',
+                'occupation' => 'Sales Executive',
+            ],
             'incident_count' => 1,
             'highest_threat_level' => 'MODERATE',
             'current_lifecycle' => 'Active',
@@ -1907,15 +2722,16 @@ class VawcSeeder extends Seeder
             'abuse_type_id' => $physicalAbuse?->id ?? 1,
             'type' => 'VAWC',
             'case_number' => 'VAWC-2026-0015-01',
-            'victim_name' => 'Rina Lucia',
-            'victim_age' => 22,
+            'victim_name' => 'Rina Gomez',
+            'victim_age' => 25,
             'victim_gender' => 'Female',
-            'complainant_name' => 'Rina Lucia',
+            'complainant_name' => 'Rina Gomez',
             'complainant_contact' => '0918-333-9900',
+            'complainant_address' => 'Block 12 Lot 5, Camia St., Zone 3, Pasay City',
             'relation_to_victim' => 'Self (Victim)',
             'incident_date' => $d14_date,
-            'incident_location' => 'House #45, Narra St., Zone 3',
-            'description' => 'Sister-in-law of Marco Alcantara residing in the same household assaulted when intervening to shield her sister Jessie Lucia. Respondent violently shoved victim against furniture and struck her arm, causing soft-tissue trauma.',
+            'incident_location' => 'Block 12 Lot 5, Camia St., Zone 3',
+            'description' => 'Survivor Rina Gomez, mother of common child with Marco Alcantara, assaulted when respondent aggressively confronted her regarding child financial support demands and custody claims.',
             'lifecycle_status' => 'Under Investigation',
             'handled_by_id' => $officer->id,
         ]);
@@ -1926,37 +2742,59 @@ class VawcSeeder extends Seeder
             'sub_case_number' => 'VAWC-2026-0015-01',
             'case_report_id' => $cr15->id,
             'intake_type' => 'Direct',
-            'children_count' => 0,
-            'is_repeat_offense' => false,
+            'children_count' => 1,
+            'children_details' => [
+                ['name' => 'Leo Gomez Alcantara', 'age' => '3', 'school_or_daycare' => 'Zone 3 Barangay Daycare Center']
+            ],
+            'incident_location_details' => 'Front porch and exterior driveway',
+            'is_repeat_offense' => true, // Serial cross-dossier repeat offender
             'has_weapon_involved' => false,
+            'is_offender_armed' => false,
+            'substance_abuse' => ['Alcohol / Drunkenness'],
+            'requires_medical' => true,
+            'medical_facility_name' => 'Barangay 183 Health Center',
+            'requires_alternative_housing' => false,
+            'immediate_emergency_actions' => ['First-Aid Rendered / EMS Responded'],
+            'is_bpo_consented_by_guardian' => true,
             'incident_veracity' => true,
             'status' => 'Escalated',
             'referral_status' => ['Barangay VAW Desk', 'PNP WCPD (Women & Children Protection Desk)', 'Hospital / Medico-Legal'],
             'action_sought' => ['PNP Inquest Referral', 'Medico-Legal Certificate', 'PAO Legal Representation'],
-            'witness_info' => 'Elder sister Jessie Lucia and neighbor witnessed respondent Marco Alcantara inflicting physical battery on Rina Lucia.',
+            'witness_info' => 'Daycare staff and neighbor witnessed respondent Marco Alcantara aggressively confronting and striking survivor Rina Gomez.',
         ]);
 
         VawcInvolvedParty::create([
             'vawc_case_id' => $c15->id,
             'role' => 'Victim',
-            'name' => 'Rina Lucia',
-            'age' => 22,
+            'name' => 'Rina Gomez',
+            'alias' => 'Rina',
+            'birthdate' => '2001-04-20',
+            'birthplace' => 'Pasay City',
+            'nationality' => 'Filipino',
+            'age' => 25,
+            'is_minor' => false,
             'gender' => 'Female',
             'contact_number' => '0918-333-9900',
-            'address' => 'House #45, Narra St., Zone 3',
+            'address' => 'Block 12 Lot 5, Camia St., Zone 3, Pasay City',
             'civil_status' => 'Single',
-            'occupation' => 'College Student',
+            'occupation' => 'Freelance Accountant',
         ]);
 
         VawcInvolvedParty::create([
             'vawc_case_id' => $c15->id,
             'role' => 'Respondent',
-            'relationship_to_victim' => 'In-Law (Brother-in-Law / Shared Household Relative)',
+            'relationship_to_victim' => 'Parent of Common Child',
             'name' => 'Marco Alcantara',
+            'alias' => 'Marco',
+            'birthdate' => '1997-01-15',
+            'birthplace' => 'Pasay City',
+            'nationality' => 'Filipino',
             'age' => 29,
+            'is_minor' => false,
             'gender' => 'Male',
             'contact_number' => '0929-777-4455',
-            'address' => 'House #45, Narra St., Zone 3',
+            'address' => 'House #45, Narra St., Zone 3, Pasay City',
+            'work_address' => 'Alcantara Auto Sales, Pasay City',
             'civil_status' => 'Married',
             'occupation' => 'Sales Executive',
         ]);
@@ -1965,11 +2803,11 @@ class VawcSeeder extends Seeder
             'vawc_case_id' => $c15->id,
             'requires_medical' => true,
             'requires_alternative_housing' => false,
-            'abuse_frequency' => 1,
+            'abuse_frequency' => 2,
             'abuse_severity' => 2,
             'weapon_access' => 1,
             'life_threat_level' => 2,
-            'risk_score' => 6,
+            'risk_score' => 7,
             'risk_level' => 'MODERATE',
         ]);
 
@@ -1977,7 +2815,7 @@ class VawcSeeder extends Seeder
             'vawc_case_id' => $c15->id,
             'referral_target' => 'PNP Women and Children Protection',
             'violation_datetime' => Carbon::parse('2026-09-09 09:00:00', $tz),
-            'violation_description' => 'Assault of non-intimate female household member (sister-in-law) during the same domestic incident as wife Jessie Lucia. While the wife proceeds on the RA 9262 BPO track, this docket is transmitted to PNP WCPD for criminal battery under the Revised Penal Code.',
+            'violation_description' => 'Physical battery and economic abuse committed by respondent Marco Alcantara against the mother of his common child, Rina Gomez, under RA 9262 Sec. 5(a) and 5(e). Docket formally transmitted to PNP WCPD and City Prosecutor for criminal investigation and child support enforcement.',
             'escorted_by_pb' => true,
         ]);
 

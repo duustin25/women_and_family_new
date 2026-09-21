@@ -2,159 +2,205 @@
 
 > **Legal Mandate**: Republic Act No. 9262 (*Anti-Violence Against Women and Their Children Act of 2004*)  
 > **Implementing Guidelines**: DILG-DSWD-DOH-DepEd-PCW Joint Memorandum Circular on Barangay VAW Desk Operations  
+> **Child Welfare Intersections**: Republic Act No. 7610 (*Special Protection of Children Against Abuse, Exploitation and Discrimination Act*)  
 > **System Scope**: Municipal & Barangay Women and Family Protection Information System (WFPIS)  
-> **Target Audience**: Barangay VAWC Desk Officers, Punong Barangays, Social Workers, System Administrators, Capstone Review Panel  
+> **Target Audience**: Barangay VAWC Desk Officers, Punong Barangays, Social Workers, System Administrators, Defense Review Panel  
 
 ---
 
-## 🏛️ Executive Summary & Statutory Framework
+## 🏛️ Executive Summary & Statutory Architecture
 
 The **Barangay Violence Against Women and Children (VAWC) Desk System** is an enterprise-grade digital platform engineered to automate, monitor, and enforce strict statutory compliance across domestic violence case intake, algorithmic risk triage, Barangay Protection Order (BPO) processing, service delivery, compliance monitoring, and inter-agency escalation.
 
 ```mermaid
 flowchart TD
-    A["Stage 1: Case Intake (Create.tsx)"] --> B["Stage 2: VAWC-RAVE Algorithmic Risk Triage"]
-    B --> C{"Risk Classification"}
-    C -- Critical Priority 10-12 --> D["🚨 Ex-Officio Emergency Bypass & QRT Police Rescue"]
-    C -- Moderate / High --> E["Stage 3: BPO Application Filing (Step 2)"]
-    E --> F["Stage 4: Official BPO Issuance (24h SLA Mandate - Sec. 14)"]
-    D --> F
-    F --> G["Stage 5: Official BPO Service to Respondent (Step 4)"]
-    G --> H["Stage 6: 15-Day Active Compliance Monitoring (Step 5)"]
-    H --> I{"Breach / Threat Detected?"}
-    I -- Yes --> J["Stage 7: Transmittal & Escalation to PNP WCPD / Court"]
-    I -- No Violation --> K["Stage 8: Statutory Case Closure & Archival (Sec. 33 Compliant)"]
-    J --> K
+    A["Gateway: Master Dossier Search (Step 0)"] --> B["Intake Wizard: Create.tsx (Steps 1 to 4)"]
+    B --> C["Algorithmic Lethality Triage (VAWC-RAVE)"]
+    C --> D{"Lethality Assessment"}
+    D -- Critical (Score 10-12) --> E["🚨 Ex-Officio Emergency Bypass & QRT Police Rescue"]
+    D -- Standard / Moderate / High --> F["Stage 2: BPO Application Filing (Step 2)"]
+    E --> G["Stage 3: Official BPO Issuance (24h SLA Mandate - Sec. 14)"]
+    F --> G
+    G --> H["Stage 4: Official BPO Service to Respondent (Step 4)"]
+    H --> I["Stage 5: 15-Day Active Compliance Monitoring (Step 5)"]
+    I --> J{"Breach / Threat Escalation?"}
+    J -- Non-Compliant / Threat --> K["Stage 6: Transmittal & Escalation to PNP WCPD / Court"]
+    J -- Peaceful Expiration --> L["Stage 7: Statutory Case Closure & Archival (Sec. 33 Compliant)"]
+    K --> M["Judicial Docket Gate: Court PPO/TPO or Prosecutor Resolution"]
+    M --> L
 ```
 
 ---
 
-## 📋 End-to-End Case Progression Lifecycle
+## 🏗️ Clean Modular Frontend System Architecture
 
-### Stage 1: Case Intake & Registration (`Create.tsx`)
-- **Statutory Authority**: RA 9262 Section 14 (Applications for BPO) and Barangay VAW Desk Intake Protocols.
-- **Intake Modes**:
-  - **Direct Intake**: Survivor personally files the disclosure at the VAW Desk.
-  - **Ex-Officio / Third-Party Intake**: Authorized under RA 9262 Sec. 14 when the victim is incapacitated or in acute peril. Filed by a Barangay Kagawad, Social Worker, Police Officer, or Guardian.
-- **Survivor & Respondent Profile**:
-  - Full demographics, contact details, physical description, relationship to respondent.
-  - *Confidentiality Protocol (RA 9262 Sec. 44)*: Client-side identity redaction (`isRedacted`) masks sensitive names and addresses to unauthorized viewers while maintaining legal auditability.
-  - *Anonymous / Whistle-Blower Shield*: Supports anonymous reporting (`is_anonymous = true`) for vulnerable complainants.
-- **Master Dossier Pattern (Recidivism Engine)**:
-  - Automatically identifies repeat offenders and recurrent survivor victimization, assigning persistent Master Dossier numbers (`DOS-YYYY-XXXX`) and sequential sub-case incident tracking (`VAWC-YYYY-XXXX-01`, `-02`, etc.).
+To guarantee code maintainability, testability, and high-performance execution, monolithic files (`Create.tsx` 1,700+ lines, `Show.tsx` 2,000+ lines) have been decomposed into a **Hook-Driven Component Hierarchy**:
+
+### 1. New Incident Intake Architecture (`pages/Admin/Vawc/Create.tsx`)
+The intake system operates under the **"Search First, Encode Second"** rule, organized into distinct sub-components coordinated by the `useVawcCreateWorkflow` custom hook:
+
+```
+resources/js/
+├── hooks/
+│   └── useVawcCreateWorkflow.ts          # State management, Inertia useForm, debounced searches, validation
+└── pages/Admin/Vawc/
+    ├── Create.tsx                        # Master Orchestrator Shell (< 240 lines)
+    └── Partials/Create/
+        ├── types.ts                      # Interfaces, Props, PreselectedDossier contract
+        ├── CreateHeader.tsx              # Unboxed header, RA 9262 badge, cancellation link
+        ├── DossierSearchGateway.tsx      # Step 0: Real-time Master Dossier live search
+        ├── Step1Survivor.tsx             # Step 1: Intake mode, Sec. 44 anonymity, victim demographics
+        ├── Step2Incident.tsx             # Step 2: Datetime boundary, zone, abuse type, RA 7610 children
+        ├── Step3Respondent.tsx           # Step 3: Perpetrator profile, serial match banner, legal relations
+        ├── Step4Verify.tsx               # Step 4: Multi-agency transmittals, remedies sought, witnesses
+        └── CreateConfirmModal.tsx        # Statutory pre-submission review & confirmation dialog
+```
+
+### 2. Case Management & BPO Control Center Architecture (`pages/Admin/Vawc/Show.tsx`)
+The post-intake lifecycle is managed through modular stage cards coordinated by `useVawcCaseWorkflow`:
+
+```
+resources/js/
+├── hooks/
+│   └── useVawcCaseWorkflow.ts            # Form states, API post handlers, SLA timer watchers
+└── pages/Admin/Vawc/
+    ├── Show.tsx                          # Case Control Center Orchestrator (< 240 lines)
+    └── Partials/Show/
+        ├── Stages/
+        │   ├── Step1TriageChecklist.tsx  # Stage 1: Algorithmic lethality scoring & danger indicators
+        │   ├── Step2BpoApplication.tsx   # Stage 2: BPO application filing with chronological checks
+        │   ├── Step3BpoIssuance.tsx      # Stage 3: Same-Day 24h SLA compliance analyzer
+        │   ├── Step4BpoService.tsx       # Stage 4: Substituted/Personal service recording
+        │   ├── Step5Resolution.tsx       # Stage 5: 15-day compliance monitoring & escalation trigger
+        │   └── VawcMonitoringLogSection.tsx # Log entries for tanod visits and compliance checks
+        └── Modals/
+            ├── VawcCloseCaseModal.tsx    # Sec. 33 anti-conciliation enforcement & judicial gate
+            └── VawcReferralModal.tsx     # External agency transmittal slip generator
+```
 
 ---
 
-### Stage 2: VAWC-RAVE Algorithmic Risk Triage
-- **Evaluation Matrix (0–12 Points)**:
-  - High-lethality triggers: Weapon access/use (+3), Repeat domestic violence history (+3), Death threats/strangulation (+2), Severe physical injury requiring medical triage (+2), Perpetrator present at scene (+2).
-- **Triage Classifications**:
-  - 🚨 **CRITICAL (Score 10–12)**: **Emergency Ex-Officio Rescue Protocol**. Unlocks immediate QRT police rescue payload, warrantless arrest assistance, and bypasses bureaucratic waiting.
-  - 🟠 **HIGH (Score 7–9)**: Expedited BPO issuance, Punong Barangay immediate notification, and CSWDO emergency shelter coordination.
-  - 🟡 **MODERATE (Score 4–6)**: Standard BPO processing and active social worker counseling.
-  - 🔵 **LOW (Score 0–3)**: Routine intake processing and standard monitoring.
+## ⚖️ Legal Bases & Qualifying Relationship Taxonomy (RA 9262 Sec. 3)
+
+### The Legal Gate for Intimate Relationships
+Under Section 3 of Republic Act 9262, the crime of Violence Against Women and Their Children can **only** be committed against a woman who is the offender's wife, former wife, or with whom the offender has or had a sexual or dating relationship, or with whom he has a common child.
+
+> [!IMPORTANT]
+> **Strict Statutory Exclusion:**
+> The option `"Other Household Relative (with custody/care)"` has been **completely removed** from the system. If a relative (e.g., uncle, cousin, in-law) abuses a woman or child without an intimate/marital relationship, the offense does **NOT** fall under RA 9262. It must be encoded under **RA 7610** (Child Abuse) or Physical Injuries under the Revised Penal Code.
+
+### Preserved Qualifying Categories in System Dropdown:
+1. **Spouse (Legal Husband/Wife)**: Current legal marriage.
+2. **Former Spouse (Separated/Annulled)**: Legally separated or annulled marriage.
+3. **Common-Law / Live-in Partner**: Cohabiting without legal marriage.
+4. **Former Live-in Partner**: Past cohabitation.
+5. **Parent of Common Child**: Shared biological or legally acknowledged child regardless of past marriage or cohabitation.
+6. **Dating / Romantic / Sexual Partner**: Current dating relationship as defined in RA 9262 Sec. 3(e).
+7. **Former Dating Partner**: Past dating relationship.
 
 ---
 
-### Stage 3: BPO Application Filing (`Step 2: Apply BPO`)
-- **Statutory Mandate**: RA 9262 Section 14 relief (ordering respondent to cease violence, stay away from victim's home/workplace).
-- **Smart Offset Cascading**:
-  - Defaults to `Incident Date + 30 minutes` for historical cases, or `Current Time` for live intake.
-  - Quick Presets: `[+30m from Incident]`, `[Same as Incident]`, `[Current Time]`.
+## 📋 Comprehensive Case Progression Lifecycle
+
+### Step 0 & Step 1: Master Dossier Gateway & Survivor Registration
+- **"Search First, Encode Second" Policy**: Before typing new data, desk officers query the live Master Dossier registry (`/admin/vawc/dossiers/search`).
+- **Chain of Custody Lock**: When an incident is linked to an existing Master Dossier (`DOS-YYYY-XXXX`), the survivor's legal name and perpetrator's name are **read-only and locked** to preserve legal evidence integrity across repeat offenses.
+- **Decoupled Registry Live Searches**:
+  - Independent live searches for survivors (`/admin/vawc/survivors/search`) and perpetrators (`/admin/vawc/respondents/search`) allow auto-populating historical demographics even when creating a brand new dossier.
+- **Cross-Dossier Serial Perpetrator Alert**:
+  - If a respondent's name matches past domestic abuse cases under *other* survivor dossiers, the system displays a prominent warning banner and automatically links the perpetrator's history, elevating the triage lethality score while maintaining victim privacy.
+- **Section 44 Confidential Informant Protection**:
+  - Whistleblower switch (`is_anonymous`) shields third-party reporting neighbors or barangay officials from retaliatory violence.
+
+### Step 2: Incident Facts & Minor Children Safeguards
 - **Chronological Boundary Limit**:
-  - `min = Incident DateTime` (prevents mathematical time travel prior to the crime).
-  - `max = Current Server DateTime` (prevents filing in the future).
-- **Status State**: System transitions to **`Application Pending`** (prevents premature "Under Monitoring" designation). Starts the statutory 24-hour SLA timer.
+  - Incident datetime cannot exceed current server time (`max = now()`).
+  - Datetimes older than 30 days trigger an informative **Historical Incident Advisory** referencing RA 9262 Section 24 (10 to 20-year prescriptive period).
+- **Minor Children Coverage (RA 7610 & RA 9262 Sec. 8)**:
+  - Supports dynamic registration of all children present during the incident (Full Name, Age, School or Daycare).
+  - Listing the child's school/daycare center ensures specific statutory stay-away radius orders are automatically inserted into the Barangay Protection Order (BPO).
+
+### Step 3: Respondent Profile & Intimate Qualification
+- Enforces strict selection from the 7 statutory RA 9262 intimate relationship categories.
+- Records physical descriptions (height, build, tattoos, distinct scars) for enforcement and tanod surveillance.
+
+### Step 4: Verification, Inter-Agency Transmittals & Statutory Remedies
+- **Inter-Agency Referral Transmittal Matrix**:
+  - Immediate formal transmittals can be checked:
+    1. **DSWD / MSWDO**: Social welfare, temporary protective custody, shelter placement.
+    2. **PNP WCPD**: Women & Children Protection Desk criminal investigation.
+    3. **Hospital / Medico-Legal**: Formal clinical examination & injury documentation.
+    4. **PAO / Legal Aid**: Free legal counseling and court TPO/PPO petition filing.
+    5. **Barangay VAW Desk**: Community surveillance & perimeter patrols.
+    6. **LGU Crisis Center**: Emergency shelter accommodation.
+- **Survivor Remedies Sought**: Immediate relief checklist (BPO, Temporary Custody, Medico-Legal, Criminal Prosecution, Tanod Security, Psychosocial Counseling).
+- **Corroborating Witness Statements**: Direct recording of neighbor, official, or eyewitness testimonies to solidify BPO issuance.
 
 ---
 
-### Stage 4: Official BPO Issuance & The 24-Hour SLA Mandate (`Step 3: Issue BPO`)
-- **Statutory Requirement (RA 9262 Section 14)**:
-  - *"A Punong Barangay or designated Kagawad must issue the Barangay Protection Order within twenty-four (24) hours of application filing."*
-- **Issuance Logic & Real-Time SLA Health Analyzer**:
-  - Defaults to `Application Date + 2 hours` (standard executive review and signature window).
-  - Quick Presets: `[+1 Hour]`, `[+2 Hours (Recommended)]`, `[+4 Hours]`, `[Current Time]`.
-  - **Red Alert (Chronological Violation)**: Blocks submission if issuance is dated before application filing.
-  - **Green Alert (SLA Compliant)**: Confirms compliance when issued within 0 to 24 hours of filing.
-  - **Amber Alert (SLA Breach Warning)**: Displays official statutory warning if issuance exceeds 24 hours; permanently logs `is_sla_breached = true` in the statutory audit database.
-- **Protective Validity Clock**: Locked to 15 days effective immediately upon issuance (`expiration_date = issued_datetime + 15 days`).
+## 🛡️ BPO Processing, Service, and Monitoring
+
+### Stage 2: BPO Application Filing
+- **Application Datetime Presets**: `[+30m from Incident]`, `[Same as Incident]`, `[Current Time]`.
+- **Status State**: Transitions to **`Application Pending`** (prevents premature "Under Monitoring" designation). Starts the statutory 24-hour SLA timer.
+
+### Stage 3: Official BPO Issuance (24-Hour SLA Mandate - Sec. 14)
+- **Legal Rule**: Punong Barangay or designated Kagawad must issue the BPO within **24 hours** of application.
+- **Real-Time SLA Health Analyzer**:
+  - 🟢 **Green (Compliant)**: Issued within 0 to 24 hours of application filing.
+  - 🟡 **Amber (Breach Warning)**: Displays official statutory warning if issuance exceeds 24 hours; permanently records `is_sla_breached = true` in the audit database.
+  - 🔴 **Red (Chronological Error)**: Blocks issuance if dated prior to application filing.
+- **Order Validity**: Strictly fixed to **15 calendar days** from issuance datetime.
+
+### Stage 4: Service of BPO to Respondent
+- Executed via **Personal Service** or **Substituted Service** (left at residence with person of sufficient age/discretion).
+- Datetime validation: Service must be dated at or after BPO issuance.
+- Transitions status to **`Under Monitoring`**.
+
+### Stage 5: 15-Day Active Compliance Monitoring
+- Desk officers log continuous check-ins (home visit, phone check, desk interview).
+- Every log captures: `is_compliant`, `survivor_reported_safe`, detailed notes, and referral status.
 
 ---
 
-### Stage 5: BPO Service to Respondent (`Step 4: Serve BPO`)
-- **Execution**: Served by Barangay Tanod, PNP officer, or authorized server.
-- **Methods**: `Personally Received` or `Left at Residence (Substituted Service)`.
-- **Chronological Constraint**: Service datetime cannot be dated prior to official BPO issuance (`served_datetime >= issued_datetime`).
-- **Quick Presets**: `[+2 Hours from Issuance]`, `[+4 Hours]`, `[+24 Hours (Next Day)]`, `[Current Time]`.
+## 🛑 The Jurisdictional Gate & Case Closure Rules
+
+### Strict Prohibition of Conciliation (RA 9262 Section 33)
+> Under Section 33 of RA 9262, **conciliation and amicable settlement are strictly prohibited**. Barangay officials who attempt to reconcile the parties face administrative sanctions. Consequently, `"Amicable Settlement"` is physically excluded from all system closure options.
+
+### The Two Legally Recognized Closure Routes:
+1. **Administrative Expiration Path (Unviolated 15-Day BPO)**:
+   - Permitted only if the 15-day BPO has lapsed peacefully with zero reported violations, and survivor confirms safety or case is transferred to CSWDO.
+2. **Judicial Resolution Gate (Escalated Path)**:
+   - Once a case is escalated to the PNP WCPD or Family Court due to BPO violation or high lethality, **the barangay loses local disposition authority** under the Public Crime Doctrine.
+   - The standard "Close Case" button is locked. Archival requires recording mandatory judicial credentials:
+     - **Court Docket / Resolution Number** (e.g., `Crim. Case No. 2026-8812`)
+     - **Issuing Court / Prosecutor Entity** (e.g., `RTC Branch 11 Family Court`)
+     - **Resolution Date & Judicial Findings**
+     - Permitted grounds: Court Issued Permanent Protection Order (PPO), Court Issued Temporary Protection Order (TPO), Prosecutor Formal Information Filed, or Judicial Dismissal.
 
 ---
 
-### Stage 6: Active Compliance Monitoring (`Step 5: Monitoring`)
-- **State Transition**: Case status officially advances to **`Under Monitoring`** only after BPO has been successfully served.
-- **Monitoring Scope (15-Day Protection Window)**:
-  - Desk officers record in-person home visits, phone check-ins, and office check-ins.
-  - Structured fields: `is_compliant`, `survivor_reported_safe`, `notes`, and psychosocial counseling referrals.
+## 🛡️ Dual-Timestamp Statutory Audit Standard
 
----
-
-### Stage 7: Legal Transmittal & Escalation (`Step 6: Referral / Escalation`)
-- **Trigger**: Non-compliance with BPO, high-risk threat escalation, or direct transmittal of historical criminal complaints (RA 9262 Sec. 24).
-- **Statutory Penalty**: Under RA 9262 Section 15, violation of a BPO is a criminal offense punishable by imprisonment of 30 days without prejudice to criminal charges for the underlying acts of violence.
-- **The Jurisdictional Gate (Loss of Local Disposition Authority)**:
-  - Once escalated to the **PNP Women and Children Protection Desk (WCPD)**, City/Provincial Prosecutor, or Family Court, **the barangay desk officer legally loses authority to close, drop, or archive the case file**.
-  - **Public Crime Doctrine**: Under Philippine jurisprudence and RA 9262, domestic violence is a crime against the State, not a private civil feud. Neither the barangay nor the victim can unilaterally "drop" or "close" an active criminal investigation.
-  - **UI Enforcement**: The system immediately blocks the standard `Close Case File` action and displays `Local Closure Blocked (Active Criminal Proceeding)`.
-  - **Community Safety & Welfare Monitoring Track**: Desk officers can continue logging community safety check-ins and tanod neighborhood wellness checks without altering the case's persistent `Escalated to Court/PNP` legal status.
-
----
-
-### Stage 8: Statutory Case Closure & Archival (`Step 7: Close Case`)
-- **STRICT STATUTORY RULE — PROHIBITION OF CONCILIATION (RA 9262 Section 33)**:
-  - Under Section 33 of RA 9262, **conciliation and amicable settlement are strictly illegal** for offenses punishable under the Anti-VAWC Act.
-  - **"Amicable Settlement / Conciliation" is strictly excluded from system options.**
-- **The Two Distinct Closure Pathways**:
-  1. **Standard 15-Day BPO Lapsed Path (Step 5)**:
-     - Used only when the 15-day protection order has concluded successfully with zero reported violations, or transferred to CSWDO for social welfare intervention.
-  2. **Official Judicial / Prosecutorial Resolution Gate (Step 6 Escalated Path)**:
-     - An escalated case remains locked in active criminal status until an official legal resolution is rendered by a Court or Prosecutor.
-     - To close an escalated case, the officer must record mandatory statutory credentials:
-       - **Docket / Resolution Number** (e.g., `Crim Case No. 2026-114`)
-       - **Issuing Court / Prosecutor Body** (e.g., `RTC Branch 12 Family Court`, `City Prosecutor's Office`)
-       - **Official Order / Resolution Date**
-       - **Judicial Findings & Transmittal Summary**
-     - Permitted grounds: Court Issued Permanent Protection Order (PPO), Court Issued Temporary Protection Order (TPO), Prosecutor Formal Information Filed in Court, or Case Dismissed by Presiding Judge / Prosecutor.
-
----
-
-## 🛡️ The Dual-Timestamp Statutory Audit Standard
-
-To defend the system during panel evaluation and judicial accreditation against questions of retrospective data entry:
-
-| Timestamp Attribute | Description | Legal Function |
+| Timestamp Attribute | System Column | Legal Purpose |
 | :--- | :--- | :--- |
-| **Process Datetime** (`process_timestamp`) | The verified historical occurrence date of the crime, filing, signing, service, or check-in. | Calculates 15-day order validity, 24-hour statutory SLAs, and evidence timelines. |
-| **System Audit Datetime** (`created_at`) | The immutable server timestamp capturing the exact second the officer saved the digital record. | Proves chain of custody, data integrity, and authenticates operator entry. |
+| **Process Datetime** | `process_timestamp` | The true historical occurrence date (crime date, filing date, service date). Drives SLA calculations and legal prescriptive periods. |
+| **System Audit Datetime** | `created_at` | Immutable server timestamp recording the exact second the officer persisted the record. Proves chain of custody in court. |
 
-### Visual Audit Badges:
-- **Historical Back-Encoding (Retroactive Log)**: Automatically badged when $| \text{Process Datetime} - \text{System Datetime} | > 24\text{ hours}$.
-- **Live Real-Time Intake (Direct Desk Record)**: Badged when the record is submitted during live desk operations.
+**Audit Badge Logic**:
+- **Retroactive Log**: Displayed when $| \text{Process Datetime} - \text{System Datetime} | > 24\text{ hours}$.
+- **Live Intake**: Displayed when record is saved concurrently with desk interview.
 
 ---
 
-## 🎓 Capstone Panel Defense Q&A Reference
+## 🎓 Quick Panel Defense Talking Points
 
-### Q1: "Why does the Master Folder header say 'Application Pending' instead of 'Under Monitoring' at Step 2?"
-> *"Under standard procedural law, monitoring only commences after an order is officially signed and served to the respondent. Labeling a case 'Under Monitoring' during Step 2 would be a procedural falsification. The system keeps the status strictly at 'Application Pending' until Step 4 (Service) is concluded."*
+1. **"Why was 'Other Household Relative' deleted?"**
+   > *"Under Section 3 of RA 9262, VAWC crimes strictly require an intimate, marital, dating, or common-child relationship. Offenses by non-intimate relatives against household members are properly prosecuted under RA 7610 or Physical Injuries under the RPC. Removing this option ensures our system strictly complies with the statutory definition of VAWC."*
 
-### Q2: "How does the system prevent operator data entry errors in dates?"
-> *"All datetime input controls enforce strict `min` boundaries (cannot be dated before the incident) and `max` boundaries (cannot be dated in the future). Furthermore, Step 3 incorporates a real-time RA 9262 Section 14 SLA Health Analyzer that warns against delays exceeding 24 hours."*
+2. **"Why are Create.tsx and Show.tsx decomposed into partials?"**
+   > *"We adhered to the Single Responsibility Principle (SRP) and custom React hooks. `Create.tsx` and `Show.tsx` act as clean orchestrators (< 240 lines), while individual steps (demographics, incident facts, BPO issuance, compliance monitoring) are encapsulated in isolated components under `Partials/Create/` and `Partials/Show/` with dedicated hooks managing business logic."*
 
-### Q3: "Why is there no 'Amicable Settlement' option for closing a VAWC case?"
-> *"Section 33 of Republic Act 9262 explicitly mandates the Prohibition of Conciliation. Barangay officials are legally barred from attempting conciliation or amicable settlements for acts of violence against women and children. Our system enforces this statutory mandate by offering only legally recognized judicial and administrative closure dispositions."*
-
-### Q4: "What if a victim reports an incident that occurred 2 years ago? Can she still apply for a BPO?"
-> *"Under RA 9262 Section 14, a BPO is an emergency relief intended to avert imminent, immediate danger within the barangay. If the incident occurred 2 years ago with no recent contact, an emergency 15-day BPO is legally inappropriate. However, under Section 24, VAWC crimes prescribe in 10 to 20 years. Therefore, the barangay must never turn the victim away; our system provides an automated Direct Criminal Transmittal route that bypasses local BPO steps and forwards the case directly to the PNP WCPD and City Prosecutor for formal criminal prosecution."*
-
-### Q5: "If a case is escalated to the PNP or Court, can the Barangay Desk Officer still close or archive it?"
-> *"Absolutely not. Under Philippine administrative law and RA 9262, domestic violence is a public crime against the State. Once escalated (Step 6), the barangay surrenders administrative jurisdiction over the legal disposition to the PNP WCPD and the Judiciary. Our system implements a strict Jurisdictional Gate: the 'Close Case File' button is locked, preventing arbitrary local dismissal. Archival (Step 7) remains locked until an official judicial verdict, PPO, or prosecutorial resolution is rendered, requiring the officer to input the court docket number, issuing body, and order date before the system permits final archival."*
-
+3. **"How does the system ensure chain of custody for repeat offenders?"**
+   > *"Through our Master Dossier pattern. Once a dossier is established, subsequent incidents are indexed sequentially (Incident #2, #3). When a Master Dossier is attached, survivor and respondent identities are legally locked to preserve evidentiary integrity across repeated disclosures."*

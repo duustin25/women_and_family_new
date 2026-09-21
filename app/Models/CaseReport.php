@@ -24,6 +24,7 @@ class CaseReport extends Model
         'victim_gender',
         'complainant_name',
         'complainant_contact',
+        'complainant_address',
         'relation_to_victim',
         'incident_date',
         'incident_location',
