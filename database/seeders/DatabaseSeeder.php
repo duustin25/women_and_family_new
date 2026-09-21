@@ -35,8 +35,16 @@ class DatabaseSeeder extends Seeder
         \Illuminate\Support\Facades\Schema::enableForeignKeyConstraints();
 
         $zoneColors = [
-            1 => '#10b981', 2 => '#3b82f6', 3 => '#f59e0b', 4 => '#ef4444', 5 => '#8b5cf6',
-            6 => '#ec4899', 7 => '#6b7280', 8 => '#06b6d4', 9 => '#14b8a6', 10 => '#f97316'
+            1 => '#10b981',
+            2 => '#3b82f6',
+            3 => '#f59e0b',
+            4 => '#ef4444',
+            5 => '#8b5cf6',
+            6 => '#ec4899',
+            7 => '#6b7280',
+            8 => '#06b6d4',
+            9 => '#14b8a6',
+            10 => '#f97316'
         ];
 
         $zones = [];
@@ -71,30 +79,42 @@ class DatabaseSeeder extends Seeder
         }
 
         // 3. Create Super Admin (System Administrator)
-        // Migrate legacy admin email if present to maintain relational IDs
-        $existingAdmin = User::whereIn('email', ['admin@gmail.com', 'admin_B183@gmail.com', 'djkhalid1m@gmail.com'])->first();
+        $adminEmail = env('SEED_ADMIN_EMAIL', 'admin@villamor183.local');
+        $adminPassword = env('SEED_ADMIN_PASSWORD', 'ChangeMeInProduction!2026');
+        $adminName = env('SEED_ADMIN_NAME', 'Dus Empleo');
+
+        // Migrate legacy admin emails if present to maintain relational IDs
+        $existingAdmin = User::withTrashed()
+            ->whereIn('email', ['admin@gmail.com', 'admin_B183@gmail.com', $adminEmail])
+            ->first();
+
         if ($existingAdmin) {
+            if ($existingAdmin->trashed()) {
+                $existingAdmin->restore();
+            }
             $existingAdmin->update([
-                'email' => 'djkhalid1m@gmail.com',
-                'password' => bcrypt('Dustin_183@Women&Family2026'),
+                'email' => $adminEmail,
+                'name' => $existingAdmin->name ?: $adminName,
+                'role' => User::ROLE_ADMIN,
+                'status' => User::STATUS_ACTIVE,
+                'is_active' => true,
+                'email_verified_at' => $existingAdmin->email_verified_at ?? now(),
+            ]);
+            // Only update password in local development or if account has no password yet
+            if (app()->environment('local') || empty($existingAdmin->password)) {
+                $existingAdmin->update(['password' => bcrypt($adminPassword)]);
+            }
+            $admin = $existingAdmin;
+        } else {
+            $admin = User::create([
+                'name' => $adminName,
+                'email' => $adminEmail,
+                'password' => bcrypt($adminPassword),
                 'role' => User::ROLE_ADMIN,
                 'status' => User::STATUS_ACTIVE,
                 'is_active' => true,
                 'email_verified_at' => now(),
             ]);
-            $admin = $existingAdmin;
-        } else {
-            $admin = User::updateOrCreate(
-                ['email' => 'djkhalid1m@gmail.com'],
-                [
-                    'name' => 'Gerald Sobrevega',
-                    'password' => bcrypt('Dustin_183@Women&Family2026'),
-                    'role' => User::ROLE_ADMIN,
-                    'status' => User::STATUS_ACTIVE,
-                    'is_active' => true,
-                    'email_verified_at' => now(),
-                ]
-            );
         }
 
         // 4. Add Gerald to the Officials Chart
@@ -109,29 +129,40 @@ class DatabaseSeeder extends Seeder
         );
 
         // 5. Create Sample Staff/Officer (Head Committee / VAWC)
-        $existingHead = User::whereIn('email', ['vawc@gmail.com', 'head_B183@gmail.com', 'djkhalid2m@gmail.com'])->first();
+        $headEmail = env('SEED_HEAD_EMAIL', 'head@villamor183.local');
+        $headPassword = env('SEED_HEAD_PASSWORD', 'ChangeMeInProduction!2026');
+        $headName = env('SEED_HEAD_NAME', 'Gerald Sobrevega');
+
+        $existingHead = User::withTrashed()
+            ->whereIn('email', ['vawc@gmail.com', 'head_B183@gmail.com', $headEmail])
+            ->first();
+
         if ($existingHead) {
+            if ($existingHead->trashed()) {
+                $existingHead->restore();
+            }
             $existingHead->update([
-                'email' => 'djkhalid2m@gmail.com',
-                'password' => bcrypt('Head_183@Women&Family2026'),
+                'email' => $headEmail,
+                'name' => $headName,
+                'role' => User::ROLE_HEAD,
+                'status' => User::STATUS_ACTIVE,
+                'is_active' => true,
+                'email_verified_at' => $existingHead->email_verified_at ?? now(),
+            ]);
+            if (app()->environment('local') || empty($existingHead->password)) {
+                $existingHead->update(['password' => bcrypt($headPassword)]);
+            }
+            $vawcOfficer = $existingHead;
+        } else {
+            $vawcOfficer = User::create([
+                'name' => $headName,
+                'email' => $headEmail,
+                'password' => bcrypt($headPassword),
                 'role' => User::ROLE_HEAD,
                 'status' => User::STATUS_ACTIVE,
                 'is_active' => true,
                 'email_verified_at' => now(),
             ]);
-            $vawcOfficer = $existingHead;
-        } else {
-            $vawcOfficer = User::updateOrCreate(
-                ['email' => 'djkhalid2m@gmail.com'],
-                [
-                    'name' => 'Officer Sarah (Head Committee)',
-                    'password' => bcrypt('Head_183@Women&Family2026'),
-                    'role' => User::ROLE_HEAD,
-                    'status' => User::STATUS_ACTIVE,
-                    'is_active' => true,
-                    'email_verified_at' => now(),
-                ]
-            );
         }
 
         // 6. Define Custom Schemas & Print Settings matching actual application sheets
@@ -412,7 +443,7 @@ class DatabaseSeeder extends Seeder
                 'print_settings' => $kalipiPrintSettings,
                 'president' => [
                     'name' => 'Elena Reyes',
-                    'email' => 'kalipi_B183@gmail.com',
+                    'email' => env('SEED_KALIPI_EMAIL', 'kalipi@villamor183.local'),
                 ]
             ],
             [
@@ -425,7 +456,7 @@ class DatabaseSeeder extends Seeder
                 'print_settings' => $kabahagiPrintSettings,
                 'president' => [
                     'name' => 'Josefa Lopez',
-                    'email' => 'kabahagi_B183@gmail.com',
+                    'email' => env('SEED_KABAHAGI_EMAIL', 'kabahagi@villamor183.local'),
                 ]
             ],
             [
@@ -438,7 +469,7 @@ class DatabaseSeeder extends Seeder
                 'print_settings' => $vcoPrintSettings,
                 'president' => [
                     'name' => 'Mark Alcantara',
-                    'email' => 'vco_B183@gmail.com',
+                    'email' => env('SEED_VCO_EMAIL', 'vco@villamor183.local'),
                 ]
             ],
             [
@@ -451,7 +482,7 @@ class DatabaseSeeder extends Seeder
                 'print_settings' => $soloParentsPrintSettings,
                 'president' => [
                     'name' => 'Maria Dela Cruz',
-                    'email' => 'djkhalid3m@gmail.com',
+                    'email' => env('SEED_SOLO_PARENT_EMAIL', 'soloparent@villamor183.local'),
                 ]
             ],
             [
@@ -464,33 +495,29 @@ class DatabaseSeeder extends Seeder
                 'print_settings' => $erpatPrintSettings,
                 'president' => [
                     'name' => 'Ramil Rodriguez',
-                    'email' => 'erpat_B183@gmail.com',
+                    'email' => env('SEED_ERPAT_EMAIL', 'erpat@villamor183.local'),
                 ]
             ]
         ];
 
         // 7. Seed Organizations, Presidents & 3 Pending Applications per Org
-        $presPassword = bcrypt('Org_183@Women&Family2026');
+        $presPassword = bcrypt(env('SEED_PRESIDENT_PASSWORD', 'ChangeMeInProduction!2026'));
 
-        // Migrate legacy solo parent president email if present
-        $existingSolo = User::where('email', 'soloparent_B183@gmail.com')->first();
-        if ($existingSolo) {
-            $existingSolo->update(['email' => 'djkhalid3m@gmail.com']);
+        // Clean out legacy mock applications and legacy test president accounts in local/testing only
+        if (app()->environment('local', 'testing')) {
+            \Illuminate\Support\Facades\Schema::disableForeignKeyConstraints();
+            Member::truncate();
+            MembershipApplication::truncate();
+            User::whereIn('email', [
+                'kalipi@gmail.com',
+                'kabahagi@gmail.com',
+                'vco@gmail.com',
+                'soloparent@gmail.com',
+                'erpat@gmail.com',
+                'hahah@gmail.com'
+            ])->forceDelete();
+            \Illuminate\Support\Facades\Schema::enableForeignKeyConstraints();
         }
-
-        // Clean out legacy mock applications and legacy test president accounts
-        \Illuminate\Support\Facades\Schema::disableForeignKeyConstraints();
-        Member::truncate();
-        MembershipApplication::truncate();
-        User::whereIn('email', [
-            'kalipi@gmail.com',
-            'kabahagi@gmail.com',
-            'vco@gmail.com',
-            'soloparent@gmail.com',
-            'erpat@gmail.com',
-            'hahah@gmail.com'
-        ])->forceDelete();
-        \Illuminate\Support\Facades\Schema::enableForeignKeyConstraints();
 
         foreach ($orgsData as $orgInfo) {
             $presData = $orgInfo['president'];
@@ -498,109 +525,129 @@ class DatabaseSeeder extends Seeder
 
             $org = Organization::firstOrCreate(['slug' => $orgInfo['slug']], $orgInfo);
 
-            // Create or update President User
-            User::updateOrCreate(
-                ['email' => $presData['email']],
-                [
+            // Create or update President User safely
+            $existingPres = User::withTrashed()->where('email', $presData['email'])->first();
+
+            if ($existingPres) {
+                if ($existingPres->trashed()) {
+                    $existingPres->restore();
+                }
+                $existingPres->update([
                     'name' => $presData['name'],
+                    'email' => $presData['email'],
+                    'role' => User::ROLE_PRESIDENT,
+                    'organization_id' => $org->id,
+                    'status' => User::STATUS_ACTIVE,
+                    'is_active' => true,
+                    'email_verified_at' => $existingPres->email_verified_at ?? now(),
+                ]);
+                if (app()->environment('local') || empty($existingPres->password)) {
+                    $existingPres->update(['password' => $presPassword]);
+                }
+            } else {
+                User::create([
+                    'name' => $presData['name'],
+                    'email' => $presData['email'],
                     'password' => $presPassword,
                     'role' => User::ROLE_PRESIDENT,
                     'organization_id' => $org->id,
                     'status' => User::STATUS_ACTIVE,
                     'is_active' => true,
                     'email_verified_at' => now(),
-                ]
-            );
-
-            // Seed exactly 3 Pending applications per organization (Mock Data)
-            for ($i = 0; $i < 3; $i++) {
-                $applicantName = $faker->name();
-                $applicantEmail = $faker->unique()->safeEmail();
-                $applicantAddress = $faker->streetAddress() . ', Zone ' . rand(1, 10);
-
-                // Mock dynamic form responses
-                $formData = [
-                    'fullname' => $applicantName,
-                    'address' => $applicantAddress,
-                    'email' => $applicantEmail,
-                ];
-
-                // Fill custom attributes
-                if ($org->slug === 'vco-youth') {
-                    $formData['vco_dob'] = $faker->date('Y-m-d', '-10 years');
-                    $formData['vco_age'] = rand(8, 17);
-                    $formData['vco_school'] = $faker->company() . ' High School';
-                    $formData['vco_grade'] = 'Grade ' . rand(3, 11);
-                    $formData['vco_guardian'] = $faker->name();
-                    $formData['vco_guardian_email'] = $faker->safeEmail();
-                    $formData['vco_guardian_phone'] = $faker->phoneNumber();
-                } elseif ($org->slug === 'erpat-fathers') {
-                    $formData['erpat_age'] = rand(25, 65);
-                    $formData['erpat_sex'] = 'Male';
-                    $formData['erpat_dob'] = $faker->date('Y-m-d', '-30 years');
-                    $formData['erpat_religion'] = $faker->randomElement(['Roman Catholic', 'Christian', 'INC']);
-                    $formData['erpat_occupation'] = $faker->jobTitle();
-                    $formData['erpat_phone'] = $faker->phoneNumber();
-                    $formData['erpat_status'] = [$faker->randomElement(['Biological Father', 'Solo Parent', 'Guardian'])];
-                    $formData['erpat_school'] = $faker->company() . ' School';
-                    $formData['erpat_year_sem'] = rand(1995, 2015) . ' Completed';
-                    $formData['erpat_skills'] = $faker->randomElement(['Carpentry', 'Plumbing', 'Welding', 'Cooking']);
-                    $formData['erpat_hobbies'] = $faker->randomElement(['Gardening', 'Sports', 'Reading']);
-                    $formData['erpat_family_composition'] = [
-                        ['Name' => $faker->name('female'), 'Sex' => 'Female', 'Relationship' => 'Wife', 'Age' => rand(25, 60)],
-                        ['Name' => $faker->name(), 'Sex' => $faker->randomElement(['Male', 'Female']), 'Relationship' => 'Child', 'Age' => rand(1, 20)]
-                    ];
-                    $formData['erpat_seminars'] = [
-                        ['title' => 'Responsible Parenting Seminar', 'organizer' => 'Pasay City SWDD', 'date' => $faker->date('Y-m-d', '-1 year')],
-                        ['title' => 'Family Health Program', 'organizer' => 'Barangay 183 Health Center', 'date' => $faker->date('Y-m-d', '-2 months')]
-                    ];
-                } elseif ($org->slug === 'kalipi-association') {
-                    $formData['kalipi_age'] = rand(22, 60);
-                    $formData['kalipi_dob'] = $faker->date('Y-m-d', '-25 years');
-                    $formData['kalipi_religion'] = $faker->randomElement(['Roman Catholic', 'Christian', 'INC']);
-                    $formData['kalipi_civil_status'] = $faker->randomElement(['Married', 'Single', 'Widowed']);
-                    $formData['kalipi_cellphone'] = $faker->phoneNumber();
-                    $formData['kalipi_sectoral'] = [$faker->randomElement(['Solo parent', 'Others'])];
-                    $formData['kalipi_attainment'] = $faker->randomElement(['High School Graduate', 'College Level', 'College Graduate']);
-                    $formData['kalipi_occupation'] = $faker->jobTitle();
-                    $formData['kalipi_income'] = rand(10000, 35000) . ' PHP';
-                    $formData['kalipi_family_composition'] = [
-                        ['Name' => $faker->name('male'), 'Age' => rand(25, 60), 'Relationship to Member' => 'Husband', 'Highest Educational Attainment' => 'College', 'Occupation' => 'Driver', 'Income' => '15000', 'Remarks (Disability, IP, Solo Parent)' => 'None'],
-                        ['Name' => $faker->name(), 'Age' => rand(5, 18), 'Relationship to Member' => 'Child', 'Highest Educational Attainment' => 'Elementary', 'Occupation' => 'Student', 'Income' => '0', 'Remarks (Disability, IP, Solo Parent)' => 'None']
-                    ];
-                } elseif ($org->slug === 'solo-parent-assoc') {
-                    $formData['solo_occupation'] = $faker->jobTitle();
-                    $formData['solo_dob'] = $faker->date('Y-m-d', '-28 years');
-                    $formData['solo_phone'] = $faker->phoneNumber();
-                    $formData['solo_age'] = rand(20, 50);
-                    $formData['solo_marital'] = $faker->randomElement(['Single Parent', 'Separated', 'Widowed']);
-                    $formData['solo_id'] = 'SP-' . rand(100000, 999999);
-                    $formData['solo_expiration'] = $faker->date('Y-m-d', '+2 years');
-                    $formData['solo_category'] = $faker->randomElement(['Death of Spouse', 'Abandoned', 'Legal Separation']);
-                    $formData['solo_zone'] = 'Zone ' . rand(1, 10);
-                    $formData['solo_precinct'] = 'PR-' . rand(10, 99);
-                    $formData['solo_children'] = [
-                        ['name' => $faker->name(), 'age' => rand(1, 15)],
-                        ['name' => $faker->name(), 'age' => rand(1, 10)]
-                    ];
-                } else {
-                    // kabahagi
-                    $formData['kabahagi_dob'] = $faker->date('Y-m-d', '-20 years');
-                    $formData['kabahagi_phone'] = $faker->phoneNumber();
-                    $formData['kabahagi_pwd_id'] = 'PWD-' . rand(10000, 99999);
-                    $formData['kabahagi_disability'] = $faker->randomElement(['Visual Impairment', 'Orthopedic Disability', 'Hearing Impairment']);
-                }
-
-                MembershipApplication::create([
-                    'organization_id' => $org->id,
-                    'fullname' => $applicantName,
-                    'address' => $applicantAddress,
-                    'email' => $applicantEmail,
-                    'form_data' => $formData,
-                    'status' => 'Pending',
-                    'approved_by' => null,
-                    'actioned_at' => null,
                 ]);
+            }
+
+            // Seed exactly 3 Pending applications per organization (Mock Data only in local/testing)
+            if (app()->environment('local', 'testing')) {
+                for ($i = 0; $i < 3; $i++) {
+                    $applicantName = $faker->name();
+                    $applicantEmail = $faker->unique()->safeEmail();
+                    $applicantAddress = $faker->streetAddress() . ', Zone ' . rand(1, 10);
+
+                    // Mock dynamic form responses
+                    $formData = [
+                        'fullname' => $applicantName,
+                        'address' => $applicantAddress,
+                        'email' => $applicantEmail,
+                    ];
+
+                    // Fill custom attributes
+                    if ($org->slug === 'vco-youth') {
+                        $formData['vco_dob'] = $faker->date('Y-m-d', '-10 years');
+                        $formData['vco_age'] = rand(8, 17);
+                        $formData['vco_school'] = $faker->company() . ' High School';
+                        $formData['vco_grade'] = 'Grade ' . rand(3, 11);
+                        $formData['vco_guardian'] = $faker->name();
+                        $formData['vco_guardian_email'] = $faker->safeEmail();
+                        $formData['vco_guardian_phone'] = $faker->phoneNumber();
+                    } elseif ($org->slug === 'erpat-fathers') {
+                        $formData['erpat_age'] = rand(25, 65);
+                        $formData['erpat_sex'] = 'Male';
+                        $formData['erpat_dob'] = $faker->date('Y-m-d', '-30 years');
+                        $formData['erpat_religion'] = $faker->randomElement(['Roman Catholic', 'Christian', 'INC']);
+                        $formData['erpat_occupation'] = $faker->jobTitle();
+                        $formData['erpat_phone'] = $faker->phoneNumber();
+                        $formData['erpat_status'] = [$faker->randomElement(['Biological Father', 'Solo Parent', 'Guardian'])];
+                        $formData['erpat_school'] = $faker->company() . ' School';
+                        $formData['erpat_year_sem'] = rand(1995, 2015) . ' Completed';
+                        $formData['erpat_skills'] = $faker->randomElement(['Carpentry', 'Plumbing', 'Welding', 'Cooking']);
+                        $formData['erpat_hobbies'] = $faker->randomElement(['Gardening', 'Sports', 'Reading']);
+                        $formData['erpat_family_composition'] = [
+                            ['Name' => $faker->name('female'), 'Sex' => 'Female', 'Relationship' => 'Wife', 'Age' => rand(25, 60)],
+                            ['Name' => $faker->name(), 'Sex' => $faker->randomElement(['Male', 'Female']), 'Relationship' => 'Child', 'Age' => rand(1, 20)]
+                        ];
+                        $formData['erpat_seminars'] = [
+                            ['title' => 'Responsible Parenting Seminar', 'organizer' => 'Pasay City SWDD', 'date' => $faker->date('Y-m-d', '-1 year')],
+                            ['title' => 'Family Health Program', 'organizer' => 'Barangay 183 Health Center', 'date' => $faker->date('Y-m-d', '-2 months')]
+                        ];
+                    } elseif ($org->slug === 'kalipi-association') {
+                        $formData['kalipi_age'] = rand(22, 60);
+                        $formData['kalipi_dob'] = $faker->date('Y-m-d', '-25 years');
+                        $formData['kalipi_religion'] = $faker->randomElement(['Roman Catholic', 'Christian', 'INC']);
+                        $formData['kalipi_civil_status'] = $faker->randomElement(['Married', 'Single', 'Widowed']);
+                        $formData['kalipi_cellphone'] = $faker->phoneNumber();
+                        $formData['kalipi_sectoral'] = [$faker->randomElement(['Solo parent', 'Others'])];
+                        $formData['kalipi_attainment'] = $faker->randomElement(['High School Graduate', 'College Level', 'College Graduate']);
+                        $formData['kalipi_occupation'] = $faker->jobTitle();
+                        $formData['kalipi_income'] = rand(10000, 35000) . ' PHP';
+                        $formData['kalipi_family_composition'] = [
+                            ['Name' => $faker->name('male'), 'Age' => rand(25, 60), 'Relationship to Member' => 'Husband', 'Highest Educational Attainment' => 'College', 'Occupation' => 'Driver', 'Income' => '15000', 'Remarks (Disability, IP, Solo Parent)' => 'None'],
+                            ['Name' => $faker->name(), 'Age' => rand(5, 18), 'Relationship to Member' => 'Child', 'Highest Educational Attainment' => 'Elementary', 'Occupation' => 'Student', 'Income' => '0', 'Remarks (Disability, IP, Solo Parent)' => 'None']
+                        ];
+                    } elseif ($org->slug === 'solo-parent-assoc') {
+                        $formData['solo_occupation'] = $faker->jobTitle();
+                        $formData['solo_dob'] = $faker->date('Y-m-d', '-28 years');
+                        $formData['solo_phone'] = $faker->phoneNumber();
+                        $formData['solo_age'] = rand(20, 50);
+                        $formData['solo_marital'] = $faker->randomElement(['Single Parent', 'Separated', 'Widowed']);
+                        $formData['solo_id'] = 'SP-' . rand(100000, 999999);
+                        $formData['solo_expiration'] = $faker->date('Y-m-d', '+2 years');
+                        $formData['solo_category'] = $faker->randomElement(['Death of Spouse', 'Abandoned', 'Legal Separation']);
+                        $formData['solo_zone'] = 'Zone ' . rand(1, 10);
+                        $formData['solo_precinct'] = 'PR-' . rand(10, 99);
+                        $formData['solo_children'] = [
+                            ['name' => $faker->name(), 'age' => rand(1, 15)],
+                            ['name' => $faker->name(), 'age' => rand(1, 10)]
+                        ];
+                    } else {
+                        // kabahagi
+                        $formData['kabahagi_dob'] = $faker->date('Y-m-d', '-20 years');
+                        $formData['kabahagi_phone'] = $faker->phoneNumber();
+                        $formData['kabahagi_pwd_id'] = 'PWD-' . rand(10000, 99999);
+                        $formData['kabahagi_disability'] = $faker->randomElement(['Visual Impairment', 'Orthopedic Disability', 'Hearing Impairment']);
+                    }
+
+                    MembershipApplication::create([
+                        'organization_id' => $org->id,
+                        'fullname' => $applicantName,
+                        'address' => $applicantAddress,
+                        'email' => $applicantEmail,
+                        'form_data' => $formData,
+                        'status' => 'Pending',
+                        'approved_by' => null,
+                        'actioned_at' => null,
+                    ]);
+                }
             }
         }
 
