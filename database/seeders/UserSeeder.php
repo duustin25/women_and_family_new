@@ -12,7 +12,7 @@ class UserSeeder extends Seeder
     /**
      * Run the database seeds.
      * This seeder ONLY creates or updates required administrative users.
-     * It NEVER truncates tables or modifies existing case/member records.
+     * It cleans up any ghost duplicate accounts and ensures exactly 7 unique system users.
      */
     public function run(): void
     {
@@ -21,9 +21,9 @@ class UserSeeder extends Seeder
         $adminPassword = env('SEED_ADMIN_PASSWORD', 'ChangeMeInProduction!2026');
         $adminName = env('SEED_ADMIN_NAME', 'Dus Empleo');
 
-        $existingAdmin = User::withTrashed()
-            ->whereIn('email', ['admin@gmail.com', 'admin_B183@gmail.com', $adminEmail])
-            ->first();
+        $existingAdmin = User::withTrashed()->where('email', $adminEmail)->first()
+            ?? User::withTrashed()->whereIn('email', ['admin@gmail.com', 'admin_B183@gmail.com', 'admin@villamor183.local'])->first()
+            ?? User::withTrashed()->where('role', User::ROLE_ADMIN)->first();
 
         if ($existingAdmin) {
             if ($existingAdmin->trashed()) {
@@ -31,7 +31,7 @@ class UserSeeder extends Seeder
             }
             $existingAdmin->update([
                 'email' => $adminEmail,
-                'name' => $existingAdmin->name ?: $adminName,
+                'name' => $adminName,
                 'role' => User::ROLE_ADMIN,
                 'status' => User::STATUS_ACTIVE,
                 'is_active' => true,
@@ -40,6 +40,10 @@ class UserSeeder extends Seeder
             if (app()->environment('local') || empty($existingAdmin->password)) {
                 $existingAdmin->update(['password' => bcrypt($adminPassword)]);
             }
+            // Clean up any extra duplicate admin accounts
+            User::where('id', '!=', $existingAdmin->id)
+                ->where('role', User::ROLE_ADMIN)
+                ->forceDelete();
             $admin = $existingAdmin;
         } else {
             $admin = User::create([
@@ -53,25 +57,25 @@ class UserSeeder extends Seeder
             ]);
         }
 
-        // 2. Add Gerald to the Officials Chart
-        OrganizationalMember::firstOrCreate(
-            ['user_id' => $admin->id, 'committee' => 'Office of the Women and Family'],
-            [
-                'position' => 'Head Committee',
-                'level' => 'head',
-                'display_order' => 1,
-                'is_active' => true,
-            ]
-        );
+        // 2. Officials Chart Entry
+        OrganizationalMember::where('committee', 'Office of the Women and Family')->delete();
+        OrganizationalMember::create([
+            'user_id' => $admin->id,
+            'committee' => 'Office of the Women and Family',
+            'position' => 'Head Committee',
+            'level' => 'head',
+            'display_order' => 1,
+            'is_active' => true,
+        ]);
 
         // 3. Head Committee Officer (Gerald Sobrevega)
         $headEmail = env('SEED_HEAD_EMAIL', 'head@villamor183.local');
         $headPassword = env('SEED_HEAD_PASSWORD', 'ChangeMeInProduction!2026');
         $headName = env('SEED_HEAD_NAME', 'Gerald Sobrevega');
 
-        $existingHead = User::withTrashed()
-            ->whereIn('email', ['vawc@gmail.com', 'head_B183@gmail.com', $headEmail])
-            ->first();
+        $existingHead = User::withTrashed()->where('email', $headEmail)->first()
+            ?? User::withTrashed()->whereIn('email', ['vawc@gmail.com', 'head_B183@gmail.com', 'head@villamor183.local'])->first()
+            ?? User::withTrashed()->where('role', User::ROLE_HEAD)->first();
 
         if ($existingHead) {
             if ($existingHead->trashed()) {
@@ -88,6 +92,10 @@ class UserSeeder extends Seeder
             if (app()->environment('local') || empty($existingHead->password)) {
                 $existingHead->update(['password' => bcrypt($headPassword)]);
             }
+            // Clean up any extra duplicate head officer accounts
+            User::where('id', '!=', $existingHead->id)
+                ->where('role', User::ROLE_HEAD)
+                ->forceDelete();
         } else {
             User::create([
                 'name' => $headName,
@@ -139,10 +147,16 @@ class UserSeeder extends Seeder
         foreach ($presidents as $p) {
             $org = Organization::firstOrCreate(
                 ['slug' => $p['slug']],
-                ['name' => $p['org_name']]
+                [
+                    'name' => $p['org_name'],
+                    'description' => $p['org_name'],
+                    'color_theme' => 'bg-blue-600',
+                ]
             );
 
-            $existingPres = User::withTrashed()->where('email', $p['email'])->first();
+            // Match president by exact email first, or by organization_id
+            $existingPres = User::withTrashed()->where('email', $p['email'])->first()
+                ?? User::withTrashed()->where('organization_id', $org->id)->where('role', User::ROLE_PRESIDENT)->first();
 
             if ($existingPres) {
                 if ($existingPres->trashed()) {
@@ -160,6 +174,15 @@ class UserSeeder extends Seeder
                 if (app()->environment('local') || empty($existingPres->password)) {
                     $existingPres->update(['password' => $presPassword]);
                 }
+                // Delete duplicate presidents for this organization
+                User::where('id', '!=', $existingPres->id)
+                    ->where(function ($q) use ($org, $p) {
+                        $q->where(function ($sub) use ($org) {
+                            $sub->where('organization_id', $org->id)
+                                ->where('role', User::ROLE_PRESIDENT);
+                        })->orWhere('email', $p['email']);
+                    })
+                    ->forceDelete();
             } else {
                 User::create([
                     'name' => $p['name'],
