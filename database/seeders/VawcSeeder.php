@@ -50,19 +50,21 @@ class VawcSeeder extends Seeder
 
         $tz = 'Asia/Manila';
 
-        // Clean out existing VAWC tables for fresh mock data
-        DB::statement('SET FOREIGN_KEY_CHECKS=0;');
-        VawcComplianceLog::truncate();
-        VawcLegalEscalation::truncate();
-        VawcBpoServiceRecord::truncate();
-        VawcAgencyTransmittal::truncate();
-        VawcProtectionOrder::truncate();
-        VawcAssessment::truncate();
-        VawcInvolvedParty::truncate();
-        VawcCase::truncate();
-        VawcDossier::truncate();
-        CaseReport::withTrashed()->where('type', 'VAWC')->forceDelete();
-        DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+        // Clean out existing VAWC tables for fresh mock data (local/testing only)
+        if (app()->environment('local', 'testing')) {
+            DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+            VawcComplianceLog::truncate();
+            VawcLegalEscalation::truncate();
+            VawcBpoServiceRecord::truncate();
+            VawcAgencyTransmittal::truncate();
+            VawcProtectionOrder::truncate();
+            VawcAssessment::truncate();
+            VawcInvolvedParty::truncate();
+            VawcCase::truncate();
+            VawcDossier::truncate();
+            CaseReport::withTrashed()->where('type', 'VAWC')->forceDelete();
+            DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+        }
 
         // =============================================================
         // DOSSIER 1: Multi-Incident Recidivist Case (Active BPO - 3 Incidents)

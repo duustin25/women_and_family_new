@@ -115,7 +115,7 @@ class AuditObserver
             'old_values' => $oldValues,
             'new_values' => $payload,
             'ip_address' => request()->ip() ?? '127.0.0.1',
-            'user_agent' => $processName ?: (request()->userAgent() ?? 'System'),
+            'user_agent' => \Illuminate\Support\Str::limit($processName ?: (request()->userAgent() ?? 'System'), 250),
         ]);
     }
 }

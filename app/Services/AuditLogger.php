@@ -232,7 +232,7 @@ class AuditLogger
                 $commandArgs = array_slice($argv, 1);
                 // Filter out php or path options
                 $commandStr = implode(' ', array_filter($commandArgs, fn($arg) => !str_starts_with($arg, '--env=')));
-                return 'System Process (Artisan: ' . trim($commandStr) . ')';
+                return \Illuminate\Support\Str::limit('System Process (Artisan: ' . trim($commandStr) . ')', 250);
             }
             return 'System Process (CLI Daemon)';
         }

@@ -652,9 +652,10 @@ class DatabaseSeeder extends Seeder
         }
 
         // 8. Seed 50 Children for BCPC Nutrition Monitoring (Clean 120-Day SFP Milestones)
-        $this->call(\Database\Seeders\BcpcSeeder::class);
-
-        // 9. Seed VAWC Master Dossiers & Sub-Cases
-        $this->call(\Database\Seeders\VawcSeeder::class);
+        // 9. Seed VAWC Master Dossiers & Sub-Cases (Only in local / testing environments)
+        if (app()->environment('local', 'testing')) {
+            $this->call(\Database\Seeders\BcpcSeeder::class);
+            $this->call(\Database\Seeders\VawcSeeder::class);
+        }
     }
 }
