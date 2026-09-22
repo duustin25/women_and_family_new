@@ -368,7 +368,7 @@ The system manages accredited community organizations representing vulnerable se
 * **Claim Lifecycle:** Dispatches generate unique tracking tokens and record claiming status (`Pending` $\rightarrow$ `Claimed`), capturing date, time, and releasing officer credentials.
 
 ### 6.5 GAD Events & Bulk Email Dispatch Engine
-* **Gender and Development (GAD) Events:** Support for event proposals, budget allocations, and administrative review workflows.
+* **Gender and Development (GAD) Events:** Support for event proposals, calendar scheduling, and administrative review workflows.
 * **Timeout-Resilient Bulk Mailing:** Laravel Queued Jobs (`SendBulkAnnouncementEmail`, `SendBulkGadEventEmail`, `SendBulkMemberEmail`) utilize chunking and exception boundaries to prevent PHP execution timeouts during mass broadcasts.
 
 ---

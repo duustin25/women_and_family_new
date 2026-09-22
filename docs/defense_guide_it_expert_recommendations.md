@@ -163,7 +163,7 @@ When explaining code structure to the Capstone panel, use these core software en
 The backup snapshot includes **all relational database entities**:
 1. **Residents & Accounts**: Resident profiles, credentials, role permissions.
 2. **VAWC & BCPC Confidential Records**: Case intake details, offender profiles, risk scores, legal protection order (BPO) logs, hearing schedules.
-3. **Barangay Operations & Organizations**: Accredited organizations, pending & verified member applications, GAD event calendars and budget allocations.
+3. **Barangay Operations & Organizations**: Accredited organizations, pending & verified member applications, GAD event calendars and program schedules.
 4. **Public Information & Officials**: Announcements, accredited org directories, barangay officials.
 5. **Immutable Audit Logs**: Complete system activity history, IP tracking, and login logs.
 
@@ -191,7 +191,7 @@ The backup snapshot includes **all relational database entities**:
 
 ### Q6: Are confidential records like VAWC cases and Resident applications included in the backup?
 > **Answer**:
-> *"Yes. The backup engine captures **100% of the relational database**, including confidential VAWC/BCPC cases, resident profiles, pending/verified organization applications, GAD budget logs, and immutable audit trails."*
+> *"Yes. The backup engine captures **100% of the relational database**, including confidential VAWC/BCPC cases, resident profiles, pending/verified organization applications, GAD event schedules, and immutable audit trails."*
 
 ### Q7: Why is Database Backup & Recovery restricted strictly to Super Administrators (role:admin) and hidden from Head and Committee users?
 > **Answer**:

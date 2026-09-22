@@ -10,7 +10,7 @@ use Carbon\Carbon;
 class GadAnalyticsService
 {
     /**
-     * Get GAD programs, budget allocations, and organization membership analytics.
+     * Get GAD calendar of events, programs, and organization membership analytics.
      */
     public function getOrganizationAnalytics(int $year): array
     {

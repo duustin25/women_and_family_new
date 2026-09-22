@@ -185,6 +185,7 @@ class DatabaseBackupController extends Controller implements HasMiddleware
 
         $request->validate([
             'password' => ['required', 'string'],
+            'archive_password' => ['nullable', 'string'],
         ]);
 
         if (!Hash::check($request->password, $request->user()->password)) {
@@ -199,8 +200,9 @@ class DatabaseBackupController extends Controller implements HasMiddleware
         $userAgent = $request->userAgent();
 
         try {
-            // Pass authorization password in case snapshot is a password-protected ZIP
-            $this->backupService->restoreBackup($filename, $request->password);
+            // If the snapshot is a password-protected ZIP, use provided archive password or fallback to admin password
+            $archivePassword = $request->input('archive_password') ?: $request->password;
+            $this->backupService->restoreBackup($filename, $archivePassword);
 
             // Re-authenticate admin so their session persists smoothly
             Auth::loginUsingId($userId);
@@ -224,7 +226,9 @@ class DatabaseBackupController extends Controller implements HasMiddleware
 
             return redirect()->back()->with('success', "Database successfully restored from snapshot '{$filename}'!");
         } catch (Exception $e) {
-            return redirect()->back()->with('error', "Database restoration failed: " . $e->getMessage());
+            return redirect()->back()
+                ->withErrors(['password' => "Database restoration failed: " . $e->getMessage()])
+                ->with('error', "Database restoration failed: " . $e->getMessage());
         }
     }
 

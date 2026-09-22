@@ -44,16 +44,17 @@ A highly confidential intake and lifecycle tracking engine for desk officers.
 An automated community health module tracking child growth under the Barangay Council for the Protection of Children.
 *   **WHO Standards Integration:** Evaluates child growth indices (Weight-for-Age and Height-for-Age) by calculating Z-scores based on WHO Child Growth curves.
 *   **90-Day Supplemental Feeding Program (SFP):** Automatically enrolls malnourished children (Underweight/Stunted) into the SFP, logs weekly assessments, and tracks graduation/relapse statuses.
-*   **Zone Hotspots:** Generates analytics of malnutrition hotspots by Zone (Purok) to help direct barangay budget interventions.
+*   **Zone Hotspots:** Generates analytics of malnutrition hotspots by Zone (Purok) to help direct targeted feeding interventions.
 
 ### 📋 4. Dynamic Organization Accreditor
 A customizable portal for community groups (KALIPI, Solo Parents, ERPAT, etc.).
 *   **Drag-and-Drop Form Builder:** Admins create custom membership forms without altering database tables. Forms are stored dynamically as JSON schemas.
 *   **Live Official Letterhead Preview:** Renders printed barangay letterhead dynamically in real-time as admins design form schemas.
 
-### 📊 5. GAD Plan & Budget Tracker
-Enforces accountability for Barangay 183 Pasay City's Gender and Development funds.
-*   **HGDG Score Calculator:** Evaluates project proposals using Harmonized Gender and Development Guidelines (HGDG) box scores, automatically attributing 25%, 50%, 75%, or 100% of the project budget based on gender responsiveness.
+### 📅 5. GAD Calendar of Events & Community Programs
+Coordinates and monitors Barangay 183 Pasay City's Gender and Development initiatives.
+*   **Event Proposal & Review Lifecycle:** Accredited organizations submit community advocacy and training proposals, with administrative review, calendar scheduling, and status tracking (Approved, Pending, Rejected).
+*   **Sector Participation & Outreach:** Tracks community involvement across accredited sectors (Women, Solo Parents, PWD, Senior Citizens) with automated bulk email notifications.
 
 ### 🛡️ 6. Defense-in-Depth Identity & OTP Security Architecture
 Built specifically to protect confidential survivor and child case records from account takeover (ATO) and session hijacking:

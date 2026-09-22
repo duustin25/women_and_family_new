@@ -38,6 +38,7 @@ export default function BackupTab({ backups = [] }: BackupTabProps) {
 
     const { data, setData, post, processing, errors, reset } = useForm({
         password: '',
+        archive_password: '',
     });
 
     const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -92,13 +93,17 @@ export default function BackupTab({ backups = [] }: BackupTabProps) {
 
         post(route('admin.backups.restore', selectedRestoreFile), {
             preserveScroll: true,
-            onSuccess: () => {
+            onSuccess: (page: any) => {
+                if (page?.props?.flash?.error) {
+                    toast.error(page.props.flash.error);
+                    return;
+                }
                 toast.success(`Database successfully restored from snapshot '${selectedRestoreFile}'!`);
                 setSelectedRestoreFile(null);
-                reset('password');
+                reset('password', 'archive_password');
             },
-            onError: () => {
-                toast.error('Failed to restore database. Verify your administrator password.');
+            onError: (err: any) => {
+                toast.error(err.password || 'Failed to restore database. Verify your administrator password.');
             }
         });
     };
@@ -306,9 +311,36 @@ export default function BackupTab({ backups = [] }: BackupTabProps) {
                                 required
                             />
                             {errors.password && (
-                                <p className="text-xs text-destructive font-medium">{errors.password}</p>
+                                <div className="p-2.5 rounded-md bg-destructive/10 border border-destructive/20 text-xs text-destructive font-medium">
+                                    {errors.password}
+                                </div>
                             )}
                         </div>
+
+                        {selectedRestoreFile?.toLowerCase().includes('.zip') && (
+                            <div className="space-y-1.5 p-3 rounded-lg border border-amber-200 dark:border-amber-900/50 bg-amber-50/50 dark:bg-amber-950/20">
+                                <div className="flex items-center justify-between">
+                                    <Label htmlFor="archive_restore_pass" className="text-xs font-bold flex items-center gap-1.5">
+                                        <Lock className="w-3.5 h-3.5 text-amber-600" />
+                                        <span>Archive Decryption Password</span>
+                                    </Label>
+                                    <Badge variant="outline" className="text-[10px] text-amber-700 dark:text-amber-300 border-amber-300">
+                                        AES-256 ZIP
+                                    </Badge>
+                                </div>
+                                <Input
+                                    id="archive_restore_pass"
+                                    type="password"
+                                    placeholder="Password set when downloading this ZIP"
+                                    value={data.archive_password}
+                                    onChange={(e) => setData('archive_password', e.target.value)}
+                                    className="text-sm font-mono"
+                                />
+                                <p className="text-[11px] text-muted-foreground">
+                                    This file is an encrypted ZIP. Enter the passphrase you chose when downloading it. (Leave blank if same as Admin password).
+                                </p>
+                            </div>
+                        )}
 
                         <DialogFooter className="gap-2 sm:gap-0">
                             <Button

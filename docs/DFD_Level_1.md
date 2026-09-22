@@ -71,8 +71,8 @@ graph TD
     P4 -->|Info/Response| Public
 
     %% 5.0 GAD Management
-    %% Admin manages budget/activities
-    Admin -->|Plan Activities, Track Budget| P5
+    %% Admin manages calendar/events/programs
+    Admin -->|Plan Activities, Schedule Events| P5
     P5 -->|Activity Data| D6
     D6 -.->|Read Activity| P5
 
@@ -128,14 +128,14 @@ graph TD
 
 ### 5.0 GAD Management
 *   **Actors:** Admin
-*   **Description:** Tracks Gender and Development (GAD) activities and budget utilization.
-*   **Data Store:** D6 GAD Activities (`gad_activities`).
+*   **Description:** Tracks Gender and Development (GAD) calendar of activities, events, and community programs.
+*   **Data Store:** D6 GAD Activities (`gad_events`).
 
 ### 6.0 Analytics & Reporting
 *   **Actors:** Admin, Committee Head
 *   **Description:** Generates visual reports (bar/pie charts) for decision making.
     *   **Case Analytics:** Abuse rates, hotspots (Used by Admin & Head).
-    *   **GAD Analytics:** Budget expenditure (Used by Admin).
+    *   **GAD Analytics:** Event and program status metrics, organization participation (Used by Admin).
 *   **Data Sources:** Aggregates from D2 (Cases) and D6 (GAD).
 
 ### 7.0 Settings & User Management

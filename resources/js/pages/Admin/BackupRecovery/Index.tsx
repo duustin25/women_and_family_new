@@ -39,6 +39,7 @@ export default function Index({ backups }: BackupRecoveryProps) {
 
     const { data, setData, post, processing, errors, reset } = useForm({
         password: '',
+        archive_password: '',
     });
 
     const [isUploading, setIsUploading] = useState(false);
@@ -102,13 +103,17 @@ export default function Index({ backups }: BackupRecoveryProps) {
         if (!selectedRestoreFile) return;
 
         post(route('admin.backups.restore', { filename: selectedRestoreFile }), {
-            onSuccess: () => {
+            onSuccess: (page: any) => {
+                if (page?.props?.flash?.error) {
+                    toast.error(page.props.flash.error);
+                    return;
+                }
                 setSelectedRestoreFile(null);
                 reset();
                 toast.success(`Database state successfully restored from snapshot '${selectedRestoreFile}'!`);
             },
-            onError: (err) => {
-                toast.error(err.password || 'Database restoration failed. Check admin password.');
+            onError: (err: any) => {
+                toast.error(err.restore_error || err.password || 'Database restoration failed. Check password.');
             },
         });
     };
@@ -404,6 +409,12 @@ export default function Index({ backups }: BackupRecoveryProps) {
                         </div>
 
                         <form onSubmit={handleRestoreSubmit} className="space-y-4">
+                            {errors.password && (
+                                <div className="p-3 rounded-md bg-destructive/10 border border-destructive/20 text-destructive text-xs font-semibold">
+                                    {errors.password}
+                                </div>
+                            )}
+
                             <div className="space-y-2">
                                 <Label htmlFor="restore-password">Admin Password Authorization</Label>
                                 <Input
@@ -414,10 +425,29 @@ export default function Index({ backups }: BackupRecoveryProps) {
                                     placeholder="Enter Admin Account Password"
                                     required
                                 />
-                                {errors.password && (
-                                    <p className="text-xs text-destructive mt-1">{errors.password}</p>
-                                )}
                             </div>
+
+                            {selectedRestoreFile?.toLowerCase().endsWith('.zip') && (
+                                <div className="space-y-2 p-3 rounded-lg border border-amber-200 dark:border-amber-900/50 bg-amber-50/50 dark:bg-amber-950/20">
+                                    <Label htmlFor="restore-archive-password" className="text-xs font-semibold text-foreground flex items-center justify-between">
+                                        <span>Archive Decryption Password</span>
+                                        <Badge variant="outline" className="text-[10px] text-amber-700 dark:text-amber-300 border-amber-300">
+                                            AES-256 ZIP
+                                        </Badge>
+                                    </Label>
+                                    <Input
+                                        id="restore-archive-password"
+                                        type="password"
+                                        value={data.archive_password}
+                                        onChange={(e) => setData('archive_password', e.target.value)}
+                                        placeholder="Password used when exporting this ZIP"
+                                        className="text-xs font-mono"
+                                    />
+                                    <p className="text-[11px] text-muted-foreground">
+                                        Enter the password you assigned when downloading this ZIP archive. (Leave blank if same as Admin password).
+                                    </p>
+                                </div>
+                            )}
 
                             <DialogFooter className="gap-2 sm:gap-0">
                                 <Button
