@@ -339,4 +339,29 @@ class AuditLogger
             'user_agent' => request()->userAgent() ?? 'System',
         ]);
     }
+
+    /**
+     * Log a record update or mutation event.
+     */
+    public static function logUpdate(Model $model, string $action = 'RECORD_UPDATED', array $newValues = [], ?array $oldValues = null): AuditLog
+    {
+        $user = Auth::user();
+        $modelClass = get_class($model);
+        $modelId = $model->getKey();
+
+        return AuditLog::create([
+            'user_id' => $user?->id,
+            'action' => $action,
+            'auditable_type' => $modelClass,
+            'auditable_id' => $modelId,
+            'old_values' => $oldValues !== null ? self::maskPii($oldValues) : null,
+            'new_values' => array_merge([
+                '_actor_name' => $user?->name,
+                '_actor_role' => $user?->role,
+                '_obfuscated_target' => self::obfuscateIdentifier($modelClass, $modelId, $model),
+            ], self::maskPii($newValues)),
+            'ip_address' => request()->ip() ?? '127.0.0.1',
+            'user_agent' => request()->userAgent() ?? 'System',
+        ]);
+    }
 }

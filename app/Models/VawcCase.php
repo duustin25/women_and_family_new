@@ -133,6 +133,22 @@ class VawcCase extends Model
     }
 
     /**
+     * Resilient accessor for risk_level delegating to the assessment relationship.
+     */
+    public function getRiskLevelAttribute(): ?string
+    {
+        return $this->assessment?->risk_level ?? 'PENDING';
+    }
+
+    /**
+     * Resilient accessor for risk_score delegating to the assessment relationship.
+     */
+    public function getRiskScoreAttribute(): float
+    {
+        return (float) ($this->assessment?->risk_score ?? 0.0);
+    }
+
+    /**
      * The Master Dossier this VAWC incident belongs to.
      */
     public function dossier(): BelongsTo

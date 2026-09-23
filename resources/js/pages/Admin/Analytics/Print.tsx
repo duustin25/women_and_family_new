@@ -339,14 +339,14 @@ export default function Print({
                         </div>
                     </div>
 
-                    {/* SECTION IV: Member Purok / Geographical Distribution (President) */}
+                    {/* SECTION IV: Member Zone / Geographical Distribution (President) */}
                     <div className="grid grid-cols-2 gap-8 mb-8 break-inside-avoid">
                         <div>
-                            <h3 className="text-xs font-black uppercase text-slate-700 mb-2 border-b border-slate-300 pb-1">IV-A. Purok / Zone Distribution</h3>
+                            <h3 className="text-xs font-black uppercase text-slate-700 mb-2 border-b border-slate-300 pb-1">IV-A. Barangay Zone Distribution</h3>
                             <table className="w-full text-[9px] border border-slate-300">
                                 <thead className="bg-slate-50">
                                     <tr>
-                                        <th className="p-1.5 text-left uppercase">Purok Name</th>
+                                        <th className="p-1.5 text-left uppercase">Zone Name</th>
                                         <th className="p-1.5 text-center uppercase">Active Members</th>
                                     </tr>
                                 </thead>
@@ -811,11 +811,11 @@ export default function Print({
 
                             <div className="grid grid-cols-2 gap-8">
                                 <div>
-                                    <h4 className="text-[9px] font-black uppercase text-slate-500 mb-2">V-A. Purok Malnutrition Hotspots</h4>
+                                    <h4 className="text-[9px] font-black uppercase text-slate-500 mb-2">V-A. Barangay Zone Malnutrition Hotspots</h4>
                                     <table className="w-full text-[8px] border border-slate-300">
                                         <thead className="bg-slate-50">
                                             <tr className="border-b border-slate-300">
-                                                <th className="p-1 text-left uppercase">Purok</th>
+                                                <th className="p-1 text-left uppercase">Zone</th>
                                                 <th className="p-1 text-center uppercase">Malnourished</th>
                                                 <th className="p-1 text-center uppercase">Stunted</th>
                                                 <th className="p-1 text-right uppercase">Prevalence</th>

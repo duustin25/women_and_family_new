@@ -1,5 +1,5 @@
 import { Head, Link, useForm } from '@inertiajs/react';
-import { ArrowLeft, UserCheck, Baby, Scale, Save, Activity, Calculator, AlertTriangle, AlertCircle, Info, ShieldAlert } from 'lucide-react';
+import { ArrowLeft, UserCheck, Baby, Scale, Save, Activity, Calculator, AlertTriangle, AlertCircle, Info, ShieldAlert, Camera } from 'lucide-react';
 import React, { useState } from 'react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
@@ -15,6 +15,7 @@ import AppLayout from '@/layouts/app-layout';
 export default function BcpcCreate({ members = [], zones = [] }: any) {
     const [selectedMember, setSelectedMember] = useState<any>(null);
     const [sanityPrompt, setSanityPrompt] = useState<{ open: boolean; message: string }>({ open: false, message: '' });
+    const [photoPreview, setPhotoPreview] = useState<string | null>(null);
 
     const { data, setData, post, processing, errors } = useForm({
         member_id: '',
@@ -26,6 +27,7 @@ export default function BcpcCreate({ members = [], zones = [] }: any) {
         child_first_name: '',
         child_last_name: '',
         child_middle_name: '',
+        photo: null as File | null,
         date_of_birth: '',
         sex: 'Male',
         date_of_weighing: new Date().toISOString().split('T')[0],
@@ -299,7 +301,7 @@ export default function BcpcCreate({ members = [], zones = [] }: any) {
                                 <Baby className="w-5 h-5 text-emerald-600" />
                                 <div>
                                     <CardTitle className="text-base font-bold">Step 2: Child Identity & Demographic Profile</CardTitle>
-                                    <CardDescription className="text-xs">Enter child's full name, birthdate, sex, and assigned Purok zone.</CardDescription>
+                                    <CardDescription className="text-xs">Enter child's full name, birthdate, sex, and assigned Barangay Zone.</CardDescription>
                                 </div>
                             </div>
                         </CardHeader>
@@ -365,10 +367,10 @@ export default function BcpcCreate({ members = [], zones = [] }: any) {
                             </div>
 
                             <div className="space-y-2">
-                                <Label className="text-xs font-bold uppercase text-muted-foreground">Purok Zone *</Label>
+                                <Label className="text-xs font-bold uppercase text-muted-foreground">Barangay Zone *</Label>
                                 <Select value={data.zone_id} onValueChange={val => setData('zone_id', val)}>
                                     <SelectTrigger className="rounded-xl h-11 border-2">
-                                        <SelectValue placeholder="-- Select Purok Zone --" />
+                                        <SelectValue placeholder="-- Select Barangay Zone --" />
                                     </SelectTrigger>
                                     <SelectContent>
                                         {zones.map((z: any) => (
@@ -380,7 +382,38 @@ export default function BcpcCreate({ members = [], zones = [] }: any) {
                                 </Select>
                             </div>
 
-                            <div className="md:col-span-3 space-y-2">
+                            <div className="md:col-span-2 space-y-2">
+                                <Label className="text-xs font-bold uppercase text-muted-foreground" htmlFor="child_photo">Child Profile Photo (Optional)</Label>
+                                <div className="flex items-center gap-4">
+                                    {photoPreview ? (
+                                        <img src={photoPreview} alt="Preview" className="w-14 h-14 rounded-xl object-cover border-2 border-emerald-500 shadow-sm" />
+                                    ) : (
+                                        <div className="w-14 h-14 rounded-xl border-2 border-dashed flex items-center justify-center bg-muted/40 text-muted-foreground shrink-0">
+                                            <Camera className="w-6 h-6 text-muted-foreground/60" />
+                                        </div>
+                                    )}
+                                    <div className="flex-1">
+                                        <Input
+                                            id="child_photo"
+                                            type="file"
+                                            accept="image/*"
+                                            className="rounded-xl h-10 border file:mr-3 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700 dark:file:bg-emerald-950 dark:file:text-emerald-300"
+                                            onChange={(e) => {
+                                                const file = e.target.files?.[0] || null;
+                                                setData('photo', file as any);
+                                                if (file) {
+                                                    setPhotoPreview(URL.createObjectURL(file));
+                                                } else {
+                                                    setPhotoPreview(null);
+                                                }
+                                            }}
+                                        />
+                                        <p className="text-[11px] text-muted-foreground mt-0.5">JPEG, PNG, WEBP up to 3MB.</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="md:col-span-1 space-y-2">
                                 <Label className="text-xs font-bold uppercase text-muted-foreground" htmlFor="bns_name">Assigned BNS Scholar Name</Label>
                                 <Input
                                     id="bns_name"

@@ -1,301 +1,207 @@
 import { Head, router, Link } from '@inertiajs/react';
-import { ShieldAlert, CheckCircle2, XCircle, Clock, AlertTriangle, Building, User, Calendar, FileText, History, ListFilter } from 'lucide-react';
-import React from 'react';
+import { ShieldAlert, ListFilter, History } from 'lucide-react';
+import React, { useState } from 'react';
 import { toast } from 'sonner';
 import { route } from 'ziggy-js';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import AppLayout from '@/layouts/app-layout';
-
-interface ApplicationAppeal {
-    id: number;
-    fullname: string;
-    email: string;
-    status: string;
-    rejection_reason?: string;
-    appeal_reason?: string;
-    appeal_docs?: string[];
-    created_at: string;
-    rejected_at?: string;
-    appealed_at?: string;
-    actioned_at?: string;
-    approved_by?: string;
-    approval_type?: string;
-    organization?: {
-        id: number;
-        name: string;
-    };
-}
+import { cn } from '@/lib/utils';
+import { ApplicationAppeal, GovernanceStats } from './Partials/Appeals/types';
+import AppealsKpiStats from './Partials/Appeals/AppealsKpiStats';
+import AppealsTable from './Partials/Appeals/AppealsTable';
+import AppealDossierDialog from './Partials/Appeals/AppealDossierDialog';
+import AppealConfirmDialog from './Partials/Appeals/AppealConfirmDialog';
 
 interface AppealsIndexProps {
     appeals: {
         data: ApplicationAppeal[];
-        links: any[];
+        links: Array<{
+            url: string | null;
+            label: string;
+            active: boolean;
+        }>;
+        total?: number;
+        from?: number;
+        to?: number;
     };
-    tab: string;
+    tab: 'active' | 'history';
+    stats?: GovernanceStats;
 }
 
-export default function AppealsIndex({ appeals, tab = 'active' }: AppealsIndexProps) {
-    const handleOverrule = (id: number, fullname: string) => {
-        if (confirm(`Are you sure you want to OVERRULE the president's rejection and FORCE-APPROVE '${fullname}'?`)) {
-            router.post(route('admin.applications.overrule', { application: id }), {}, {
-                onSuccess: () => toast.success(`Rejection overruled! Application for '${fullname}' approved.`),
-                onError: () => toast.error('Failed to overrule application.'),
-            });
-        }
-    };
+export default function AppealsIndex({ appeals, tab = 'active', stats }: AppealsIndexProps) {
+    const [selectedAppeal, setSelectedAppeal] = useState<ApplicationAppeal | null>(null);
+    const [confirmAction, setConfirmAction] = useState<{
+        type: 'overrule' | 'sustain';
+        appeal: ApplicationAppeal;
+    } | null>(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const handleSustain = (id: number, fullname: string) => {
-        if (confirm(`Are you sure you want to SUSTAIN DISAPPROVAL for '${fullname}'? This will close the appeal and uphold the rejection.`)) {
-            router.post(route('admin.applications.sustain', { application: id }), {}, {
-                onSuccess: () => toast.success(`Disapproval sustained! Appeal for '${fullname}' closed.`),
-                onError: () => toast.error('Failed to sustain disapproval.'),
-            });
-        }
-    };
-
-    const formatTimestamp = (dateStr?: string) => {
-        if (!dateStr) return 'N/A';
-        return new Date(dateStr).toLocaleString('en-US', {
-            month: 'short',
-            day: 'numeric',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
-        });
-    };
-
-    const getStatusBadge = (item: ApplicationAppeal) => {
-        if (item.status === 'approved' || item.approval_type === 'admin_overrule') {
-            return (
-                <Badge className="bg-emerald-600 text-white font-black text-[10px] uppercase">
-                    Overruled & Approved
-                </Badge>
-            );
-        }
-        if (item.status === 'final_disapproved' || item.approval_type === 'admin_sustained') {
-            return (
-                <Badge className="bg-rose-700 text-white font-black text-[10px] uppercase">
-                    Disapproval Sustained
-                </Badge>
-            );
-        }
-        if (item.status === 'appealed') {
-            return (
-                <Badge className="bg-amber-500 text-white font-black text-[10px] uppercase">
-                    Escalated Appeal
-                </Badge>
-            );
-        }
-        return (
-            <Badge variant="destructive" className="font-black text-[10px] uppercase">
-                {item.status}
-            </Badge>
+    // Execute overrule action
+    const handleConfirmOverrule = () => {
+        if (!confirmAction) return;
+        setIsSubmitting(true);
+        router.post(
+            route('admin.applications.overrule', { application: confirmAction.appeal.id }),
+            {},
+            {
+                onSuccess: () => {
+                    toast.success(`Disapproval overruled! Application for ${confirmAction.appeal.fullname} has been approved.`);
+                    setConfirmAction(null);
+                    setSelectedAppeal(null);
+                },
+                onError: () => toast.error('Failed to overrule application. Please try again.'),
+                onFinish: () => setIsSubmitting(false),
+            }
         );
     };
+
+    // Execute sustain action
+    const handleConfirmSustain = () => {
+        if (!confirmAction) return;
+        setIsSubmitting(true);
+        router.post(
+            route('admin.applications.sustain', { application: confirmAction.appeal.id }),
+            {},
+            {
+                onSuccess: () => {
+                    toast.success(`Disapproval sustained. Appeal for ${confirmAction.appeal.fullname} is resolved and closed.`);
+                    setConfirmAction(null);
+                    setSelectedAppeal(null);
+                },
+                onError: () => toast.error('Failed to sustain disapproval. Please try again.'),
+                onFinish: () => setIsSubmitting(false),
+            }
+        );
+    };
+
+    const activeCount = stats?.active_count ?? appeals.data.length;
+    const totalResolved = stats?.total_resolved ?? 0;
 
     return (
         <AppLayout breadcrumbs={[
             { title: 'Dashboard', href: '/admin/dashboard' },
-            { title: 'Governance Appeals Queue', href: '#' }
+            { title: 'Governance Appeals', href: '#' }
         ]}>
-            <Head title="Governance Appeals Queue" />
+            <Head title="Governance Appeals Command Center" />
 
-            <div className="p-6 space-y-6">
-                {/* Header */}
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b pb-4">
+            <div className="flex h-full flex-1 flex-col gap-4 p-4 sm:p-6 w-full max-w-7xl mx-auto">
+
+                {/* ── HEADER ── */}
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
                     <div>
-                        <h1 className="text-2xl font-black uppercase tracking-tight flex items-center gap-2">
-                            <ShieldAlert className="w-7 h-7 text-amber-600 dark:text-amber-400" />
-                            Barangay Governance Appeals Command Center
-                        </h1>
-                        <p className="text-xs text-muted-foreground font-bold uppercase tracking-widest mt-1">
-                            Independent Review, Dispute Resolution & Governance Audit Trail
+                        <div className="flex items-center gap-2.5 flex-wrap">
+                            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground flex items-center gap-2">
+                                <ShieldAlert className="w-6 h-6 sm:w-7 sm:h-7 text-amber-600 dark:text-amber-400 shrink-0" />
+                                <span>Appeals & Governance Command Center</span>
+                            </h1>
+                            <Badge variant="outline" className="text-xs font-semibold py-0.5 px-2">
+                                Barangay 183
+                            </Badge>
+                        </div>
+                        <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
+                            Independent arbitration desk for reviewing resident appeals and organization screening decisions.
                         </p>
                     </div>
 
-                    {/* Filter Tabs */}
-                    <div className="flex items-center bg-slate-100 dark:bg-slate-900 p-1 rounded-xl border">
+                    {/* Filter Navigation Tabs (Readable pill buttons) */}
+                    <div className="inline-flex items-center p-1 rounded-xl bg-muted/70 border gap-1 self-start lg:self-auto">
                         <Link
                             href={route('admin.applications.appeals', { tab: 'active' })}
-                            className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
+                            className={cn(
+                                "h-9 px-4 text-xs sm:text-sm font-semibold rounded-lg transition-all inline-flex items-center gap-1.5 whitespace-nowrap cursor-pointer",
                                 tab === 'active'
-                                    ? 'bg-amber-600 text-white shadow-sm'
-                                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
-                            }`}
+                                    ? "bg-amber-600 text-white shadow-xs font-bold"
+                                    : "text-muted-foreground hover:text-foreground"
+                            )}
                         >
-                            <ListFilter className="w-3.5 h-3.5" /> Active Appeals Queue
+                            <ListFilter className="w-4 h-4" />
+                            <span>Active Appeals Queue</span>
+                            <span className={cn(
+                                "px-2 py-0.5 rounded-full text-xs font-bold",
+                                tab === 'active' ? "bg-white/20 text-white" : "bg-muted text-muted-foreground"
+                            )}>
+                                {activeCount}
+                            </span>
                         </Link>
                         <Link
                             href={route('admin.applications.appeals', { tab: 'history' })}
-                            className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
+                            className={cn(
+                                "h-9 px-4 text-xs sm:text-sm font-semibold rounded-lg transition-all inline-flex items-center gap-1.5 whitespace-nowrap cursor-pointer",
                                 tab === 'history'
-                                    ? 'bg-slate-900 text-white dark:bg-slate-800 shadow-sm'
-                                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
-                            }`}
+                                    ? "bg-foreground text-background shadow-xs font-bold"
+                                    : "text-muted-foreground hover:text-foreground"
+                            )}
                         >
-                            <History className="w-3.5 h-3.5" /> Governance History Log
+                            <History className="w-4 h-4" />
+                            <span>Resolution History Log</span>
+                            <span className={cn(
+                                "px-2 py-0.5 rounded-full text-xs font-bold",
+                                tab === 'history' ? "bg-background/20 text-background" : "bg-muted text-muted-foreground"
+                            )}>
+                                {totalResolved}
+                            </span>
                         </Link>
                     </div>
                 </div>
 
-                {/* Table Card */}
-                <Card className="shadow-md">
-                    <CardHeader className="border-b">
-                        <CardTitle className="text-sm font-bold uppercase flex items-center gap-2">
-                            {tab === 'active' ? (
-                                <>
-                                    <AlertTriangle className="w-4 h-4 text-amber-500" />
-                                    Active Escalated Appeals ({appeals.data.length} Pending Actions)
-                                </>
-                            ) : (
-                                <>
-                                    <History className="w-4 h-4 text-blue-500" />
-                                    Resolved Governance Appeals Audit Log ({appeals.data.length} Records)
-                                </>
-                            )}
-                        </CardTitle>
-                        <CardDescription className="text-xs">
-                            {tab === 'active'
-                                ? 'Review officer rejection justifications against resident appeal statements. Admins can Overrule & Approve or Sustain Disapproval.'
-                                : 'Historical audit trail of all resolved appeal actions with complete timestamps and action takers.'}
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent className="p-0">
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead className="font-bold text-xs">Resident Applicant</TableHead>
-                                    <TableHead className="font-bold text-xs">Organization</TableHead>
-                                    <TableHead className="font-bold text-xs">Timeline & Timestamps</TableHead>
-                                    <TableHead className="font-bold text-xs">Officer Rejection Reason</TableHead>
-                                    <TableHead className="font-bold text-xs">Resident Appeal Statement</TableHead>
-                                    <TableHead className="font-bold text-xs">Status</TableHead>
-                                    <TableHead className="font-bold text-xs text-right">Admin Action</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {appeals.data.length === 0 ? (
-                                    <TableRow>
-                                        <TableCell colSpan={7} className="text-center p-8 text-muted-foreground italic">
-                                            {tab === 'active'
-                                                ? 'No active appeals requiring admin action right now.'
-                                                : 'No historical resolved appeals found.'}
-                                        </TableCell>
-                                    </TableRow>
-                                ) : (
-                                    appeals.data.map((item) => (
-                                        <TableRow key={item.id}>
-                                            {/* Resident Info */}
-                                            <TableCell className="font-bold text-xs">
-                                                <div className="flex items-center gap-2">
-                                                    <User className="w-4 h-4 text-slate-500 shrink-0" />
-                                                    <div>
-                                                        <p className="font-black">{item.fullname}</p>
-                                                        <p className="text-[10px] text-muted-foreground">{item.email}</p>
-                                                    </div>
-                                                </div>
-                                            </TableCell>
+                {/* ── KPI METRICS SUMMARY (LARGE READABLE FONTS) ── */}
+                <AppealsKpiStats stats={stats} fallbackActiveCount={appeals.data.length} />
 
-                                            {/* Target Organization */}
-                                            <TableCell className="text-xs font-semibold">
-                                                <Badge variant="outline" className="flex items-center gap-1 w-fit">
-                                                    <Building className="w-3 h-3 text-purple-600" />
-                                                    {item.organization?.name || 'Barangay Organization'}
-                                                </Badge>
-                                            </TableCell>
+                {/* ── SIMPLE, CLEAN APPEALS QUEUE TABLE ── */}
+                <AppealsTable
+                    appeals={appeals.data}
+                    tab={tab}
+                    onSelectAppeal={(appeal) => setSelectedAppeal(appeal)}
+                    onOverruleClick={(appeal) => setConfirmAction({ type: 'overrule', appeal })}
+                    onSustainClick={(appeal) => setConfirmAction({ type: 'sustain', appeal })}
+                />
 
-                                            {/* Timestamps & Timeline */}
-                                            <TableCell className="text-[11px] space-y-1">
-                                                <div className="flex items-center gap-1 text-slate-600 dark:text-slate-400">
-                                                    <Calendar className="w-3 h-3 text-blue-500 shrink-0" />
-                                                    <span><strong>Applied:</strong> {formatTimestamp(item.created_at)}</span>
-                                                </div>
-                                                {item.appealed_at && (
-                                                    <div className="flex items-center gap-1 text-amber-700 dark:text-amber-400">
-                                                        <Clock className="w-3 h-3 text-amber-500 shrink-0" />
-                                                        <span><strong>Appealed:</strong> {formatTimestamp(item.appealed_at)}</span>
-                                                    </div>
-                                                )}
-                                                {item.actioned_at && (
-                                                    <div className="flex items-center gap-1 text-emerald-700 dark:text-emerald-400">
-                                                        <CheckCircle2 className="w-3 h-3 text-emerald-500 shrink-0" />
-                                                        <span><strong>Resolved:</strong> {formatTimestamp(item.actioned_at)}</span>
-                                                    </div>
-                                                )}
-                                            </TableCell>
-
-                                            {/* Rejection Justification */}
-                                            <TableCell className="text-xs max-w-xs leading-relaxed text-rose-600 dark:text-rose-400 italic">
-                                                {item.rejection_reason || 'No justification documented'}
-                                            </TableCell>
-
-                                            {/* Resident Appeal Statement */}
-                                            <TableCell className="text-xs max-w-xs leading-relaxed">
-                                                <p className="text-amber-700 dark:text-amber-300 font-medium">
-                                                    {item.appeal_reason || 'Pending resident appeal statement'}
-                                                </p>
-                                                {item.appeal_docs && item.appeal_docs.length > 0 && (
-                                                    <div className="mt-1.5 flex flex-wrap gap-1">
-                                                        {item.appeal_docs.map((doc, idx) => (
-                                                            <a
-                                                                key={idx}
-                                                                href={`/storage/${doc}`}
-                                                                target="_blank"
-                                                                rel="noreferrer"
-                                                                className="inline-flex items-center gap-1 text-[10px] bg-amber-100 dark:bg-amber-950 text-amber-900 dark:text-amber-200 px-2 py-0.5 rounded font-bold hover:underline"
-                                                            >
-                                                                <FileText className="w-3 h-3" /> Attached File {idx + 1}
-                                                            </a>
-                                                        ))}
-                                                    </div>
-                                                )}
-                                            </TableCell>
-
-                                            {/* Status Badge */}
-                                            <TableCell>{getStatusBadge(item)}</TableCell>
-
-                                            {/* Admin Actions */}
-                                            <TableCell className="text-right">
-                                                {tab === 'active' && (item.status === 'appealed' || item.status === 'rejected') ? (
-                                                    <div className="flex flex-col sm:flex-row justify-end items-center gap-1.5">
-                                                        <Button
-                                                            size="sm"
-                                                            onClick={() => handleOverrule(item.id, item.fullname)}
-                                                            className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs gap-1 w-full sm:w-auto"
-                                                        >
-                                                            <CheckCircle2 className="w-3.5 h-3.5" /> Overrule & Approve
-                                                        </Button>
-                                                        <Button
-                                                            size="sm"
-                                                            variant="destructive"
-                                                            onClick={() => handleSustain(item.id, item.fullname)}
-                                                            className="bg-rose-700 hover:bg-rose-800 text-white font-bold text-xs gap-1 w-full sm:w-auto"
-                                                        >
-                                                            <XCircle className="w-3.5 h-3.5" /> Sustain Disapproval
-                                                        </Button>
-                                                    </div>
-                                                ) : (
-                                                    <div className="text-[11px] text-slate-500 font-medium">
-                                                        <p className="font-bold text-slate-700 dark:text-slate-300">
-                                                            {item.approved_by || 'Resolved'}
-                                                        </p>
-                                                        <p className="text-[10px] text-slate-400">
-                                                            {formatTimestamp(item.actioned_at || item.created_at)}
-                                                        </p>
-                                                    </div>
-                                                )}
-                                            </TableCell>
-                                        </TableRow>
-                                    ))
-                                )}
-                            </TableBody>
-                        </Table>
-                    </CardContent>
-                </Card>
+                {/* ── PAGINATION ── */}
+                {appeals.links && appeals.links.length > 3 && (
+                    <div className="flex items-center justify-between gap-4 border-t pt-4 px-1">
+                        <p className="text-sm text-muted-foreground">
+                            Showing <span className="font-bold text-foreground">{appeals.from || 0}</span> to <span className="font-bold text-foreground">{appeals.to || appeals.data.length}</span> of <span className="font-bold text-foreground">{appeals.total || appeals.data.length}</span> records
+                        </p>
+                        <div className="flex items-center gap-1.5">
+                            {appeals.links.map((link, idx) => (
+                                <Button
+                                    key={idx}
+                                    asChild
+                                    variant={link.active ? "default" : "outline"}
+                                    size="sm"
+                                    disabled={!link.url}
+                                    className="h-9 px-3.5 text-sm font-semibold"
+                                >
+                                    {link.url ? (
+                                        <Link href={link.url} dangerouslySetInnerHTML={{ __html: link.label }} />
+                                    ) : (
+                                        <span dangerouslySetInnerHTML={{ __html: link.label }} className="text-muted-foreground" />
+                                    )}
+                                </Button>
+                            ))}
+                        </div>
+                    </div>
+                )}
             </div>
+
+            {/* ── DIALOG: FULL VERBATIM APPEAL DOSSIER MODAL ── */}
+            <AppealDossierDialog
+                appeal={selectedAppeal}
+                open={!!selectedAppeal}
+                onClose={() => setSelectedAppeal(null)}
+                onOverruleClick={(appeal) => setConfirmAction({ type: 'overrule', appeal })}
+                onSustainClick={(appeal) => setConfirmAction({ type: 'sustain', appeal })}
+                isHistoryTab={tab === 'history'}
+            />
+
+            {/* ── DIALOG: ACTION CONFIRMATION MODAL ── */}
+            <AppealConfirmDialog
+                confirmAction={confirmAction}
+                isSubmitting={isSubmitting}
+                onClose={() => setConfirmAction(null)}
+                onConfirm={confirmAction?.type === 'overrule' ? handleConfirmOverrule : handleConfirmSustain}
+            />
         </AppLayout>
     );
 }

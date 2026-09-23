@@ -1,5 +1,5 @@
-import { Head, Link, useForm } from '@inertiajs/react';
-import { ArrowLeft, User, Calendar, MapPin, Phone, Scale, RefreshCw, FileText, CheckCircle2, History, Activity, Heart, AlertCircle, PlusCircle, Check, Info, ShieldAlert, AlertTriangle, Printer } from 'lucide-react';
+import { Head, Link, useForm, router } from '@inertiajs/react';
+import { ArrowLeft, User, Calendar, MapPin, Phone, Scale, RefreshCw, FileText, CheckCircle2, History, Activity, Heart, AlertCircle, PlusCircle, Check, Info, ShieldAlert, AlertTriangle, Printer, Camera, Upload } from 'lucide-react';
 import React, { useState } from 'react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
@@ -14,6 +14,11 @@ import AppLayout from '@/layouts/app-layout';
 
 export default function BcpcShow({ child, computedAge }: any) {
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isPhotoModalOpen, setIsPhotoModalOpen] = useState(false);
+    const [isChoModalOpen, setIsChoModalOpen] = useState(false);
+    const [selectedPhoto, setSelectedPhoto] = useState<File | null>(null);
+    const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+    const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
     const [sanityPrompt, setSanityPrompt] = useState<{ open: boolean; message: string }>({ open: false, message: '' });
 
     // 0-59 Months Lockout Calculation
@@ -23,6 +28,45 @@ export default function BcpcShow({ child, computedAge }: any) {
     const hasAgedOut = ageInMonths >= 60;
 
     const latest = child.assessments?.[0]; // Ordered by date_of_weighing DESC
+
+    const handlePhotoUpload = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!selectedPhoto) {
+            toast.error('Please select an image file first.');
+            return;
+        }
+        setIsUploadingPhoto(true);
+        const formData = new FormData();
+        formData.append('photo', selectedPhoto);
+        router.post(`/admin/bcpc/cases/${child.id}/photo`, formData, {
+            onSuccess: () => {
+                toast.success('Child profile photo updated successfully!');
+                setIsPhotoModalOpen(false);
+                setSelectedPhoto(null);
+                setPhotoPreview(null);
+            },
+            onError: () => {
+                toast.error('Failed to upload photo. Ensure image is under 3MB.');
+            },
+            onFinish: () => {
+                setIsUploadingPhoto(false);
+            }
+        });
+    };
+
+    const handleReenrollCycle = () => {
+        const nextCycle = (child.sfp_cycle_number || 1) + 1;
+        if (confirm(`Are you sure you want to re-enroll ${child.child_first_name} into SFP Cycle ${nextCycle}? This initiates a new 120-day supplemental feeding sequence.`)) {
+            router.post(`/admin/bcpc/cases/${child.id}/reenroll-cycle`, {}, {
+                onSuccess: () => {
+                    toast.success(`Child re-enrolled in SFP Cycle ${nextCycle}!`);
+                },
+                onError: () => {
+                    toast.error('Could not process SFP re-enrollment.');
+                }
+            });
+        }
+    };
 
     const getTriageAlert = (latestAssessment: any) => {
         if (!latestAssessment) return null;
@@ -379,17 +423,39 @@ export default function BcpcShow({ child, computedAge }: any) {
                     </div>
                 )}
 
-                {/* ── HEADER (Minimalist VAWC Dossier Pattern) ── */}
+                {/* ── HEADER (Minimalist VAWC Dossier Pattern with Avatar & Cycles) ── */}
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3.5">
                         <Link href="/admin/bcpc/cases">
                             <Button variant="outline" size="icon" className="h-9 w-9 rounded-xl">
                                 <ArrowLeft className="h-4 w-4" />
                             </Button>
                         </Link>
+
+                        {/* Child Avatar with Camera Upload Trigger */}
+                        <div className="relative group shrink-0">
+                            <div className="w-14 h-14 rounded-2xl overflow-hidden border-2 border-emerald-500/50 bg-emerald-50 dark:bg-emerald-950/40 flex items-center justify-center shadow-xs">
+                                {child.photo_url ? (
+                                    <img src={child.photo_url} alt={child.child_first_name} className="w-full h-full object-cover" />
+                                ) : (
+                                    <span className="text-base font-black text-emerald-700 dark:text-emerald-300 uppercase">
+                                        {child.child_first_name?.[0]}{child.child_last_name?.[0]}
+                                    </span>
+                                )}
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setIsPhotoModalOpen(true)}
+                                className="absolute -bottom-1 -right-1 p-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-full shadow-md transition-all cursor-pointer"
+                                title="Upload Child Photo"
+                            >
+                                <Camera className="w-3.5 h-3.5" />
+                            </button>
+                        </div>
+
                         <div>
                             <div className="flex flex-wrap items-center gap-2">
-                                <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
+                                <h1 className="text-2xl font-bold tracking-tight text-foreground">
                                     {child.child_first_name} {child.child_middle_name || ''} {child.child_last_name}
                                 </h1>
                                 <Badge variant="outline" className="text-xs font-semibold">
@@ -397,11 +463,11 @@ export default function BcpcShow({ child, computedAge }: any) {
                                 </Badge>
                                 {child.sfp_status !== 'None' && (
                                     <Badge className="bg-emerald-600 text-white text-xs font-semibold">
-                                        120-Day SFP: {child.sfp_status}
+                                        120-Day SFP: {child.sfp_status} (Cycle {child.sfp_cycle_number || 1})
                                     </Badge>
                                 )}
                             </div>
-                            <p className="text-sm text-muted-foreground mt-0.5">
+                            <p className="text-xs text-muted-foreground mt-0.5">
                                 Guardian: <strong className="text-foreground font-semibold">{child.guardian_name}</strong> {child.bns_name ? `• Scholar: ${child.bns_name}` : ''}
                             </p>
                         </div>
@@ -421,6 +487,66 @@ export default function BcpcShow({ child, computedAge }: any) {
                         )}
                     </div>
                 </div>
+
+                {/* 🚨 NON-RESPONDER / PERSISTENT MALNUTRITION WARNING & CHO REFERRAL PROTOCOL */}
+                {(() => {
+                    const day120Rec = findMilestoneRecord(120);
+                    const isCompletedOr120 = ['Completed', 'Graduated'].includes(child.sfp_status) || (day120Rec !== null);
+                    const isStillMal = latest && (
+                        ['Underweight', 'Severely Underweight'].includes(latest.wfa_status) ||
+                        ['Wasted', 'Severely Wasted'].includes(latest.wflh_status)
+                    );
+                    const netGain = (day1Record && latest) ? (latest.weight_kg - day1Record.weight_kg) : 0;
+                    const isNonResp = isCompletedOr120 && isStillMal;
+
+                    if (!isNonResp) return null;
+
+                    return (
+                        <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-rose-500/15 via-red-500/10 to-amber-500/15 border-2 border-rose-500/40 text-rose-950 dark:text-rose-100 shadow-md">
+                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                <div className="flex items-start gap-3.5">
+                                    <div className="p-2.5 bg-rose-600 text-white rounded-xl shadow-xs shrink-0">
+                                        <ShieldAlert className="w-6 h-6 animate-pulse" />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <div className="flex flex-wrap items-center gap-2">
+                                            <Badge className="bg-rose-600 text-white font-black text-[11px] px-2.5 py-0.5 uppercase tracking-wider">
+                                                NON-RESPONDER / PERSISTENT MALNUTRITION
+                                            </Badge>
+                                            <Badge variant="outline" className="border-rose-400 bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 font-bold text-[11px]">
+                                                SFP Cycle {child.sfp_cycle_number || 1} Evaluated
+                                            </Badge>
+                                        </div>
+                                        <h3 className="text-base font-bold tracking-tight text-rose-950 dark:text-rose-100">
+                                            Clinical Action Mandated: Inadequate Growth Velocity after 120 Days
+                                        </h3>
+                                        <p className="text-xs text-rose-900/80 dark:text-rose-200/80 font-medium leading-relaxed max-w-3xl">
+                                            Child completed 120-Day Supplemental Feeding but remains classified as <strong>{latest.wfa_status}</strong> (WFL/H: <strong>{latest.wflh_status || 'N/A'}</strong>) with total net weight gain of <strong>{netGain >= 0 ? `+${netGain.toFixed(2)}` : netGain.toFixed(2)} kg</strong>. Per RA 11037 and DOH PIMAM guidelines, refer child to the Pasay City Health Office (CHO) for secondary pediatric evaluation, or re-enroll in SFP Cycle 2.
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="flex flex-wrap items-center gap-2 shrink-0 self-start md:self-center">
+                                    <Button
+                                        size="sm"
+                                        onClick={() => setIsChoModalOpen(true)}
+                                        className="h-9 px-4 text-xs font-semibold bg-rose-600 hover:bg-rose-700 text-white shadow-xs gap-1.5 cursor-pointer"
+                                    >
+                                        <Printer className="w-4 h-4" /> Print CHO Referral Form
+                                    </Button>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={handleReenrollCycle}
+                                        className="h-9 px-4 text-xs font-semibold border-rose-300 text-rose-700 dark:border-rose-800 dark:text-rose-300 hover:bg-rose-100/50 gap-1.5 cursor-pointer"
+                                    >
+                                        <RefreshCw className="w-4 h-4" /> Re-enroll in SFP Cycle {(child.sfp_cycle_number || 1) + 1}
+                                    </Button>
+                                </div>
+                            </div>
+                        </div>
+                    );
+                })()}
 
                 {/* 🏛️ COA AUDIT & DEPED TRANSFER ARCHIVAL BANNER FOR 60+ MONTHS CHILDREN */}
                 {(hasAgedOut || child.status === 'Aged Out') && (
@@ -467,7 +593,7 @@ export default function BcpcShow({ child, computedAge }: any) {
                                     </span>
                                 </div>
                                 <div className="flex justify-between border-b pb-2">
-                                    <span className="text-muted-foreground">Purok Zone</span>
+                                    <span className="text-muted-foreground">Barangay Zone</span>
                                     <span className="font-bold text-foreground">{child.zone?.name || 'Unassigned'}</span>
                                 </div>
                                 <div className="flex justify-between border-b pb-2">
@@ -913,6 +1039,152 @@ export default function BcpcShow({ child, computedAge }: any) {
                             Confirm Value is Correct & Save
                         </Button>
                     </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* 📸 CHILD PHOTO UPLOAD MODAL */}
+            <Dialog open={isPhotoModalOpen} onOpenChange={setIsPhotoModalOpen}>
+                <DialogContent className="max-w-md rounded-2xl">
+                    <DialogHeader>
+                        <DialogTitle className="text-base font-bold flex items-center gap-2">
+                            <Camera className="w-5 h-5 text-emerald-600" />
+                            Upload Child Profile Photo
+                        </DialogTitle>
+                    </DialogHeader>
+                    <form onSubmit={handlePhotoUpload} className="space-y-4 py-2">
+                        <div className="flex flex-col items-center justify-center p-4 border-2 border-dashed rounded-xl bg-muted/20">
+                            {photoPreview ? (
+                                <img src={photoPreview} alt="Preview" className="w-32 h-32 rounded-xl object-cover shadow-md mb-3" />
+                            ) : child.photo_url ? (
+                                <img src={child.photo_url} alt={child.child_first_name} className="w-32 h-32 rounded-xl object-cover shadow-md mb-3" />
+                            ) : (
+                                <div className="w-24 h-24 rounded-xl bg-muted flex items-center justify-center text-muted-foreground mb-3">
+                                    <Camera className="w-8 h-8" />
+                                </div>
+                            )}
+                            <Input
+                                type="file"
+                                accept="image/*"
+                                className="max-w-xs text-xs file:mr-2 file:py-1 file:px-2 file:rounded-md file:border-0 file:text-xs file:bg-emerald-50 file:text-emerald-700"
+                                onChange={(e) => {
+                                    const file = e.target.files?.[0] || null;
+                                    setSelectedPhoto(file);
+                                    if (file) {
+                                        setPhotoPreview(URL.createObjectURL(file));
+                                    } else {
+                                        setPhotoPreview(null);
+                                    }
+                                }}
+                            />
+                            <p className="text-[10px] text-muted-foreground mt-1">JPEG, PNG, WEBP up to 3MB</p>
+                        </div>
+                        <DialogFooter className="flex gap-2">
+                            <Button type="button" variant="outline" size="sm" onClick={() => setIsPhotoModalOpen(false)} className="h-9 text-xs">
+                                Cancel
+                            </Button>
+                            <Button type="submit" size="sm" disabled={!selectedPhoto || isUploadingPhoto} className="h-9 text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-semibold">
+                                {isUploadingPhoto ? 'Uploading...' : 'Save Photo'}
+                            </Button>
+                        </DialogFooter>
+                    </form>
+                </DialogContent>
+            </Dialog>
+
+            {/* 🩺 CHO MEDICAL REFERRAL FORM (PRINTABLE) */}
+            <Dialog open={isChoModalOpen} onOpenChange={setIsChoModalOpen}>
+                <DialogContent className="max-w-2xl rounded-2xl max-h-[90vh] overflow-y-auto">
+                    <DialogHeader className="border-b pb-3">
+                        <div className="flex items-center justify-between">
+                            <DialogTitle className="text-base font-bold flex items-center gap-2 text-rose-700 dark:text-rose-400">
+                                <FileText className="w-5 h-5 text-rose-600" />
+                                City Health Office (CHO) Medical Referral Slip
+                            </DialogTitle>
+                            <Button
+                                size="sm"
+                                onClick={() => window.print()}
+                                className="h-8 px-3 text-xs bg-rose-600 hover:bg-rose-700 text-white font-semibold flex items-center gap-1.5"
+                            >
+                                <Printer className="w-3.5 h-3.5" /> Print Referral
+                            </Button>
+                        </div>
+                    </DialogHeader>
+
+                    <div className="p-4 space-y-4 text-xs print:p-0">
+                        <div className="text-center border-b pb-3 space-y-1">
+                            <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Republic of the Philippines • City of Pasay</p>
+                            <h3 className="font-extrabold text-sm uppercase tracking-wide">Barangay 183, Villamor Airbase</h3>
+                            <p className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-400">Barangay Council for the Protection of Children (BCPC) • Nutrition Desk</p>
+                            <h4 className="font-black text-rose-600 uppercase text-xs tracking-widest pt-1">
+                                OFFICIAL MEDICAL REFERRAL — NON-RESPONDER / PERSISTENT MALNUTRITION
+                            </h4>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3 border p-3 rounded-xl bg-muted/10">
+                            <div>
+                                <span className="text-muted-foreground block text-[10px] uppercase font-bold">Patient Name</span>
+                                <strong className="text-sm font-bold text-foreground">{child.child_first_name} {child.child_middle_name || ''} {child.child_last_name}</strong>
+                            </div>
+                            <div>
+                                <span className="text-muted-foreground block text-[10px] uppercase font-bold">Computed Age / Sex</span>
+                                <strong className="text-sm font-bold text-foreground">{computedAge} • {child.sex}</strong>
+                            </div>
+                            <div>
+                                <span className="text-muted-foreground block text-[10px] uppercase font-bold">Parent / Guardian</span>
+                                <strong className="font-semibold text-foreground">{child.guardian_name} ({child.contact_number || 'No contact'})</strong>
+                            </div>
+                            <div>
+                                <span className="text-muted-foreground block text-[10px] uppercase font-bold">Barangay Zone & Address</span>
+                                <strong className="font-semibold text-foreground">{child.zone?.name || 'Zone 183'} • {child.address}</strong>
+                            </div>
+                        </div>
+
+                        <div className="border rounded-xl p-3 space-y-2">
+                            <h5 className="font-bold uppercase text-[11px] text-muted-foreground">120-Day SFP Clinical Progression Summary</h5>
+                            <div className="grid grid-cols-3 gap-2 text-center">
+                                <div className="p-2 border rounded-lg bg-card">
+                                    <span className="text-[10px] text-muted-foreground block">Day 1 Baseline</span>
+                                    <strong className="text-xs">{day1Record ? `${day1Record.weight_kg} kg • ${day1Record.height_cm} cm` : 'N/A'}</strong>
+                                </div>
+                                <div className="p-2 border rounded-lg bg-card">
+                                    <span className="text-[10px] text-muted-foreground block">Day 120 / Latest</span>
+                                    <strong className="text-xs">{latest ? `${latest.weight_kg} kg • ${latest.height_cm} cm` : 'N/A'}</strong>
+                                </div>
+                                <div className="p-2 border rounded-lg bg-card">
+                                    <span className="text-[10px] text-muted-foreground block">Net Velocity</span>
+                                    <strong className={`text-xs ${day1Record && latest && (latest.weight_kg - day1Record.weight_kg) > 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                                        {day1Record && latest ? (
+                                            (latest.weight_kg - day1Record.weight_kg) >= 0 
+                                                ? `+${(latest.weight_kg - day1Record.weight_kg).toFixed(2)} kg` 
+                                                : `${(latest.weight_kg - day1Record.weight_kg).toFixed(2)} kg`
+                                        ) : 'N/A'}
+                                    </strong>
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-3 gap-2 pt-1 text-[11px]">
+                                <div><strong>WFA:</strong> <span className="text-rose-600 font-bold">{latest?.wfa_status || 'N/A'}</span></div>
+                                <div><strong>HFA:</strong> <span className="font-semibold">{latest?.hfa_status || 'N/A'}</span></div>
+                                <div><strong>WFL/H:</strong> <span className="text-rose-600 font-bold">{latest?.wflh_status || 'N/A'}</span></div>
+                            </div>
+                        </div>
+
+                        <div className="p-3 border rounded-xl bg-rose-50/50 dark:bg-rose-950/20 text-rose-950 dark:text-rose-100 space-y-1">
+                            <h5 className="font-bold text-[11px] uppercase tracking-wider text-rose-800 dark:text-rose-300">Reason for Referral</h5>
+                            <p className="text-[11px] leading-relaxed">
+                                Child completed the 120-Day Supplementary Feeding Program (Cycle {child.sfp_cycle_number || 1}) under RA 11037 without achieving normal nutritional status. Persistent undernutrition (weight velocity &lt; 2 g/day / persistent acute wasting) observed. Referred to Pasay City Health Office for clinical workup (underlying chronic infection, micronutrient deficiency, or pediatric physician evaluation).
+                            </p>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-6 pt-6 text-center">
+                            <div>
+                                <div className="border-b border-foreground/30 pb-1 mb-1 font-bold text-xs">{child.bns_name || 'Ana Clara, BNS'}</div>
+                                <span className="text-[10px] text-muted-foreground uppercase font-semibold">Barangay Nutrition Scholar (Assessor)</span>
+                            </div>
+                            <div>
+                                <div className="border-b border-foreground/30 pb-1 mb-1 font-bold text-xs">Kagawad on Women, Family & Health</div>
+                                <span className="text-[10px] text-muted-foreground uppercase font-semibold">Committee Head / Barangay Executive</span>
+                            </div>
+                        </div>
+                    </div>
                 </DialogContent>
             </Dialog>
 

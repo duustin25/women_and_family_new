@@ -667,18 +667,18 @@ export default function BcpcDashboard({
                     {/* Right Column: Spatial Hotspots, Multi-Axis Visualizations, & Birthdays */}
                     <div className="flex flex-col lg:grid lg:grid-cols-2 xl:flex xl:flex-col gap-6">
 
-                        {/* 📍 Spatial Intelligence: Purok Malnutrition Hotspots */}
+                        {/* 📍 Spatial Intelligence: Zone Malnutrition Hotspots */}
                         <Card className="border-border shadow-sm rounded-2xl overflow-hidden">
                             <CardHeader className="pb-3 border-b bg-muted/20">
                                 <div className="flex items-center justify-between">
                                     <CardTitle className="text-sm font-black uppercase tracking-tight flex items-center gap-2">
                                         <MapPin className="h-4 w-4 text-emerald-600" />
-                                        Purok Hotspots
+                                        Zone Hotspots
                                     </CardTitle>
                                     <span className="text-[10px] font-bold text-muted-foreground uppercase">Barangay 183</span>
                                 </div>
                                 <CardDescription className="text-xs text-muted-foreground mt-0.5">
-                                    Malnutrition concentration by purok zone.
+                                    Malnutrition concentration by Barangay Zone.
                                 </CardDescription>
                             </CardHeader>
                             <CardContent className="p-0">

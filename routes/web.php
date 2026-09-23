@@ -183,6 +183,8 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.', 'middleware' => ['auth', 'v
     Route::get('bcpc/dashboard', [\App\Http\Controllers\Admin\BcpcMonitoringController::class, 'dashboard'])->name('bcpc.dashboard');
     Route::get('bcpc/cases/{id}', [\App\Http\Controllers\Admin\BcpcMonitoringController::class, 'show'])->name('bcpc.show');
     Route::put('bcpc/cases/{id}', [\App\Http\Controllers\Admin\BcpcMonitoringController::class, 'update'])->name('bcpc.update');
+    Route::post('bcpc/cases/{id}/photo', [\App\Http\Controllers\Admin\BcpcMonitoringController::class, 'uploadPhoto'])->name('bcpc.photo');
+    Route::post('bcpc/cases/{id}/reenroll-cycle', [\App\Http\Controllers\Admin\BcpcMonitoringController::class, 'reenrollCycle'])->name('bcpc.reenroll-cycle');
     // ------------------------------------------------------------
 });
 

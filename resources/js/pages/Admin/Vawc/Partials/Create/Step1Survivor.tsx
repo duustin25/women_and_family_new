@@ -273,7 +273,7 @@ export function Step1Survivor({
                         <div className="space-y-2 md:col-span-2">
                             <Label className="text-sm font-semibold text-foreground">Complete Residential Address (House #, Street, Barangay/City) *</Label>
                             <Input
-                                placeholder="House #, Street Name, Purok/Zone, Barangay 183, Pasay City..."
+                                placeholder="House #, Street Name, Zone, Barangay 183, Pasay City..."
                                 value={data.victim.address}
                                 onChange={e => setData('victim', { ...data.victim, address: e.target.value })}
                                 className="text-sm h-10 min-h-[40px]"

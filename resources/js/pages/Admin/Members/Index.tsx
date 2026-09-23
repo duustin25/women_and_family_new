@@ -2,13 +2,21 @@ import { Head, Link, router, usePage } from '@inertiajs/react';
 import {
     Search, Users, Mail, CreditCard, ChevronRight,
     MapPin, History, CheckCircle, Send, PlusCircle, X,
-    CheckCheck, AlertCircle
+    CheckCheck, AlertCircle, ChevronDown
 } from 'lucide-react';
 import { useState } from 'react';
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -60,6 +68,15 @@ export default function MembersIndex({ members, organizations, filters }: IndexP
     const [orgFilter, setOrgFilter] = useState(filters.organization_id || (isPresident && organizations[0] ? String(organizations[0].id) : 'All'));
     const [pendingClaimsFilter, setPendingClaimsFilter] = useState(filters.pending_claims === '1');
     const [formData, setFormData] = useState({ subject: '', body: '', recipient_group: isPresident && organizations[0] ? String(organizations[0].id) : 'all', benefit_name: '', instructions: '' });
+
+    const openPresetDispatch = (subject: string, body: string) => {
+        setFormData(prev => ({
+            ...prev,
+            subject,
+            body,
+        }));
+        setBulkModalOpen(true);
+    };
 
     const handleFilter = (key: string, value: string) => {
         const newFilters = { ...filters, [key]: value };
@@ -149,9 +166,72 @@ export default function MembersIndex({ members, organizations, filters }: IndexP
                         <h1 className="text-2xl font-bold tracking-tight uppercase">Citizen Master Ledger & Distribution Console</h1>
                         <p className="text-muted-foreground text-[10px] font-black uppercase tracking-widest mt-1">Centralized Registry for Approved Resident Profiles</p>
                     </div>
-                    <Button onClick={() => setBulkModalOpen(true)} className="flex items-center gap-2">
-                        <Mail className="w-4 h-4" /> Bulk Broadcast
-                    </Button>
+
+                    {/* Benefit Dispatch & Message Hub Dropdown */}
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button className="h-9 px-4 text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs flex items-center gap-2 cursor-pointer">
+                                <Send className="w-4 h-4" /> Benefit Dispatch & Message Hub
+                                <ChevronDown className="w-3.5 h-3.5 opacity-80" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-72">
+                            <DropdownMenuLabel className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">
+                                Preset Community Dispatches
+                            </DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                                onClick={() => openPresetDispatch(
+                                    'Social Welfare Financial Assistance (Ayuda) Schedule',
+                                    'Notice to accredited organization members: You are eligible to receive social welfare financial assistance. Please bring a valid government ID to the Barangay 183 Hall on the designated schedule.'
+                                )}
+                                className="cursor-pointer gap-2.5 text-xs py-2"
+                            >
+                                <span className="text-base">💰</span>
+                                <div>
+                                    <strong className="block font-semibold">Financial Aid (Ayuda)</strong>
+                                    <span className="text-[10px] text-muted-foreground">Cash assistance & social relief notice</span>
+                                </div>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                                onClick={() => openPresetDispatch(
+                                    'Barangay 183 Rice & Food Ration Distribution Schedule',
+                                    'Notice to accredited organization members: Food ration and rice packs will be distributed at the Barangay 183 Covered Court. Please present your registered membership QR code or ID upon claiming.'
+                                )}
+                                className="cursor-pointer gap-2.5 text-xs py-2"
+                            >
+                                <span className="text-base">🌾</span>
+                                <div>
+                                    <strong className="block font-semibold">Rice / Food Ration Schedule</strong>
+                                    <span className="text-[10px] text-muted-foreground">Ration distribution claim details</span>
+                                </div>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                                onClick={() => openPresetDispatch(
+                                    'Barangay 183 Medical Mission & Health Voucher Schedule',
+                                    'Notice: Barangay 183 Health Center is conducting free medical checkups, diagnostic screening, and prescription voucher distribution for registered sector members.'
+                                )}
+                                className="cursor-pointer gap-2.5 text-xs py-2"
+                            >
+                                <span className="text-base">🩺</span>
+                                <div>
+                                    <strong className="block font-semibold">Medical Mission / Health Voucher</strong>
+                                    <span className="text-[10px] text-muted-foreground">Free health clinic & diagnostic check</span>
+                                </div>
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                                onClick={() => openPresetDispatch('', '')}
+                                className="cursor-pointer gap-2.5 text-xs py-2"
+                            >
+                                <Mail className="w-4 h-4 text-indigo-600 shrink-0" />
+                                <div>
+                                    <strong className="block font-semibold">Custom Sector Announcement</strong>
+                                    <span className="text-[10px] text-muted-foreground">Compose custom email/SMS broadcast</span>
+                                </div>
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
                 </div>
 
                 {/* ── Table ── */}

@@ -39,22 +39,49 @@ class GadEventController extends Controller
     }
 
     /**
+     * Show the form for creating a new GAD event.
+     */
+    public function create()
+    {
+        return Inertia::render('Admin/GadEvents/Create');
+    }
+
+    /**
+     * Show the form for editing the specified GAD event.
+     */
+    public function edit(string $id)
+    {
+        $event = GadEvent::with('organization')->findOrFail($id);
+
+        return Inertia::render('Admin/GadEvents/Edit', [
+            'event' => $event,
+        ]);
+    }
+
+    /**
      * Store a newly created resource in storage (Admin-created → auto-approved).
      */
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'title'      => 'required|string|max:255',
+        $rules = [
+            'title'       => 'required|string|max:255',
             'description' => 'required|string',
-            'event_date' => 'required|date',
-            'event_time' => 'required',
-            'location'   => 'required|string|max:255',
-            'image_path' => 'nullable|image|max:2048',
-        ]);
+            'event_date'  => 'required|date',
+            'event_time'  => 'required',
+            'location'    => 'required|string|max:255',
+        ];
+
+        if ($request->hasFile('image_path')) {
+            $rules['image_path'] = 'required|image|max:2048';
+        }
+
+        $validated = $request->validate($rules);
 
         if ($request->hasFile('image_path')) {
             $path = $request->file('image_path')->store('gad_events', 'public');
             $validated['image_path'] = $path;
+        } else {
+            $validated['image_path'] = null;
         }
 
         // Admin-created events are immediately approved & visible on the public calendar
@@ -72,14 +99,19 @@ class GadEventController extends Controller
     {
         $event = GadEvent::findOrFail($id);
 
-        $validated = $request->validate([
-            'title'      => 'required|string|max:255',
+        $rules = [
+            'title'       => 'required|string|max:255',
             'description' => 'required|string',
-            'event_date' => 'required|date',
-            'event_time' => 'required',
-            'location'   => 'required|string|max:255',
-            'image_path' => 'nullable|image|max:2048',
-        ]);
+            'event_date'  => 'required|date',
+            'event_time'  => 'required',
+            'location'    => 'required|string|max:255',
+        ];
+
+        if ($request->hasFile('image_path')) {
+            $rules['image_path'] = 'required|image|max:2048';
+        }
+
+        $validated = $request->validate($rules);
 
         if ($request->hasFile('image_path')) {
             if ($event->image_path) {
@@ -87,6 +119,9 @@ class GadEventController extends Controller
             }
             $path = $request->file('image_path')->store('gad_events', 'public');
             $validated['image_path'] = $path;
+        } else {
+            // CRITICAL: Preserve existing image when no new file is uploaded
+            unset($validated['image_path']);
         }
 
         $event->update($validated);

@@ -27,6 +27,7 @@ class BcpcAssessment extends Model
         'remarks',
         'bns_assessor',
         'sfp_day_number',
+        'sfp_cycle_number',
     ];
 
     protected $casts = [
@@ -34,6 +35,7 @@ class BcpcAssessment extends Model
         'weight_kg' => 'float',
         'height_cm' => 'float',
         'intervention_logs' => 'array',
+        'sfp_cycle_number' => 'integer',
     ];
 
     /**

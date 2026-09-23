@@ -13,9 +13,12 @@ use App\Services\NutritionCalculatorService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Inertia\Response;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redirect;
+use Illuminate\Support\Facades\Storage;
 
 class BcpcMonitoringController extends Controller
 {
@@ -199,8 +202,10 @@ class BcpcMonitoringController extends Controller
 
     /**
      * Executive BCPC Analytics & Command Center Dashboard.
+     *
+     * @return Response
      */
-    public function dashboard()
+    public function dashboard(): Response
     {
         $this->ensureZonesExist();
         $this->syncAgedOutChildren();
@@ -209,6 +214,55 @@ class BcpcMonitoringController extends Controller
             ->where('status', 'Active')
             ->get();
 
+        $cohorts = $this->buildPriorityCohorts($children);
+        $timeSensitive = $this->buildOverdueAndBirthdays($children);
+        $zonesBreakdown = $this->buildZonesBreakdown($children);
+        $distributions = $this->buildNutritionalDistributions($children, $cohorts['activeSfp']->count());
+
+        $overdueCount = $timeSensitive['overdueWeighings']->count();
+        $samCount = $cohorts['topPriority']->count();
+        $mamCount = $cohorts['secondPriority']->count();
+        $doubleBurdenCount = $cohorts['doubleBurden']->count();
+        $stuntedCount = $cohorts['thirdPriority']->count();
+
+        return Inertia::render('Admin/Bcpc/Dashboard', [
+            'monitoredChildren' => $children,
+            'topPriority' => $cohorts['topPriority'],
+            'secondPriority' => $cohorts['secondPriority'],
+            'thirdPriority' => $cohorts['thirdPriority'],
+            'doubleBurden' => $cohorts['doubleBurden'],
+            'activeSfp' => $cohorts['activeSfp'],
+            'overdueWeighings' => $timeSensitive['overdueWeighings'],
+            'upcomingBirthdays' => $timeSensitive['upcomingBirthdays'],
+            'zonesBreakdown' => $zonesBreakdown,
+            'distributions' => $distributions,
+            'metrics' => [
+                'total_monitored' => $children->count(),
+                'active_sfp' => $cohorts['activeSfp']->count(),
+                'graduated_sfp' => BcpcChild::where('sfp_status', 'Graduated')->count(),
+                'completed_sfp' => BcpcChild::where('sfp_status', 'Completed')->count(),
+                'overdue_weighing' => $overdueCount,
+                'sam_cases' => $samCount,
+                'mam_cases' => $mamCount,
+                'double_burden_cases' => $doubleBurdenCount,
+                'stunted_cases' => $stuntedCount,
+                'obese_cases' => $children->filter(fn($c) => in_array($c->latestAssessment->wflh_status ?? '', ['Overweight', 'Obese']))->count(),
+                'severely_underweight' => $samCount,
+                'underweight' => $mamCount,
+                'stunted' => $stuntedCount,
+                'double_burden' => $doubleBurdenCount,
+            ]
+        ]);
+    }
+
+    /**
+     * Compute clinical priority cohorts for BCPC triage.
+     *
+     * @param Collection<int, BcpcChild> $children
+     * @return array<string, Collection<int, BcpcChild>>
+     */
+    private function buildPriorityCohorts(Collection $children): array
+    {
         // 1. Triage Top Priority (SAM - Severe Acute Malnutrition / Wasting)
         $topPriority = $children->filter(function ($child) {
             $latest = $child->latestAssessment;
@@ -255,7 +309,24 @@ class BcpcMonitoringController extends Controller
             return $child->sfp_status === 'Enrolled';
         })->values();
 
-        // 6. Overdue Re-Weighing Check-ins (> 30 Days) with Assigned Scholar Details
+        return [
+            'topPriority' => $topPriority,
+            'secondPriority' => $secondPriority,
+            'doubleBurden' => $doubleBurden,
+            'thirdPriority' => $thirdPriority,
+            'activeSfp' => $activeSfp,
+        ];
+    }
+
+    /**
+     * Compute overdue check-ins and upcoming birthdays.
+     *
+     * @param Collection<int, BcpcChild> $children
+     * @return array<string, Collection<int, BcpcChild>>
+     */
+    private function buildOverdueAndBirthdays(Collection $children): array
+    {
+        // Overdue Re-Weighing Check-ins (> 30 Days) with Assigned Scholar Details
         $overdueWeighings = $children->filter(function ($child) {
             $latest = $child->latestAssessment;
             if (!$latest) return false;
@@ -285,7 +356,7 @@ class BcpcMonitoringController extends Controller
             return $latest ? Carbon::parse($latest->date_of_weighing)->timestamp : 0;
         })->values();
 
-        // 7. Upcoming Birthdays (Next 30 Days)
+        // Upcoming Birthdays (Next 30 Days)
         $today = Carbon::now();
         $upcomingBirthdays = $children->filter(function ($child) use ($today) {
             if (!$child->date_of_birth) return false;
@@ -302,8 +373,21 @@ class BcpcMonitoringController extends Controller
             return $birthdayThisYear->timestamp;
         })->values();
 
-        // 8. Zone Malnutrition Breakdown (Purok Malnutrition Hotspots in Barangay 183)
-        $zonesBreakdown = Zone::query()->get()->map(function ($zone) use ($children) {
+        return [
+            'overdueWeighings' => $overdueWeighings,
+            'upcomingBirthdays' => $upcomingBirthdays,
+        ];
+    }
+
+    /**
+     * Compute malnutrition prevalence and totals across Barangay Zones.
+     *
+     * @param Collection<int, BcpcChild> $children
+     * @return Collection
+     */
+    private function buildZonesBreakdown(Collection $children): Collection
+    {
+        return Zone::query()->get()->map(function ($zone) use ($children) {
             $zoneChildren = $children->filter(function ($c) use ($zone) {
                 return $c->zone_id === $zone->id;
             });
@@ -345,8 +429,17 @@ class BcpcMonitoringController extends Controller
                 'prevalence_rate' => $prevalenceRate,
             ];
         })->sortByDesc('total_malnourished')->values();
+    }
 
-        // 9. Multi-Axis WHO Distributions for Analytics
+    /**
+     * Compute WHO multi-axis and SFP distributions.
+     *
+     * @param Collection<int, BcpcChild> $children
+     * @param int $activeSfpCount
+     * @return array<string, array<string, int>>
+     */
+    private function buildNutritionalDistributions(Collection $children, int $activeSfpCount): array
+    {
         $wfaDistribution = [
             'Normal' => $children->filter(fn($c) => ($c->latestAssessment->wfa_status ?? 'Normal') === 'Normal')->count(),
             'Underweight' => $children->filter(fn($c) => ($c->latestAssessment->wfa_status ?? '') === 'Underweight')->count(),
@@ -370,45 +463,18 @@ class BcpcMonitoringController extends Controller
         ];
 
         $sfpDistribution = [
-            'Enrolled' => $activeSfp->count(),
+            'Enrolled' => $activeSfpCount,
             'Graduated' => BcpcChild::where('sfp_status', 'Graduated')->count(),
             'Completed' => BcpcChild::where('sfp_status', 'Completed')->count(),
             'None' => $children->where('sfp_status', 'None')->count(),
         ];
 
-        return Inertia::render('Admin/Bcpc/Dashboard', [
-            'monitoredChildren' => $children,
-            'topPriority' => $topPriority,
-            'secondPriority' => $secondPriority,
-            'thirdPriority' => $thirdPriority,
-            'doubleBurden' => $doubleBurden,
-            'activeSfp' => $activeSfp,
-            'overdueWeighings' => $overdueWeighings,
-            'upcomingBirthdays' => $upcomingBirthdays,
-            'zonesBreakdown' => $zonesBreakdown,
-            'distributions' => [
-                'wfa' => $wfaDistribution,
-                'hfa' => $hfaDistribution,
-                'wflh' => $wflhDistribution,
-                'sfp' => $sfpDistribution,
-            ],
-            'metrics' => [
-                'total_monitored' => $children->count(),
-                'active_sfp' => $activeSfp->count(),
-                'graduated_sfp' => BcpcChild::where('sfp_status', 'Graduated')->count(),
-                'completed_sfp' => BcpcChild::where('sfp_status', 'Completed')->count(),
-                'overdue_weighing' => $overdueWeighings->count(),
-                'sam_cases' => $topPriority->count(),
-                'mam_cases' => $secondPriority->count(),
-                'double_burden_cases' => $doubleBurden->count(),
-                'stunted_cases' => $thirdPriority->count(),
-                'obese_cases' => $children->filter(fn($c) => in_array($c->latestAssessment->wflh_status ?? '', ['Overweight', 'Obese']))->count(),
-                'severely_underweight' => $topPriority->count(),
-                'underweight' => $secondPriority->count(),
-                'stunted' => $thirdPriority->count(),
-                'double_burden' => $doubleBurden->count(),
-            ]
-        ]);
+        return [
+            'wfa' => $wfaDistribution,
+            'hfa' => $hfaDistribution,
+            'wflh' => $wflhDistribution,
+            'sfp' => $sfpDistribution,
+        ];
     }
 
     /**
@@ -438,6 +504,7 @@ class BcpcMonitoringController extends Controller
             'child_first_name' => 'required|string|max:255',
             'child_last_name' => 'required|string|max:255',
             'child_middle_name' => 'nullable|string|max:255',
+            'photo' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:3072',
             'date_of_birth' => 'required|date|before_or_equal:today',
             'sex' => 'required|in:Male,Female',
             'date_of_weighing' => 'required|date|after_or_equal:date_of_birth|before_or_equal:today',
@@ -474,7 +541,12 @@ class BcpcMonitoringController extends Controller
             }
         }
 
-        return DB::transaction(function () use ($validated, $ageInMonthsAtRegistration) {
+        $photoPath = null;
+        if ($request->hasFile('photo')) {
+            $photoPath = $request->file('photo')->store('bcpc_children', 'public');
+        }
+
+        return DB::transaction(function () use ($validated, $ageInMonthsAtRegistration, $photoPath) {
             // 1. Evaluate WHO Growth Standard Z-Scores (3 Axes)
             $ageInMonths = $ageInMonthsAtRegistration;
             $wfa = $this->nutritionService->evaluateWeightForAge($ageInMonths, $validated['sex'], $validated['weight_kg']);
@@ -509,11 +581,13 @@ class BcpcMonitoringController extends Controller
                 'child_first_name' => $validated['child_first_name'],
                 'child_last_name' => $validated['child_last_name'],
                 'child_middle_name' => $validated['child_middle_name'],
+                'photo_path' => $photoPath,
                 'date_of_birth' => $validated['date_of_birth'],
                 'sex' => $validated['sex'],
                 'status' => 'Active',
                 'sfp_status' => $sfpStatus,
                 'sfp_start_date' => $sfpStartDate,
+                'sfp_cycle_number' => 1,
             ]);
 
             // 4. Create Baseline Assessment
@@ -529,6 +603,7 @@ class BcpcMonitoringController extends Controller
                 'remarks' => $validated['remarks'] ?? null,
                 'bns_assessor' => $validated['bns_assessor'] ?? ($validated['bns_name'] ?? null),
                 'sfp_day_number' => $sfpStatus === 'Enrolled' ? 1 : null,
+                'sfp_cycle_number' => 1,
             ]);
 
             return Redirect::route('admin.bcpc.index')->with('success', 'Child registered and evaluated successfully.');
@@ -745,6 +820,7 @@ class BcpcMonitoringController extends Controller
                 'remarks' => $validated['remarks'] ?? null,
                 'bns_assessor' => $validated['bns_assessor'] ?? null,
                 'sfp_day_number' => $sfpDayNum,
+                'sfp_cycle_number' => $child->sfp_cycle_number ?? 1,
             ]);
 
             // Dispatch BCPC Assessment event if exists
@@ -754,6 +830,53 @@ class BcpcMonitoringController extends Controller
 
             return Redirect::back()->with('success', 'New nutrition measurement recorded successfully.');
         });
+    }
+
+    /**
+     * Upload or update child profile photo.
+     */
+    public function uploadPhoto(Request $request, int $id)
+    {
+        $child = BcpcChild::findOrFail($id);
+        $request->validate([
+            'photo' => 'required|image|mimes:jpeg,png,jpg,webp|max:3072',
+        ]);
+
+        if ($child->photo_path && Storage::disk('public')->exists($child->photo_path)) {
+            Storage::disk('public')->delete($child->photo_path);
+        }
+
+        $path = $request->file('photo')->store('bcpc_children', 'public');
+        $child->update(['photo_path' => $path]);
+
+        AuditLogger::logUpdate($child, 'BCPC_CHILD_PHOTO_UPDATED', [
+            'photo_path' => $path,
+        ]);
+
+        return Redirect::back()->with('success', 'Child profile photo updated successfully.');
+    }
+
+    /**
+     * Re-enroll child in secondary or subsequent SFP cycle (Non-responder or Relapse).
+     */
+    public function reenrollCycle(Request $request, int $id)
+    {
+        $child = BcpcChild::findOrFail($id);
+        $newCycle = ($child->sfp_cycle_number ?? 1) + 1;
+
+        $child->update([
+            'sfp_status' => 'Enrolled',
+            'sfp_start_date' => Carbon::today()->format('Y-m-d'),
+            'sfp_end_date' => null,
+            'sfp_cycle_number' => $newCycle,
+        ]);
+
+        AuditLogger::logUpdate($child, 'BCPC_CHILD_REENROLLED_CYCLE', [
+            'sfp_cycle_number' => $newCycle,
+            'sfp_start_date' => Carbon::today()->format('Y-m-d'),
+        ]);
+
+        return Redirect::back()->with('success', "Child successfully re-enrolled in SFP Cycle {$newCycle}.");
     }
 
     /**

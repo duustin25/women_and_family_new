@@ -87,7 +87,20 @@ export default function Index({ events, filters }: PageProps) {
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (editingEvent) {
-            router.post(`/admin/organization/events/${editingEvent.id}`, { _method: 'put', ...formData, image_path: formData.image_path || undefined }, { onSuccess: () => setIsModalOpen(false) });
+            const payload: Record<string, any> = {
+                _method: 'put',
+                title: formData.title,
+                description: formData.description,
+                event_date: formData.event_date,
+                event_time: formData.event_time,
+                location: formData.location,
+            };
+            if (formData.image_path instanceof File) {
+                payload.image_path = formData.image_path;
+            }
+            router.post(`/admin/organization/events/${editingEvent.id}`, payload, {
+                onSuccess: () => setIsModalOpen(false)
+            });
         } else {
             router.post('/admin/organization/events', formData as any, { onSuccess: () => setIsModalOpen(false) });
         }

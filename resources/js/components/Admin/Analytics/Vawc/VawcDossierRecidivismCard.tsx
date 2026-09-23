@@ -5,6 +5,7 @@ import { FolderGit2, Repeat, Users, ShieldAlert, CheckCircle2, Clock } from 'luc
 import { cn } from '@/lib/utils';
 
 interface DossierAnalytics {
+    total_cases?: number;
     total_dossiers: number;
     active_dossiers: number;
     closed_dossiers: number;
@@ -24,6 +25,8 @@ interface Props {
 export default function VawcDossierRecidivismCard({ data }: Props) {
     if (!data) return null;
 
+    const totalIncidents = data.total_cases ?? (data.total_dossiers + data.total_repeat_incidents);
+
     return (
         <Card className="shadow-sm border">
             <CardHeader className="border-b bg-muted/20 pb-4">
@@ -32,63 +35,68 @@ export default function VawcDossierRecidivismCard({ data }: Props) {
                         <FolderGit2 className="w-4 h-4 text-rose-600" />
                         Master Dossier & Recidivism Intelligence
                     </CardTitle>
-                    <Badge variant="outline" className="font-mono text-[10px] font-bold">
-                        {data.total_dossiers} Total Dossiers
-                    </Badge>
+                    <div className="flex items-center gap-2">
+                        <Badge variant="outline" className="font-mono text-[10px] font-bold">
+                            {data.total_dossiers} Master Folders
+                        </Badge>
+                        <Badge variant="secondary" className="font-mono text-[10px] font-bold text-rose-700 dark:text-rose-400">
+                            {totalIncidents} Logged Incidents
+                        </Badge>
+                    </div>
                 </div>
                 <CardDescription className="text-[10px] font-bold uppercase text-muted-foreground">
-                    Longitudinal Legal Relationship Tracking & Serial Recidivism
+                    Longitudinal Legal Relationship Tracking & Repeat Incident Monitoring
                 </CardDescription>
             </CardHeader>
 
             <CardContent className="p-5 space-y-5">
-                {/* 4 Primary Metric Stat Blocks */}
+                {/* 4 Primary Metric Stat Blocks with Explicit Context */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                    <div className="p-3 rounded-lg border bg-slate-50 dark:bg-slate-900 text-center">
-                        <span className="text-[10px] font-black uppercase tracking-wider text-muted-foreground block mb-1">
-                            Active Dossiers
+                    <div className="p-3 rounded-xl border bg-card text-center shadow-xs">
+                        <span className="text-xs font-semibold text-muted-foreground block mb-0.5">
+                            Master Dossiers
                         </span>
-                        <span className="text-xl font-black text-slate-900 dark:text-white">
-                            {data.active_dossiers}
+                        <span className="text-2xl font-black font-mono text-foreground block">
+                            {data.total_dossiers}
                         </span>
-                        <span className="text-[9px] font-bold text-emerald-600 block mt-0.5">
-                            {data.closed_dossiers} Archived
+                        <span className="text-[10px] text-muted-foreground font-medium">
+                            {data.active_dossiers} Active · {data.closed_dossiers} Closed
                         </span>
                     </div>
 
-                    <div className="p-3 rounded-lg border border-red-200 bg-red-50/50 dark:bg-red-950/20 text-center">
-                        <span className="text-[10px] font-black uppercase tracking-wider text-red-700 dark:text-red-400 block mb-1">
+                    <div className="p-3 rounded-xl border border-rose-200 bg-rose-50/40 dark:bg-rose-950/20 text-center shadow-xs">
+                        <span className="text-xs font-semibold text-rose-700 dark:text-rose-400 block mb-0.5">
+                            Total Incidents
+                        </span>
+                        <span className="text-2xl font-black font-mono text-rose-600 dark:text-rose-400 block">
+                            {totalIncidents}
+                        </span>
+                        <span className="text-[10px] text-rose-600/80 dark:text-rose-400/80 font-medium">
+                            {data.total_dossiers} Initial + {data.total_repeat_incidents} Repeat
+                        </span>
+                    </div>
+
+                    <div className="p-3 rounded-xl border border-purple-200 bg-purple-50/40 dark:bg-purple-950/20 text-center shadow-xs">
+                        <span className="text-xs font-semibold text-purple-700 dark:text-purple-400 block mb-0.5">
                             Recidivism Rate
                         </span>
-                        <span className="text-xl font-black text-red-600 dark:text-red-400">
+                        <span className="text-2xl font-black font-mono text-purple-700 dark:text-purple-400 block">
                             {data.recidivism_rate}%
                         </span>
-                        <span className="text-[9px] font-bold text-muted-foreground block mt-0.5">
+                        <span className="text-[10px] text-purple-700/80 dark:text-purple-400/80 font-medium">
                             {data.recidivism_count} Repeat Dossiers
                         </span>
                     </div>
 
-                    <div className="p-3 rounded-lg border border-amber-200 bg-amber-50/50 dark:bg-amber-950/20 text-center">
-                        <span className="text-[10px] font-black uppercase tracking-wider text-amber-800 dark:text-amber-400 block mb-1">
+                    <div className="p-3 rounded-xl border border-amber-200 bg-amber-50/40 dark:bg-amber-950/20 text-center shadow-xs">
+                        <span className="text-xs font-semibold text-amber-800 dark:text-amber-400 block mb-0.5">
                             Serial Perpetrators
                         </span>
-                        <span className="text-xl font-black text-amber-700 dark:text-amber-400">
+                        <span className="text-2xl font-black font-mono text-amber-700 dark:text-amber-400 block">
                             {data.serial_perpetrators_count}
                         </span>
-                        <span className="text-[9px] font-bold text-muted-foreground block mt-0.5">
-                            Linked &gt;1 Survivor
-                        </span>
-                    </div>
-
-                    <div className="p-3 rounded-lg border border-purple-200 bg-purple-50/50 dark:bg-purple-950/20 text-center">
-                        <span className="text-[10px] font-black uppercase tracking-wider text-purple-700 dark:text-purple-400 block mb-1">
-                            Repeat Incidents
-                        </span>
-                        <span className="text-xl font-black text-purple-700 dark:text-purple-400">
-                            {data.total_repeat_incidents}
-                        </span>
-                        <span className="text-[9px] font-bold text-muted-foreground block mt-0.5">
-                            Chronological Sub-Cases
+                        <span className="text-[10px] text-amber-700/80 dark:text-amber-400/80 font-medium">
+                            Multi-Survivor Offenders
                         </span>
                     </div>
                 </div>

@@ -216,7 +216,7 @@ class MembershipController extends Controller
                         $q->where('id', $search);
                     } else {
                         $q->where('email', $search)
-                          ->orWhere('fullname', 'LIKE', "%{$search}%");
+                            ->orWhere('fullname', 'LIKE', "%{$search}%");
                     }
                 })
                 ->latest()
@@ -235,9 +235,13 @@ class MembershipController extends Controller
     public function submitPublicAppeal(Request $request, MembershipApplication $application, \App\Services\OrganizationGovernanceService $service)
     {
         $validated = $request->validate([
-            'appeal_reason' => 'required|string|min:10|max:1000',
+            'appeal_reason' => 'required|string|min:10|max:500',
             'appeal_docs' => 'nullable|array',
             'appeal_docs.*' => 'file|mimes:jpg,jpeg,png,pdf|max:5120',
+        ], [
+            'appeal_reason.required' => 'Please provide an appeal statement.',
+            'appeal_reason.min' => 'Appeal statement must be at least 10 characters.',
+            'appeal_reason.max' => 'Appeal statement must not exceed 500 characters to keep review concise.',
         ]);
 
         $uploadedDocs = [];
@@ -249,7 +253,11 @@ class MembershipController extends Controller
             }
         }
 
-        $service->submitAppeal($application, $validated['appeal_reason'], $uploadedDocs);
+        try {
+            $service->submitAppeal($application, $validated['appeal_reason'], $uploadedDocs);
+        } catch (\Exception $e) {
+            return redirect()->back()->withErrors(['appeal_reason' => $e->getMessage()]);
+        }
 
         return redirect()->route('public.applications.status', ['search' => $application->email ?? $application->id])
             ->with('success', 'Your appeal statement has been successfully submitted and escalated to the Barangay Administrator Appeals Command Center.');

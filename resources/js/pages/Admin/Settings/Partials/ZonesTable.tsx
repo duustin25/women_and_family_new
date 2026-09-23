@@ -78,10 +78,10 @@ export default function ZonesTable({ zones }: { zones: Zone[] }) {
                 <div>
                     <CardTitle className="text-lg font-bold flex items-center gap-2">
                         <MapPin className="w-5 h-5 text-emerald-600" />
-                        Barangay Zones & Purok Mapping
+                        Barangay Zones
                     </CardTitle>
                     <CardDescription className="text-sm text-muted-foreground">
-                        Manage local community zones and clusters used for geographic incident dispatching and demographic analytics.
+                        Manage local community zones used for geographic incident dispatching and demographic analytics in Barangay 183.
                     </CardDescription>
                 </div>
                 <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
@@ -93,7 +93,7 @@ export default function ZonesTable({ zones }: { zones: Zone[] }) {
                     <DialogContent className="sm:max-w-md">
                         <DialogHeader>
                             <DialogTitle className="text-lg font-bold">{isEditing ? 'Edit Zone' : 'Add New Zone'}</DialogTitle>
-                            <DialogDescription className="text-sm text-muted-foreground">{isEditing ? 'Update existing zone attributes.' : 'Register a new geographic zone or purok.'}</DialogDescription>
+                            <DialogDescription className="text-sm text-muted-foreground">{isEditing ? 'Update existing zone attributes.' : 'Register a new geographic zone in Barangay 183.'}</DialogDescription>
                         </DialogHeader>
                         <form onSubmit={submit} className="space-y-4 py-2">
                             <div className="space-y-2">
@@ -102,7 +102,7 @@ export default function ZonesTable({ zones }: { zones: Zone[] }) {
                                     id="zone_name"
                                     value={form.data.name}
                                     onChange={e => form.setData('name', e.target.value)}
-                                    placeholder="e.g. Zone 1 or Purok Bagong Silang"
+                                    placeholder="e.g. Zone 1, Zone 2, Zone 3"
                                     required
                                     className="text-sm"
                                 />
@@ -123,7 +123,7 @@ export default function ZonesTable({ zones }: { zones: Zone[] }) {
                     <Table>
                         <TableHeader>
                             <TableRow className="bg-muted/40">
-                                <TableHead className="font-semibold text-xs uppercase tracking-wider">Zone / Purok Name</TableHead>
+                                <TableHead className="font-semibold text-xs uppercase tracking-wider">Barangay Zone Name</TableHead>
                                 <TableHead className="font-semibold text-xs uppercase tracking-wider">Operational Status</TableHead>
                                 <TableHead className="text-right font-semibold text-xs uppercase tracking-wider w-24">Actions</TableHead>
                             </TableRow>

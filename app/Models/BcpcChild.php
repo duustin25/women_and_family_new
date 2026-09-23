@@ -28,19 +28,38 @@ class BcpcChild extends Model
         'child_first_name',
         'child_last_name',
         'child_middle_name',
+        'photo_path',
         'date_of_birth',
         'sex',
         'status',
         'sfp_status',
         'sfp_start_date',
         'sfp_end_date',
+        'sfp_cycle_number',
     ];
 
     protected $casts = [
         'date_of_birth' => 'date',
         'sfp_start_date' => 'date',
         'sfp_end_date' => 'date',
+        'sfp_cycle_number' => 'integer',
     ];
+
+    protected $appends = [
+        'full_name',
+        'photo_url',
+    ];
+
+    /**
+     * Virtual attribute for the photo URL.
+     */
+    public function getPhotoUrlAttribute(): ?string
+    {
+        if ($this->photo_path) {
+            return asset('storage/' . $this->photo_path);
+        }
+        return null;
+    }
 
     /**
      * Virtual attribute for the full name.

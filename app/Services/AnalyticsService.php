@@ -28,9 +28,13 @@ class AnalyticsService
     public function getRibbonStats(int $year): array
     {
         $totalCases = VawcCase::whereYear('created_at', $year)->count();
-        $totalDossiers = VawcDossier::count();
-        $activeBpos = DB::table('vawc_protection_orders')->whereIn('status', ['Issued', 'Served'])->count();
-        $repeatDossiers = VawcDossier::where('incident_count', '>', 1)->count();
+        $totalDossiers = VawcDossier::whereHas('cases', function ($q) use ($year) {
+            $q->whereYear('created_at', $year);
+        })->count();
+        $activeBpos = DB::table('vawc_protection_orders')->whereIn('status', ['Issued', 'Served'])->whereYear('created_at', $year)->count();
+        $repeatDossiers = VawcDossier::whereHas('cases', function ($q) use ($year) {
+            $q->whereYear('created_at', $year);
+        })->where('incident_count', '>', 1)->count();
         $recidivismRate = $totalDossiers > 0 ? round(($repeatDossiers / $totalDossiers) * 100, 1) : 0.0;
 
         return [
@@ -389,16 +393,60 @@ class AnalyticsService
      */
     public function getZoneDistribution(int $year): array
     {
-        return Zone::withCount(['caseReports' => function ($query) use ($year) {
+        return Zone::with([
+            'caseReports' => function ($query) use ($year) {
+                $query->whereYear('created_at', $year)
+                      ->with(['vawcCase' => function ($vQuery) {
+                          $vQuery->select('id', 'case_report_id', 'uuid')
+                                 ->with('assessment:id,vawc_case_id,risk_level,risk_score');
+                      }]);
+            },
+            'children' => function ($query) {
+                $query->where('status', 'Active')
+                      ->with('latestAssessment');
+            }
+        ])
+        ->withCount(['caseReports' => function ($query) use ($year) {
             $query->whereYear('created_at', $year);
         }])
-            ->get()
-            ->map(fn($zone) => [
-                'name'  => $zone->name,
-                'count' => $zone->case_reports_count,
-                'color' => $zone->color_code,
-            ])
-            ->toArray();
+        ->get()
+        ->map(function ($zone) {
+            $vawcCases = $zone->caseReports->map(function ($cr) {
+                return [
+                    'id' => $cr->vawcCase?->id,
+                    'uuid' => $cr->vawcCase?->uuid,
+                    'case_number' => $cr->case_number,
+                    'location' => $cr->incident_location ?: 'Barangay 183',
+                    'risk_level' => $cr->vawcCase?->assessment?->risk_level ?? 'MODERATE',
+                    'risk_score' => $cr->vawcCase?->assessment?->risk_score ?? 0,
+                ];
+            })->filter(fn($c) => !empty($c['id']))->values()->toArray();
+
+            $bcpcChildren = $zone->children ? $zone->children->map(function ($ch) {
+                $latest = $ch->latestAssessment;
+                $isMalnourished = $latest && (
+                    in_array($latest->wfa_status, ['Underweight', 'Severely Underweight']) ||
+                    in_array($latest->wflh_status ?? '', ['Wasted', 'Severely Wasted'])
+                );
+                return [
+                    'id' => $ch->id,
+                    'name' => $ch->full_name,
+                    'address' => $ch->address ?: 'Barangay 183',
+                    'is_malnourished' => $isMalnourished,
+                    'status' => $latest ? ($latest->wflh_status ?: $latest->wfa_status) : 'Active',
+                ];
+            })->values()->toArray() : [];
+
+            return [
+                'id'       => $zone->id,
+                'name'     => $zone->name,
+                'count'    => $zone->case_reports_count,
+                'color'    => $zone->color_code,
+                'cases'    => $vawcCases,
+                'children' => $bcpcChildren,
+            ];
+        })
+        ->toArray();
     }
 
     /**
@@ -867,19 +915,26 @@ class AnalyticsService
      */
     public function getVawcDossierAnalytics(int $year): array
     {
-        $dossiers = VawcDossier::with(['cases'])->get();
+        $dossiers = VawcDossier::whereHas('cases', function ($q) use ($year) {
+            $q->whereYear('created_at', $year);
+        })->with(['cases' => fn($q) => $q->whereYear('created_at', $year)])->get();
+
         $totalDossiers = $dossiers->count();
+        $totalCases = $dossiers->sum(fn($d) => $d->cases->count());
         $activeDossiers = $dossiers->where('current_lifecycle', '!=', 'Dormant/Closed')->count();
         $closedDossiers = $dossiers->where('current_lifecycle', 'Dormant/Closed')->count();
 
         // Longitudinal recidivism: Dossiers with > 1 incident recorded
-        $repeatDossiers = $dossiers->where('incident_count', '>', 1);
+        $repeatDossiers = $dossiers->filter(fn($d) => $d->cases->count() > 1);
         $recidivismCount = $repeatDossiers->count();
         $recidivismRate = $totalDossiers > 0 ? round(($recidivismCount / $totalDossiers) * 100, 1) : 0.0;
-        $totalRepeatIncidents = $repeatDossiers->sum('incident_count');
+        
+        // Exact subsequent repeat incidents (incidents beyond the initial blotter: Total Cases - Total Dossiers)
+        $totalRepeatIncidents = max(0, $totalCases - $totalDossiers);
 
         // Serial Perpetrators: Distinct respondent names appearing in > 1 master dossier
         $serialPerpNames = VawcDossier::select('respondent_name')
+            ->whereHas('cases', fn($q) => $q->whereYear('created_at', $year))
             ->groupBy('respondent_name')
             ->havingRaw('count(*) > 1')
             ->pluck('respondent_name');
@@ -887,6 +942,7 @@ class AnalyticsService
 
         // Compound Survivors: Distinct survivor names appearing in > 1 master dossier
         $compoundSurvivorNames = VawcDossier::select('survivor_name')
+            ->whereHas('cases', fn($q) => $q->whereYear('created_at', $year))
             ->groupBy('survivor_name')
             ->havingRaw('count(*) > 1')
             ->pluck('survivor_name');
@@ -929,6 +985,7 @@ class AnalyticsService
         })->values()->toArray();
 
         return [
+            'total_cases'               => $totalCases,
             'total_dossiers'            => $totalDossiers,
             'active_dossiers'           => $activeDossiers,
             'closed_dossiers'           => $closedDossiers,

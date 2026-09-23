@@ -52,8 +52,13 @@ export default function ApplicationStatusPage({ search: initialSearch, applicati
         e.preventDefault();
         if (!application) return;
 
-        if (data.appeal_reason.trim().length < 10) {
+        const reason = data.appeal_reason.trim();
+        if (reason.length < 10) {
             toast.error('Appeal statement must be at least 10 characters long.');
+            return;
+        }
+        if (reason.length > 500) {
+            toast.error('Appeal statement must not exceed 500 characters.');
             return;
         }
 
@@ -269,18 +274,27 @@ export default function ApplicationStatusPage({ search: initialSearch, applicati
                                                     <CardContent className="pt-4">
                                                         <form onSubmit={handleAppealSubmit} className="space-y-4">
                                                             <div className="space-y-1.5">
-                                                                <Label htmlFor="appeal_reason" className="text-xs font-bold">
-                                                                    Appeal Statement / Justification <span className="text-rose-500">*</span>
-                                                                </Label>
+                                                                <div className="flex items-center justify-between">
+                                                                    <Label htmlFor="appeal_reason" className="text-xs font-bold">
+                                                                        Appeal Statement / Justification <span className="text-rose-500">*</span>
+                                                                    </Label>
+                                                                    <span className={`text-[11px] font-mono ${data.appeal_reason.length > 450 ? 'text-amber-600 font-bold' : 'text-muted-foreground'}`}>
+                                                                        {data.appeal_reason.length}/500 chars
+                                                                    </span>
+                                                                </div>
                                                                 <Textarea
                                                                     id="appeal_reason"
                                                                     rows={4}
-                                                                    placeholder="Explain why your application should be reconsidered (e.g. 'I have attached my updated Barangay Certificate showing 3 years of residency...')"
+                                                                    maxLength={500}
+                                                                    placeholder="Briefly explain why your application should be reconsidered (keep it concise, max 500 characters)..."
                                                                     value={data.appeal_reason}
                                                                     onChange={(e) => setData('appeal_reason', e.target.value)}
                                                                     className="text-xs leading-relaxed"
                                                                     required
                                                                 />
+                                                                <p className="text-[11px] text-muted-foreground">
+                                                                    Please keep your appeal concise (10–500 characters). Supporting evidence can be attached below.
+                                                                </p>
                                                                 {errors.appeal_reason && (
                                                                     <p className="text-[11px] font-bold text-rose-600">{errors.appeal_reason}</p>
                                                                 )}

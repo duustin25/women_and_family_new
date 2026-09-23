@@ -49,7 +49,8 @@ class OrganizationGovernanceService
      */
     public function submitAppeal(MembershipApplication $application, string $appealReason, array $appealDocs = []): MembershipApplication
     {
-        if ($application->status !== 'rejected') {
+        $currentStatus = strtolower(trim((string) $application->status));
+        if (!in_array($currentStatus, ['rejected', 'disapproved'])) {
             throw new Exception("Only rejected applications can be appealed.");
         }
 
@@ -57,8 +58,12 @@ class OrganizationGovernanceService
             throw new Exception("Appeal reason statement is required.");
         }
 
+        if (mb_strlen(trim($appealReason)) > 500) {
+            throw new Exception("Appeal reason statement must not exceed 500 characters.");
+        }
+
         $application->update([
-            'status' => 'appealed',
+            'status' => MembershipApplication::STATUS_APPEALED,
             'appeal_reason' => trim($appealReason),
             'appeal_docs' => $appealDocs,
             'appealed_at' => now(),

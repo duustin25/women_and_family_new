@@ -10,7 +10,6 @@ import {
 } from "lucide-react";
 import { useState, useEffect } from 'react';
 import { toast, Toaster } from 'sonner';
-import AccessibilityToolbar from '@/components/AccessibilityToolbar';
 import ChatbotWidget from '@/components/ChatbotWidget';
 import { useAppearance } from '@/hooks/use-appearance';
 
@@ -80,7 +79,6 @@ export default function PublicLayout({ children, bgColor = "bg-white" }: PublicL
 
             {/* FLOATING ACTION UTILITIES */}
             <ChatbotWidget />
-            <AccessibilityToolbar />
 
             {/* --- 0. TOP BAR (HOTLINE MARQUEE) --- */}
             <div className="bg-[#3b0764] dark:bg-purple-950 text-white text-[11px] sm:text-xs font-bold uppercase tracking-wider py-1.5 sm:py-2 relative z-50 border-b border-white/5">

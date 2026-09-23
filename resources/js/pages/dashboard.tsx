@@ -1,4 +1,4 @@
-import { Head, router } from '@inertiajs/react';
+import { Head, router, Link } from '@inertiajs/react';
 import {
     Users,
     ShieldAlert,
@@ -87,7 +87,7 @@ export default function Dashboard({
             { label: 'Total Users', value: systemStats.totalSystemUsers, icon: Users, color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-900/20' },
             { label: 'Pending Applications', value: systemStats.pendingApps, icon: UserPlus, color: 'text-amber-600', bg: 'bg-amber-50 dark:bg-amber-900/20' },
             { label: 'Organizations', value: systemStats.totalOrgs, icon: Building2, color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-900/20' },
-            { label: 'GAD Projects', value: `${systemStats.gadApprovedCount}/${systemStats.totalGadEvents}`, icon: CalendarCheck, color: 'text-indigo-600', bg: 'bg-indigo-50 dark:bg-indigo-900/20' },
+            { label: 'GAD Events', value: `${systemStats.gadApprovedCount}/${systemStats.totalGadEvents}`, icon: CalendarCheck, color: 'text-indigo-600', bg: 'bg-indigo-50 dark:bg-indigo-900/20' },
             { label: 'Recent System Activity', value: systemStats.recentSystemActivity, icon: Activity, color: 'text-rose-600', bg: 'bg-rose-50 dark:bg-rose-900/20' },
         ];
 
@@ -127,8 +127,16 @@ export default function Dashboard({
 
                 {/* ── STATS RIBBON (No Duplicates) ── */}
                 <div className={`grid gap-4 grid-cols-2 ${isPresident ? 'md:grid-cols-4' : 'lg:grid-cols-5'}`}>
-                    {stats.map((stat, i) => (
-                        <div key={i} className="border p-5 rounded-xl shadow-sm transition-all hover:shadow-md bg-white dark:bg-slate-900">
+                    {stats.map((stat, i) => {
+                        const href = stat.label === 'Pending Applications'
+                            ? '/admin/applications'
+                            : stat.label === 'Verified Members'
+                                ? '/admin/members'
+                                : stat.label === 'Organizations'
+                                    ? '/admin/organizations'
+                                    : undefined;
+
+                        const content = (
                             <div className="flex justify-between items-start">
                                 <div>
                                     <p className="text-[10px] font-black uppercase text-slate-400 dark:text-slate-500 tracking-widest mb-1 leading-tight">
@@ -142,8 +150,26 @@ export default function Dashboard({
                                     <stat.icon size={20} className="stroke-[2.5]" />
                                 </div>
                             </div>
-                        </div>
-                    ))}
+                        );
+
+                        if (href) {
+                            return (
+                                <Link
+                                    key={i}
+                                    href={href}
+                                    className="border p-5 rounded-xl shadow-sm transition-all hover:shadow-md hover:border-blue-500/50 bg-white dark:bg-slate-900 block cursor-pointer"
+                                >
+                                    {content}
+                                </Link>
+                            );
+                        }
+
+                        return (
+                            <div key={i} className="border p-5 rounded-xl shadow-sm transition-all hover:shadow-md bg-white dark:bg-slate-900">
+                                {content}
+                            </div>
+                        );
+                    })}
                 </div>
 
                 {/* ── MODULE HEALTH COMMAND CARDS ── */}

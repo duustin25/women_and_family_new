@@ -1,6 +1,6 @@
 import React from 'react';
 import { Head } from '@inertiajs/react';
-import { ArchiveX } from 'lucide-react';
+import { ArchiveX, ShieldAlert, Clock, Gavel, FileText, Send } from 'lucide-react';
 import { route } from 'ziggy-js';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -30,6 +30,8 @@ export default function Show({ case: vawcCase, crossStats, survivorStats }: Show
     const workflow = useVawcCaseWorkflow(vawcCase);
     const { stepNum } = workflow;
 
+    const isCriticalAlert = (vawcCase.risk_score ?? 0) >= 9 || (workflow.activeBpo?.status === 'Applied');
+
     return (
         <AppLayout breadcrumbs={[
             { title: 'Dashboard', href: route('dashboard') },
@@ -45,6 +47,85 @@ export default function Show({ case: vawcCase, crossStats, survivorStats }: Show
                     isRedacted={workflow.isRedacted}
                     setIsRedacted={workflow.setIsRedacted}
                 />
+
+                {/* 🚨 CRITICAL CASES HERO ACTION DOCK (TRIGGERED IF RISK SCORE >= 9 OR PENDING BPO) */}
+                {isCriticalAlert && (
+                    <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-red-500/15 via-rose-500/10 to-amber-500/15 border-2 border-red-500/40 text-red-950 dark:text-red-100 shadow-md">
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                            <div className="flex items-start gap-3.5">
+                                <div className="p-2.5 bg-red-600 text-white rounded-xl shadow-xs shrink-0">
+                                    <ShieldAlert className="w-6 h-6 animate-pulse" />
+                                </div>
+                                <div className="space-y-1">
+                                    <div className="flex flex-wrap items-center gap-2">
+                                        <Badge className="bg-red-600 text-white font-black text-[11px] px-2.5 py-0.5 uppercase tracking-wider">
+                                            EMERGENCY LETHALITY: Score {vawcCase.risk_score ?? 10}/12
+                                        </Badge>
+                                        {workflow.activeBpo?.status === 'Applied' && (
+                                            <Badge variant="outline" className="border-red-400 bg-red-50 dark:bg-red-950/60 text-red-700 dark:text-red-300 font-bold text-[11px] px-2.5 py-0.5 flex items-center gap-1">
+                                                <Clock className="w-3.5 h-3.5" /> 24-HR STATUTORY SLA ACTIVE
+                                            </Badge>
+                                        )}
+                                    </div>
+                                    <h2 className="text-base font-bold tracking-tight text-red-950 dark:text-red-100">
+                                        Critical Lethality & Immediate Protection Action Center
+                                    </h2>
+                                    <p className="text-xs text-red-900/80 dark:text-red-200/80 font-medium leading-relaxed max-w-3xl">
+                                        Under RA 9262 Section 14 and DILG Joint Memorandum Circular 2010-2, emergency protective actions and PNP transmittal must be executed swiftly within the statutory SLA.
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* Quick-Action Execution Dock */}
+                            <div className="flex flex-wrap items-center gap-2 shrink-0 self-start md:self-center">
+                                {stepNum === 2 && (
+                                    <Button
+                                        size="sm"
+                                        onClick={() => {
+                                            const el = document.getElementById('step-action-card');
+                                            el?.scrollIntoView({ behavior: 'smooth' });
+                                        }}
+                                        className="h-9 px-4 text-xs font-semibold bg-red-600 hover:bg-red-700 text-white shadow-xs gap-1.5 cursor-pointer"
+                                    >
+                                        <Gavel className="w-4 h-4" /> Issue BPO (RA 9262)
+                                    </Button>
+                                )}
+                                {stepNum === 3 && (
+                                    <Button
+                                        size="sm"
+                                        onClick={() => {
+                                            const el = document.getElementById('step-action-card');
+                                            el?.scrollIntoView({ behavior: 'smooth' });
+                                        }}
+                                        className="h-9 px-4 text-xs font-semibold bg-red-600 hover:bg-red-700 text-white shadow-xs gap-1.5 cursor-pointer"
+                                    >
+                                        <Gavel className="w-4 h-4" /> Confirm 15-Day Issuance
+                                    </Button>
+                                )}
+                                {stepNum === 4 && (
+                                    <Button
+                                        size="sm"
+                                        onClick={() => {
+                                            const el = document.getElementById('step-action-card');
+                                            el?.scrollIntoView({ behavior: 'smooth' });
+                                        }}
+                                        className="h-9 px-4 text-xs font-semibold bg-red-600 hover:bg-red-700 text-white shadow-xs gap-1.5 cursor-pointer"
+                                    >
+                                        <Send className="w-4 h-4" /> Serve Protection Order
+                                    </Button>
+                                )}
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => workflow.setShowEscalateModal(true)}
+                                    className="h-9 px-4 text-xs font-semibold border-red-300 text-red-700 dark:border-red-800 dark:text-red-300 hover:bg-red-100/50 gap-1.5 cursor-pointer"
+                                >
+                                    <FileText className="w-4 h-4" /> PNP WCPD Transmittal
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 {/* 2. Master Dossier Command Bar */}
                 <VawcMasterDossierBanner
@@ -63,7 +144,7 @@ export default function Show({ case: vawcCase, crossStats, survivorStats }: Show
                 <VawcProgressionStepper stepNum={stepNum} />
 
                 {/* 5. Primary Guided Action Card */}
-                <Card className="shadow-xs border overflow-hidden">
+                <Card id="step-action-card" className="shadow-xs border overflow-hidden">
                     <CardHeader className="p-4 sm:p-6 bg-muted/20 pb-4 border-b">
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 w-full">
                             <div className="flex flex-wrap items-center gap-2">

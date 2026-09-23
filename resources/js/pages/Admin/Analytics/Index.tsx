@@ -1,35 +1,47 @@
-import { Head, usePage, router } from '@inertiajs/react';
+import { Head, usePage, router, Link } from '@inertiajs/react';
 import {
-    TrendingUp, Users, Activity, FileText, Baby,
-    ShieldAlert, CheckCircle, Clock, Gavel, BarChart3,
-    Calendar, Building, AlertCircle, Heart, Map, Search, BrainCircuit,
-    Mail, UserPlus, FolderGit2, CheckSquare, Globe, Building2, Eye, ShieldCheck
+    Users, Activity, FileText, Baby,
+    ShieldAlert, CheckCircle2, Clock, BarChart3,
+    Calendar, Building, Heart, Map, Search,
+    Mail, UserPlus, Sparkles, Building2, MapPin, ExternalLink,
+    AlertTriangle, ShieldCheck
 } from 'lucide-react';
 import { useState } from 'react';
 import {
-    PieChart, Pie, Cell, Tooltip, ResponsiveContainer,
-    LineChart, Line, XAxis, YAxis, CartesianGrid,
-    BarChart, Bar, AreaChart, Area, Legend
+    BarChart, Bar, XAxis, YAxis, CartesianGrid,
+    Tooltip, ResponsiveContainer
 } from 'recharts';
 
-// Modular Analytics Chart Components
-import BcpcNutritionalRadarChart from '@/components/Admin/Analytics/Bcpc/BcpcNutritionalRadarChart';
-import BcpcSfpOutcomesChart from '@/components/Admin/Analytics/Bcpc/BcpcSfpOutcomesChart';
-import GadMemberDemographicsChart from '@/components/Admin/Analytics/Gad/GadMemberDemographicsChart';
-import GadMembershipTrendsChart from '@/components/Admin/Analytics/Gad/GadMembershipTrendsChart';
-import OrganizationSectorBreakdown from '@/components/Admin/Analytics/Gad/OrganizationSectorBreakdown';
-import VawcGeographicalDensityChart from '@/components/Admin/Analytics/Vawc/VawcGeographicalDensityChart';
+// Domain-Specific & Common Analytics Components
+import AnalyticsFilterBar from '@/components/Admin/Analytics/Common/AnalyticsFilterBar';
+import AnalyticsSkeleton from '@/components/Admin/Analytics/Common/AnalyticsSkeleton';
+
+// VAWC Components
 import VawcMonthlyAbuseChart from '@/components/Admin/Analytics/Vawc/VawcMonthlyAbuseChart';
-import VawcThreatIndicatorsChart from '@/components/Admin/Analytics/Vawc/VawcThreatIndicatorsChart';
-import VawcVictimDemographicsChart from '@/components/Admin/Analytics/Vawc/VawcVictimDemographicsChart';
-import VawcDossierRecidivismCard from '@/components/Admin/Analytics/Vawc/VawcDossierRecidivismCard';
 import VawcRiskDistributionChart from '@/components/Admin/Analytics/Vawc/VawcRiskDistributionChart';
+import VawcDossierRecidivismCard from '@/components/Admin/Analytics/Vawc/VawcDossierRecidivismCard';
 import VawcBpoMilestonesChart from '@/components/Admin/Analytics/Vawc/VawcBpoMilestonesChart';
-import VawcRelationshipProtocolChart from '@/components/Admin/Analytics/Vawc/VawcRelationshipProtocolChart';
+import VawcGeographicalDensityChart from '@/components/Admin/Analytics/Vawc/VawcGeographicalDensityChart';
+import VawcVictimDemographicsChart from '@/components/Admin/Analytics/Vawc/VawcVictimDemographicsChart';
+
+// BCPC Components
+import BcpcNutritionStatusBarChart from '@/components/Admin/Analytics/Bcpc/BcpcNutritionStatusBarChart';
+import BcpcSfpOutcomesChart from '@/components/Admin/Analytics/Bcpc/BcpcSfpOutcomesChart';
+
+// GAD Components
+import GadProjectPipelineChart from '@/components/Admin/Analytics/Gad/GadProjectPipelineChart';
+
+// Organization Components
+import OrgBacklogKpiCard from '@/components/Admin/Analytics/Organizations/OrgBacklogKpiCard';
+import GadMembershipTrendsChart from '@/components/Admin/Analytics/Gad/GadMembershipTrendsChart';
+import GadMemberDemographicsChart from '@/components/Admin/Analytics/Gad/GadMemberDemographicsChart';
+
+// UI Components
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import AppLayout from '@/layouts/app-layout';
 import { cn } from '@/lib/utils';
 
@@ -40,6 +52,9 @@ interface Stats {
     total_orgs: number;
     resolution_rate: number;
     sla_rate: number;
+    total_dossiers?: number;
+    active_bpos?: number;
+    recidivism_rate?: number;
 }
 
 interface ChartData {
@@ -88,48 +103,86 @@ interface BcpcSummary {
 
 interface PageProps {
     stats: Stats | null;
-    vawcData: ChartData[];
+    vawcData?: ChartData[];
     currentYear: number;
+    quarter?: string;
     vawcChartConfig: ChartConfig[];
-    membershipStats: any;
-    ageDemographics: any[];
-    zoneDistribution: any[];
-    bpoTrends: any[];
-    bpoMetrics: any;
-    dossierAnalytics: any;
-    relationshipAnalytics: any;
-    vawcStatusBreakdown: any[];
-    threatPatterns: any[];
-    interventionGaps: any[];
-    riskDistribution: any[];
-    bcpcSummary: BcpcSummary | null;
-    gadAnalytics: any;
-    orgSectorAnalysis: any[];
-    orgAnalytics: any;
-    selectedOrgId: number | null;
+    ageDemographics?: any[];
+    zoneDistribution?: any[];
+    bpoTrends?: any[];
+    bpoMetrics?: any;
+    dossierAnalytics?: any;
+    relationshipAnalytics?: any;
+    vawcStatusBreakdown?: any[];
+    threatPatterns?: any[];
+    interventionGaps?: any[];
+    riskDistribution?: any[];
+    bcpcSummary?: BcpcSummary | null;
+    gadAnalytics?: any;
+    orgSectorAnalysis?: any[];
+    orgAnalytics?: any;
+    selectedOrgId?: number | null;
 }
 
 export default function Index({
-    stats, vawcData, currentYear, vawcChartConfig,
-    membershipStats, ageDemographics,
-    zoneDistribution, bpoTrends, bpoMetrics,
-    dossierAnalytics, relationshipAnalytics,
+    stats,
+    vawcData,
+    currentYear,
+    quarter = 'ALL',
+    vawcChartConfig,
+    ageDemographics,
+    zoneDistribution,
+    bpoTrends,
+    bpoMetrics,
+    dossierAnalytics,
+    relationshipAnalytics,
     vawcStatusBreakdown,
-    threatPatterns, interventionGaps, riskDistribution, bcpcSummary,
-    gadAnalytics, orgSectorAnalysis,
-    orgAnalytics, selectedOrgId
+    threatPatterns,
+    interventionGaps,
+    riskDistribution,
+    bcpcSummary,
+    gadAnalytics,
+    orgSectorAnalysis,
+    orgAnalytics,
+    selectedOrgId
 }: PageProps) {
     const { auth } = usePage<any>().props;
-    const isPresident = auth.user.role === 'president';
+    const isPresident = auth?.user?.role === 'president';
 
-    const [demoTab, setDemoTab] = useState<'age' | 'gender' | 'civil'>('age');
+    // 4 Distinct Domain Tabs
+    const [activeTab, setActiveTab] = useState<string>(isPresident ? 'organizations' : 'vawc');
+    const [selectedZone, setSelectedZone] = useState<any | null>(null);
+    const [isZoneInspectorOpen, setIsZoneInspectorOpen] = useState(false);
 
-    // Scoped / Conditional Year and Org filters
+    const handleOpenZoneInspector = (zoneName: string) => {
+        const found = zoneDistribution?.find((z: any) => z.name?.toLowerCase() === zoneName?.toLowerCase())
+            || { name: zoneName, count: 0, cases: [], children: [] };
+        setSelectedZone(found);
+        setIsZoneInspectorOpen(true);
+    };
+
+    // Filter Handlers
     const handleYearChange = (year: string) => {
         router.get(
             window.location.pathname,
             {
-                year: year,
+                year,
+                quarter,
+                org_id: selectedOrgId || undefined,
+            },
+            {
+                preserveScroll: true,
+                preserveState: true,
+            }
+        );
+    };
+
+    const handleQuarterChange = (newQuarter: string) => {
+        router.get(
+            window.location.pathname,
+            {
+                year: currentYear,
+                quarter: newQuarter,
                 org_id: selectedOrgId || undefined,
             },
             {
@@ -143,7 +196,8 @@ export default function Index({
         router.get(
             window.location.pathname,
             {
-                year: currentYear || new Date().getFullYear(),
+                year: currentYear,
+                quarter,
                 org_id: orgId || undefined,
             },
             {
@@ -153,278 +207,289 @@ export default function Index({
         );
     };
 
-    // System-wide ribbon (Admin / Head Only)
+    // System-wide ribbon stats (Admin / Head)
     const adminRibbonStats = stats ? [
-        { label: 'Total RA 9262 Cases', value: stats.total_vawc.toString(), icon: ShieldAlert, color: 'text-red-600', bg: 'bg-red-50 dark:bg-red-900/20', desc: `VAWC Incidents Recorded (${currentYear})` },
-        { label: 'Child Health Registry', value: stats.total_bcpc.toString(), icon: Baby, color: 'text-teal-600', bg: 'bg-teal-50 dark:bg-teal-900/20', desc: 'Total BCPC Monitored Children' },
-        { label: 'Active GAD Programs', value: stats.total_gad.toString(), icon: Calendar, color: 'text-indigo-600', bg: 'bg-indigo-50 dark:bg-indigo-900/20', desc: `Gender & Development (${currentYear})` },
-        { label: 'Accredited Organizations', value: stats.total_orgs.toString(), icon: Building, color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-900/20', desc: 'Total Partner Entities' },
+        {
+            label: 'Total Incidents (RA 9262)',
+            value: stats.total_vawc.toString(),
+            icon: ShieldAlert,
+            color: 'text-rose-600 dark:text-rose-400',
+            bg: 'bg-rose-50 dark:bg-rose-950/30',
+            desc: stats.total_dossiers ? `Across ${stats.total_dossiers} Master Folders` : 'Recorded Incidents'
+        },
+        {
+            label: 'BCPC Child Registry',
+            value: stats.total_bcpc.toString(),
+            icon: Baby,
+            color: 'text-teal-600 dark:text-teal-400',
+            bg: 'bg-teal-50 dark:bg-teal-950/30',
+            desc: 'Monitored Nutrition Profiles'
+        },
+        {
+            label: 'Active GAD Programs',
+            value: stats.total_gad.toString(),
+            icon: Calendar,
+            color: 'text-purple-600 dark:text-purple-400',
+            bg: 'bg-purple-50 dark:bg-purple-950/30',
+            desc: 'Advocacy Projects'
+        },
+        {
+            label: 'Accredited Entities',
+            value: stats.total_orgs.toString(),
+            icon: Building2,
+            color: 'text-emerald-600 dark:text-emerald-400',
+            bg: 'bg-emerald-50 dark:bg-emerald-950/30',
+            desc: 'Active Community Partners'
+        },
     ] : [];
 
     // President Scoped Ribbon
     const presidentRibbonStats = orgAnalytics ? [
-        { label: 'Active Members', value: orgAnalytics.total_members.toString(), icon: Users, color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-900/20', desc: 'Verified Active Members' },
-        { label: 'Pending Applications', value: orgAnalytics.applications.pending.toString(), icon: UserPlus, color: 'text-amber-600', bg: 'bg-amber-50 dark:bg-amber-900/20', desc: 'Awaiting Action' },
-        { label: 'Proposed GAD Events', value: orgAnalytics.gad.total.toString(), icon: Calendar, color: 'text-indigo-600', bg: 'bg-indigo-50 dark:bg-indigo-900/20', desc: `Total proposals (${currentYear})` },
-        { label: 'Sent Messages', value: orgAnalytics.communications.total.toString(), icon: Mail, color: 'text-teal-600', bg: 'bg-teal-50 dark:bg-teal-900/20', desc: 'Outreach Emails Dispatched' },
+        {
+            label: 'Active Members',
+            value: (orgAnalytics.total_members ?? 0).toString(),
+            icon: Users,
+            color: 'text-emerald-600 dark:text-emerald-400',
+            bg: 'bg-emerald-50 dark:bg-emerald-950/30',
+            desc: 'Verified Resident Members'
+        },
+        {
+            label: 'Pending Applications',
+            value: (orgAnalytics.applications?.pending ?? 0).toString(),
+            icon: Clock,
+            color: 'text-amber-600 dark:text-amber-400',
+            bg: 'bg-amber-50 dark:bg-amber-950/30',
+            desc: 'Review Queue'
+        },
+        {
+            label: 'Proposed GAD Events',
+            value: (orgAnalytics.gad?.total ?? 0).toString(),
+            icon: Calendar,
+            color: 'text-purple-600 dark:text-purple-400',
+            bg: 'bg-purple-50 dark:bg-purple-950/30',
+            desc: 'Proposals Filed'
+        },
+        {
+            label: 'Dispatched Outreach',
+            value: (orgAnalytics.communications?.total ?? 0).toString(),
+            icon: Mail,
+            color: 'text-teal-600 dark:text-teal-400',
+            bg: 'bg-teal-50 dark:bg-teal-950/30',
+            desc: 'Broadcast Announcements'
+        },
     ] : [];
 
-    // Colors for donut demographics charts
     const DEMO_COLORS = ['#6366f1', '#10b981', '#a855f7', '#f59e0b', '#ec4899', '#6b7280'];
 
     return (
         <AppLayout breadcrumbs={[
             { title: 'Dashboard', href: '/dashboard' },
-            { title: 'Official Reporting Dashboard', href: '#' }
+            { title: 'Analytics & Compliance', href: '#' }
         ]}>
-            <Head title="Official Reporting Dashboard" />
+            <Head title="Official Analytics & Compliance Dashboard" />
 
-            <div className="flex h-full flex-1 flex-col gap-6 p-6">
+            <div className="flex h-full flex-1 flex-col gap-5 p-4 sm:p-6 print:p-0 print:gap-4 print:bg-white">
 
-                {/* ── HEADER ─────────────────────────────────────────── */}
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <div>
-                        <h1 className="text-2xl font-black uppercase tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
-                            <BarChart3 className="w-6 h-6 text-[#ce1126]" />
-                            {isPresident ? 'ORGANIZATION PERFORMANCE DASHBOARD' : 'OFFICIAL REPORTING DASHBOARD'}
-                        </h1>
-                        <p className="text-sm text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest">
-                            {isPresident
-                                ? 'Scoped Member Demographics & GAD Outreach Statistics'
-                                : ''}
-                        </p>
-                    </div>
-
-                    <div className="flex flex-wrap items-center gap-3">
-
-
-                        <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-md px-3 py-1.5 dark:bg-slate-900 dark:border-slate-700">
-                            <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Filter Year:</span>
-                            <select
-                                className="border-none text-xs font-black text-slate-900 dark:text-white focus:ring-0 p-0 cursor-pointer bg-transparent"
-                                value={currentYear}
-                                onChange={(e) => handleYearChange(e.target.value)}
-                            >
-                                {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i).map(y => (
-                                    <option key={y} value={y}>{y}</option>
-                                ))}
-                            </select>
-                        </div>
-                        <a href={`/admin/analytics/print?year=${currentYear}${selectedOrgId ? `&org_id=${selectedOrgId}` : ''}`} target="_blank" rel="noopener noreferrer">
-                            <Button className="bg-[#ce1126] hover:bg-red-700 h-9 px-4 text-[10px] font-black uppercase tracking-widest gap-2">
-                                <FileText className="w-4 h-4" /> Print Official Report
-                            </Button>
-                        </a>
+                {/* ── PRINT-ONLY OFFICIAL LETTERHEAD ──────────────────── */}
+                <div className="hidden print:block text-center border-b pb-3 mb-2">
+                    <p className="text-xs uppercase font-medium tracking-widest text-slate-500">Republic of the Philippines • City of Pasay</p>
+                    <h1 className="text-lg font-black uppercase tracking-tight text-slate-900">Barangay 183 Villamor Airbase</h1>
+                    <p className="text-xs font-bold text-slate-600">Women & Family Protection Desk • Official Analytics & Compliance Audit</p>
+                    <div className="flex justify-between items-center text-[10px] text-slate-500 mt-2 px-2">
+                        <span>Reporting Period: CY {currentYear} ({quarter === 'ALL' ? 'Annual Full Cycle' : quarter})</span>
+                        <span>Generated: {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
                     </div>
                 </div>
 
-                {/* ── RIBBON: Scoped or Admin metrics ─────────────────── */}
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                {/* ── INTERACTIVE HEADER & TITLE (Clean, No Textbook Subtitle) ── */}
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 print:hidden">
+                    <h1 className="text-xl sm:text-2xl font-black uppercase tracking-tight text-foreground flex items-center gap-2">
+                        <BarChart3 className="w-5 h-5 text-primary shrink-0" />
+                        {isPresident ? 'ORGANIZATION PERFORMANCE & DEMOGRAPHICS' : 'ANALYTICS & STATUTORY COMPLIANCE'}
+                    </h1>
+                </div>
+
+                {/* ── GLOBAL FILTER & PRINT CONTROL BAR ───────────────── */}
+                <AnalyticsFilterBar
+                    currentYear={currentYear}
+                    onYearChange={handleYearChange}
+                    quarter={quarter}
+                    onQuarterChange={handleQuarterChange}
+                    selectedOrgId={selectedOrgId || null}
+                    onOrgChange={handleOrgChange}
+                    organizationsList={orgAnalytics?.organizations_list || []}
+                    isPresident={isPresident}
+                    printUrl={`/admin/analytics/print?year=${currentYear}${selectedOrgId ? `&org_id=${selectedOrgId}` : ''}`}
+                />
+
+                {/* ── SYSTEM RIBBON METRICS ──────────────────────────── */}
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 print:grid-cols-4 print:gap-2">
                     {(isPresident ? presidentRibbonStats : adminRibbonStats).map((stat, i) => (
-                        <div key={i} className="border p-6 rounded-xl shadow-sm bg-white dark:bg-slate-900 transition-all hover:shadow-md">
-                            <div className="flex justify-between items-start">
-                                <div className="space-y-1">
-                                    <p className="text-[10px] font-black uppercase text-slate-400 dark:text-slate-500 tracking-widest">
-                                        {stat.label}
-                                    </p>
-                                    <h3 className="text-3xl font-black text-slate-900 dark:text-white">
-                                        {stat.value}
-                                    </h3>
-                                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-tight">
-                                        {stat.desc}
-                                    </p>
-                                </div>
-                                <div className={cn("p-3 rounded-xl", stat.bg, stat.color)}>
-                                    <stat.icon size={22} className="stroke-[2.5]" />
-                                </div>
+                        <div
+                            key={i}
+                            className="border p-4 rounded-xl shadow-xs bg-card transition-all hover:shadow-sm flex items-center justify-between print:border-slate-300 print:shadow-none print:p-3"
+                        >
+                            <div className="space-y-0.5">
+                                <p className="text-[11px] font-bold uppercase text-muted-foreground tracking-wider">
+                                    {stat.label}
+                                </p>
+                                <h3 className="text-2xl sm:text-3xl font-black font-mono tracking-tight text-foreground">
+                                    {stat.value}
+                                </h3>
+                                <p className="text-[11px] font-medium text-muted-foreground">
+                                    {stat.desc}
+                                </p>
+                            </div>
+                            <div className={cn("p-2.5 rounded-xl shrink-0 print:hidden", stat.bg, stat.color)}>
+                                <stat.icon size={20} className="stroke-[2.2]" />
                             </div>
                         </div>
                     ))}
                 </div>
 
                 {/* ══════════════════════════════════════════════════════ */}
-                {/* DOMAIN SEGREGATED TABS (IT Expert Recommendation)     */}
+                {/* 4 DOMAIN SEGREGATED TABS                              */}
                 {/* ══════════════════════════════════════════════════════ */}
-                <Tabs defaultValue="vawc" className="w-full space-y-6">
-                    <TabsList className="grid grid-cols-3 max-w-2xl bg-slate-100 dark:bg-slate-800 p-1.5 rounded-xl border">
-                        <TabsTrigger value="vawc" className="gap-2 font-black text-xs uppercase tracking-wider data-[state=active]:bg-white dark:data-[state=active]:bg-slate-900 data-[state=active]:text-[#ce1126]">
-                            <ShieldAlert className="w-4 h-4 text-[#ce1126]" /> VAWC Case Analytics
+                <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full space-y-5">
+                    {/* Tab Navigation (Hidden in Print) */}
+                    <TabsList className="grid grid-cols-2 sm:grid-cols-4 max-w-3xl bg-muted/60 p-1 rounded-xl border print:hidden">
+                        {!isPresident && (
+                            <>
+                                <TabsTrigger
+                                    value="vawc"
+                                    className="gap-1.5 font-bold text-xs uppercase tracking-wider data-[state=active]:bg-card data-[state=active]:text-rose-600 data-[state=active]:shadow-xs"
+                                >
+                                    <ShieldAlert className="w-3.5 h-3.5 text-rose-600 shrink-0" />
+                                    <span>VAWC (RA 9262)</span>
+                                </TabsTrigger>
+                                <TabsTrigger
+                                    value="bcpc"
+                                    className="gap-1.5 font-bold text-xs uppercase tracking-wider data-[state=active]:bg-card data-[state=active]:text-teal-600 data-[state=active]:shadow-xs"
+                                >
+                                    <Baby className="w-3.5 h-3.5 text-teal-600 shrink-0" />
+                                    <span>BCPC (RA 11037)</span>
+                                </TabsTrigger>
+                            </>
+                        )}
+                        <TabsTrigger
+                            value="gad"
+                            className="gap-1.5 font-bold text-xs uppercase tracking-wider data-[state=active]:bg-card data-[state=active]:text-purple-600 data-[state=active]:shadow-xs"
+                        >
+                            <Sparkles className="w-3.5 h-3.5 text-purple-600 shrink-0" />
+                            <span>GAD (RA 9710)</span>
                         </TabsTrigger>
-                        <TabsTrigger value="bcpc" className="gap-2 font-black text-xs uppercase tracking-wider data-[state=active]:bg-white dark:data-[state=active]:bg-slate-900 data-[state=active]:text-emerald-600">
-                            <Baby className="w-4 h-4 text-emerald-600" /> BCPC Child Welfare
-                        </TabsTrigger>
-                        <TabsTrigger value="gad_orgs" className="gap-2 font-black text-xs uppercase tracking-wider data-[state=active]:bg-white dark:data-[state=active]:bg-slate-900 data-[state=active]:text-purple-600">
-                            <Users className="w-4 h-4 text-purple-600" /> GAD & Organizations
+                        <TabsTrigger
+                            value="organizations"
+                            className="gap-1.5 font-bold text-xs uppercase tracking-wider data-[state=active]:bg-card data-[state=active]:text-primary data-[state=active]:shadow-xs"
+                        >
+                            <Users className="w-3.5 h-3.5 text-primary shrink-0" />
+                            <span>Organizations</span>
                         </TabsTrigger>
                     </TabsList>
 
-                    {/* TAB 1: VAWC DOMAIN ANALYTICS */}
-                    <TabsContent value="vawc" className="space-y-6 mt-4">
-                        {!isPresident ? (
-                            <>
-                                {/* SECTION 1: VAWC CASE TRIAGE & ACTION ANALYSIS */}
-                                <div className="space-y-6">
-                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 py-3 border-b">
-                                        <h2 className="text-base font-black tracking-tight flex items-center gap-2 uppercase text-[#ce1126] dark:text-red-400">
-                                            <ShieldAlert className="w-4 h-4" />
-                                            VAWC Statutory Intelligence & Judicial Analytics (RA 9262)
-                                        </h2>
-                                        <Badge variant="outline" className="text-[10px] font-mono font-bold w-fit">
-                                            Calendar Year {currentYear}
-                                        </Badge>
-                                    </div>
-
-                                    {/* 6-Card Executive Ribbon for VAWC */}
-                                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-                                        <div className="p-3 rounded-lg border bg-card text-center shadow-sm">
-                                            <span className="text-[9px] font-black uppercase text-muted-foreground block mb-1">
-                                                Total Incidents
-                                            </span>
-                                            <span className="text-xl font-black text-foreground">
-                                                {stats?.total_vawc ?? 0}
-                                            </span>
-                                            <span className="text-[8px] font-bold text-muted-foreground block mt-0.5">
-                                                Recorded Sub-Cases
-                                            </span>
-                                        </div>
-
-                                        <div className="p-3 rounded-lg border bg-card text-center shadow-sm">
-                                            <span className="text-[9px] font-black uppercase text-muted-foreground block mb-1">
-                                                Master Dossiers
-                                            </span>
-                                            <span className="text-xl font-black text-rose-600 dark:text-rose-400">
-                                                {dossierAnalytics?.total_dossiers ?? 0}
-                                            </span>
-                                            <span className="text-[8px] font-bold text-muted-foreground block mt-0.5">
-                                                {dossierAnalytics?.active_dossiers ?? 0} Active Files
-                                            </span>
-                                        </div>
-
-                                        <div className="p-3 rounded-lg border border-red-200 bg-red-50/40 dark:bg-red-950/20 text-center shadow-sm">
-                                            <span className="text-[9px] font-black uppercase text-red-700 dark:text-red-400 block mb-1">
-                                                Recidivism Rate
-                                            </span>
-                                            <span className="text-xl font-black text-red-600 dark:text-red-400">
-                                                {dossierAnalytics?.recidivism_rate ?? 0}%
-                                            </span>
-                                            <span className="text-[8px] font-bold text-red-600 dark:text-red-400 block mt-0.5">
-                                                {dossierAnalytics?.recidivism_count ?? 0} Repeat Relationships
-                                            </span>
-                                        </div>
-
-                                        <div className="p-3 rounded-lg border border-amber-200 bg-amber-50/40 dark:bg-amber-950/20 text-center shadow-sm">
-                                            <span className="text-[9px] font-black uppercase text-amber-800 dark:text-amber-400 block mb-1">
-                                                Serial Perpetrators
-                                            </span>
-                                            <span className="text-xl font-black text-amber-700 dark:text-amber-400">
-                                                {dossierAnalytics?.serial_perpetrators_count ?? 0}
-                                            </span>
-                                            <span className="text-[8px] font-bold text-amber-700 dark:text-amber-400 block mt-0.5">
-                                                Multiple Survivors
-                                            </span>
-                                        </div>
-
-                                        <div className="p-3 rounded-lg border border-emerald-200 bg-emerald-50/40 dark:bg-emerald-950/20 text-center shadow-sm">
-                                            <span className="text-[9px] font-black uppercase text-emerald-800 dark:text-emerald-400 block mb-1">
-                                                24-Hr BPO SLA
-                                            </span>
-                                            <span className="text-xl font-black text-emerald-600 dark:text-emerald-400">
-                                                {bpoMetrics?.sla_rate ?? 100}%
-                                            </span>
-                                            <span className="text-[8px] font-bold text-emerald-600 dark:text-emerald-400 block mt-0.5">
-                                                Statutory Mandate
-                                            </span>
-                                        </div>
-
-                                        <div className="p-3 rounded-lg border border-blue-200 bg-blue-50/40 dark:bg-blue-950/20 text-center shadow-sm">
-                                            <span className="text-[9px] font-black uppercase text-blue-800 dark:text-blue-400 block mb-1">
-                                                Active 15-Day BPO
-                                            </span>
-                                            <span className="text-xl font-black text-blue-600 dark:text-blue-400">
-                                                {bpoMetrics?.active_monitoring ?? 0}
-                                            </span>
-                                            <span className="text-[8px] font-bold text-blue-600 dark:text-blue-400 block mt-0.5">
-                                                Under Monitoring
-                                            </span>
-                                        </div>
-                                    </div>
-
+                    {/* ────────────────────────────────────────────────── */}
+                    {/* TAB 1: VAWC CASE ANALYTICS (RA 9262)               */}
+                    {/* ────────────────────────────────────────────────── */}
+                    {!isPresident && (
+                        <TabsContent value="vawc" key={`vawc-${activeTab}`} className="space-y-5 mt-2">
+                            {/* Deferred Loading Fallback */}
+                            {!vawcData ? (
+                                <AnalyticsSkeleton />
+                            ) : (
+                                <div className="space-y-5">
                                     {/* Row 1: Monthly Rates (2 cols) + RAVE Risk Severity (1 col) */}
-                                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
                                         <VawcMonthlyAbuseChart data={vawcData} config={vawcChartConfig} />
-                                        <VawcRiskDistributionChart data={riskDistribution} />
+                                        <VawcRiskDistributionChart data={riskDistribution || []} />
                                     </div>
 
-                                    {/* Row 2: Master Dossier Recidivism (1 col) + BPO Milestones & SLA (2 cols) */}
-                                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                                    {/* Row 2: Dossier Recidivism (1 col) + BPO Milestones & SLA (2 cols) */}
+                                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
                                         <VawcDossierRecidivismCard data={dossierAnalytics} />
-                                        <VawcBpoMilestonesChart monthlyTrends={bpoTrends} metrics={bpoMetrics} />
+                                        <VawcBpoMilestonesChart monthlyTrends={bpoTrends || []} metrics={bpoMetrics} />
                                     </div>
 
-                                    {/* Row 3: Threat Indicators (1 col) + Relationship & Protocol Matrix (1 col) */}
-                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                        <VawcThreatIndicatorsChart data={threatPatterns} />
-                                        <VawcRelationshipProtocolChart data={relationshipAnalytics} />
-                                    </div>
-
-                                    {/* Row 4: Geographical Density (1 col) + Victim Demographics (1 col) */}
-                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                        <VawcGeographicalDensityChart data={zoneDistribution} />
-                                        <VawcVictimDemographicsChart data={ageDemographics} colors={DEMO_COLORS} />
+                                    {/* Row 3: Geographical Density (1 col) + Demographics (1 col) */}
+                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                                        <VawcGeographicalDensityChart
+                                            data={zoneDistribution || []}
+                                            onSelectZone={handleOpenZoneInspector}
+                                        />
+                                        <VawcVictimDemographicsChart
+                                            data={ageDemographics || []}
+                                            colors={DEMO_COLORS}
+                                        />
                                     </div>
                                 </div>
-                            </>
-                        ) : (
-                            <div className="p-8 text-center bg-slate-50 dark:bg-slate-900 rounded-xl border">
-                                <ShieldAlert className="w-8 h-8 text-slate-400 mx-auto mb-2" />
-                                <p className="text-sm font-bold text-slate-600 dark:text-slate-300">VAWC Case Analytics are scoped to Barangay Administrators and VAWC Desk Officers.</p>
-                            </div>
-                        )}
-                    </TabsContent>
+                            )}
+                        </TabsContent>
+                    )}
 
-                    {/* TAB 2: BCPC CHILD WELFARE ANALYTICS */}
-                    <TabsContent value="bcpc" className="space-y-6 mt-4">
-                        {!isPresident ? (
-                            <div className="space-y-6">
-                                <h2 className="text-base font-black tracking-tight flex items-center gap-2 py-3 mb-2 border-b uppercase text-teal-600 dark:text-teal-400">
-                                    <Baby className="w-4 h-4" />
-                                    BCPC Child Health & Nutrition Triage (RA 11037)
-                                </h2>
+                    {/* ────────────────────────────────────────────────── */}
+                    {/* TAB 2: BCPC CHILD WELFARE (RA 11037)               */}
+                    {/* ────────────────────────────────────────────────── */}
+                    {!isPresident && (
+                        <TabsContent value="bcpc" key={`bcpc-${activeTab}`} className="space-y-5 mt-2">
+                            {!bcpcSummary ? (
+                                <AnalyticsSkeleton />
+                            ) : (
+                                <div className="space-y-5">
+                                    {/* Row 1: Clustered Bar Chart + SFP Outcomes */}
+                                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+                                        <BcpcNutritionStatusBarChart bcpcSummary={bcpcSummary} />
+                                        <BcpcSfpOutcomesChart bcpcSummary={bcpcSummary} />
+                                    </div>
 
-                                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                                    <BcpcNutritionalRadarChart bcpcSummary={bcpcSummary} />
-                                    <BcpcSfpOutcomesChart bcpcSummary={bcpcSummary} />
-
-                                    {/* Purok Malnutrition Hotspots table */}
-                                    <Card className="flex flex-col justify-between">
-                                        <CardHeader>
-                                            <CardTitle className="uppercase tracking-widest text-xs font-black text-orange-700 flex items-center gap-2">
-                                                <Map className="w-4 h-4 text-orange-600" /> Purok Malnutrition Hotspots
-                                            </CardTitle>
-                                            <CardDescription className="text-[10px] font-bold uppercase text-slate-400">Malnutrition prevalence mapped by zone</CardDescription>
+                                    {/* Row 2: Zone Malnutrition Hotspots */}
+                                    <Card className="shadow-xs border bg-card flex flex-col justify-between">
+                                        <CardHeader className="flex flex-row items-center justify-between border-b bg-muted/20 px-4 py-3 sm:px-5">
+                                            <div>
+                                                <CardTitle className="text-sm font-bold text-foreground flex items-center gap-2">
+                                                    <Map className="w-4 h-4 text-amber-600" />
+                                                    Zone Malnutrition Hotspots & Household Audit
+                                                </CardTitle>
+                                                <CardDescription className="text-xs text-muted-foreground mt-0.5">
+                                                    Malnutrition prevalence mapped across Barangay 183 zones under RA 11037
+                                                </CardDescription>
+                                            </div>
+                                            <Badge variant="outline" className="text-xs font-mono font-bold">
+                                                {bcpcSummary?.zones_breakdown?.length || 0} Zones Audited
+                                            </Badge>
                                         </CardHeader>
-                                        <CardContent className="p-0 overflow-y-auto max-h-[260px] pb-4">
-                                            <table className="w-full text-left text-[10px] uppercase font-black">
-                                                <thead className="bg-slate-50 dark:bg-slate-900 border-b">
-                                                    <tr className="text-slate-400 tracking-wider">
-                                                        <th className="p-3 pl-4">Purok</th>
+                                        <CardContent className="p-0 overflow-y-auto max-h-[300px]">
+                                            <table className="w-full text-left text-xs">
+                                                <thead className="bg-muted/40 border-b">
+                                                    <tr className="text-muted-foreground uppercase text-[11px] font-bold">
+                                                        <th className="p-3 pl-4">Barangay Zone</th>
+                                                        <th className="p-3 text-center">Total Monitored</th>
                                                         <th className="p-3 text-center">Malnourished</th>
                                                         <th className="p-3 text-center">Stunted</th>
-                                                        <th className="p-3 text-right pr-4">Prevalence</th>
+                                                        <th className="p-3 text-right pr-4">Action</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody className="divide-y divide-border/60">
-                                                    {bcpcSummary?.zones_breakdown.slice(0, 5).map((zone, i) => (
-                                                        <tr key={i} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/50">
-                                                            <td className="p-3 pl-4 text-slate-800 dark:text-slate-200">{zone.name}</td>
-                                                            <td className="p-3 text-center text-rose-600">{zone.malnourished}</td>
-                                                            <td className="p-3 text-center text-purple-600">{zone.stunted}</td>
-                                                            <td className="p-3 text-right pr-4 text-slate-900 dark:text-slate-100">{zone.rate}%</td>
+                                                    {bcpcSummary?.zones_breakdown?.map((zone, i) => (
+                                                        <tr key={i} className="hover:bg-muted/30 transition-colors">
+                                                            <td className="p-3 pl-4 font-semibold text-foreground">{zone.name}</td>
+                                                            <td className="p-3 text-center font-mono font-bold text-foreground">{zone.total}</td>
+                                                            <td className="p-3 text-center font-mono font-bold text-rose-600 dark:text-rose-400">{zone.malnourished}</td>
+                                                            <td className="p-3 text-center font-mono font-bold text-purple-600 dark:text-purple-400">{zone.stunted}</td>
+                                                            <td className="p-3 text-right pr-4">
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => handleOpenZoneInspector(zone.name)}
+                                                                    className="text-xs font-bold text-primary hover:underline cursor-pointer"
+                                                                >
+                                                                    Inspect Zone
+                                                                </button>
+                                                            </td>
                                                         </tr>
                                                     ))}
-                                                    {bcpcSummary?.zones_breakdown.length === 0 && (
+                                                    {(!bcpcSummary?.zones_breakdown || bcpcSummary.zones_breakdown.length === 0) && (
                                                         <tr>
-                                                            <td colSpan={4} className="text-center p-8 text-slate-400 italic font-medium">No Purok records found.</td>
+                                                            <td colSpan={5} className="text-center p-8 text-muted-foreground italic">
+                                                                No Zone malnutrition records found for the current period.
+                                                            </td>
                                                         </tr>
                                                     )}
                                                 </tbody>
@@ -432,128 +497,220 @@ export default function Index({
                                         </CardContent>
                                     </Card>
                                 </div>
-                            </div>
+                            )}
+                        </TabsContent>
+                    )}
+
+                    {/* ────────────────────────────────────────────────── */}
+                    {/* TAB 3: GAD FOCAL POINT SYSTEM (RA 9710)            */}
+                    {/* ────────────────────────────────────────────────── */}
+                    <TabsContent value="gad" key={`gad-${activeTab}`} className="space-y-5 mt-2">
+                        {!gadAnalytics ? (
+                            <AnalyticsSkeleton />
                         ) : (
-                            <div className="p-8 text-center bg-slate-50 dark:bg-slate-900 rounded-xl border">
-                                <Baby className="w-8 h-8 text-slate-400 mx-auto mb-2" />
-                                <p className="text-sm font-bold text-slate-600 dark:text-slate-300">BCPC Child Health & Nutrition Analytics are scoped to Barangay Administrators and BCPC Officers.</p>
+                            <div className="space-y-5">
+                                <GadProjectPipelineChart gadAnalytics={gadAnalytics} isPresident={isPresident} />
                             </div>
                         )}
                     </TabsContent>
 
-                    {/* TAB 3: GAD & ORGANIZATION ANALYTICS */}
-                    <TabsContent value="gad_orgs" className="space-y-6 mt-4">
-                        <div className="space-y-6">
-                            <div className="flex flex-col md:flex-row md:items-center justify-between py-3 mb-2 border-b gap-4">
-                                <h2 className="text-base font-black tracking-tight flex items-center gap-2 uppercase text-purple-600 dark:text-purple-400 border-none py-0 mb-0">
-                                    <Users className="w-4 h-4" />
-                                    Organization & Member Intelligence (GAD Registry)
-                                </h2>
+                    {/* ────────────────────────────────────────────────── */}
+                    {/* TAB 4: ORGANIZATIONS & MEMBERSHIP GOVERNANCE       */}
+                    {/* ────────────────────────────────────────────────── */}
+                    <TabsContent value="organizations" key={`orgs-${activeTab}`} className="space-y-5 mt-2">
+                        {!orgAnalytics ? (
+                            <AnalyticsSkeleton />
+                        ) : (
+                            <div className="space-y-5">
+                                {/* Backlog KPI Alert Card */}
+                                <OrgBacklogKpiCard
+                                    applications={orgAnalytics.applications || { total: 0, approved: 0, pending: 0, disapproved: 0 }}
+                                    totalMembers={orgAnalytics.total_members || 0}
+                                    isPresident={isPresident}
+                                />
 
-                                {/* Admin-only Organization Filter Dropdown */}
-                                {!isPresident && orgAnalytics?.organizations_list && (
-                                    <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-md px-3 py-1.5 dark:bg-slate-900 dark:border-slate-700">
-                                        <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Organization:</span>
-                                        <select
-                                            className="border-none text-xs font-black text-slate-900 dark:text-white focus:ring-0 p-0 cursor-pointer bg-transparent"
-                                            value={selectedOrgId || ''}
-                                            onChange={(e) => handleOrgChange(e.target.value)}
-                                        >
-                                            <option value="">All Organizations</option>
-                                            {orgAnalytics.organizations_list.map((org: any) => (
-                                                <option key={org.id} value={org.id}>{org.name}</option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                )}
-                            </div>
+                                {/* Row 1: Membership Intake Velocity & Demographics */}
+                                <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+                                    <GadMembershipTrendsChart data={orgAnalytics.applications?.monthly_trend || []} />
+                                    <GadMemberDemographicsChart
+                                        demographics={{
+                                            age_groups: orgAnalytics.age_distribution?.map((d: any) => ({ name: d.name, count: d.value })),
+                                            gender_distribution: orgAnalytics.gender_distribution?.map((d: any) => ({ name: d.name, count: d.value })),
+                                            civil_status: orgAnalytics.civil_status_distribution?.map((d: any) => ({ name: d.name, count: d.value }))
+                                        }}
+                                        colors={DEMO_COLORS}
+                                    />
+                                </div>
 
-                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                                <GadMembershipTrendsChart data={orgAnalytics.applications.monthly_trend} />
-                                <GadMemberDemographicsChart demographics={{
-                                    age_groups: orgAnalytics.age_distribution?.map((d: any) => ({ name: d.name, count: d.value })),
-                                    gender_distribution: orgAnalytics.gender_distribution?.map((d: any) => ({ name: d.name, count: d.value })),
-                                    civil_status: orgAnalytics.civil_status_distribution?.map((d: any) => ({ name: d.name, count: d.value }))
-                                }} colors={DEMO_COLORS} />
-                            </div>
-
-                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-                                {/* Chart 3: Member Purok / Geographical Distribution */}
-                                <Card className={cn("shadow-sm border flex flex-col justify-between", isPresident ? "lg:col-span-3" : "lg:col-span-2")}>
-                                    <CardHeader className="border-b bg-gray-50/50 dark:bg-slate-900/50 pb-3">
-                                        <CardTitle className="uppercase tracking-widest text-xs font-black text-purple-700 flex items-center gap-2">
-                                            <Map className="w-4 h-4 text-purple-600" /> Member Purok Distribution
+                                {/* Row 2: Member Zone Distribution */}
+                                <Card className="shadow-xs border bg-card flex flex-col justify-between">
+                                    <CardHeader className="border-b bg-muted/20 px-4 py-3 sm:px-5">
+                                        <CardTitle className="text-sm font-bold text-foreground flex items-center gap-2">
+                                            <MapPin className="w-4 h-4 text-primary" />
+                                            Member Residential Zone Distribution
                                         </CardTitle>
-                                        <CardDescription className="text-[10px] font-bold uppercase text-slate-400">
-                                            Geographical distribution of verified members across puroks
+                                        <CardDescription className="text-xs text-muted-foreground mt-0.5">
+                                            Geographical density of accredited organization members across Barangay 183
                                         </CardDescription>
                                     </CardHeader>
-                                    <CardContent className="h-[220px] p-6">
-                                        {orgAnalytics.purok_distribution.length > 0 ? (
+                                    <CardContent className="h-[260px] p-4">
+                                        {orgAnalytics.purok_distribution && orgAnalytics.purok_distribution.length > 0 ? (
                                             <ResponsiveContainer width="100%" height="100%">
-                                                <BarChart data={orgAnalytics.purok_distribution} layout="vertical" margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
-                                                    <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
+                                                <BarChart
+                                                    data={orgAnalytics.purok_distribution}
+                                                    layout="vertical"
+                                                    margin={{ top: 5, right: 25, left: 10, bottom: 5 }}
+                                                >
+                                                    <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} opacity={0.6} />
                                                     <XAxis type="number" hide />
-                                                    <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fontSize: 8, fontWeight: 'bold' }} width={80} />
+                                                    <YAxis
+                                                        dataKey="name"
+                                                        type="category"
+                                                        axisLine={false}
+                                                        tickLine={false}
+                                                        tick={{ fontSize: 11, fontWeight: 500 }}
+                                                        width={90}
+                                                    />
                                                     <Tooltip />
-                                                    <Bar dataKey="count" fill="#8b5cf6" radius={[0, 4, 4, 0]} label={{ position: 'right', fontSize: 9, fontWeight: 'black' }} />
+                                                    <Bar
+                                                        dataKey="count"
+                                                        fill="#8b5cf6"
+                                                        radius={[0, 4, 4, 0]}
+                                                        label={{ position: 'right', fontSize: 11, fontWeight: 'bold' }}
+                                                    />
                                                 </BarChart>
                                             </ResponsiveContainer>
                                         ) : (
                                             <div className="h-full flex items-center justify-center">
-                                                <p className="text-xs text-slate-400 italic">No Purok records found.</p>
+                                                <p className="text-xs text-muted-foreground italic">No Zone distribution records found.</p>
                                             </div>
                                         )}
                                     </CardContent>
                                 </Card>
-
-                                {/* Chart 4: GAD Approved Activity Radar (Admin/Head Only) */}
-                                {!isPresident && (
-                                    <Card className="border-indigo-100 bg-indigo-50/5 flex flex-col justify-between">
-                                        <CardHeader className="pb-2">
-                                            <CardTitle className="uppercase tracking-widest text-xs font-black text-indigo-700 flex items-center gap-2">
-                                                <Calendar className="w-4 h-4" /> GAD Approved Activity Radar
-                                            </CardTitle>
-                                            <CardDescription className="text-[10px] font-bold uppercase text-slate-400">Advocacy Event Status Distribution</CardDescription>
-                                        </CardHeader>
-                                        <CardContent className="flex items-center justify-between h-[180px] pt-0">
-                                            <div className="space-y-2 flex-1">
-                                                <div className="bg-white dark:bg-slate-900 border rounded-xl px-4 py-2 shadow-sm">
-                                                    <p className="text-[8px] uppercase font-black text-slate-400">Total GAD Projects</p>
-                                                    <p className="text-xl font-black text-slate-900 dark:text-white">{gadAnalytics.total_events}</p>
-                                                </div>
-                                                <div className="flex flex-col gap-1 text-[8px] font-black uppercase text-slate-400 pl-2">
-                                                    <span className="text-emerald-600">Approved: {gadAnalytics.approved}</span>
-                                                    <span className="text-amber-500">Pending: {gadAnalytics.pending}</span>
-                                                    <span className="text-rose-600">Rejected: {gadAnalytics.rejected}</span>
-                                                </div>
-                                            </div>
-                                            <div className="h-full w-1/2">
-                                                <ResponsiveContainer width="100%" height="100%">
-                                                    <PieChart>
-                                                        <Pie
-                                                            data={gadAnalytics.distribution.filter((d: any) => d.value > 0)}
-                                                            cx="50%" cy="50%"
-                                                            innerRadius={35} outerRadius={55}
-                                                            paddingAngle={2} dataKey="value"
-                                                        >
-                                                            {gadAnalytics.distribution.map((entry: any, index: number) => (
-                                                                <Cell key={`gad-cell-${index}`} fill={entry.fill} />
-                                                            ))}
-                                                        </Pie>
-                                                        <Tooltip />
-                                                    </PieChart>
-                                                </ResponsiveContainer>
-                                            </div>
-                                        </CardContent>
-                                    </Card>
-                                )}
                             </div>
-                        </div>
+                        )}
                     </TabsContent>
                 </Tabs>
             </div>
+
+            {/* 🗺️ ZONE ADDRESS INSPECTOR DIALOG */}
+            <Dialog open={isZoneInspectorOpen} onOpenChange={setIsZoneInspectorOpen}>
+                <DialogContent className="max-w-3xl rounded-2xl max-h-[85vh] overflow-y-auto">
+                    <DialogHeader className="border-b pb-3">
+                        <div className="flex items-center gap-2.5">
+                            <div className="p-2 rounded-xl bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300">
+                                <MapPin className="w-5 h-5" />
+                            </div>
+                            <div>
+                                <DialogTitle className="text-base font-bold flex items-center gap-2">
+                                    Zone Address Inspector: <span className="text-amber-600">{selectedZone?.name}</span>
+                                </DialogTitle>
+                                <DialogDescription className="text-xs">
+                                    Registered incident and nutritional cases in Barangay 183 Villamor Airbase.
+                                </DialogDescription>
+                            </div>
+                        </div>
+                    </DialogHeader>
+
+                    <div className="py-3 space-y-4">
+                        {/* Summary Badges */}
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                            <div className="p-3 rounded-xl border bg-muted/20">
+                                <span className="text-[11px] font-bold text-muted-foreground uppercase block">VAWC Incidents</span>
+                                <span className="text-lg font-black font-mono text-rose-600">{selectedZone?.cases?.length ?? selectedZone?.count ?? 0}</span>
+                            </div>
+                            <div className="p-3 rounded-xl border bg-muted/20">
+                                <span className="text-[11px] font-bold text-muted-foreground uppercase block">Children Monitored</span>
+                                <span className="text-lg font-black font-mono text-emerald-600">{selectedZone?.children?.length ?? 0}</span>
+                            </div>
+                            <div className="p-3 rounded-xl border bg-muted/20 col-span-2 sm:col-span-1">
+                                <span className="text-[11px] font-bold text-muted-foreground uppercase block">Malnutrition In Zone</span>
+                                <span className="text-lg font-black font-mono text-amber-600">
+                                    {selectedZone?.children?.filter((c: any) => c.is_malnourished)?.length ?? 0}
+                                </span>
+                            </div>
+                        </div>
+
+                        {/* Section 1: VAWC Case Incident Streets */}
+                        <div className="space-y-2">
+                            <h4 className="text-xs font-bold uppercase tracking-wider text-rose-700 dark:text-rose-400 flex items-center gap-1.5">
+                                <ShieldAlert className="w-4 h-4" /> VAWC Incident Locations & Case Dossiers
+                            </h4>
+                            {selectedZone?.cases && selectedZone.cases.length > 0 ? (
+                                <div className="border rounded-xl overflow-hidden divide-y text-xs">
+                                    {selectedZone.cases.map((cs: any, idx: number) => (
+                                        <div key={idx} className="p-3 flex items-center justify-between gap-3 hover:bg-muted/10">
+                                            <div className="space-y-0.5">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="font-bold text-foreground">{cs.case_number}</span>
+                                                    <Badge variant="outline" className={`text-[10px] font-bold ${
+                                                        cs.risk_level === 'CRITICAL' ? 'border-rose-500 text-rose-600 bg-rose-50 dark:bg-rose-950/30' : 'border-amber-500 text-amber-600'
+                                                    }`}>
+                                                        {cs.risk_level}
+                                                    </Badge>
+                                                </div>
+                                                <p className="text-xs text-muted-foreground flex items-center gap-1">
+                                                    <MapPin className="w-3.5 h-3.5 text-muted-foreground/70" />
+                                                    {cs.location}
+                                                </p>
+                                            </div>
+                                            {cs.id && (
+                                                <Button asChild size="sm" variant="outline" className="h-8 px-3 text-xs gap-1">
+                                                    <Link href={`/admin/vawc/cases/${cs.id}`}>
+                                                        View Dossier <ExternalLink className="w-3 h-3" />
+                                                    </Link>
+                                                </Button>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <p className="text-xs text-muted-foreground italic p-3 border rounded-xl bg-muted/10">
+                                    No recorded VAWC incidents located in this zone for the selected year.
+                                </p>
+                            )}
+                        </div>
+
+                        {/* Section 2: BCPC Nutrition Registered Children */}
+                        <div className="space-y-2">
+                            <h4 className="text-xs font-bold uppercase tracking-wider text-teal-700 dark:text-teal-400 flex items-center gap-1.5">
+                                <Baby className="w-4 h-4" /> Monitored Children & Household Addresses
+                            </h4>
+                            {selectedZone?.children && selectedZone.children.length > 0 ? (
+                                <div className="border rounded-xl overflow-hidden divide-y text-xs">
+                                    {selectedZone.children.map((ch: any, idx: number) => (
+                                        <div key={idx} className="p-3 flex items-center justify-between gap-3 hover:bg-muted/10">
+                                            <div className="space-y-0.5">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="font-bold text-foreground">{ch.name}</span>
+                                                    <Badge variant="outline" className={`text-[10px] font-bold ${
+                                                        ch.is_malnourished ? 'border-rose-500 text-rose-600 bg-rose-50 dark:bg-rose-950/30' : 'border-teal-500 text-teal-600'
+                                                    }`}>
+                                                        {ch.status}
+                                                    </Badge>
+                                                </div>
+                                                <p className="text-xs text-muted-foreground flex items-center gap-1">
+                                                    <MapPin className="w-3.5 h-3.5 text-muted-foreground/70" />
+                                                    {ch.address}
+                                                </p>
+                                            </div>
+                                            <Button asChild size="sm" variant="outline" className="h-8 px-3 text-xs gap-1">
+                                                <Link href={`/admin/bcpc/cases/${ch.id}`}>
+                                                    View Profile <ExternalLink className="w-3 h-3" />
+                                                </Link>
+                                            </Button>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <p className="text-xs text-muted-foreground italic p-3 border rounded-xl bg-muted/10">
+                                    No registered nutritional monitoring records in this zone.
+                                </p>
+                            )}
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
         </AppLayout>
     );
 }

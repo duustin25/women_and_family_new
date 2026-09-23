@@ -182,7 +182,6 @@ export default function VawcDashboard({
     currentYear
 }: Props) {
     const [isPrivacyRedacted, setIsPrivacyRedacted] = useState(true);
-    const [searchQuery, setSearchQuery] = useState('');
 
     // 🔄 Real-time Autoloader: Silently polls triage queues & KPI aggregates behind the scenes every 10 seconds
     usePoll(10000, {
@@ -191,32 +190,25 @@ export default function VawcDashboard({
 
     const [activeFilter, setActiveFilter] = useState<'ALL' | 'CRITICAL' | 'BPOS' | 'REPEAT'>('ALL');
 
-    // Filter helper
+    // Filter helper based strictly on active queue mode (search bar removed for high-speed triage)
     const filterQueue = (queue: CaseQueueItem[]) => {
         return queue.filter(item => {
-            if (searchQuery.trim()) {
-                const q = searchQuery.toLowerCase().trim();
-                const matches = (
-                    item.victim_name.toLowerCase().includes(q) ||
-                    item.respondent_name.toLowerCase().includes(q) ||
-                    item.case_number.toLowerCase().includes(q) ||
-                    item.abuse_type.toLowerCase().includes(q)
-                );
-                if (!matches) return false;
-            }
-
             if (activeFilter === 'CRITICAL') return item.risk_level === 'CRITICAL' || item.risk_level === 'HIGH';
             if (activeFilter === 'BPOS') return !!item.bpo_info;
             if (activeFilter === 'REPEAT') return item.is_repeat;
-
             return true;
         });
     };
 
-    const filteredCritical = useMemo(() => filterQueue(criticalQueue), [criticalQueue, searchQuery, activeFilter]);
-    const filteredModerate = useMemo(() => filterQueue(moderateQueue), [moderateQueue, searchQuery, activeFilter]);
-    const filteredLow = useMemo(() => filterQueue(lowQueue), [lowQueue, searchQuery, activeFilter]);
-    const filteredUnassessed = useMemo(() => filterQueue(unassessedQueue), [unassessedQueue, searchQuery, activeFilter]);
+    const filteredCritical = useMemo(() => filterQueue(criticalQueue), [criticalQueue, activeFilter]);
+    const filteredModerate = useMemo(() => filterQueue(moderateQueue), [moderateQueue, activeFilter]);
+    const filteredLow = useMemo(() => filterQueue(lowQueue), [lowQueue, activeFilter]);
+    const filteredUnassessed = useMemo(() => filterQueue(unassessedQueue), [unassessedQueue, activeFilter]);
+
+    const allCasesCount = (criticalQueue.length + moderateQueue.length + lowQueue.length + unassessedQueue.length);
+    const criticalBadgeCount = criticalTotal ?? criticalQueue.filter(i => i.risk_level === 'CRITICAL' || i.risk_level === 'HIGH').length;
+    const activeBposCount = kpis.active_bpos ?? 0;
+    const repeatCount = kpis.repeat_cases ?? 0;
 
     return (
         <AppLayout breadcrumbs={[
@@ -226,158 +218,236 @@ export default function VawcDashboard({
         ]}>
             <Head title="VAWC Action Center" />
 
-            <div className="flex h-full flex-1 flex-col gap-5 sm:gap-6 p-4 sm:p-6 w-full">
+            <div className="flex h-full flex-1 flex-col gap-3.5 sm:gap-4 p-4 sm:p-6 w-full">
 
                 {/* ── HEADER ── */}
-                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
                     <div>
                         <div className="flex items-center gap-2.5 flex-wrap">
-                            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
+                            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
                                 VAWC Action Center
                             </h1>
-                            <Badge variant="outline" className="text-xs sm:text-sm font-semibold">
+                            <Badge variant="outline" className="text-xs font-semibold py-0.5 px-2">
                                 RA 9262
                             </Badge>
                         </div>
-                        <p className="text-sm sm:text-base text-muted-foreground mt-0.5">
-                            Risk triage priority queues and protection order monitoring.
+                        <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
+                            Real-time lethality triage priority queues and statutory protection order monitoring.
                         </p>
                     </div>
 
-                    {/* Action buttons (WCAG min-h-[44px] touch targets) */}
-                    <div className="flex items-center gap-2 sm:gap-2.5 flex-wrap">
-
+                    {/* Action buttons (Standard h-9 dimensions) */}
+                    <div className="flex items-center gap-2 flex-wrap">
                         <Button
                             type="button"
                             variant="outline"
                             size="sm"
                             onClick={() => setIsPrivacyRedacted(!isPrivacyRedacted)}
-                            className="flex-1 sm:flex-initial text-sm min-h-[44px] sm:min-h-[40px] gap-2 font-semibold px-4"
+                            className="h-9 px-3.5 text-xs font-medium gap-1.5"
                         >
-                            {isPrivacyRedacted ? <Lock className="w-4 h-4 text-amber-600" /> : <Unlock className="w-4 h-4 text-muted-foreground" />}
-                            <span className="hidden xs:inline">{isPrivacyRedacted ? "Names Redacted" : "Privacy Mode"}</span>
-                            <span className="xs:hidden">{isPrivacyRedacted ? "Redacted" : "Privacy"}</span>
+                            {isPrivacyRedacted ? <Lock className="w-3.5 h-3.5 text-amber-600" /> : <Unlock className="w-3.5 h-3.5 text-muted-foreground" />}
+                            <span>{isPrivacyRedacted ? "Names Redacted" : "Privacy Mode"}</span>
                         </Button>
 
-                        <Button asChild variant="outline" size="sm" className="flex-1 sm:flex-initial text-sm min-h-[44px] sm:min-h-[40px] font-semibold px-4">
+                        <Button asChild variant="outline" size="sm" className="h-9 px-3.5 text-xs font-medium gap-1.5">
                             <Link href={route('admin.vawc.index')}>
-                                <FolderKanban className="w-4 h-4 mr-2 text-muted-foreground" />
+                                <FolderKanban className="w-3.5 h-3.5 text-muted-foreground" />
                                 Registry
                             </Link>
                         </Button>
 
-                        <Button asChild size="sm" className="w-full sm:w-auto text-sm min-h-[44px] sm:min-h-[40px] bg-[#ce1126] hover:bg-red-700 text-white font-bold px-4 shadow-sm">
+                        <Button asChild size="sm" className="h-9 px-4 text-xs bg-red-600 hover:bg-red-700 text-white font-semibold shadow-xs gap-1.5">
                             <Link href={route('admin.vawc.create')}>
-                                <Plus className="w-4 h-4 mr-1.5" /> New Case Intake
+                                <Plus className="w-3.5 h-3.5" /> New Case Intake
                             </Link>
                         </Button>
                     </div>
                 </div>
 
-                {/* ── 4 SCALED STAT CARDS (RESPONSIVE: 2x2 ON MOBILE/TABLET, 4 COLUMNS ON DESKTOP) ── */}
-                <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 w-full">
-                    <Card className="shadow-2xs border-t-2 border-t-red-600">
-                        <CardHeader className="p-4 sm:p-5 pb-1">
-                            <CardTitle className="text-sm sm:text-base font-semibold text-slate-700 dark:text-slate-300">
-                                Critical Cases
-                            </CardTitle>
-                            <div className="text-3xl sm:text-4xl font-extrabold tracking-tight text-red-600 font-mono mt-1">
-                                {criticalTotal}
+                {/* ── COMPACT STAT CARDS (CLICK-TO-FILTER, SLIM PADDING & BORDERS) ── */}
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 w-full">
+                    {/* 1. Critical Cases */}
+                    <button
+                        type="button"
+                        onClick={() => setActiveFilter(activeFilter === 'CRITICAL' ? 'ALL' : 'CRITICAL')}
+                        className={cn(
+                            "text-left p-2.5 sm:p-3 rounded-lg border transition-all cursor-pointer relative overflow-hidden bg-card",
+                            "hover:border-red-400 hover:shadow-xs",
+                            activeFilter === 'CRITICAL'
+                                ? "border-red-500 ring-2 ring-red-500/20 bg-red-50/40 dark:bg-red-950/20"
+                                : "border-border/80 border-l-2 border-l-red-500"
+                        )}
+                    >
+                        <div className="flex items-center justify-between">
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Critical Cases</span>
+                            <div className="p-1.5 rounded-md bg-red-100 dark:bg-red-950/60 text-red-600 dark:text-red-400 shrink-0">
+                                <ShieldAlert className="w-4 h-4" />
                             </div>
-                        </CardHeader>
-                        <CardContent className="p-4 sm:p-5 pt-1">
-                            <p className="text-xs sm:text-sm font-medium text-slate-500 dark:text-slate-400">High lethality priority</p>
-                        </CardContent>
-                    </Card>
+                        </div>
+                        <div className="text-xl sm:text-2xl font-bold tracking-tight text-red-600 dark:text-red-400 font-mono mt-1">
+                            {criticalTotal}
+                        </div>
+                        <p className="text-[10px] text-muted-foreground mt-0.5 truncate">High lethality priority</p>
+                    </button>
 
-                    <Card className="shadow-2xs border-t-2 border-t-slate-500">
-                        <CardHeader className="p-4 sm:p-5 pb-1">
-                            <CardTitle className="text-sm sm:text-base font-semibold text-slate-700 dark:text-slate-300">
-                                Pending Triage
-                            </CardTitle>
-                            <div className="text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground font-mono mt-1">
-                                {unassessedTotal}
+                    {/* 2. Pending Triage */}
+                    <button
+                        type="button"
+                        onClick={() => setActiveFilter('ALL')}
+                        className={cn(
+                            "text-left p-2.5 sm:p-3 rounded-lg border transition-all cursor-pointer relative overflow-hidden bg-card",
+                            "hover:border-slate-400 hover:shadow-xs",
+                            activeFilter === 'ALL'
+                                ? "border-slate-500 ring-2 ring-slate-500/20 bg-slate-50/50 dark:bg-slate-900/30"
+                                : "border-border/80 border-l-2 border-l-slate-400"
+                        )}
+                    >
+                        <div className="flex items-center justify-between">
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Pending Triage</span>
+                            <div className="p-1.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 shrink-0">
+                                <Clock className="w-4 h-4" />
                             </div>
-                        </CardHeader>
-                        <CardContent className="p-4 sm:p-5 pt-1">
-                            <p className="text-xs sm:text-sm font-medium text-slate-500 dark:text-slate-400">Awaiting review</p>
-                        </CardContent>
-                    </Card>
+                        </div>
+                        <div className="text-xl sm:text-2xl font-bold tracking-tight text-foreground font-mono mt-1">
+                            {unassessedTotal}
+                        </div>
+                        <p className="text-[10px] text-muted-foreground mt-0.5 truncate">Awaiting review</p>
+                    </button>
 
-                    <Card className="shadow-2xs border-t-2 border-t-emerald-600">
-                        <CardHeader className="p-4 sm:p-5 pb-1">
-                            <CardTitle className="text-sm sm:text-base font-semibold text-slate-700 dark:text-slate-300">
-                                Active BPOs
-                            </CardTitle>
-                            <div className="text-3xl sm:text-4xl font-extrabold tracking-tight text-emerald-600 dark:text-emerald-400 font-mono mt-1">
-                                {kpis.active_bpos ?? 0}
+                    {/* 3. Active BPOs */}
+                    <button
+                        type="button"
+                        onClick={() => setActiveFilter(activeFilter === 'BPOS' ? 'ALL' : 'BPOS')}
+                        className={cn(
+                            "text-left p-2.5 sm:p-3 rounded-lg border transition-all cursor-pointer relative overflow-hidden bg-card",
+                            "hover:border-emerald-400 hover:shadow-xs",
+                            activeFilter === 'BPOS'
+                                ? "border-emerald-500 ring-2 ring-emerald-500/20 bg-emerald-50/40 dark:bg-emerald-950/20"
+                                : "border-border/80 border-l-2 border-l-emerald-500"
+                        )}
+                    >
+                        <div className="flex items-center justify-between">
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Active BPOs</span>
+                            <div className="p-1.5 rounded-md bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 shrink-0">
+                                <ShieldCheck className="w-4 h-4" />
                             </div>
-                        </CardHeader>
-                        <CardContent className="p-4 sm:p-5 pt-1">
-                            <p className="text-xs sm:text-sm font-medium text-slate-500 dark:text-slate-400">15-day protection</p>
-                        </CardContent>
-                    </Card>
+                        </div>
+                        <div className="text-xl sm:text-2xl font-bold tracking-tight text-emerald-600 dark:text-emerald-400 font-mono mt-1">
+                            {kpis.active_bpos ?? 0}
+                        </div>
+                        <p className="text-[10px] text-muted-foreground mt-0.5 truncate">15-day protection</p>
+                    </button>
 
-                    <Card className="shadow-2xs border-t-2 border-t-amber-600">
-                        <CardHeader className="p-4 sm:p-5 pb-1">
-                            <CardTitle className="text-sm sm:text-base font-semibold text-slate-700 dark:text-slate-300">
-                                Repeat Cases
-                            </CardTitle>
-                            <div className="text-3xl sm:text-4xl font-extrabold tracking-tight text-amber-600 dark:text-amber-400 font-mono mt-1">
-                                {kpis.repeat_cases ?? 0}
+                    {/* 4. Repeat Cases */}
+                    <button
+                        type="button"
+                        onClick={() => setActiveFilter(activeFilter === 'REPEAT' ? 'ALL' : 'REPEAT')}
+                        className={cn(
+                            "text-left p-2.5 sm:p-3 rounded-lg border transition-all cursor-pointer relative overflow-hidden bg-card",
+                            "hover:border-amber-400 hover:shadow-xs",
+                            activeFilter === 'REPEAT'
+                                ? "border-amber-500 ring-2 ring-amber-500/20 bg-amber-50/40 dark:bg-amber-950/20"
+                                : "border-border/80 border-l-2 border-l-amber-500"
+                        )}
+                    >
+                        <div className="flex items-center justify-between">
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Repeat Cases</span>
+                            <div className="p-1.5 rounded-md bg-amber-100 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 shrink-0">
+                                <AlertTriangle className="w-4 h-4" />
                             </div>
-                        </CardHeader>
-                        <CardContent className="p-4 sm:p-5 pt-1">
-                            <p className="text-xs sm:text-sm font-medium text-slate-500 dark:text-slate-400">Recidivist incidents</p>
-                        </CardContent>
-                    </Card>
+                        </div>
+                        <div className="text-xl sm:text-2xl font-bold tracking-tight text-amber-600 dark:text-amber-400 font-mono mt-1">
+                            {kpis.repeat_cases ?? 0}
+                        </div>
+                        <p className="text-[10px] text-muted-foreground mt-0.5 truncate">Recidivist incidents</p>
+                    </button>
                 </div>
 
-                {/* ── SEARCH & FILTER CONTROLS (MOBILE & TABLET TOUCH-COMPLIANT) ── */}
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 w-full">
-                    <div className="relative flex-1 w-full sm:max-w-md">
-                        <Search className="absolute left-3.5 top-3.5 h-4 w-4 text-muted-foreground" />
-                        <Input
-                            placeholder="Filter survivor, respondent, case #..."
-                            value={searchQuery}
-                            onChange={e => setSearchQuery(e.target.value)}
-                            className="pl-10 h-11 min-h-[44px] text-base bg-background w-full"
-                        />
+                {/* ── ACTION CENTER STREAMLINED FILTER CONTROLS (SEARCH REMOVED) ── */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 w-full border-b pb-2.5">
+                    <div className="flex items-center gap-2">
+                        <span className="text-xs font-semibold text-muted-foreground">Queue Focus:</span>
                     </div>
 
-                    <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 w-full sm:w-auto">
-                        <Button
-                            variant={activeFilter === 'ALL' ? 'secondary' : 'ghost'}
-                            size="sm"
+                    <div className="inline-flex items-center p-1 rounded-lg bg-muted/70 border gap-1 w-full sm:w-auto overflow-x-auto">
+                        <button
+                            type="button"
                             onClick={() => setActiveFilter('ALL')}
-                            className="h-10 min-h-[44px] text-sm font-semibold px-4 whitespace-nowrap"
+                            className={cn(
+                                "h-8 px-3 text-xs font-medium rounded-md transition-all inline-flex items-center gap-1.5 whitespace-nowrap cursor-pointer",
+                                activeFilter === 'ALL'
+                                    ? "bg-background text-foreground shadow-xs font-semibold"
+                                    : "text-muted-foreground hover:text-foreground"
+                            )}
                         >
                             All Cases
-                        </Button>
-                        <Button
-                            variant={activeFilter === 'CRITICAL' ? 'secondary' : 'ghost'}
-                            size="sm"
+                            <span className={cn(
+                                "px-1.5 py-0.2 rounded-full text-[10px] font-bold",
+                                activeFilter === 'ALL' ? "bg-muted text-foreground" : "bg-muted/50 text-muted-foreground"
+                            )}>
+                                {allCasesCount}
+                            </span>
+                        </button>
+
+                        <button
+                            type="button"
                             onClick={() => setActiveFilter('CRITICAL')}
-                            className="h-10 min-h-[44px] text-sm font-semibold px-4 whitespace-nowrap"
+                            className={cn(
+                                "h-8 px-3 text-xs font-medium rounded-md transition-all inline-flex items-center gap-1.5 whitespace-nowrap cursor-pointer",
+                                activeFilter === 'CRITICAL'
+                                    ? "bg-red-600 text-white shadow-xs font-semibold"
+                                    : "text-muted-foreground hover:text-red-600 dark:hover:text-red-400"
+                            )}
                         >
+                            <ShieldAlert className="w-3.5 h-3.5" />
                             Critical
-                        </Button>
-                        <Button
-                            variant={activeFilter === 'BPOS' ? 'secondary' : 'ghost'}
-                            size="sm"
+                            <span className={cn(
+                                "px-1.5 py-0.2 rounded-full text-[10px] font-bold",
+                                activeFilter === 'CRITICAL' ? "bg-white/20 text-white" : "bg-red-100 text-red-700 dark:bg-red-950/60 dark:text-red-300"
+                            )}>
+                                {criticalBadgeCount}
+                            </span>
+                        </button>
+
+                        <button
+                            type="button"
                             onClick={() => setActiveFilter('BPOS')}
-                            className="h-10 min-h-[44px] text-sm font-semibold px-4 whitespace-nowrap"
+                            className={cn(
+                                "h-8 px-3 text-xs font-medium rounded-md transition-all inline-flex items-center gap-1.5 whitespace-nowrap cursor-pointer",
+                                activeFilter === 'BPOS'
+                                    ? "bg-emerald-600 text-white shadow-xs font-semibold"
+                                    : "text-muted-foreground hover:text-emerald-600 dark:hover:text-emerald-400"
+                            )}
                         >
+                            <ShieldCheck className="w-3.5 h-3.5" />
                             Active BPOs
-                        </Button>
-                        <Button
-                            variant={activeFilter === 'REPEAT' ? 'secondary' : 'ghost'}
-                            size="sm"
+                            <span className={cn(
+                                "px-1.5 py-0.2 rounded-full text-[10px] font-bold",
+                                activeFilter === 'BPOS' ? "bg-white/20 text-white" : "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300"
+                            )}>
+                                {activeBposCount}
+                            </span>
+                        </button>
+
+                        <button
+                            type="button"
                             onClick={() => setActiveFilter('REPEAT')}
-                            className="h-10 min-h-[44px] text-sm font-semibold px-4 whitespace-nowrap"
+                            className={cn(
+                                "h-8 px-3 text-xs font-medium rounded-md transition-all inline-flex items-center gap-1.5 whitespace-nowrap cursor-pointer",
+                                activeFilter === 'REPEAT'
+                                    ? "bg-amber-600 text-white shadow-xs font-semibold"
+                                    : "text-muted-foreground hover:text-amber-600 dark:hover:text-amber-400"
+                            )}
                         >
+                            <AlertTriangle className="w-3.5 h-3.5" />
                             Repeat
-                        </Button>
+                            <span className={cn(
+                                "px-1.5 py-0.2 rounded-full text-[10px] font-bold",
+                                activeFilter === 'REPEAT' ? "bg-white/20 text-white" : "bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300"
+                            )}>
+                                {repeatCount}
+                            </span>
+                        </button>
                     </div>
                 </div>
 

@@ -246,7 +246,7 @@ export default function Index({ monitoredChildren = [], zones = [], filters, met
                                     </Badge>
                                 </CardTitle>
                                 <CardDescription className="text-xs text-muted-foreground mt-0.5">
-                                    Search by Child, Parent, Scholar, or filter by Purok Zone and Feeding Stage.
+                                    Search by Child, Parent, Scholar, or filter by Barangay Zone and Feeding Stage.
                                 </CardDescription>
                             </div>
 
@@ -300,16 +300,16 @@ export default function Index({ monitoredChildren = [], zones = [], filters, met
                                 />
                             </div>
 
-                            {/* Purok / Zone Dropdown */}
+                            {/* Barangay Zone Dropdown */}
                             <Select value={zoneId} onValueChange={(val) => setZoneId(val)}>
                                 <SelectTrigger className="h-10 rounded-xl border-2 text-xs font-bold">
                                     <div className="flex items-center gap-1.5">
                                         <MapPin className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                                        <SelectValue placeholder="All Purok Zones" />
+                                        <SelectValue placeholder="All Barangay Zones" />
                                     </div>
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="all" className="text-xs font-bold">All Purok Zones</SelectItem>
+                                    <SelectItem value="all" className="text-xs font-bold">All Barangay Zones</SelectItem>
                                     {zones.map((zone: any) => (
                                         <SelectItem key={zone.id} value={String(zone.id)} className="text-xs font-medium">
                                             {zone.name}
@@ -439,7 +439,7 @@ export default function Index({ monitoredChildren = [], zones = [], filters, met
                                 <TableHeader className="bg-muted/50">
                                     <TableRow>
                                         <TableHead className="font-bold py-4 pl-6 uppercase text-[10px] tracking-wider text-muted-foreground">Child & Parent Information</TableHead>
-                                        <TableHead className="font-bold uppercase text-[10px] tracking-wider text-muted-foreground">Age & Purok Zone</TableHead>
+                                        <TableHead className="font-bold uppercase text-[10px] tracking-wider text-muted-foreground">Age & Barangay Zone</TableHead>
                                         <TableHead className="font-bold uppercase text-[10px] tracking-wider text-muted-foreground text-center">WHO 3-Axis Diagnostics</TableHead>
                                         <TableHead className="font-bold uppercase text-[10px] tracking-wider text-muted-foreground">120-Day Feeding Progress</TableHead>
                                         <TableHead className="font-bold uppercase text-[10px] tracking-wider text-muted-foreground">Last Checked</TableHead>

@@ -24,19 +24,27 @@ class AnnouncementResource extends JsonResource
             'location' => $this->location,
             'date'     => $this->event_date?->format('M d, Y') ?? $this->created_at->format('M d, Y'),
             'image'    => $this->image_url, // From Model Accessor
+            'content'  => $this->content,
             
-            'content' => $this->content,
-            
-            // 👇 formatted for display
-            'event_date' => $this->event_date
-                ? $this->event_date->format('M d, Y')
-                : $this->created_at->format('M d, Y'),
+            // Event Date details
+            'event_date' => $this->event_date ? $this->event_date->format('M d, Y') : null,
+            'raw_date'   => $this->event_date?->format('Y-m-d'),
+            'is_upcoming' => $this->event_date ? $this->event_date->isFuture() || $this->event_date->isToday() : false,
 
-            // 👇 raw date for forms
-            'raw_date' => $this->event_date?->format('Y-m-d'),
-            
+            // Author and Organization details
+            'author' => $this->user ? [
+                'id' => $this->user->id,
+                'name' => $this->user->name,
+                'role' => $this->user->role ?? 'Admin',
+            ] : null,
+            'organization' => $this->organization ? [
+                'id' => $this->organization->id,
+                'name' => $this->organization->name,
+            ] : null,
+
+            // Publishing Timestamps
+            'created_at' => $this->created_at?->format('M d, Y'),
+            'created_at_human' => $this->created_at?->diffForHumans(),
         ];
-            // Only send full content if we aren't on the list page (saves bandwidth)
-        //'content'    => $this->when($request->routeIs('announcements.view'), $this->content),
     }
 }

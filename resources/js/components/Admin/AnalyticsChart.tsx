@@ -17,58 +17,75 @@ interface Props {
 }
 
 export default function AnalyticsChart({ data, config }: Props) {
-    // Default config if not provided (Fallbacks)
+    // Elegant, accessible color palette replacing harsh raw primaries
     const defaultConfig: ChartConfig[] = [
-        { key: 'physical', label: 'Physical Abuse', color: '#FF0000' },
-        { key: 'sexual', label: 'Sexual Abuse', color: '#0000FF' },
-        { key: 'psychological', label: 'Psychological Abuse', color: '#00FF00' },
-        { key: 'economic', label: 'Economic Abuse', color: '#FFFF00' },
+        { key: 'physical', label: 'Physical Abuse', color: '#f43f5e' }, // Rose-500
+        { key: 'sexual', label: 'Sexual Abuse', color: '#8b5cf6' },    // Violet-500
+        { key: 'psychological', label: 'Psychological Abuse', color: '#3b82f6' }, // Blue-500
+        { key: 'economic', label: 'Economic Abuse', color: '#f59e0b' }, // Amber-500
     ];
 
-    const activeConfig = config || defaultConfig;
+    const activeConfig = config && config.length > 0 ? config : defaultConfig;
 
     return (
-        <div className="rounded-lg">
-            <div className="h-[300px] w-full">
-                <ResponsiveContainer width="100%" height="100%">
+        <div className="w-full">
+            <div className="h-[320px] sm:h-[350px] w-full">
+                <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                     <BarChart
                         data={data}
                         margin={{
-                            top: 5,
-                            right: 30,
-                            left: 20,
+                            top: 10,
+                            right: 16,
+                            left: -10,
                             bottom: 5,
                         }}
                     >
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#64748b" />
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" opacity={0.6} />
                         <XAxis
                             dataKey="month"
-                            tick={{ fontSize: 15, fill: 'gray', fontWeight: 'bold' }}
+                            tick={{ fontSize: 12, fill: '#64748b', fontWeight: 500 }}
                             axisLine={false}
                             tickLine={false}
                         />
                         <YAxis
-                            tick={{ fontSize: 15, fill: 'gray' }}
+                            tick={{ fontSize: 12, fill: '#64748b' }}
                             axisLine={false}
                             tickLine={false}
+                            allowDecimals={false}
                         />
                         <Tooltip
-                            contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                            cursor={{ fill: 'gray ' }}
+                            contentStyle={{
+                                borderRadius: '8px',
+                                border: '1px solid #e2e8f0',
+                                backgroundColor: '#ffffff',
+                                color: '#0f172a',
+                                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                                fontSize: '12px',
+                                fontWeight: 500
+                            }}
+                            cursor={{ fill: 'rgba(148, 163, 184, 0.15)' }}
                         />
-                        <Legend iconType="circle" wrapperStyle={{ fontSize: '18px', fontWeight: 'black', paddingTop: '20px' }} />
+                        <Legend
+                            iconType="circle"
+                            wrapperStyle={{
+                                fontSize: '12px',
+                                fontWeight: 500,
+                                paddingTop: '12px',
+                                color: '#475569'
+                            }}
+                        />
 
                         {/* Dynamically render Bars based on Config */}
-                        {(activeConfig || []).map((item) => (
+                        {activeConfig.map((item) => (
                             <Bar
                                 key={item.key}
                                 dataKey={item.key}
                                 name={item.label}
                                 fill={item.color}
                                 radius={[4, 4, 0, 0]}
+                                maxBarSize={40}
                             />
                         ))}
-
                     </BarChart>
                 </ResponsiveContainer>
             </div>

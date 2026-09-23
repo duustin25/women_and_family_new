@@ -104,7 +104,7 @@ const navGroups: NavGroup[] = [
                 icon: Users,
             },
             {
-                title: 'Org Proposals',
+                title: 'Calendar Events',
                 href: '/admin/organization/events',
                 icon: FileText,
             },
@@ -135,47 +135,57 @@ export function AppSidebar() {
 
     // Filter dynamic groups based on roles
     const filteredGroups = navGroups.map((group) => {
-        const filteredItems = group.items.filter((item) => {
-            // System Settings is strictly Admin ONLY
-            if (item.title === 'System Settings' && role !== 'admin') {
-                return false;
-            }
-
-            // Audit Trails is strictly Executive (Admin & Head Committee)
-            if (item.title === 'Audit Trails' && !['admin', 'head'].includes(role)) {
-                return false;
-            }
-
-            // Presidents see Org Proposals, not admin GAD/Social/Applications
-            if (item.title === 'Org Proposals' && role !== 'president') {
-                return false;
-            }
-
-            if (role === 'president') {
-                const hiddenFromPresident = [
-                    'VAWC Cases',
-                    'BCPC Nutrition',
-                    'GAD Events',
-                    'Applications',
-                    'Analytics & Reports',
-                    'System Settings',
-                ];
-                if (hiddenFromPresident.includes(item.title)) return false;
-            }
-
-            // Head Committee visibility
-            if (role === 'head') {
-                const hiddenFromHead = [
-                    'Org Proposals',
-                    'System Settings',
-                ];
-                if (hiddenFromHead.includes(item.title)) {
+        const filteredItems = group.items
+            .map((item) => {
+                // If president, link Applications directly without admin Appeals Queue
+                if (item.title === 'Applications' && role === 'president') {
+                    return {
+                        ...item,
+                        items: undefined,
+                    };
+                }
+                return item;
+            })
+            .filter((item) => {
+                // System Settings is strictly Admin ONLY
+                if (item.title === 'System Settings' && role !== 'admin') {
                     return false;
                 }
-            }
 
-            return true;
-        });
+                // Audit Trails is strictly Executive (Admin & Head Committee)
+                if (item.title === 'Audit Trails' && !['admin', 'head'].includes(role)) {
+                    return false;
+                }
+
+                // Presidents see Calendar Events, not admin GAD/Social/Applications
+                if (item.title === 'Calendar Events' && role !== 'president') {
+                    return false;
+                }
+
+                if (role === 'president') {
+                    const hiddenFromPresident = [
+                        'VAWC Cases',
+                        'BCPC Nutrition',
+                        'GAD Events',
+                        'Analytics & Reports',
+                        'System Settings',
+                    ];
+                    if (hiddenFromPresident.includes(item.title)) return false;
+                }
+
+                // Head Committee visibility
+                if (role === 'head') {
+                    const hiddenFromHead = [
+                        'Calendar Events',
+                        'System Settings',
+                    ];
+                    if (hiddenFromHead.includes(item.title)) {
+                        return false;
+                    }
+                }
+
+                return true;
+            });
 
         return {
             ...group,

@@ -23,7 +23,11 @@ class MembershipApplicationController extends Controller
         $applications = $service->getScopedApplications($request->user(), $filters);
 
         // Fetch organizations for filter dropdown
-        $organizations = Organization::orderBy('name')->get();
+        if ($request->user()->isPresident()) {
+            $organizations = Organization::where('id', $request->user()->organization_id)->get();
+        } else {
+            $organizations = Organization::orderBy('name')->get();
+        }
 
         // Fetch distinct monthly_income values from personal_data JSON for the filter dropdown
         // Uses MySQL JSON extraction syntax. If using SQLite/Postgres, syntax might vary slightly, 
@@ -45,9 +49,13 @@ class MembershipApplicationController extends Controller
         ]);
     }
 
-    public function create()
+    public function create(Request $request)
     {
-        $organizations = Organization::orderBy('name')->get();
+        if ($request->user()->isPresident()) {
+            $organizations = Organization::where('id', $request->user()->organization_id)->get();
+        } else {
+            $organizations = Organization::orderBy('name')->get();
+        }
 
         // Ensure this matches: resources/js/Pages/Admin/Applications/Create.tsx
         return Inertia::render('Admin/Applications/Create', [
@@ -221,6 +229,13 @@ class MembershipApplicationController extends Controller
         ]);
 
         $application = MembershipApplication::findOrFail($id);
+        
+        /** @var \App\Models\User $user */
+        $user = $request->user();
+        if ($user->isPresident() && $user->organization_id !== $application->organization_id) {
+            abort(403, 'Unauthorized to reject this application.');
+        }
+
         $service->rejectApplication($application, $request->input('reason'), $request->user()->name);
 
         return redirect()->back()->with('success', "Application rejected with documented reason.");
@@ -232,11 +247,19 @@ class MembershipApplicationController extends Controller
     public function appeal(Request $request, $id, \App\Services\OrganizationGovernanceService $service)
     {
         $request->validate([
-            'appeal_reason' => 'required|string|min:10',
+            'appeal_reason' => 'required|string|min:10|max:500',
+        ], [
+            'appeal_reason.required' => 'Please provide an appeal statement.',
+            'appeal_reason.min' => 'Appeal statement must be at least 10 characters.',
+            'appeal_reason.max' => 'Appeal statement must not exceed 500 characters to keep review concise.',
         ]);
 
         $application = MembershipApplication::findOrFail($id);
-        $service->submitAppeal($application, $request->input('appeal_reason'));
+        try {
+            $service->submitAppeal($application, $request->input('appeal_reason'));
+        } catch (\Exception $e) {
+            return redirect()->back()->withErrors(['appeal_reason' => $e->getMessage()]);
+        }
 
         return redirect()->back()->with('success', "Appeal submitted successfully! Escalated to Barangay Admin Command Center.");
     }
@@ -286,18 +309,59 @@ class MembershipApplicationController extends Controller
 
         if ($tab === 'history') {
             // Appeals history (Overruled or Sustained)
-            $query->whereIn('approval_type', ['admin_overrule', 'admin_sustained'])
-                  ->orWhere('status', 'final_disapproved');
+            $query->where(function ($q) {
+                $q->whereIn('approval_type', ['admin_overrule', 'admin_sustained'])
+                    ->orWhereIn('status', [
+                        MembershipApplication::STATUS_FINAL_DISAPPROVED,
+                        'Final Disapproved',
+                        'final_disapproved',
+                    ]);
+            });
         } else {
             // Active appeals queue (Pending admin review)
-            $query->whereIn('status', ['appealed', 'rejected']);
+            $query->where(function ($q) {
+                $q->whereIn('status', [
+                    MembershipApplication::STATUS_APPEALED,
+                    'Appealed',
+                    'appealed',
+                    MembershipApplication::STATUS_DISAPPROVED,
+                    'Disapproved',
+                    'disapproved',
+                    'rejected',
+                    'Rejected',
+                ]);
+            });
         }
 
         $appeals = $query->latest('updated_at')->paginate(10)->withQueryString();
 
+        $stats = [
+            'active_count' => MembershipApplication::whereIn('status', [
+                MembershipApplication::STATUS_APPEALED,
+                'Appealed',
+                'appealed',
+                MembershipApplication::STATUS_DISAPPROVED,
+                'Disapproved',
+                'disapproved',
+                'rejected',
+                'Rejected',
+            ])->count(),
+            'overruled_count' => MembershipApplication::where('approval_type', 'admin_overrule')->count(),
+            'sustained_count' => MembershipApplication::where(function ($q) {
+                $q->where('approval_type', 'admin_sustained')
+                    ->orWhereIn('status', [
+                        MembershipApplication::STATUS_FINAL_DISAPPROVED,
+                        'Final Disapproved',
+                        'final_disapproved',
+                    ]);
+            })->count(),
+        ];
+        $stats['total_resolved'] = $stats['overruled_count'] + $stats['sustained_count'];
+
         return Inertia::render('Admin/Applications/AppealsIndex', [
             'appeals' => $appeals,
             'tab' => $tab,
+            'stats' => $stats,
         ]);
     }
 }

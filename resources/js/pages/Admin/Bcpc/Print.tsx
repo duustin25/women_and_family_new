@@ -106,7 +106,7 @@ export default function BcpcPrint({ monitoredChildren, metrics, generatedAt }: P
                             <th className="p-2 border-r border-slate-900">Child Name</th>
                             <th className="p-2 border-r border-slate-900">Parent / Guardian</th>
                             <th className="p-2 border-r border-slate-900">Sex & Age</th>
-                            <th className="p-2 border-r border-slate-900">Purok</th>
+                            <th className="p-2 border-r border-slate-900">Zone</th>
                             <th className="p-2 border-r border-slate-900 text-center">WFA Status</th>
                             <th className="p-2 border-r border-slate-900 text-center">HFA Status</th>
                             <th className="p-2 border-r border-slate-900 text-center">WFL/H Status</th>

@@ -42,18 +42,25 @@ class OrganizationEventController extends Controller
      */
     public function store(Request $request)
     {
-        $validated = $request->validate([
+        $rules = [
             'title'       => 'required|string|max:255',
             'description' => 'required|string',
             'event_date'  => 'required|date',
             'event_time'  => 'required',
             'location'    => 'required|string|max:255',
-            'image_path'  => 'nullable|image|max:2048',
-        ]);
+        ];
+
+        if ($request->hasFile('image_path')) {
+            $rules['image_path'] = 'required|image|max:2048';
+        }
+
+        $validated = $request->validate($rules);
 
         if ($request->hasFile('image_path')) {
             $path = $request->file('image_path')->store('gad_events', 'public');
             $validated['image_path'] = $path;
+        } else {
+            $validated['image_path'] = null;
         }
 
         // Force the owner and set initial status
@@ -76,14 +83,19 @@ class OrganizationEventController extends Controller
         $event = GadEvent::where('organization_id', Auth::user()->organization_id)
             ->findOrFail($id);
 
-        $validated = $request->validate([
+        $rules = [
             'title'       => 'required|string|max:255',
             'description' => 'required|string',
             'event_date'  => 'required|date',
             'event_time'  => 'required',
             'location'    => 'required|string|max:255',
-            'image_path'  => 'nullable|image|max:2048',
-        ]);
+        ];
+
+        if ($request->hasFile('image_path')) {
+            $rules['image_path'] = 'required|image|max:2048';
+        }
+
+        $validated = $request->validate($rules);
 
         if ($request->hasFile('image_path')) {
             if ($event->image_path) {
@@ -91,6 +103,9 @@ class OrganizationEventController extends Controller
             }
             $path = $request->file('image_path')->store('gad_events', 'public');
             $validated['image_path'] = $path;
+        } else {
+            // CRITICAL: Preserve existing image when no new file is uploaded
+            unset($validated['image_path']);
         }
 
         $wasRescheduled = ($event->status === 'reschedule_requested');

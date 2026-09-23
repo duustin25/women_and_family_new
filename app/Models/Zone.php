@@ -23,4 +23,12 @@ class Zone extends Model
     {
         return $this->hasMany(CaseReport::class);
     }
+
+    /**
+     * Get the BCPC children for the zone.
+     */
+    public function children(): HasMany
+    {
+        return $this->hasMany(BcpcChild::class);
+    }
 }

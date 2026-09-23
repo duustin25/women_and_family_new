@@ -33,21 +33,26 @@ export default function AppealModal({ open, onOpenChange, application }: AppealM
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!appealReason.trim()) {
-            toast.error('Appeal statement is required.');
+        const reason = appealReason.trim();
+        if (!reason || reason.length < 10) {
+            toast.error('Appeal statement must be at least 10 characters.');
+            return;
+        }
+        if (reason.length > 500) {
+            toast.error('Appeal statement cannot exceed 500 characters.');
             return;
         }
 
         setSubmitting(true);
-        router.post(route('admin.applications.appeal', { application: application.id }), { appeal_reason: appealReason }, {
+        router.post(route('admin.applications.appeal', { application: application.id }), { appeal_reason: reason }, {
             onFinish: () => setSubmitting(false),
             onSuccess: () => {
                 toast.success(`Appeal submitted! Escalated to Barangay Admin Command Center.`);
                 setAppealReason('');
                 onOpenChange(false);
             },
-            onError: () => {
-                toast.error('Failed to submit appeal.');
+            onError: (err: any) => {
+                toast.error(err?.appeal_reason || 'Failed to submit appeal.');
             },
         });
     };
@@ -73,19 +78,28 @@ export default function AppealModal({ open, onOpenChange, application }: AppealM
                         </div>
                     )}
 
-                    <div className="space-y-2">
-                        <Label htmlFor="appeal_reason" className="text-xs font-bold uppercase tracking-wider">
-                            Your Appeal Statement & Supporting Details
-                        </Label>
+                    <div className="space-y-1.5">
+                        <div className="flex items-center justify-between">
+                            <Label htmlFor="appeal_reason" className="text-xs font-bold uppercase tracking-wider">
+                                Your Appeal Statement & Supporting Details
+                            </Label>
+                            <span className={`text-[11px] font-mono ${appealReason.length > 450 ? 'text-amber-600 font-bold' : 'text-muted-foreground'}`}>
+                                {appealReason.length}/500
+                            </span>
+                        </div>
                         <Textarea
                             id="appeal_reason"
                             rows={4}
+                            maxLength={500}
                             value={appealReason}
                             onChange={(e) => setAppealReason(e.target.value)}
-                            placeholder="Explain why your application meets all qualifications and why the rejection was improper..."
+                            placeholder="Briefly explain why the application meets qualifications and why rejection was improper (max 500 characters)..."
                             className="text-xs"
                             required
                         />
+                        <p className="text-[11px] text-muted-foreground">
+                            Keep appeals concise (10–500 characters) to ensure swift administrative review.
+                        </p>
                     </div>
 
                     <DialogFooter className="border-t pt-4">

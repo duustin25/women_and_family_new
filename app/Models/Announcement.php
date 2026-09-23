@@ -29,6 +29,19 @@ class Announcement extends Model
         return $this->belongsTo(Organization::class);
     }
 
+    /**
+     * RELATIONSHIP: Announcement belongs to a User (Author)
+     */
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
+
+    public function author()
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
+
     // SOLID: Encapsulation - Model handles its own data types
     protected $casts = [
         'event_date' => 'date',
