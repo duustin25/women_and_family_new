@@ -58,7 +58,7 @@ class BcpcNutritionAlert extends Notification
             'child_id' => $this->child->id,
             'title' => $title,
             'message' => $message,
-            'link' => '/admin/bcpc'
+            'link' => '/admin/bcpc/cases'
         ];
     }
 }

@@ -318,18 +318,24 @@ class MembershipApplicationController extends Controller
                     ]);
             });
         } else {
-            // Active appeals queue (Pending admin review)
-            $query->where(function ($q) {
-                $q->whereIn('status', [
-                    MembershipApplication::STATUS_APPEALED,
-                    'Appealed',
-                    'appealed',
-                    MembershipApplication::STATUS_DISAPPROVED,
-                    'Disapproved',
-                    'disapproved',
-                    'rejected',
-                    'Rejected',
-                ]);
+            // Active appeals queue (Only applications submitted for appeal)
+            $query->whereIn('status', [
+                MembershipApplication::STATUS_APPEALED,
+                'Appealed',
+                'appealed',
+            ]);
+        }
+
+        if ($search = $request->input('search')) {
+            $query->where(function ($q) use ($search) {
+                $q->where('fullname', 'like', "%{$search}%")
+                  ->orWhere('id', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%")
+                  ->orWhere('address', 'like', "%{$search}%")
+                  ->orWhere('appeal_reason', 'like', "%{$search}%")
+                  ->orWhereHas('organization', function ($orgQ) use ($search) {
+                      $orgQ->where('name', 'like', "%{$search}%");
+                  });
             });
         }
 
@@ -340,11 +346,6 @@ class MembershipApplicationController extends Controller
                 MembershipApplication::STATUS_APPEALED,
                 'Appealed',
                 'appealed',
-                MembershipApplication::STATUS_DISAPPROVED,
-                'Disapproved',
-                'disapproved',
-                'rejected',
-                'Rejected',
             ])->count(),
             'overruled_count' => MembershipApplication::where('approval_type', 'admin_overrule')->count(),
             'sustained_count' => MembershipApplication::where(function ($q) {
@@ -361,6 +362,7 @@ class MembershipApplicationController extends Controller
         return Inertia::render('Admin/Applications/AppealsIndex', [
             'appeals' => $appeals,
             'tab' => $tab,
+            'filters' => $request->only('search', 'tab'),
             'stats' => $stats,
         ]);
     }

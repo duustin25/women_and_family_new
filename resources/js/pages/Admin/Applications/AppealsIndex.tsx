@@ -1,41 +1,69 @@
-import { Head, router, Link } from '@inertiajs/react';
-import { ShieldAlert, ListFilter, History } from 'lucide-react';
-import React, { useState } from 'react';
+import { Head, router } from '@inertiajs/react';
+import React, { useState, useEffect, useRef } from 'react';
 import { toast } from 'sonner';
 import { route } from 'ziggy-js';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { useDebounce } from '@/hooks/use-debounce';
 import AppLayout from '@/layouts/app-layout';
-import { cn } from '@/lib/utils';
-import { ApplicationAppeal, GovernanceStats } from './Partials/Appeals/types';
-import AppealsKpiStats from './Partials/Appeals/AppealsKpiStats';
+
+import { ApplicationAppeal, AppealsPageProps } from './Partials/Appeals/types';
+import { AppealsHeader } from './Partials/Appeals/AppealsHeader';
+import { AppealsFilterBar } from './Partials/Appeals/AppealsFilterBar';
 import AppealsTable from './Partials/Appeals/AppealsTable';
+import { AppealsPagination } from './Partials/Appeals/AppealsPagination';
 import AppealDossierDialog from './Partials/Appeals/AppealDossierDialog';
 import AppealConfirmDialog from './Partials/Appeals/AppealConfirmDialog';
 
-interface AppealsIndexProps {
-    appeals: {
-        data: ApplicationAppeal[];
-        links: Array<{
-            url: string | null;
-            label: string;
-            active: boolean;
-        }>;
-        total?: number;
-        from?: number;
-        to?: number;
-    };
-    tab: 'active' | 'history';
-    stats?: GovernanceStats;
-}
+export default function AppealsIndex({ appeals, tab = 'active', filters, stats }: AppealsPageProps) {
+    const [searchQuery, setSearchQuery] = useState(filters?.search ?? '');
+    const [currentTab, setCurrentTab] = useState<'active' | 'history'>(tab ?? 'active');
 
-export default function AppealsIndex({ appeals, tab = 'active', stats }: AppealsIndexProps) {
     const [selectedAppeal, setSelectedAppeal] = useState<ApplicationAppeal | null>(null);
     const [confirmAction, setConfirmAction] = useState<{
         type: 'overrule' | 'sustain';
         appeal: ApplicationAppeal;
     } | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const debouncedSearch = useDebounce(searchQuery, 300);
+    const isInitialMount = useRef(true);
+
+    // Keep currentTab synced if server prop changes
+    useEffect(() => {
+        if (tab && tab !== currentTab) {
+            setCurrentTab(tab);
+        }
+    }, [tab]);
+
+    // Apply live search and tab switching
+    useEffect(() => {
+        if (isInitialMount.current) {
+            isInitialMount.current = false;
+            return;
+        }
+
+        router.get(
+            '/admin/applications/appeals',
+            {
+                tab: currentTab,
+                search: debouncedSearch || undefined,
+            },
+            {
+                preserveState: true,
+                preserveScroll: true,
+                replace: true,
+            }
+        );
+    }, [debouncedSearch, currentTab]);
+
+    const handleClearFilters = () => {
+        setSearchQuery('');
+        router.get(
+            '/admin/applications/appeals',
+            { tab: currentTab },
+            { preserveState: true, replace: true }
+        );
+    };
 
     // Execute overrule action
     const handleConfirmOverrule = () => {
@@ -75,114 +103,51 @@ export default function AppealsIndex({ appeals, tab = 'active', stats }: Appeals
         );
     };
 
-    const activeCount = stats?.active_count ?? appeals.data.length;
-    const totalResolved = stats?.total_resolved ?? 0;
+    const totalCount = appeals.meta?.total ?? appeals.total ?? appeals.data.length;
+    const paginationLinks = appeals.meta?.links || appeals.links;
+    const hasActiveFilters = Boolean(searchQuery);
+
+    const activeCount = stats?.active_count ?? (currentTab === 'active' ? totalCount : 0);
+    const totalResolved = stats?.total_resolved ?? (currentTab === 'history' ? totalCount : 0);
 
     return (
         <AppLayout breadcrumbs={[
             { title: 'Dashboard', href: '/admin/dashboard' },
-            { title: 'Governance Appeals', href: '#' }
+            { title: 'Membership Appeals', href: '/admin/applications/appeals' }
         ]}>
-            <Head title="Governance Appeals Command Center" />
+            <Head title="Membership Appeals" />
 
-            <div className="flex h-full flex-1 flex-col gap-4 p-4 sm:p-6 w-full max-w-7xl mx-auto">
-
+            <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-8xl mx-auto">
                 {/* ── HEADER ── */}
-                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
-                    <div>
-                        <div className="flex items-center gap-2.5 flex-wrap">
-                            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground flex items-center gap-2">
-                                <ShieldAlert className="w-6 h-6 sm:w-7 sm:h-7 text-amber-600 dark:text-amber-400 shrink-0" />
-                                <span>Appeals & Governance Command Center</span>
-                            </h1>
-                            <Badge variant="outline" className="text-xs font-semibold py-0.5 px-2">
-                                Barangay 183
-                            </Badge>
-                        </div>
-                        <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
-                            Independent arbitration desk for reviewing resident appeals and organization screening decisions.
-                        </p>
-                    </div>
+                <AppealsHeader />
 
-                    {/* Filter Navigation Tabs (Readable pill buttons) */}
-                    <div className="inline-flex items-center p-1 rounded-xl bg-muted/70 border gap-1 self-start lg:self-auto">
-                        <Link
-                            href={route('admin.applications.appeals', { tab: 'active' })}
-                            className={cn(
-                                "h-9 px-4 text-xs sm:text-sm font-semibold rounded-lg transition-all inline-flex items-center gap-1.5 whitespace-nowrap cursor-pointer",
-                                tab === 'active'
-                                    ? "bg-amber-600 text-white shadow-xs font-bold"
-                                    : "text-muted-foreground hover:text-foreground"
-                            )}
-                        >
-                            <ListFilter className="w-4 h-4" />
-                            <span>Active Appeals Queue</span>
-                            <span className={cn(
-                                "px-2 py-0.5 rounded-full text-xs font-bold",
-                                tab === 'active' ? "bg-white/20 text-white" : "bg-muted text-muted-foreground"
-                            )}>
-                                {activeCount}
-                            </span>
-                        </Link>
-                        <Link
-                            href={route('admin.applications.appeals', { tab: 'history' })}
-                            className={cn(
-                                "h-9 px-4 text-xs sm:text-sm font-semibold rounded-lg transition-all inline-flex items-center gap-1.5 whitespace-nowrap cursor-pointer",
-                                tab === 'history'
-                                    ? "bg-foreground text-background shadow-xs font-bold"
-                                    : "text-muted-foreground hover:text-foreground"
-                            )}
-                        >
-                            <History className="w-4 h-4" />
-                            <span>Resolution History Log</span>
-                            <span className={cn(
-                                "px-2 py-0.5 rounded-full text-xs font-bold",
-                                tab === 'history' ? "bg-background/20 text-background" : "bg-muted text-muted-foreground"
-                            )}>
-                                {totalResolved}
-                            </span>
-                        </Link>
-                    </div>
-                </div>
+                {/* ── DATA CARD & TABLE (NO KPIS, MATCHING GAD & ANNOUNCEMENTS) ── */}
+                <Card className="border shadow-xs overflow-hidden">
+                    <AppealsFilterBar
+                        totalCount={totalCount}
+                        activeCount={activeCount}
+                        totalResolved={totalResolved}
+                        hasActiveFilters={hasActiveFilters}
+                        searchQuery={searchQuery}
+                        onSearchChange={setSearchQuery}
+                        currentTab={currentTab}
+                        onTabChange={setCurrentTab}
+                        onClearFilters={handleClearFilters}
+                    />
 
-                {/* ── KPI METRICS SUMMARY (LARGE READABLE FONTS) ── */}
-                <AppealsKpiStats stats={stats} fallbackActiveCount={appeals.data.length} />
+                    <AppealsTable
+                        appeals={appeals.data}
+                        tab={currentTab}
+                        hasActiveFilters={hasActiveFilters}
+                        onSelectAppeal={(appeal) => setSelectedAppeal(appeal)}
+                        onOverruleClick={(appeal) => setConfirmAction({ type: 'overrule', appeal })}
+                        onSustainClick={(appeal) => setConfirmAction({ type: 'sustain', appeal })}
+                        onClearFilters={handleClearFilters}
+                    />
+                </Card>
 
-                {/* ── SIMPLE, CLEAN APPEALS QUEUE TABLE ── */}
-                <AppealsTable
-                    appeals={appeals.data}
-                    tab={tab}
-                    onSelectAppeal={(appeal) => setSelectedAppeal(appeal)}
-                    onOverruleClick={(appeal) => setConfirmAction({ type: 'overrule', appeal })}
-                    onSustainClick={(appeal) => setConfirmAction({ type: 'sustain', appeal })}
-                />
-
-                {/* ── PAGINATION ── */}
-                {appeals.links && appeals.links.length > 3 && (
-                    <div className="flex items-center justify-between gap-4 border-t pt-4 px-1">
-                        <p className="text-sm text-muted-foreground">
-                            Showing <span className="font-bold text-foreground">{appeals.from || 0}</span> to <span className="font-bold text-foreground">{appeals.to || appeals.data.length}</span> of <span className="font-bold text-foreground">{appeals.total || appeals.data.length}</span> records
-                        </p>
-                        <div className="flex items-center gap-1.5">
-                            {appeals.links.map((link, idx) => (
-                                <Button
-                                    key={idx}
-                                    asChild
-                                    variant={link.active ? "default" : "outline"}
-                                    size="sm"
-                                    disabled={!link.url}
-                                    className="h-9 px-3.5 text-sm font-semibold"
-                                >
-                                    {link.url ? (
-                                        <Link href={link.url} dangerouslySetInnerHTML={{ __html: link.label }} />
-                                    ) : (
-                                        <span dangerouslySetInnerHTML={{ __html: link.label }} className="text-muted-foreground" />
-                                    )}
-                                </Button>
-                            ))}
-                        </div>
-                    </div>
-                )}
+                {/* ── NUMBERED PAGINATION ── */}
+                <AppealsPagination links={paginationLinks} />
             </div>
 
             {/* ── DIALOG: FULL VERBATIM APPEAL DOSSIER MODAL ── */}
@@ -192,7 +157,7 @@ export default function AppealsIndex({ appeals, tab = 'active', stats }: Appeals
                 onClose={() => setSelectedAppeal(null)}
                 onOverruleClick={(appeal) => setConfirmAction({ type: 'overrule', appeal })}
                 onSustainClick={(appeal) => setConfirmAction({ type: 'sustain', appeal })}
-                isHistoryTab={tab === 'history'}
+                isHistoryTab={currentTab === 'history'}
             />
 
             {/* ── DIALOG: ACTION CONFIRMATION MODAL ── */}

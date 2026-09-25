@@ -39,27 +39,27 @@ export default function AppealConfirmDialog({
                         {isOverrule ? (
                             <>
                                 <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
-                                <span>Confirm Overrule & Force-Approval</span>
+                                <span>Approve Resident Appeal</span>
                             </>
                         ) : (
                             <>
                                 <XCircle className="w-5 h-5 text-rose-600 shrink-0" />
-                                <span>Confirm Sustained Disapproval</span>
+                                <span>Sustain Organization Disapproval</span>
                             </>
                         )}
                     </DialogTitle>
                     <DialogDescription className="text-sm text-muted-foreground mt-1.5 leading-relaxed">
                         {isOverrule
-                            ? `You are exercising Barangay Executive authority to overrule the organization president's rejection and officially enroll ${confirmAction.appeal.fullname}.`
-                            : `You are upholding the organization president's rejection for ${confirmAction.appeal.fullname}. This will finalize the rejection and close the appeal.`}
+                            ? `You are approving the appeal for ${confirmAction.appeal.fullname}. This will grant membership in ${confirmAction.appeal.organization?.name || 'the organization'}.`
+                            : `You are sustaining the disapproval for ${confirmAction.appeal.fullname}. This will finalize the rejection and close the appeal.`}
                     </DialogDescription>
                 </DialogHeader>
 
                 <div className="p-4 rounded-xl border bg-muted/40 text-sm space-y-1.5 my-2">
                     <p className="font-bold text-base text-foreground">{confirmAction.appeal.fullname}</p>
-                    <p className="text-muted-foreground">{confirmAction.appeal.organization?.name || 'Community Organization'}</p>
+                    <p className="text-muted-foreground text-xs">{confirmAction.appeal.organization?.name || 'Community Organization'}</p>
                     <p className="text-xs text-muted-foreground pt-1.5 border-t mt-1 font-mono">
-                        Application ID: #{confirmAction.appeal.id} • Action: {isOverrule ? 'Executive Council Overrule' : 'Sustained Disapproval'}
+                        Application ID: #{confirmAction.appeal.id} • Decision: {isOverrule ? 'Overrule & Approve' : 'Sustain Disapproval'}
                     </p>
                 </div>
 
@@ -69,7 +69,7 @@ export default function AppealConfirmDialog({
                         variant="outline"
                         disabled={isSubmitting}
                         onClick={onClose}
-                        className="h-10 px-5 text-sm font-semibold"
+                        className="h-9 px-4 text-xs sm:text-sm font-semibold"
                     >
                         Cancel
                     </Button>
@@ -79,20 +79,20 @@ export default function AppealConfirmDialog({
                             type="button"
                             disabled={isSubmitting}
                             onClick={onConfirm}
-                            className="h-10 px-5 text-sm font-bold bg-emerald-600 hover:bg-emerald-700 text-white gap-2"
+                            className="h-9 px-4 text-xs sm:text-sm font-bold bg-emerald-600 hover:bg-emerald-700 text-white gap-2 shadow-xs"
                         >
                             <CheckCircle2 className="w-4 h-4" />
-                            <span>{isSubmitting ? 'Approving...' : 'Confirm Overrule & Approve'}</span>
+                            <span>{isSubmitting ? 'Approving...' : 'Approve Appeal'}</span>
                         </Button>
                     ) : (
                         <Button
                             type="button"
                             disabled={isSubmitting}
                             onClick={onConfirm}
-                            className="h-10 px-5 text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white gap-2"
+                            className="h-9 px-4 text-xs sm:text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white gap-2 shadow-xs"
                         >
                             <XCircle className="w-4 h-4" />
-                            <span>{isSubmitting ? 'Sustaining...' : 'Confirm Sustain Disapproval'}</span>
+                            <span>{isSubmitting ? 'Sustaining...' : 'Sustain Disapproval'}</span>
                         </Button>
                     )}
                 </DialogFooter>

@@ -1,22 +1,36 @@
 # 🏗️ BCPC Module: System Architecture
 
 > **Municipal & Barangay Women and Family Protection Information System (WFPIS)**  
-> **Module:** Barangay Council for the Protection of Children (BCPC) Child Nutrition Module
+> **Module:** Barangay Council for the Protection of Children (BCPC) Child Nutrition Module  
+> **Architecture Pattern:** Multi-Tier Architecture with Modular Clean-Partials Presentation Layer
 
 ---
 
 ## 🏛️ 1. Multi-Tier Layered Architecture
 
-The BCPC module isolates mathematical calculations from HTTP handling, delegating WHO z-score lookups to an encapsulated calculation service.
+The BCPC module is organized into five decoupled architectural layers, isolating presentation logic, transport routing, domain business services, and database persistence.
 
 ```mermaid
 flowchart TD
-    subgraph ClientLayer ["1. Presentation Layer (React 19 + TypeScript + Shadcn UI)"]
-        UI_Index["Index.tsx (Master OPT+ Census Registry)"]
-        UI_Show["Show.tsx (Child Growth Card & SFP Timeline)"]
-        UI_Create["Create.tsx (Child Intake & Baseline Weighing)"]
-        UI_Dashboard["Dashboard.tsx (Prevalence Heatmaps & SFP Radar)"]
-        UI_Print["Print.tsx (Official DOH/NNC Printable Masterlist)"]
+    subgraph ClientLayer ["1. Presentation Layer (React 19 + TypeScript + Modular Partials)"]
+        direction TB
+        subgraph Orchestrators ["Page Orchestrators"]
+            UI_Index["Index.tsx (Master OPT+ Census Registry)"]
+            UI_Create["Create.tsx (3-Step Child Intake Wizard)"]
+            UI_Show["Show.tsx (Longitudinal Profile & Growth Card)"]
+            UI_Dashboard["Dashboard.tsx (Real-Time Action Center)"]
+            UI_Print["Print.tsx (Official DOH/NNC Printable Masterlist)"]
+        end
+        subgraph Partials ["Modular Partials Hierarchy"]
+            P_Index["Partials/Index/<br/>(MetricCards, FilterBar, Table)"]
+            P_Create["Partials/Create/<br/>(Step1Household, Step2Identity, Step3Measurement)"]
+            P_Show["Partials/Show/<br/>(Header, Demographics, Timeline, Diagnostics, Modals/*)"]
+            P_Dashboard["Partials/Dashboard/<br/>(KpiStrip, TriageQueue, SfpRoster, ZoneTable, Distributions)"]
+        end
+        UI_Index -.-> P_Index
+        UI_Create -.-> P_Create
+        UI_Show -.-> P_Show
+        UI_Dashboard -.-> P_Dashboard
     end
 
     subgraph TransportLayer ["2. Transport Layer (Inertia.js Protocol)"]
@@ -32,7 +46,7 @@ flowchart TD
 
     subgraph ServiceLayer ["4. Domain Services"]
         Svc_Nutri["NutritionCalculatorService.php<br/>(WHO 3-Axis & Interpolation Engine)"]
-        Svc_Analytics["BcpcAnalyticsService.php<br/>(Prevalence & Recovery Rate Calculator)"]
+        Svc_Analytics["BcpcAnalyticsService.php<br/>(Prevalence, Heatmaps & SFP Velocity)"]
         Svc_Audit["AuditLogger.php<br/>(COA Compliance Traceability)"]
 
         BcpcCtrl --> Svc_Nutri
@@ -51,8 +65,8 @@ flowchart TD
     end
 
     UI_Index --> InertiaRouter
-    UI_Show --> InertiaRouter
     UI_Create --> InertiaRouter
+    UI_Show --> InertiaRouter
     UI_Dashboard --> InertiaRouter
     UI_Print --> InertiaRouter
 ```
@@ -61,7 +75,7 @@ flowchart TD
 
 ## 💾 2. Entity-Relationship Data Model
 
-The schema separates stable demographic entities from time-series clinical weighing evaluations:
+The schema cleanly isolates immutable/longitudinal demographic records from time-series clinical weighing evaluations:
 
 ```mermaid
 erDiagram
@@ -115,13 +129,12 @@ erDiagram
 ## ⚙️ 3. Service Layer Architecture
 
 ### `NutritionCalculatorService.php`
-- **WHO Array Tables:** Stores static reference lookup vectors for boys and girls from month 0 to 60 (Median, $-1\text{ SD}$, $-2\text{ SD}$, $-3\text{ SD}$, $+1\text{ SD}$, $+2\text{ SD}$, $+3\text{ SD}$).
-- **Continuous Interpolation:** Computes exact decimal age and performs linear interpolation between bounding monthly milestones.
-- **Extreme Sanity Checking:** Implements `isBiologicalOutlier($weight, $height, $ageMonths)` returning boolean warning flags.
-- **Clinical Triage Evaluator:** Assigns categorical status based on WHO standard cut-offs.
+- **WHO Growth Reference Standards:** Encapsulates official WHO reference tables for boys and girls from birth to 60 months.
+- **Continuous Interpolation:** Computes exact decimal age and performs linear interpolation between adjacent monthly nodes for decimal-accurate z-score approximation.
+- **Extreme Biological Sanity Guardrail:** Implements `isBiologicalOutlier($weight, $height, $ageMonths)` enforcing $[1.5\text{ kg}, 35\text{ kg}]$ and $[40\text{ cm}, 125\text{ cm}]$ limits to trap typographical errors.
+- **Preliminary Decision-Support Triage:** Assigns preliminary nutritional status across WFA, HFA, and WFL/H for human health worker verification.
 
 ### `BcpcAnalyticsService.php`
-- Computes aggregate zone prevalence:
-  $$\text{Prevalence Rate} = \left( \frac{N_{\text{malnourished children in zone}}}{N_{\text{total children weighed in zone}}} \right) \times 100\%$$
-- Computes SFP recovery velocity:
-  $$\text{Velocity} = \frac{\text{Weight}_{\text{final}} - \text{Weight}_{\text{baseline}}}{\Delta t_{\text{days}}} \quad (\text{g/day})$$
+- **Zone Heatmap Aggregations:** Computes malnutrition density and prevalence rates across all 10 Zones of Barangay 183.
+- **Clinical Action Queues:** Dynamically segments children requiring intervention (SAM, MAM, Double Burden, Stunting, Overdue Weighings).
+- **SFP Velocity Engine:** Evaluates therapeutic weight velocity ($g/\text{day}$) to track rehabilitation progress.

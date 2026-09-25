@@ -207,25 +207,28 @@ class MembershipController extends Controller
     public function statusPage(Request $request)
     {
         $search = trim($request->input('search', ''));
-        $application = null;
+        $applications = collect();
 
         if (!empty($search)) {
-            $application = MembershipApplication::with('organization')
-                ->where(function ($q) use ($search) {
-                    if (is_numeric($search)) {
-                        $q->where('id', $search);
+            $cleanId = ltrim($search, '#');
+
+            $applications = MembershipApplication::with('organization')
+                ->where(function ($q) use ($search, $cleanId) {
+                    if (is_numeric($cleanId)) {
+                        $q->where('id', $cleanId);
                     } else {
                         $q->where('email', $search)
                             ->orWhere('fullname', 'LIKE', "%{$search}%");
                     }
                 })
-                ->latest()
-                ->first();
+                ->latest('created_at')
+                ->get();
         }
 
         return Inertia::render('Public/Applications/Status', [
             'search' => $search,
-            'application' => $application,
+            'applications' => $applications,
+            'application' => $applications->first(),
         ]);
     }
 
@@ -259,7 +262,7 @@ class MembershipController extends Controller
             return redirect()->back()->withErrors(['appeal_reason' => $e->getMessage()]);
         }
 
-        return redirect()->route('public.applications.status', ['search' => $application->email ?? $application->id])
-            ->with('success', 'Your appeal statement has been successfully submitted and escalated to the Barangay Administrator Appeals Command Center.');
+        return redirect()->route('public.applications.status', ['search' => $application->id])
+            ->with('success', 'Your appeal has been submitted successfully and is now under review by the Barangay Administrator.');
     }
 }

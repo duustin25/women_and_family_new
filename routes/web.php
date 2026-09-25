@@ -236,4 +236,3 @@ Route::get('/auth/unlock/verify/{token}', [\App\Http\Controllers\Auth\AccountUnl
 Route::post('/auth/unlock/confirm', [\App\Http\Controllers\Auth\AccountUnlockController::class, 'confirmUnlock'])->middleware('throttle:5,1')->name('account-unlock.confirm');
 
 require __DIR__ . '/settings.php';
-

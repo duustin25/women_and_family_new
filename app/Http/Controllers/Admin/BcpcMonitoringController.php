@@ -270,8 +270,8 @@ class BcpcMonitoringController extends Controller
             $isObese = in_array($latest->wflh_status ?? '', ['Overweight', 'Obese']);
             if ($isObese) return false;
             $hasOedema = in_array('Bilateral Oedema (Fluid Retention) [SAM PIMAM]', $latest->intervention_logs ?? []);
-            return $hasOedema 
-                || in_array($latest->wfa_status, ['Severely Underweight']) 
+            return $hasOedema
+                || in_array($latest->wfa_status, ['Severely Underweight'])
                 || in_array($latest->wflh_status ?? '', ['Severely Wasted']);
         })->values();
 
@@ -513,6 +513,7 @@ class BcpcMonitoringController extends Controller
             'intervention_logs' => 'nullable|array',
             'remarks' => 'nullable|string',
             'bns_assessor' => 'nullable|string|max:255',
+            'sfp_status' => 'nullable|string|in:None,Enrolled',
             'confirm_outlier' => 'nullable|boolean',
         ]);
 
@@ -546,8 +547,7 @@ class BcpcMonitoringController extends Controller
             $photoPath = $request->file('photo')->store('bcpc_children', 'public');
         }
 
-        return DB::transaction(function () use ($validated, $ageInMonthsAtRegistration, $photoPath) {
-            // 1. Evaluate WHO Growth Standard Z-Scores (3 Axes)
+        return DB::transaction(function () use ($validated, $ageInMonthsAtRegistration, $photoPath, $request) {
             $ageInMonths = $ageInMonthsAtRegistration;
             $wfa = $this->nutritionService->evaluateWeightForAge($ageInMonths, $validated['sex'], $validated['weight_kg']);
             $hfa = $this->nutritionService->evaluateHeightForAge($ageInMonths, $validated['sex'], $validated['height_cm']);
@@ -560,12 +560,16 @@ class BcpcMonitoringController extends Controller
                 $wflh = 'Severely Wasted';
             }
 
-            // 2. Automate 120-Day Supplemental Feeding Program (SFP) Triage
-            // Guardrail: SFP is contraindicated for Overweight / Obese children (Double Burden Protocol)
+            // Supplemental Feeding Program (SFP) Triage (Decision-Support / Opt-in with Consent)
+            // SFP is contraindicated for Overweight / Obese children (Double Burden Protocol)
             $isOverweightOrObese = in_array($wflh, ['Overweight', 'Obese']);
+            $requestedEnrollment = ($validated['sfp_status'] ?? 'None') === 'Enrolled'
+                || $request->boolean('enroll_in_sfp')
+                || in_array('Supplemental Feeding (SFP)', $interventionLogs);
+
             $sfpStatus = 'None';
             $sfpStartDate = null;
-            if (!$isOverweightOrObese && (in_array($wfa, ['Underweight', 'Severely Underweight']) || in_array($wflh, ['Wasted', 'Severely Wasted']))) {
+            if (!$isOverweightOrObese && $requestedEnrollment) {
                 $sfpStatus = 'Enrolled';
                 $sfpStartDate = $validated['date_of_weighing'];
             }
@@ -738,35 +742,26 @@ class BcpcMonitoringController extends Controller
                     $sfpStatus = ($wfa === 'Normal' && $wflh === 'Normal') ? 'Graduated' : 'Completed';
                     $sfpEndDate = $validated['date_of_weighing'];
                 }
-            } elseif (in_array($child->sfp_status, ['Graduated', 'Completed'])) {
-                // SFP Post-Graduation / Post-Completion Relapse Engine (Cycle 2 Intake)
-                if (!$isOverweightOrObese && (in_array($wfa, ['Underweight', 'Severely Underweight']) || in_array($wflh, ['Wasted', 'Severely Wasted']))) {
-                    $sfpStatus = 'Enrolled';
-                    $sfpStartDate = $validated['date_of_weighing'];
-                    $sfpEndDate = null;
-                    $isRelapse = true;
-                    if (!in_array('SFP Relapse Protocol (Cycle 2 Enrollment)', $interventionLogs)) {
-                        array_unshift($interventionLogs, 'SFP Relapse Protocol (Cycle 2 Enrollment)');
-                    }
-                }
-            } elseif ($child->sfp_status === 'None') {
-                if (!$isOverweightOrObese && (in_array($wfa, ['Underweight', 'Severely Underweight']) || in_array($wflh, ['Wasted', 'Severely Wasted']))) {
-                    if (!isset($validated['sfp_status']) || $validated['sfp_status'] === 'Enrolled') {
-                        $sfpStatus = 'Enrolled';
-                        $sfpStartDate = $validated['date_of_weighing'];
-                        $sfpEndDate = null;
-                    }
-                }
             }
 
-            // 2. Respect manual user dropdown overrides ONLY if explicitly changed from previous status
+            // 2. Respect manual user dropdown overrides or explicit intervention selection if specified
             if (isset($validated['sfp_status']) && !empty($validated['sfp_status']) && $validated['sfp_status'] !== $child->sfp_status) {
-                $sfpStatus = $validated['sfp_status'];
-                if ($sfpStatus === 'Enrolled' && !$sfpStartDate) {
-                    $sfpStartDate = $validated['date_of_weighing'];
+                // SFP cannot be manually enrolled if child is overweight or obese
+                if ($validated['sfp_status'] === 'Enrolled' && $isOverweightOrObese) {
+                    // Do not allow enrolling an overweight/obese child into caloric feeding
+                } else {
+                    $sfpStatus = $validated['sfp_status'];
+                    if ($sfpStatus === 'Enrolled' && !$sfpStartDate) {
+                        $sfpStartDate = $validated['date_of_weighing'];
+                    }
+                    if (in_array($sfpStatus, ['Graduated', 'Completed', 'Terminated', 'None'])) {
+                        $sfpEndDate = $validated['date_of_weighing'];
+                    }
                 }
-                if (in_array($sfpStatus, ['Graduated', 'Completed', 'Terminated'])) {
-                    $sfpEndDate = $validated['date_of_weighing'];
+            } elseif (in_array('Supplemental Feeding (SFP)', $interventionLogs) && $sfpStatus === 'None' && !$isOverweightOrObese) {
+                $sfpStatus = 'Enrolled';
+                if (!$sfpStartDate) {
+                    $sfpStartDate = $validated['date_of_weighing'];
                 }
             }
 
