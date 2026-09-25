@@ -151,7 +151,7 @@ export default function Print({
 
             {/* ── DOCUMENT HEADER ── */}
             <div className="flex items-center justify-center gap-4 mb-8 border-b-2 border-slate-900 pb-6">
-                <img src="/Logo/women&family_logo.png" alt="Logo" className="w-16 h-16 object-contain" />
+                <img src="/Logo/women&family_logo.webp" alt="Logo" className="w-16 h-16 object-contain" />
                 <div className="text-center">
                     <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-600">Republic of the Philippines</h3>
                     <h1 className="text-xl font-black uppercase tracking-tight text-slate-900">Barangay 183 Villamor</h1>
@@ -164,8 +164,8 @@ export default function Print({
             {/* ── REPORT TITLE ── */}
             <div className="text-center mb-8">
                 <h1 className="text-lg font-black uppercase text-slate-900 underline decoration-2 decoration-[#ce1126] underline-offset-4">
-                    {isPresident 
-                        ? 'Barangay 183 Organization Performance & Member Registry Report' 
+                    {isPresident
+                        ? 'Barangay 183 Organization Performance & Member Registry Report'
                         : 'Annual Integrated Tactical & Statistical Report'}
                 </h1>
                 <p className="text-xs font-bold text-slate-600 mt-2 uppercase tracking-widest text-[9px]">
@@ -394,7 +394,7 @@ export default function Print({
             ) : (
                 <>
                     {/* SECTION II: Comprehensive VAWC Tactical & Statutory Intelligence (Admin/Head) */}
-                    
+
                     {/* II-A: Monthly Abuse Case Distribution */}
                     <div className="mb-8 overflow-hidden break-inside-avoid">
                         <h3 className="text-xs font-black uppercase text-slate-700 mb-2 border-b border-slate-300 pb-1 flex justify-between">

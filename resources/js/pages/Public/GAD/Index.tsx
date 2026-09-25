@@ -46,7 +46,7 @@ const ActivityCard = ({ activity, onEventClick }: { activity: GadEvent; onEventC
     }
 
     return (
-        <div 
+        <div
             onClick={() => onEventClick(activity)}
             className={`bg-white dark:bg-neutral-900 rounded-3xl border overflow-hidden shadow-sm hover:shadow-xl hover:border-purple-250 dark:hover:border-purple-800 transition-all duration-300 flex flex-col h-full cursor-pointer group ${isHappeningNow ? 'border-purple-400 ring-2 ring-purple-50 dark:ring-purple-900/30' : 'border-slate-200/80 dark:border-neutral-800'} relative`}
         >
@@ -76,7 +76,7 @@ const ActivityCard = ({ activity, onEventClick }: { activity: GadEvent; onEventC
                     </div>
                 )}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent opacity-60"></div>
-                
+
                 {/* Floating Organization Badge */}
                 <div className="absolute bottom-3 left-4 z-10">
                     <Badge variant="secondary" className="rounded-sm text-[9px] uppercase font-bold tracking-wider text-purple-700 bg-white/90 dark:bg-neutral-900/90 dark:text-purple-300 py-0.5 px-2 backdrop-blur-sm border-none shadow-sm">
@@ -182,8 +182,8 @@ const CalendarGrid = ({ activities, onEventClick }: { activities: GadEvent[]; on
 
                 <div className="flex-1 overflow-y-auto space-y-2 hide-scrollbar mt-2">
                     {dayEvents.map(event => (
-                        <div 
-                            key={event.id} 
+                        <div
+                            key={event.id}
                             onClick={() => onEventClick(event)}
                             className="text-[10px] font-bold leading-snug p-1.5 rounded bg-purple-100/70 text-purple-800 dark:bg-purple-900/40 dark:text-purple-200 border border-purple-200 dark:border-purple-800 flex flex-col group hover:bg-purple-200/70 transition-colors shadow-sm cursor-pointer"
                         >
@@ -250,24 +250,15 @@ export default function GadIndex({ activities = [] }: { activities?: GadEvent[] 
         <PublicLayout>
             <Head title="Gender and Development - Brgy 183 Villamor" />
 
-            {/* FIXED BACKGROUND LOGO */}
-            <div className="fixed inset-0 flex justify-center items-center pointer-events-none z-0">
-                <img
-                    src="/Logo/barangay183LOGO.png"
-                    alt="Barangay 183 Logo"
-                    className="w-[500px] opacity-10 dark:opacity-5"
-                />
-            </div>
-
-            <div className="min-h-screen bg-slate-50/50 dark:bg-neutral-950 transition-colors pb-24 relative z-20">
+            <div className="min-h-screen bg-transparent transition-colors pb-24 relative z-20">
 
                 {/* --- UNIFIED HERO SECTION --- */}
-                <section className="relative z-10 bg-slate-100 dark:bg-neutral-900 border-b border-slate-200 dark:border-neutral-800 py-16 md:py-20 mb-12">
+                <section className="relative z-10 bg-gradient-to-b from-purple-100/30 via-slate-100/20 to-transparent dark:from-purple-950/20 dark:via-neutral-900/10 dark:to-transparent border-b border-purple-200/30 dark:border-purple-900/30 backdrop-blur-[2px] py-16 md:py-20 mb-12">
                     <div className="w-[92%] sm:w-[88%] lg:w-[80%] max-w-7xl mx-auto px-1 sm:px-2 text-center max-w-4xl">
                         <span className="text-xs font-black tracking-widest text-purple-700 dark:text-purple-400 uppercase mb-3 block">
                             Community Programs & Services / Barangay GAD
                         </span>
-                        <h1 className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white tracking-tighter uppercase leading-none">
+                        <h1 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white tracking-tighter uppercase leading-none">
                             Gender and Development
                         </h1>
                         <p className="text-slate-600 dark:text-slate-400 font-bold uppercase text-xs md:text-sm tracking-widest leading-relaxed max-w-2xl mx-auto mt-4 mb-8">
@@ -337,14 +328,14 @@ export default function GadIndex({ activities = [] }: { activities?: GadEvent[] 
                                     </div>
                                 )}
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/35 to-transparent"></div>
-                                
+
                                 {/* Floating Title / Org inside Cover bottom */}
                                 <div className="absolute bottom-6 left-6 right-6 text-white z-10">
                                     <div className="flex items-center gap-2 mb-2">
                                         <Badge className="bg-purple-600 hover:bg-purple-700 text-white font-bold border-none text-[9px] uppercase tracking-wider">
                                             {selectedEvent.organization ? selectedEvent.organization.name : 'Community Event'}
                                         </Badge>
-                                        
+
                                         {(() => {
                                             const eventDate = new Date(selectedEvent.event_date);
                                             const today = new Date();

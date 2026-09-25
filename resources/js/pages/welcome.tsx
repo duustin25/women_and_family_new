@@ -43,15 +43,6 @@ export default function Welcome({ announcements, organizations }: WelcomeProps) 
         <PublicLayout>
             <Head title="Welcome - Brgy 183 Villamor" />
 
-            {/* ======================== FIXED BACKGROUND LOGO ==========================*/}
-            <div className="fixed inset-0 flex justify-center items-center pointer-events-none z-0">
-                <img
-                    src="/Logo/barangay183LOGO.png"
-                    alt="Barangay 183 Logo"
-                    className="w-[300px] sm:w-[500px] opacity-10"
-                />
-            </div>
-
             {/* ======================== HERO SECTION ==========================*/}
             <section className="relative z-10 py-12 sm:py-20 overflow-hidden min-h-[500px] sm:min-h-[720px] flex items-center bg-neutral-950 text-white transition-colors">
                 {/* HERO CAROUSEL BACKGROUND */}
@@ -72,7 +63,7 @@ export default function Welcome({ announcements, organizations }: WelcomeProps) 
                 {/* 2. THE TEXT CONTENT */}
                 <div className="w-[92%] sm:w-[88%] lg:w-[80%] max-w-7xl mx-auto px-1 sm:px-2 relative z-10">
                     <div className="max-w-3xl">
-                        <h1 className="text-3xl sm:text-6xl md:text-7xl lg:text-8xl font-black uppercase leading-[0.95] sm:leading-[0.85] tracking-tight mb-4 sm:mb-8 animate-in slide-in-from-left-10 duration-700">
+                        <h1 className="text-3xl sm:text-4xl md:text-7xl lg:text-8xl font-black uppercase leading-[0.95] sm:leading-[0.85] tracking-tight mb-4 sm:mb-8 animate-in slide-in-from-left-10 duration-700">
                             Women & Family <br />
                             <span className="text-yellow-500">Protection Center</span>
                         </h1>
@@ -216,7 +207,7 @@ export default function Welcome({ announcements, organizations }: WelcomeProps) 
                     <div className="mt-10 text-center">
                         <Link
                             href="/announcements"
-                            className="inline-flex items-center gap-2 px-6 py-3.5 bg-purple-700 hover:bg-purple-800 text-white font-black uppercase text-xs sm:text-sm tracking-wider rounded-md transition-all shadow-md"
+                            className="inline-flex items-center gap-2 px-3 py-3.5 bg-purple-700 hover:bg-purple-800 text-white font-black uppercase text-xs sm:text-xs tracking-wider rounded-md transition-all shadow-md"
                         >
                             View All Announcements <ArrowRight size={16} />
                         </Link>
@@ -271,7 +262,7 @@ export default function Welcome({ announcements, organizations }: WelcomeProps) 
                     <div className="mt-10 text-center pb-6">
                         <Link
                             href="/organizations"
-                            className="inline-flex items-center gap-2 px-6 py-3.5 bg-purple-700 hover:bg-purple-800 text-white font-black uppercase text-xs sm:text-sm tracking-wider rounded-md transition-all shadow-md">
+                            className="inline-flex items-center gap-2 px-3 py-3.5 bg-purple-700 hover:bg-purple-800 text-white font-black uppercase text-xs sm:text-xs tracking-wider rounded-md transition-all shadow-md">
                             View all organizations <ArrowRight size={16} />
                         </Link>
                     </div>

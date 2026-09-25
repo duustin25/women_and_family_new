@@ -19,22 +19,13 @@ export default function Index({ organizations = { data: [] } }: any) {
             <div className="min-h-screen text-slate-900 dark:text-slate-100 font-sans selection:bg-purple-200 selection:text-purple-900 transition-colors">
                 <Head title="Accredited Organizations - Brgy 183 Villamor" />
 
-                {/* FIXED BACKGROUND LOGO */}
-                <div className="fixed inset-0 flex justify-center items-center pointer-events-none z-0">
-                    <img
-                        src="/Logo/barangay183LOGO.png"
-                        alt="Barangay 183 Logo"
-                        className="w-[500px] opacity-10 dark:opacity-5"
-                    />
-                </div>
-
                 {/* --- UNIFIED HERO SECTION --- */}
-                <section className="relative z-10 bg-slate-100 dark:bg-neutral-900 border-b border-slate-200 dark:border-neutral-800 py-16 md:py-20">
+                <section className="relative z-10 bg-gradient-to-b from-purple-100/30 via-slate-100/20 to-transparent dark:from-purple-950/20 dark:via-neutral-900/10 dark:to-transparent border-b border-purple-200/30 dark:border-purple-900/30 backdrop-blur-[2px] py-16 md:py-20">
                     <div className="w-[92%] sm:w-[88%] lg:w-[80%] max-w-7xl mx-auto px-1 sm:px-2 text-center max-w-4xl">
                         <span className="text-xs font-black tracking-widest text-purple-700 dark:text-purple-400 uppercase mb-3 block">
                             Verified Community Partners / Mga Kasosyong Samahan
                         </span>
-                        <h1 className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white tracking-tighter uppercase leading-none">
+                        <h1 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white tracking-tighter uppercase leading-none">
                             Accredited Organizations
                         </h1>
                         <p className="text-slate-600 dark:text-slate-400 font-bold uppercase text-xs md:text-sm tracking-widest leading-relaxed max-w-2xl mx-auto mt-4">
@@ -77,9 +68,9 @@ export default function Index({ organizations = { data: [] } }: any) {
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                             {filteredOrgs.length > 0 ? (
                                 filteredOrgs.map((org: any) => (
-                                    <Link 
-                                        key={org.id} 
-                                        href={`/organizations/${org.slug}`} 
+                                    <Link
+                                        key={org.id}
+                                        href={`/organizations/${org.slug}`}
                                         className="group bg-white dark:bg-neutral-900 rounded-3xl overflow-hidden border border-slate-200 dark:border-neutral-800 hover:border-purple-200 dark:hover:border-purple-800 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 flex flex-col h-full"
                                     >
                                         <div className="p-8 flex flex-col flex-grow">

@@ -128,7 +128,7 @@ export default function DynamicForm({ organization, mode = 'public' }: { organiz
                             </Button>
 
                             <div className="text-center sm:text-right text-xs text-neutral-400 font-medium flex items-center gap-2">
-                                <img src="/Logo/women&family_logo.png" className="h-6 grayscale opacity-40" alt="WFP Logo" />
+                                <img src="/Logo/women&family_logo.webp" className="h-6 grayscale opacity-40" alt="WFP Logo" />
                                 <span>{mode === 'admin' ? 'Admin Intake Portal' : 'Powered by Barangay 183 WFP'}</span>
                             </div>
                         </div>

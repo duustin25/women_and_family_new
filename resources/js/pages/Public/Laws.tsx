@@ -80,22 +80,13 @@ export default function Laws() {
         <PublicLayout>
             <Head title="Laws & Rights" />
 
-            {/* FIXED BACKGROUND LOGO */}
-            <div className="fixed inset-0 flex justify-center items-center pointer-events-none z-0">
-                <img
-                    src="/Logo/barangay183LOGO.png"
-                    alt="Barangay 183 Logo"
-                    className="w-[500px] opacity-10"
-                />
-            </div>
-
             {/* --- UNIFIED HERO SECTION --- */}
-            <section className="relative z-10 bg-slate-100 dark:bg-neutral-900 border-b border-slate-200 dark:border-neutral-800 py-16 md:py-20 mb-12">
+            <section className="relative z-10 bg-gradient-to-b from-purple-100/30 via-slate-100/20 to-transparent dark:from-purple-950/20 dark:via-neutral-900/10 dark:to-transparent border-b border-purple-200/30 dark:border-purple-900/30 backdrop-blur-[2px] py-16 md:py-20 mb-12">
                 <div className="w-[92%] sm:w-[88%] lg:w-[80%] max-w-7xl mx-auto px-1 sm:px-2 text-center max-w-4xl">
                     <span className="text-xs font-black tracking-widest text-purple-700 dark:text-purple-400 uppercase mb-3 block">
-                        Know Your Rights / Alamin ang Inyong Karapatan
+                        Know Your Rights
                     </span>
-                    <h1 className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white tracking-tighter uppercase leading-none">
+                    <h1 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white tracking-tighter uppercase leading-none">
                         Laws & Protections
                     </h1>
                     <p className="text-slate-600 dark:text-slate-400 font-bold uppercase text-xs md:text-sm tracking-widest leading-relaxed max-w-2xl mx-auto mt-4">
@@ -104,7 +95,7 @@ export default function Laws() {
                 </div>
             </section>
 
-            <div className="bg-slate-50/50 dark:bg-neutral-950 min-h-screen pb-24 relative z-20">
+            <div className="bg-transparent min-h-screen pb-24 relative z-20">
                 <div className="w-[92%] sm:w-[88%] lg:w-[80%] max-w-7xl mx-auto px-1 sm:px-2">
                     {/* Laws Grid */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">

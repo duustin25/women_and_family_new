@@ -18,20 +18,30 @@ const cityName = import.meta.env.VITE_APP_CITY_NAME || 'Pasay City';
 const brgyNum = import.meta.env.VITE_HOTLINE_BRGY || '(02) 8854-1234';
 const vawcNum = import.meta.env.VITE_HOTLINE_VAWC || '911 / 1343';
 const brgyMail = import.meta.env.VITE_OFFICIAL_EMAIL || 'support@pasay.gov.ph';
-const offcialFb = import.meta.env.VITE_OFFICIAL_FB || 'https://facebook.com';
+const offcialFb = import.meta.env.VITE_OFFICIAL_FB || 'https://www.facebook.com/profile.php?id=100084864033324';
 const brgyZone = import.meta.env.VITE_APP_ZONE || 'Zone 20';
 
 interface PublicLayoutProps {
     children: React.ReactNode;
     bgColor?: string;
+    showWatermark?: boolean;
 }
 
-export default function PublicLayout({ children, bgColor = "bg-white" }: PublicLayoutProps) {
+export default function PublicLayout({
+    children,
+    bgColor = "bg-white",
+    showWatermark = true,
+}: PublicLayoutProps) {
     // 2. MOVE HOOKS INSIDE THE FUNCTION
-    const { props } = usePage<any>();
+    const { props, url } = usePage<any>();
     const { auth } = props;
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const { appearance, updateAppearance } = useAppearance();
+
+    const isCurrentActive = (href: string) => {
+        if (href === '/') return url === '/' || url === '';
+        return url.startsWith(href);
+    };
 
     const toggleTheme = () => {
         updateAppearance(appearance === 'dark' ? 'light' : 'dark');
@@ -65,14 +75,17 @@ export default function PublicLayout({ children, bgColor = "bg-white" }: PublicL
     ];
 
     return (
-        <div className={`min-h-screen ${bgColor} dark:bg-neutral-950 text-slate-900 dark:text-slate-100 font-sans selection:bg-purple-100 selection:text-purple-900`}>
-            {/* 0. ACCESSIBILITY: SKIP TO MAIN CONTENT */}
-            <a
-                href="#main-content"
-                className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 z-[9999] bg-purple-800 text-white px-5 py-3 rounded-lg font-black text-xs uppercase tracking-wider shadow-2xl focus:outline-none focus:ring-4 focus:ring-purple-300"
-            >
-                Skip to main content
-            </a>
+        <div className={`min-h-screen ${bgColor} dark:bg-neutral-950 text-slate-900 dark:text-slate-100 font-sans selection:bg-purple-100 selection:text-purple-900 relative`}>
+            {/* CENTRALIZED WATERMARK BACKGROUND LOGO */}
+            {showWatermark && (
+                <div className="fixed inset-0 flex justify-center items-center pointer-events-none z-0">
+                    <img
+                        src="/Logo/barangay183LOGO.webp"
+                        alt="Barangay 183 Logo"
+                        className="w-[300px] sm:w-[500px] opacity-10 dark:opacity-5"
+                    />
+                </div>
+            )}
 
             {/* 4. TOASTER COMPONENT */}
             <Toaster position="top-right" richColors closeButton theme={appearance === 'dark' ? 'dark' : 'light'} />
@@ -82,19 +95,19 @@ export default function PublicLayout({ children, bgColor = "bg-white" }: PublicL
 
             {/* --- 0. TOP BAR (HOTLINE MARQUEE) --- */}
             <div className="bg-[#3b0764] dark:bg-purple-950 text-white text-[11px] sm:text-xs font-bold uppercase tracking-wider py-1.5 sm:py-2 relative z-50 border-b border-white/5">
-                <div className="w-[92%] sm:w-[88%] lg:w-[80%] max-w-7xl mx-auto px-1 sm:px-2 flex flex-col md:flex-row justify-between items-center gap-1.5 sm:gap-3">
-                    <div className="flex items-center gap-4 sm:gap-6">
-                        <span className="flex items-center gap-1.5 text-rose-400 animate-pulse font-black">
-                            <AlertCircle size={13} /> Emergency: <a href={`tel:${brgyNum}`} className="text-white hover:text-rose-400 transition-colors">{brgyNum}</a>
+                <div className="w-[92%] sm:w-[88%] lg:w-[80%] max-w-7xl mx-auto px-1 sm:px-2 flex flex-wrap justify-between items-center gap-2">
+                    <div className="flex items-center flex-wrap gap-x-4 sm:gap-x-6 gap-y-1">
+                        <span className="flex items-center gap-1.5 text-rose-200 animate-pulse font-black shrink-0">
+                            <AlertCircle size={13} /> Emergency: <a href={`tel:${brgyNum}`} className="text-white hover:text-rose-300 transition-colors">{brgyNum}</a>
                         </span>
-                        <span className="hidden md:flex items-center gap-2 text-purple-300">
-                            <Shield size={14} /> VAWC Rescue: <a href={`tel:${vawcNum}`} className="text-white hover:text-purple-400 transition-colors">{vawcNum}</a>
+                        <span className="flex items-center gap-1.5 text-purple-300 shrink-0">
+                            <Shield size={13} /> VAWC Rescue: <a href={`tel:${vawcNum}`} className="text-white hover:text-purple-300 transition-colors">{vawcNum}</a>
                         </span>
                     </div>
 
-                    <div className="hidden md:flex items-center gap-4 text-slate-300">
-                        <span className="flex items-center gap-2">
-                            <Info size={14} /> Office Hours: Mon-Fri, 8AM - 5PM
+                    <div className="hidden lg:flex items-center gap-4 text-slate-300 shrink-0">
+                        <span className="flex items-center gap-1.5">
+                            <Info size={13} /> Office Hours: Mon-Fri, 8AM - 5PM
                         </span>
                     </div>
                 </div>
@@ -103,57 +116,64 @@ export default function PublicLayout({ children, bgColor = "bg-white" }: PublicL
             {/* 1. STICKY HEADER */}
             <header className="sticky top-0 z-40 shadow-xl">
                 <div className="bg-[#6b21a8] dark:bg-purple-900 text-white border-b border-purple-500/30">
-                    <div className="w-[92%] sm:w-[88%] lg:w-[80%] max-w-7xl mx-auto px-1 sm:px-2 py-2.5 sm:py-4 flex justify-between items-center">
+                    <div className="w-[92%] sm:w-[88%] lg:w-[80%] max-w-7xl mx-auto px-1 sm:px-2 py-2.5 sm:py-3.5 flex justify-between items-center">
                         <div className="flex items-center gap-2 sm:gap-4 min-w-0 pr-2">
                             {/* Official Seal 1 (Women and Family Logo) */}
-                            <div className="bg-white p-0.5 sm:p-1 rounded-full shadow-lg border-2 border-purple-200 shrink-0">
-                                <img src="/Logo/women&family_logo.png" className="w-7 h-7 sm:w-11 sm:h-11 lg:w-16 lg:h-16 object-contain" alt="Women and Family Logo" />
+                            <div className="shrink-0 drop-shadow-md">
+                                <img src="/Logo/women&family_logo.webp" className="w-9 h-9 sm:w-12 sm:h-12 lg:w-16 lg:h-16 object-contain" alt="Women and Family Logo" />
                             </div>
 
-                            {/* Official Seal 2 for Mobile (Barangay 183 Logo) */}
-                            <div className="bg-white p-0.5 sm:p-1 rounded-full shadow-lg border-2 border-purple-200 shrink-0 md:hidden">
-                                <img src="/Logo/barangay183LOGO.png" className="w-7 h-7 sm:w-10 sm:h-10 object-contain" alt="Barangay Logo" />
+                            {/* Official Seal 2 for Mobile & Tablets (Barangay 183 Logo) */}
+                            <div className="shrink-0 lg:hidden drop-shadow-md">
+                                <img src="/Logo/barangay183LOGO.webp" className="w-9 h-9 sm:w-12 sm:h-12 object-contain" alt="Barangay Logo" />
                             </div>
 
                             {/* Center Title Text */}
                             <div className="min-w-0">
-                                <h1 className="text-[10px] sm:text-base lg:text-2xl font-black uppercase leading-snug sm:leading-tight tracking-tight text-white break-words">
+                                <h1 className="text-xs sm:text-base lg:text-2xl font-black uppercase leading-tight tracking-tight text-white break-words">
                                     {brgyName}, {cityName}
                                 </h1>
-                                <p className="text-[8.5px] sm:text-xs lg:text-sm font-extrabold uppercase tracking-wider mt-0.5 text-purple-100 break-words leading-tight">
+                                <p className="text-[9.5px] sm:text-xs lg:text-sm font-extrabold uppercase tracking-wider mt-0.5 text-purple-100 break-words leading-tight">
                                     Office of the Women and Family
                                 </p>
                             </div>
 
                             {/* Official Seal 2 for Desktop (Barangay 183 Logo - framing title text) */}
-                            <div className="hidden md:block bg-white p-1 rounded-full shadow-lg border-2 border-purple-200 shrink-0">
-                                <img src="/Logo/barangay183LOGO.png" className="w-12 h-12 lg:w-16 lg:h-16 object-contain" alt="Barangay Logo" />
+                            <div className="hidden lg:block shrink-0 drop-shadow-md">
+                                <img src="/Logo/barangay183LOGO.webp" className="w-12 h-12 lg:w-16 lg:h-16 object-contain" alt="Barangay Logo" />
                             </div>
                         </div>
 
                         {/* Desktop Dashboard Link & Theme Toggle */}
-                        <div className="hidden md:flex items-center gap-4">
+                        <div className="hidden lg:flex items-center gap-3">
                             <button
                                 onClick={toggleTheme}
-                                className="p-2 rounded-full hover:bg-white/10 transition-colors text-purple-200 focus:outline-none focus:ring-2 focus:ring-purple-400/50 cursor-pointer"
+                                className="p-2.5 rounded-full hover:bg-white/10 transition-colors text-purple-200 focus:outline-none focus:ring-2 focus:ring-purple-400/50 cursor-pointer"
                                 aria-label="Toggle Dark Mode"
                             >
-                                {appearance === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
+                                {appearance === 'dark' ? <Sun size={19} /> : <Moon size={19} />}
                             </button>
 
                             {auth.user ? (
-                                <Link href="/dashboard" className="bg-[#ce1126] hover:bg-red-700 transition-all text-white px-6 py-3 rounded-md text-xs font-black uppercase tracking-widest shadow-xl active:scale-95">
-                                    Dashboard
+                                <Link
+                                    href="/dashboard"
+                                    className="bg-gradient-to-r from-red-600 to-rose-700 hover:from-red-500 hover:to-rose-600 transition-all text-white px-5 py-2.5 rounded-lg text-xs font-black uppercase tracking-wider shadow-lg hover:shadow-red-900/30 active:scale-95 flex items-center gap-1.5 border border-red-400/20"
+                                >
+                                    <ShieldCheck size={15} />
+                                    <span>Dashboard</span>
                                 </Link>
                             ) : (
-                                <Link href="/login" className="bg-white/10 hover:bg-white/20 transition-all text-white border border-white/30 px-6 py-3 rounded-md text-xs font-black uppercase tracking-widest active:scale-95">
+                                <Link
+                                    href="/login"
+                                    className="bg-white/10 hover:bg-white/20 transition-all text-white border border-white/20 px-5 py-2.5 rounded-lg text-xs font-black uppercase tracking-wider shadow-sm active:scale-95 flex items-center gap-1.5"
+                                >
                                     Login
                                 </Link>
                             )}
                         </div>
 
-                        {/* Mobile Menu Button */}
-                        <div className="flex items-center gap-1 sm:gap-2 md:hidden">
+                        {/* Mobile & Tablet Menu Button */}
+                        <div className="flex items-center gap-1 sm:gap-2 lg:hidden">
                             <button
                                 onClick={toggleTheme}
                                 className="p-2 rounded-full hover:bg-white/10 transition-colors text-purple-200 focus:outline-none cursor-pointer"
@@ -172,42 +192,54 @@ export default function PublicLayout({ children, bgColor = "bg-white" }: PublicL
                     </div>
                 </div>
 
-                {/* Desktop Navigation */}
-                <nav className="bg-[#3b0764] dark:bg-purple-950 border-t border-white/5 hidden md:block">
-                    <div className="w-[92%] sm:w-[88%] lg:w-[80%] max-w-7xl mx-auto px-2 flex justify-center">
-                        {navLinks.map((link) => (
-                            <Link
-                                key={link.name}
-                                href={link.href}
-                                className="px-6 lg:px-8 py-5 text-sm font-black uppercase tracking-widest text-slate-200 hover:bg-[#6b21a8] hover:text-white transition-all duration-200 border-x border-white/5 whitespace-nowrap"
-                            >
-                                {link.name}
-                            </Link>
-                        ))}
-                    </div>
-                </nav>
-
-                {/* Mobile Navigation Dropdown */}
-                {isMenuOpen && (
-                    <div className="md:hidden bg-[#3b0764] dark:bg-purple-950 border-t border-white/10 animate-in slide-in-from-top duration-300 max-h-[calc(100vh-80px)] overflow-y-auto z-50">
-                        <div className="flex flex-col p-4">
-                            {navLinks.map((link) => (
+                {/* Desktop Navigation (Visible on lg 1024px+ screens only) */}
+                <nav className="bg-[#3b0764] dark:bg-purple-950 hidden lg:block shadow-md border-t border-white/5">
+                    <div className="w-full max-w-7xl mx-auto flex justify-center items-stretch h-12">
+                        {navLinks.map((link) => {
+                            const active = isCurrentActive(link.href);
+                            return (
                                 <Link
                                     key={link.name}
                                     href={link.href}
-                                    onClick={() => setIsMenuOpen(false)}
-                                    className="py-4 px-5 text-sm font-black uppercase text-white border-b border-white/5 hover:bg-purple-900 flex items-center justify-between"
+                                    className={`px-4 lg:px-6 flex items-center justify-center text-xs lg:text-[13px] font-black uppercase tracking-wider transition-colors duration-150 whitespace-nowrap rounded-none ${active
+                                        ? 'bg-white/10 text-white font-white'
+                                        : 'text-white hover:bg-white/10'
+                                        }`}
                                 >
-                                    <span>{link.name}</span>
-                                    <ChevronRight size={16} className="text-purple-300" />
+                                    {link.name}
                                 </Link>
-                            ))}
+                            );
+                        })}
+                    </div>
+                </nav>
+
+                {/* Mobile & Tablet Navigation Dropdown */}
+                {isMenuOpen && (
+                    <div className="lg:hidden bg-[#3b0764] dark:bg-purple-950 border-t border-white/10 animate-in slide-in-from-top duration-300 max-h-[calc(100vh-80px)] overflow-y-auto z-50 shadow-2xl">
+                        <div className="flex flex-col p-3 space-y-1">
+                            {navLinks.map((link) => {
+                                const active = isCurrentActive(link.href);
+                                return (
+                                    <Link
+                                        key={link.name}
+                                        href={link.href}
+                                        onClick={() => setIsMenuOpen(false)}
+                                        className={`py-3 px-4 text-xs font-black uppercase tracking-wider rounded-none transition-colors flex items-center justify-between ${active
+                                            ? 'bg-white/10 text-white font-white'
+                                            : 'text-white hover:bg-white/10'
+                                            }`}
+                                    >
+                                        <span>{link.name}</span>
+                                        <ChevronRight size={15} className={active ? 'text-[#3b0764]' : 'text-white'} />
+                                    </Link>
+                                );
+                            })}
                             {auth.user ? (
-                                <Link href="/dashboard" className="mt-4 text-center bg-[#ce1126] text-white px-6 py-3.5 rounded-md text-xs font-black uppercase tracking-widest">
+                                <Link href="/dashboard" className="mt-3 text-center bg-gradient-to-r from-red-600 to-rose-700 text-white px-5 py-3 rounded-lg text-xs font-black uppercase tracking-wider shadow-md">
                                     Access Dashboard
                                 </Link>
                             ) : (
-                                <Link href="/login" className="mt-4 text-center bg-white/10 text-white border border-white/20 px-6 py-3.5 rounded-md text-xs font-black uppercase tracking-widest">
+                                <Link href="/login" className="mt-3 text-center bg-white/10 text-white border border-white/20 px-5 py-3 rounded-lg text-xs font-black uppercase tracking-wider">
                                     Portal Login
                                 </Link>
                             )}
@@ -229,7 +261,7 @@ export default function PublicLayout({ children, bgColor = "bg-white" }: PublicL
                         {/* Identity Column */}
                         <div className="space-y-6">
                             <div className="flex items-center gap-3">
-                                <img src="/Logo/women&family_logo.png" className="w-10 h-10" alt="Women and Family Logo" />
+                                <img src="/Logo/women&family_logo.webp" className="w-10 h-10" alt="Women and Family Logo" />
                                 <h4 className="font-black uppercase tracking-widest text-base text-white leading-tight">Women and Family Support System</h4>
                             </div>
                             <p className="text-slate-300 font-bold leading-relaxed uppercase text-sm tracking-wide">

@@ -18,24 +18,15 @@ export default function VawcIndex() {
         <PublicLayout>
             <Head title="VAWC Support - Brgy 183 Villamor" />
 
-            {/* FIXED BACKGROUND LOGO */}
-            <div className="fixed inset-0 flex justify-center items-center pointer-events-none z-0">
-                <img
-                    src="/Logo/barangay183LOGO.png"
-                    alt="Barangay 183 Logo"
-                    className="w-[500px] opacity-10 dark:opacity-5"
-                />
-            </div>
-
-            <div className="min-h-screen bg-slate-50/50 dark:bg-neutral-950 font-sans text-slate-800 dark:text-slate-200 transition-colors pb-24 relative z-20">
+            <div className="min-h-screen bg-transparent font-sans text-slate-800 dark:text-slate-200 transition-colors pb-24 relative z-20">
 
                 {/* --- UNIFIED HERO SECTION --- */}
-                <section className="relative z-10 bg-slate-100 dark:bg-neutral-900 border-b border-slate-200 dark:border-neutral-800 py-16 md:py-20 mb-12">
+                <section className="relative z-10 bg-gradient-to-b from-rose-100/30 via-slate-100/20 to-transparent dark:from-rose-950/20 dark:via-neutral-900/10 dark:to-transparent border-b border-rose-200/30 dark:border-rose-900/30 backdrop-blur-[2px] py-16 md:py-20 mb-12">
                     <div className="w-[92%] sm:w-[88%] lg:w-[80%] max-w-7xl mx-auto px-1 sm:px-2 text-center max-w-4xl">
                         <span className="text-xs font-black tracking-widest text-rose-600 dark:text-rose-400 uppercase mb-3 block">
                             Violence Against Women & Children / VAWC Support
                         </span>
-                        <h1 className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white tracking-tighter uppercase leading-none">
+                        <h1 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white tracking-tighter uppercase leading-none">
                             Protection & Support Services
                         </h1>
                         <p className="text-slate-600 dark:text-slate-400 font-bold uppercase text-xs md:text-sm tracking-widest leading-relaxed max-w-2xl mx-auto mt-4 mb-8">
