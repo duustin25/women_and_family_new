@@ -1,23 +1,37 @@
 import { Head, useForm, Link, router } from '@inertiajs/react';
-import { ArrowLeft, Printer, CheckCircle, XCircle, Building2, Edit, FileText, Users, DollarSign, BookOpen, Briefcase } from "lucide-react";
-
+import { 
+    ArrowLeft, 
+    Printer, 
+    CheckCircle2, 
+    XCircle, 
+    Building2, 
+    Edit, 
+    Users, 
+    Mail, 
+    MapPin, 
+    Calendar, 
+    ShieldCheck, 
+    AlertCircle,
+    FileText
+} from "lucide-react";
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { route } from 'ziggy-js';
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useConfirm } from '@/hooks/use-confirm';
 import AppLayout from '@/layouts/app-layout';
-import AppealModal from './Partials/AppealModal';
 import RejectionReasonModal from './Partials/RejectionReasonModal';
+
+declare function route(name: string, params?: any): string;
 
 export default function ReviewData({ application, organization }: { application: any, organization: any }) {
     const confirm = useConfirm();
-    const record = application.data;
+    const record = application.data || application;
+    const org = organization.data || organization;
     const { processing } = useForm();
 
     const [rejectModalOpen, setRejectModalOpen] = useState(false);
-    const [appealModalOpen, setAppealModalOpen] = useState(false);
 
     const formData = typeof record.form_data === 'string'
         ? JSON.parse(record.form_data)
@@ -63,7 +77,7 @@ export default function ReviewData({ application, organization }: { application:
             title: `${status} Application`,
             message: `Are you sure you want to set the status of this application to "${status}"?`,
             confirmText: status,
-            variant: "info",
+            variant: status === 'Approved' ? "info" : "destructive",
             onConfirm: () => {
                 router.patch(`/admin/applications/${record.id}/status`,
                     { status: status },
@@ -73,325 +87,390 @@ export default function ReviewData({ application, organization }: { application:
         });
     };
 
-    // Helper for rendering horizontal data rows
+    const statusLower = (record.status || '').toLowerCase();
+
+    // Data row component with readable typography
     const DataRow = ({ label, value, icon: Icon }: { label: string, value: any, icon?: any }) => (
-        <div className="flex flex-col sm:flex-row sm:items-center py-3 border-b border-neutral-100 dark:border-neutral-800 last:border-0 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors px-4 rounded-md">
-            <span className="text-[10px] font-black uppercase text-neutral-400 w-1/3 flex items-center gap-2 mb-1 sm:mb-0">
-                {Icon && <Icon size={14} className="text-neutral-400" />}
+        <div className="flex flex-col sm:flex-row sm:items-baseline py-2.5 border-b border-border/60 last:border-0 px-2 rounded-md hover:bg-muted/30 transition-colors">
+            <span className="text-xs font-semibold text-muted-foreground w-full sm:w-2/5 flex items-center gap-1.5 mb-1 sm:mb-0">
+                {Icon && <Icon className="w-3.5 h-3.5 text-muted-foreground/70 shrink-0" />}
                 {label}
             </span>
-            <span className="text-sm font-bold text-neutral-900 dark:text-neutral-100 uppercase break-words w-2/3">
-                {value || <span className="text-neutral-300 italic">-</span>}
+            <span className="text-sm font-medium text-foreground break-words w-full sm:w-3/5">
+                {value ? String(value) : <span className="text-muted-foreground/60 italic">—</span>}
             </span>
         </div>
     );
 
     return (
-        <AppLayout breadcrumbs={[{ title: 'Queue', href: '/admin/applications' }, { title: 'Review Applicant Data', href: '#' }]}>
-            <Head title={`Review - ${record.fullname}`} />
+        <AppLayout breadcrumbs={[
+            { title: 'Dashboard', href: '/admin/dashboard' },
+            { title: 'Membership Applications', href: '/admin/applications' },
+            { title: 'Review Applicant Data', href: '#' }
+        ]}>
+            <Head title={`Review Application - ${record.fullname}`} />
 
-            <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950 py-8 px-4 transition-colors">
-                <div className="max-w-6xl mx-auto">
+            <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-6xl mx-auto pb-28">
 
-                    {/* TOP ACTION BAR */}
-                    <div className="flex flex-col sm:flex-row justify-between items-center bg-white dark:bg-neutral-900 p-4 rounded-xl shadow-sm border border-neutral-200 dark:border-neutral-800 mb-6 gap-4">
-                        <div className="flex items-center gap-4">
-                            <Link href="/admin/applications" className="flex items-center justify-center w-10 h-10 rounded-full bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 text-neutral-500 transition-colors">
-                                <ArrowLeft size={16} />
-                            </Link>
-                            <div>
-                                <h1 className="text-xl font-black uppercase tracking-tight text-neutral-900 dark:text-white leading-none">
+                {/* ── TOP ACTION & HEADER BAR ── */}
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-card p-4 sm:p-5 rounded-xl border shadow-xs gap-4">
+                    <div className="flex items-center gap-3.5">
+                        <Link 
+                            href="/admin/applications" 
+                            className="flex items-center justify-center w-9 h-9 rounded-lg border bg-muted/40 hover:bg-muted text-muted-foreground transition-colors cursor-pointer"
+                        >
+                            <ArrowLeft className="w-4 h-4" />
+                        </Link>
+                        <div>
+                            <div className="flex items-center gap-2.5 flex-wrap">
+                                <h1 className="text-lg sm:text-xl font-bold tracking-tight text-foreground">
                                     {record.fullname}
                                 </h1>
-                                <p className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest mt-1">
-                                    {organization.data?.name || organization.name} Application
-                                </p>
+                                <Badge 
+                                    variant="outline" 
+                                    className={`text-xs font-semibold px-2 py-0.5 ${
+                                        statusLower === 'approved' ? 'bg-emerald-50 text-emerald-700 border-emerald-300 dark:bg-emerald-950/40' :
+                                        statusLower === 'disapproved' || statusLower === 'rejected' ? 'bg-rose-50 text-rose-700 border-rose-300 dark:bg-rose-950/40' :
+                                        statusLower === 'appealed' ? 'bg-blue-50 text-blue-700 border-blue-300 dark:bg-blue-950/40' :
+                                        'bg-amber-50 text-amber-700 border-amber-300 dark:bg-amber-950/40'
+                                    }`}
+                                >
+                                    Status: {record.status}
+                                </Badge>
                             </div>
-                        </div>
-
-                        <div className="flex items-center gap-2 flex-wrap justify-end">
-                            <Badge className={`uppercase font-black text-[10px] tracking-widest px-3 py-1.5 ${record.status === 'Approved' ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200 border-emerald-200' :
-                                record.status === 'Disapproved' ? 'bg-red-100 text-red-700 hover:bg-red-200 border-red-200' :
-                                    'bg-amber-100 text-amber-700 hover:bg-amber-200 border-amber-200'
-                                }`} variant="outline">
-                                Status: {record.status}
-                            </Badge>
-
-                            <Link href={`/admin/applications/${record.id}/edit`}>
-                                <Button variant="outline" size="sm" className="h-9 border-neutral-200 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 text-[10px] font-black uppercase tracking-widest transition-colors">
-                                    <Edit className="w-4 h-4 mr-2" /> Edit Records
-                                </Button>
-                            </Link>
-
-                            <a href={`/admin/applications/${record.id}/print`} target="_blank" rel="noopener noreferrer">
-                                <Button size="sm" className="h-9 bg-neutral-900 hover:bg-neutral-800 text-white shadow-md hover:shadow-lg transition-all text-[10px] font-black uppercase tracking-widest border border-transparent dark:border-neutral-700">
-                                    <Printer className="w-4 h-4 mr-2" /> Print Official Form
-                                </Button>
-                            </a>
+                            <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1.5">
+                                <Building2 className="w-3.5 h-3.5 text-muted-foreground/70" />
+                                <span>{org.name || 'Accredited Sector'} Application</span>
+                            </p>
                         </div>
                     </div>
 
-                    {/* MAIN CONTENT GRID */}
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div className="flex items-center gap-2 flex-wrap">
+                        <Button 
+                            variant="outline" 
+                            size="sm" 
+                            asChild
+                            className="h-9 text-xs font-semibold cursor-pointer shadow-2xs"
+                        >
+                            <Link href={`/admin/applications/${record.id}/edit`}>
+                                <Edit className="w-3.5 h-3.5 mr-1.5 text-muted-foreground" />
+                                Edit Records
+                            </Link>
+                        </Button>
 
-                        {/* LEFT COLUMN: Overview & Personal Info */}
-                        <div className="lg:col-span-1 space-y-6">
-
-                            {/* Summary Card */}
-                            <div className="bg-white dark:bg-neutral-900 rounded-xl shadow-sm border border-neutral-200 dark:border-neutral-800 p-6 relative overflow-hidden">
-                                <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 dark:bg-blue-500/10 rounded-bl-full -mr-8 -mt-8 pointer-events-none" />
-                                <h2 className="text-xs font-black uppercase tracking-widest text-blue-600 mb-4 flex items-center">
-                                    Quick Summary
-                                </h2>
-
-                                <div className="space-y-4">
-                                    <div>
-                                        <p className="text-[10px] text-neutral-400 font-bold uppercase tracking-wider mb-1">Submitted On</p>
-                                        <p className="text-sm font-bold text-neutral-800 dark:text-neutral-200 uppercase">{new Date(record.created_at || '').toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-[10px] text-neutral-400 font-bold uppercase tracking-wider mb-1">Last Action</p>
-                                        <p className="text-sm font-bold text-neutral-800 dark:text-neutral-200 uppercase">{record.actioned_at ? new Date(record.actioned_at).toLocaleDateString() : 'Pending Review'}</p>
-                                        {record.approved_by && <p className="text-[10px] text-neutral-500 uppercase mt-0.5">By: {record.approved_by}</p>}
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Standard Core Data */}
-                            <div className="bg-white dark:bg-neutral-900 rounded-xl shadow-sm border border-neutral-200 dark:border-neutral-800 overflow-hidden">
-                                <div className="p-4 border-b border-neutral-100 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-900/50">
-                                    <h2 className="text-xs font-black uppercase tracking-widest text-neutral-700 dark:text-neutral-300 flex items-center">
-                                        Core Applicant Data
-                                    </h2>
-                                </div>
-                                <div className="p-2">
-                                    <DataRow label="Full Name" value={record.fullname} />
-                                    <DataRow label="Address" value={record.address} />
-                                    <DataRow label="Email" value={record.email} />
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* RIGHT COLUMN: Dynamic Data & Tables */}
-                        <div className="lg:col-span-2 space-y-6">
-
-                            {/* Dynamic Requirements (Form Data) */}
-                            {Object.keys(formData).length > 2 && (() => {
-                                const schemaRaw = organization?.data?.form_schema || organization?.form_schema;
-                                let schemaFields: any[] = [];
-                                try {
-                                    schemaFields = typeof schemaRaw === 'string' ? JSON.parse(schemaRaw) : schemaRaw || [];
-                                } catch (e) { }
-                                const activeFieldIds = new Set(Array.isArray(schemaFields) ? schemaFields.map((f: any) => f.id) : []);
-
-                                const activeEntries = Object.entries(formData).filter(([key]) => {
-                                    if (key === 'fullname' || key === 'address' || key === 'email') return false;
-                                    return activeFieldIds.has(key);
-                                });
-
-                                const legacyEntries = Object.entries(formData).filter(([key]) => {
-                                    if (key === 'fullname' || key === 'address' || key === 'email') return false;
-                                    return !activeFieldIds.has(key);
-                                });
-
-                                // Helper to get true label from schema
-                                const getFieldLabel = (keyId: string) => {
-                                    if (Array.isArray(schemaFields)) {
-                                        const field = schemaFields.find((f: any) => f.id === keyId);
-                                        return field ? field.label : keyId.replace(/_/g, ' ');
-                                    }
-                                    return keyId.replace(/_/g, ' ');
-                                };
-
-                                 const getFieldType = (keyId: string) => {
-                                     if (Array.isArray(schemaFields)) {
-                                         const field = schemaFields.find((f: any) => f.id === keyId);
-                                         return field ? field.type : 'text';
-                                     }
-                                     return 'text';
-                                 };
-
-                                 const isComplexKey = (key: string, val: any) => {
-                                     const type = getFieldType(key);
-                                     if (type === 'table' || type === 'repeater') return true;
-                                     return Array.isArray(val) && val.length > 0 && typeof val[0] === 'object';
-                                 };
-
-                                 const standardEntries = activeEntries.filter(([key, val]) => !isComplexKey(key, val));
-                                 const complexEntries = activeEntries.filter(([key, val]) => isComplexKey(key, val));
-
-                                 return (
-                                     <div className="space-y-6">
-                                         {/* Active Form Fields */}
-                                         {(standardEntries.length > 0 || complexEntries.length > 0) && (
-                                             <div className="bg-white dark:bg-neutral-900 rounded-xl shadow-sm border border-neutral-200 dark:border-neutral-800 overflow-hidden">
-                                                 <div className="p-4 border-b border-neutral-100 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-900/50">
-                                                     <h2 className="text-xs font-black uppercase tracking-widest text-neutral-700 dark:text-neutral-300">
-                                                         Active Data Questionnaire
-                                                     </h2>
-                                                 </div>
-                                                 
-                                                  {standardEntries.length > 0 && (
-                                                      <div className="p-2 grid grid-cols-1 sm:grid-cols-2 gap-x-4">
-                                                          {standardEntries.map(([key, value]: [string, any]) => {
-                                                              const formattedLabel = getFieldLabel(key);
-                                                              const formattedValue = formatDisplayValue(value);
-                                                              return <DataRow key={key} label={formattedLabel} value={formattedValue} />;
-                                                          })}
-                                                      </div>
-                                                  )}
-
-                                                 {complexEntries.length > 0 && (
-                                                     <div className="border-t border-neutral-100 dark:border-neutral-800 p-4 space-y-6">
-                                                         {complexEntries.map(([key, value]: [string, any]) => {
-                                                             const label = getFieldLabel(key);
-                                                             const type = getFieldType(key);
-                                                             const rows = Array.isArray(value) ? value : [];
-                                                             
-                                                             return (
-                                                                 <div key={key} className="space-y-2">
-                                                                     <h3 className="text-[10px] font-black uppercase text-neutral-400 tracking-widest">
-                                                                         {label} ({type === 'table' ? 'Table Grid' : 'Repeated Section'})
-                                                                     </h3>
-                                                                     
-                                                                     {rows.length === 0 ? (
-                                                                         <p className="text-xs text-neutral-400 italic">No entries added.</p>
-                                                                     ) : type === 'table' ? (
-                                                                         <div className="overflow-x-auto border border-neutral-200 dark:border-neutral-800 rounded-lg">
-                                                                             <table className="w-full text-left border-collapse text-xs">
-                                                                                 <thead>
-                                                                                     <tr className="bg-neutral-50 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 font-bold border-b border-neutral-200 dark:border-neutral-800">
-                                                                                         {Object.keys(rows[0] || {}).map((colName) => (
-                                                                                             <th key={colName} className="px-4 py-2 border-r border-neutral-200 dark:border-neutral-800 last:border-0">{colName}</th>
-                                                                                         ))}
-                                                                                     </tr>
-                                                                                 </thead>
-                                                                                 <tbody>
-                                                                                     {rows.map((row: any, rIdx: number) => (
-                                                                                         <tr key={rIdx} className="border-b border-neutral-200 dark:border-neutral-800 last:border-0 hover:bg-neutral-50/50 dark:hover:bg-neutral-800/50">
-                                                                                             {Object.entries(row).map(([colName, colVal]: [string, any]) => (
-                                                                                                 <td key={colName} className="px-4 py-2 border-r border-neutral-200 dark:border-neutral-800 last:border-0 font-medium text-neutral-800 dark:text-neutral-200">{colVal}</td>
-                                                                                             ))}
-                                                                                         </tr>
-                                                                                     ))}
-                                                                                 </tbody>
-                                                                             </table>
-                                                                         </div>
-                                                                     ) : (
-                                                                         <div className="space-y-3">
-                                                                             {rows.map((row: any, rIdx: number) => (
-                                                                                 <div key={rIdx} className="p-3 bg-neutral-50 dark:bg-neutral-800/50 rounded-lg border border-neutral-100 dark:border-neutral-800 flex gap-4">
-                                                                                     <span className="font-bold text-xs text-neutral-400">{rIdx + 1}.</span>
-                                                                                     <div className="flex flex-wrap gap-x-6 gap-y-2 text-xs">
-                                                                                         {Object.entries(row || {}).map(([subKey, subVal]: [string, any]) => (
-                                                                                             <div key={subKey} className="flex gap-2">
-                                                                                                 <span className="font-black uppercase text-neutral-400">{subKey.replace(/_/g, ' ')}:</span>
-                                                                                                 <span className="font-bold text-neutral-800 dark:text-neutral-200">{subVal}</span>
-                                                                                             </div>
-                                                                                         ))}
-                                                                                     </div>
-                                                                                 </div>
-                                                                             ))}
-                                                                         </div>
-                                                                     )}
-                                                                 </div>
-                                                             );
-                                                         })}
-                                                     </div>
-                                                 )}
-                                             </div>
-                                         )}
-
-                                         {/* Retired/Legacy Data Fields */}
-                                         {legacyEntries.length > 0 && (
-                                             <div className="bg-white dark:bg-neutral-900 rounded-xl shadow-sm border border-dashed border-neutral-300 dark:border-neutral-800 overflow-hidden">
-                                                 <div className="p-4 border-b border-dashed border-neutral-200 dark:border-neutral-800 bg-amber-50/20 dark:bg-amber-950/10">
-                                                     <h2 className="text-xs font-black uppercase tracking-widest text-amber-600 dark:text-amber-400">
-                                                         Retired/Legacy Data Fields (Historical Record)
-                                                     </h2>
-                                                 </div>
-                                                  <div className="p-2 grid grid-cols-1 sm:grid-cols-2 gap-x-4">
-                                                      {legacyEntries.map(([key, value]: [string, any]) => {
-                                                          const formattedLabel = key.replace(/_/g, ' ');
-                                                          const formattedValue = formatDisplayValue(value);
-                                                          return <DataRow key={key} label={formattedLabel} value={formattedValue} />;
-                                                      })}
-                                                  </div>
-                                             </div>
-                                         )}
-                                     </div>
-                                 );
-                             })()}
-
-
-                        </div>
+                        <Button 
+                            size="sm" 
+                            asChild
+                            className="h-9 text-xs font-semibold cursor-pointer shadow-2xs"
+                        >
+                            <a href={`/admin/applications/${record.id}/print`} target="_blank" rel="noopener noreferrer">
+                                <Printer className="w-3.5 h-3.5 mr-1.5" />
+                                Print Official Form
+                            </a>
+                        </Button>
                     </div>
                 </div>
 
-                {/* BOTTOM ACTION BAR (Sticky) */}
-                {(() => {
-                    const statusLower = (record.status || '').toLowerCase();
+                {/* ── MAIN CONTENT GRID ── */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
+                    {/* LEFT COLUMN: Overview & Core Identity */}
+                    <div className="lg:col-span-1 space-y-6">
+
+                        {/* Intake Metadata Summary Card */}
+                        <Card className="border shadow-xs overflow-hidden">
+                            <CardHeader className="py-3.5 px-4 border-b bg-muted/20">
+                                <CardTitle className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                                    <FileText className="w-3.5 h-3.5 text-primary" />
+                                    Submission Summary
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="p-4 space-y-3.5 text-xs">
+                                <div>
+                                    <span className="text-muted-foreground font-medium block">Date Submitted</span>
+                                    <span className="font-semibold text-foreground text-sm">
+                                        {record.created_at ? new Date(record.created_at).toLocaleDateString('en-US', {
+                                            year: 'numeric',
+                                            month: 'long',
+                                            day: 'numeric'
+                                        }) : '—'}
+                                    </span>
+                                </div>
+                                <div className="border-t pt-3">
+                                    <span className="text-muted-foreground font-medium block">Target Organization</span>
+                                    <span className="font-semibold text-foreground">
+                                        {org.name}
+                                    </span>
+                                </div>
+                                <div className="border-t pt-3">
+                                    <span className="text-muted-foreground font-medium block">Last Evaluation</span>
+                                    <span className="font-semibold text-foreground">
+                                        {record.actioned_at || 'Pending Evaluation'}
+                                    </span>
+                                    {record.approved_by && (
+                                        <p className="text-[11px] text-muted-foreground mt-0.5">
+                                            Evaluated by: <span className="font-medium text-foreground">{record.approved_by}</span>
+                                        </p>
+                                    )}
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        {/* Core Applicant Data */}
+                        <Card className="border shadow-xs overflow-hidden">
+                            <CardHeader className="py-3.5 px-4 border-b bg-muted/20">
+                                <CardTitle className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                                    <Users className="w-3.5 h-3.5 text-primary" />
+                                    Primary Applicant Details
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="p-3">
+                                <DataRow label="Full Name" value={record.fullname} icon={Users} />
+                                <DataRow label="Address" value={record.address} icon={MapPin} />
+                                <DataRow label="Email Address" value={record.email} icon={Mail} />
+                            </CardContent>
+                        </Card>
+                    </div>
+
+                    {/* RIGHT COLUMN: Official Application Form Data */}
+                    <div className="lg:col-span-2 space-y-6">
+
+                        {/* Dynamic Form Questionnaire Fields */}
+                        {(() => {
+                            const schemaRaw = org.form_schema;
+                            let schemaFields: any[] = [];
+                            try {
+                                schemaFields = typeof schemaRaw === 'string' ? JSON.parse(schemaRaw) : schemaRaw || [];
+                            } catch (e) { }
+                            const activeFieldIds = new Set(Array.isArray(schemaFields) ? schemaFields.map((f: any) => f.id) : []);
+
+                            const activeEntries = Object.entries(formData).filter(([key]) => {
+                                if (key === 'fullname' || key === 'address' || key === 'email') return false;
+                                return activeFieldIds.has(key);
+                            });
+
+                            const legacyEntries = Object.entries(formData).filter(([key]) => {
+                                if (key === 'fullname' || key === 'address' || key === 'email') return false;
+                                return !activeFieldIds.has(key);
+                            });
+
+                            const getFieldLabel = (keyId: string) => {
+                                if (Array.isArray(schemaFields)) {
+                                    const field = schemaFields.find((f: any) => f.id === keyId);
+                                    return field ? field.label : keyId.replace(/_/g, ' ');
+                                }
+                                return keyId.replace(/_/g, ' ');
+                            };
+
+                            const getFieldType = (keyId: string) => {
+                                if (Array.isArray(schemaFields)) {
+                                    const field = schemaFields.find((f: any) => f.id === keyId);
+                                    return field ? field.type : 'text';
+                                }
+                                return 'text';
+                            };
+
+                            const isComplexKey = (key: string, val: any) => {
+                                const type = getFieldType(key);
+                                if (type === 'table' || type === 'repeater') return true;
+                                return Array.isArray(val) && val.length > 0 && typeof val[0] === 'object';
+                            };
+
+                            const standardEntries = activeEntries.filter(([key, val]) => !isComplexKey(key, val));
+                            const complexEntries = activeEntries.filter(([key, val]) => isComplexKey(key, val));
+
+                            return (
+                                <div className="space-y-6">
+                                    <Card className="border shadow-xs overflow-hidden">
+                                        <CardHeader className="py-3.5 px-5 border-b bg-muted/20">
+                                            <CardTitle className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                                                <Building2 className="w-3.5 h-3.5 text-primary" />
+                                                Sector Application Questionnaire
+                                            </CardTitle>
+                                        </CardHeader>
+                                        <CardContent className="p-4 sm:p-5 space-y-5">
+                                            {/* Standard Entries */}
+                                            {standardEntries.length > 0 ? (
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1">
+                                                    {standardEntries.map(([key, value]) => (
+                                                        <DataRow 
+                                                            key={key} 
+                                                            label={getFieldLabel(key)} 
+                                                            value={formatDisplayValue(value)} 
+                                                        />
+                                                    ))}
+                                                </div>
+                                            ) : complexEntries.length === 0 ? (
+                                                <p className="text-xs text-muted-foreground italic py-3 text-center">
+                                                    No additional questionnaire responses recorded for this applicant.
+                                                </p>
+                                            ) : null}
+
+                                            {/* Complex / Tabular Entries (e.g., Name of Children / Dependents) */}
+                                            {complexEntries.length > 0 && (
+                                                <div className="border-t pt-5 space-y-5">
+                                                    {complexEntries.map(([key, value]) => {
+                                                        const label = getFieldLabel(key);
+                                                        const rows = Array.isArray(value) ? value : [];
+
+                                                        return (
+                                                            <div key={key} className="space-y-2.5">
+                                                                <h3 className="text-xs font-bold uppercase tracking-wide text-foreground">
+                                                                    {label}
+                                                                </h3>
+
+                                                                {rows.length === 0 ? (
+                                                                    <div className="border border-dashed rounded-lg p-4 text-center text-xs text-muted-foreground">
+                                                                        No entries added yet.
+                                                                    </div>
+                                                                ) : (
+                                                                    <div className="overflow-x-auto border rounded-lg">
+                                                                        <table className="w-full text-left text-xs">
+                                                                            <thead>
+                                                                                <tr className="bg-muted/40 font-semibold border-b text-muted-foreground">
+                                                                                    {Object.keys(rows[0] || {}).map((colName) => (
+                                                                                        <th key={colName} className="px-3.5 py-2.5 capitalize">
+                                                                                            {colName.replace(/_/g, ' ')}
+                                                                                        </th>
+                                                                                    ))}
+                                                                                </tr>
+                                                                            </thead>
+                                                                            <tbody>
+                                                                                {rows.map((row: any, rIdx: number) => (
+                                                                                    <tr key={rIdx} className="border-b last:border-0 hover:bg-muted/20">
+                                                                                        {Object.entries(row).map(([colName, colVal]: [string, any]) => (
+                                                                                            <td key={colName} className="px-3.5 py-2.5 font-medium text-foreground">
+                                                                                                {String(colVal || '—')}
+                                                                                            </td>
+                                                                                        ))}
+                                                                                    </tr>
+                                                                                ))}
+                                                                            </tbody>
+                                                                        </table>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            )}
+                                        </CardContent>
+                                    </Card>
+
+                                    {/* Legacy Data Entries if any */}
+                                    {legacyEntries.length > 0 && (
+                                        <Card className="border border-dashed shadow-xs overflow-hidden">
+                                            <CardHeader className="py-3 px-5 border-b bg-muted/10">
+                                                <CardTitle className="text-xs font-semibold text-muted-foreground">
+                                                    Archived / Legacy Fields
+                                                </CardTitle>
+                                            </CardHeader>
+                                            <CardContent className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1">
+                                                {legacyEntries.map(([key, value]) => (
+                                                    <DataRow
+                                                        key={key}
+                                                        label={key.replace(/_/g, ' ')}
+                                                        value={formatDisplayValue(value)}
+                                                    />
+                                                ))}
+                                            </CardContent>
+                                        </Card>
+                                    )}
+                                </div>
+                            );
+                        })()}
+                    </div>
+                </div>
+
+                {/* ── STICKY FOOTER ACTION & REASON BAR ── */}
+                {(() => {
                     if (statusLower === 'pending') {
                         return (
-                            <div className="fixed bottom-0 left-0 lg:left-64 right-0 p-4 bg-white/80 dark:bg-neutral-900/80 backdrop-blur-md border-t border-neutral-200 dark:border-neutral-800 shadow-[0_-4px_20px_-10px_rgba(0,0,0,0.1)] flex justify-end gap-3 z-40">
-                                <Button
-                                    type="button"
-                                    onClick={() => setRejectModalOpen(true)}
-                                    disabled={processing}
-                                    variant="destructive"
-                                    className="uppercase font-black tracking-widest text-[10px] h-10 px-6"
-                                >
-                                    <XCircle className="w-4 h-4 mr-2" /> Disapprove / Reject
-                                </Button>
-                                <Button
-                                    type="button"
-                                    onClick={() => handleAction('Approved')}
-                                    disabled={processing}
-                                    className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-600/20 uppercase font-black tracking-widest text-[10px] h-10 px-6 border border-emerald-500"
-                                >
-                                    <CheckCircle className="w-4 h-4 mr-2" /> Approve Application
-                                </Button>
+                            <div className="fixed bottom-0 left-0 lg:left-64 right-0 p-4 bg-background/90 backdrop-blur-md border-t shadow-lg flex items-center justify-between gap-3 z-40">
+                                <div className="text-xs text-muted-foreground hidden sm:block">
+                                    Review the applicant's credentials and intake data before making a decision.
+                                </div>
+                                <div className="flex items-center gap-2.5 ml-auto">
+                                    <Button
+                                        type="button"
+                                        onClick={() => setRejectModalOpen(true)}
+                                        disabled={processing}
+                                        variant="destructive"
+                                        size="sm"
+                                        className="h-9 px-4 font-semibold text-xs cursor-pointer shadow-xs"
+                                    >
+                                        <XCircle className="w-4 h-4 mr-1.5" /> Disapprove / Reject
+                                    </Button>
+                                    <Button
+                                        type="button"
+                                        onClick={() => handleAction('Approved')}
+                                        disabled={processing}
+                                        size="sm"
+                                        className="h-9 px-5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs cursor-pointer shadow-xs"
+                                    >
+                                        <CheckCircle2 className="w-4 h-4 mr-1.5" /> Approve Application
+                                    </Button>
+                                </div>
                             </div>
                         );
                     }
 
                     if (statusLower === 'rejected' || statusLower === 'disapproved') {
                         return (
-                            <div className="fixed bottom-0 left-0 lg:left-64 right-0 p-4 bg-white/80 dark:bg-neutral-900/80 backdrop-blur-md border-t border-neutral-200 dark:border-neutral-800 shadow-[0_-4px_20px_-10px_rgba(0,0,0,0.1)] flex items-center justify-between gap-3 z-40">
-                                <div className="text-xs font-semibold text-rose-600 dark:text-rose-400">
-                                    <span className="font-black uppercase">Rejection Justification:</span> "{record.rejection_reason || 'Documented by Organization President'}"
+                            <div className="fixed bottom-0 left-0 lg:left-64 right-0 p-4 bg-background/90 backdrop-blur-md border-t shadow-lg flex items-center justify-between gap-3 z-40">
+                                <div className="flex items-center gap-2 text-xs text-rose-700 dark:text-rose-400">
+                                    <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
+                                    <span>
+                                        <strong className="font-semibold uppercase mr-1">Disapproval Justification:</strong>
+                                        "{record.rejection_reason || 'Documented during evaluation'}"
+                                    </span>
                                 </div>
-                                <Button
-                                    type="button"
-                                    onClick={() => setAppealModalOpen(true)}
-                                    className="bg-amber-600 hover:bg-amber-700 text-white uppercase font-black tracking-widest text-[10px] h-10 px-6"
-                                >
-                                    Submit Resident Appeal
-                                </Button>
+                                {/* STRICTLY HIDE / REMOVE APPEAL BUTTON FROM ADMIN/PRESIDENT/HEAD COMMITTEE */}
+                                <div className="text-[11px] text-muted-foreground italic shrink-0">
+                                    Appeals are filed by the resident via the public tracking portal.
+                                </div>
                             </div>
                         );
                     }
 
                     if (statusLower === 'appealed') {
                         return (
-                            <div className="fixed bottom-0 left-0 lg:left-64 right-0 p-4 bg-white/80 dark:bg-neutral-900/80 backdrop-blur-md border-t border-neutral-200 dark:border-neutral-800 shadow-[0_-4px_20px_-10px_rgba(0,0,0,0.1)] flex items-center justify-between gap-3 z-40">
-                                <div className="text-xs font-semibold text-amber-700 dark:text-amber-300">
-                                    <span className="font-black uppercase">Resident Appeal Statement:</span> "{record.appeal_reason || 'Escalated to Barangay Admin'}"
+                            <div className="fixed bottom-0 left-0 lg:left-64 right-0 p-4 bg-background/90 backdrop-blur-md border-t shadow-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 z-40">
+                                <div className="flex items-start sm:items-center gap-2 text-xs text-amber-800 dark:text-amber-300">
+                                    <AlertCircle className="w-4 h-4 shrink-0 text-amber-600 mt-0.5 sm:mt-0" />
+                                    <span>
+                                        <strong className="font-semibold uppercase mr-1">Resident Appeal Statement:</strong>
+                                        "{record.appeal_reason || 'Escalated for administrative governance review'}"
+                                    </span>
                                 </div>
                                 <Button
                                     type="button"
+                                    size="sm"
                                     onClick={() => {
-                                        if (window.confirm(`Overrule president's rejection and approve '${record.fullname}'?`)) {
+                                        if (window.confirm(`Overrule rejection and approve '${record.fullname}'?`)) {
                                             router.post(route('admin.applications.overrule', { application: record.id }), {}, {
                                                 onSuccess: () => toast.success(`Rejection overruled! Application approved.`),
                                             });
                                         }
                                     }}
-                                    className="bg-emerald-600 hover:bg-emerald-700 text-white uppercase font-black tracking-widest text-[10px] h-10 px-6"
+                                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs h-9 px-4 shrink-0 shadow-xs cursor-pointer ml-auto"
                                 >
-                                    <CheckCircle className="w-4 h-4 mr-2" /> Admin Overrule & Approve
+                                    <CheckCircle2 className="w-4 h-4 mr-1.5" /> Overrule & Approve
                                 </Button>
+                            </div>
+                        );
+                    }
+
+                    if (statusLower === 'approved') {
+                        return (
+                            <div className="fixed bottom-0 left-0 lg:left-64 right-0 p-4 bg-background/90 backdrop-blur-md border-t shadow-lg flex items-center justify-between gap-3 z-40">
+                                <div className="flex items-center gap-2 text-xs text-emerald-700 dark:text-emerald-400">
+                                    <ShieldCheck className="w-4 h-4 shrink-0 text-emerald-600" />
+                                    <span>
+                                        <strong className="font-semibold uppercase mr-1">Application Approved:</strong>
+                                        Resident is enrolled as an active accredited member of {org.name}.
+                                    </span>
+                                </div>
                             </div>
                         );
                     }
@@ -399,16 +478,10 @@ export default function ReviewData({ application, organization }: { application:
                     return null;
                 })()}
 
-                {/* MODALS */}
+                {/* ── REJECTION JUSTIFICATION MODAL ── */}
                 <RejectionReasonModal
                     open={rejectModalOpen}
                     onOpenChange={setRejectModalOpen}
-                    application={record}
-                />
-
-                <AppealModal
-                    open={appealModalOpen}
-                    onOpenChange={setAppealModalOpen}
                     application={record}
                 />
             </div>

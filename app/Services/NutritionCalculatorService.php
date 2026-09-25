@@ -7,11 +7,59 @@ use Carbon\Carbon;
 /**
  * 🍎 WHO Child Growth Standards (e-OPT Plus) Nutrition Calculator Service
  * 
- * Compliant with Philippine National Nutrition Council (NNC) Operation Timbang Plus guidelines.
- * Provides precision WHO 3-axis child growth evaluation for 0 to 59 months:
- * 1. Weight-for-Age (WFA): Underweight & SAM Triage
- * 2. Height-for-Age (HFA): Stunting Evaluation (Growth Faltering Detection)
- * 3. Weight-for-Length/Height (WFL/H): Acute Wasting, SAM, MAM, & Obesity Triage
+ * Standards & Protocols:
+ * - World Health Organization (WHO) Child Growth Standards (2006)
+ * - Philippine National Nutrition Council (NNC) Operation Timbang Plus (OPT+) Field Guidelines
+ * - Republic Act No. 11037 (Masustansyang Pagkain para sa Batang Pilipino Act)
+ * - DOH Administrative Order No. 2015-0055 (National Guidelines on the Management of SAM)
+ * 
+ * =========================================================================================
+ * 📐 LEGITIMATE MATHEMATICAL FORMULAS IMPLEMENTED IN THIS SERVICE:
+ * =========================================================================================
+ * 
+ * 1. Chronological Age in Months:
+ *    Age_months = floor((Date_weighed - Date_birth) / 30.4375)
+ *    Active implementation: (int) Carbon::parse($dob)->diffInMonths(Carbon::parse($dateOfWeighing))
+ *    Statutory Boundary: Scope is strictly 0 to 59 months. Children >= 60 months are locked out.
+ * 
+ * 2. Piecewise Linear Interpolation (NNC e-OPT Plus Threshold Curve Fitting):
+ *    Given continuous search variable x (Age in months or Height in cm) falling between
+ *    discrete reference milestone nodes x1 and x2 (where x1 <= x <= x2):
+ *    
+ *    Fraction = (x - x1) / (x2 - x1)
+ *    Threshold_interpolated = Y(x1) + Fraction * [Y(x2) - Y(x1)]
+ *    
+ *    Where Y(x) represents the WHO standard deviation reference cutoffs (-3SD, -2SD, Median, +2SD, +3SD).
+ * 
+ * 3. Diagnostic Classification Rules Across 3 Orthogonal Clinical Axes:
+ *    - Axis 1: Weight-for-Age (WFA) - General Underweight
+ *        W < -3 SD                => 'Severely Underweight'
+ *        -3 SD <= W < -2 SD       => 'Underweight'
+ *        -2 SD <= W <= +2 SD      => 'Normal'
+ *        W > +2 SD                => 'Overweight'
+ * 
+ *    - Axis 2: Height-for-Age (HFA) - Stunting / Linear Growth Faltering
+ *        H < -3 SD                => 'Severely Stunted'
+ *        -3 SD <= H < -2 SD       => 'Stunted'
+ *        -2 SD <= H <= +2 SD      => 'Normal'
+ *        H > +2 SD                => 'Tall'
+ * 
+ *    - Axis 3: Weight-for-Length/Height (WFL/H) - Acute Wasting & Malnutrition
+ *        W < -3 SD                => 'Severely Wasted' (Severe Acute Malnutrition / SAM)
+ *        -3 SD <= W < -2 SD       => 'Wasted' (Moderate Acute Malnutrition / MAM)
+ *        -2 SD <= W <= +2 SD      => 'Normal'
+ *        +2 SD < W <= +3 SD       => 'Overweight'
+ *        W > +3 SD                => 'Obese'
+ * 
+ * 4. Clinical Oedema Override (DOH SAM Protocol / NNC Page 23):
+ *    If Bilateral Pitting Oedema is present, child is automatically triaged as:
+ *    wfa_status = 'Severely Underweight' AND wflh_status = 'Severely Wasted' (SAM Priority 1).
+ * 
+ * 5. Extreme Biological Outlier Sanity Guardrail (WHO +-5 SD):
+ *    Flags extreme typographical/recording errors:
+ *    Height: H < (Median_H * 0.65) OR H > (Median_H * 1.35)
+ *    Weight: W < (Median_W * 0.40) OR W > (Median_W * 2.20)
+ * =========================================================================================
  */
 class NutritionCalculatorService
 {

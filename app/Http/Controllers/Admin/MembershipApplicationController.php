@@ -51,11 +51,22 @@ class MembershipApplicationController extends Controller
 
     public function create(Request $request)
     {
+        $query = Organization::with('president')->orderBy('name');
+
         if ($request->user()->isPresident()) {
-            $organizations = Organization::where('id', $request->user()->organization_id)->get();
-        } else {
-            $organizations = Organization::orderBy('name')->get();
+            $query->where('id', $request->user()->organization_id);
         }
+
+        $organizations = $query->get()->map(function ($org) {
+            return [
+                'id' => $org->id,
+                'name' => $org->name,
+                'slug' => $org->slug,
+                'description' => $org->description,
+                'president_name' => $org->president?->name,
+                'color_theme' => $org->color_theme,
+            ];
+        });
 
         // Ensure this matches: resources/js/Pages/Admin/Applications/Create.tsx
         return Inertia::render('Admin/Applications/Create', [

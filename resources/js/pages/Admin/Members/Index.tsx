@@ -1,640 +1,226 @@
-import { Head, Link, router, usePage } from '@inertiajs/react';
-import {
-    Search, Users, Mail, CreditCard, ChevronRight,
-    MapPin, History, CheckCircle, Send, PlusCircle, X,
-    CheckCheck, AlertCircle, ChevronDown
-} from 'lucide-react';
-import { useState } from 'react';
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Textarea } from "@/components/ui/textarea";
+import { Head, router } from '@inertiajs/react';
+import React, { useState, useEffect, useRef } from 'react';
+import { CheckCircle, AlertCircle } from 'lucide-react';
+import { Card } from "@/components/ui/card";
+import { useDebounce } from '@/hooks/use-debounce';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
 
+import { PageProps, Member } from './types';
+import { MembersHeader } from './Partials/MembersHeader';
+import { MembersFilterBar } from './Partials/MembersFilterBar';
+import { MembersTable } from './Partials/MembersTable';
+import { MembersPagination } from './Partials/MembersPagination';
+import { MemberDetailDialog } from './Partials/MemberDetailDialog';
+import { TagBenefitDialog } from './Partials/TagBenefitDialog';
+import { SendEmailDialog } from './Partials/SendEmailDialog';
+import { BulkBroadcastDialog } from './Partials/BulkBroadcastDialog';
+
 declare function route(name: string, params?: any): string;
 
-interface Member {
-    id: number;
-    fullname: string;
-    email: string;
-    phone: string;
-    organization_id: number;
-    organization: { name: string; color_theme: string };
-    application?: { address: string };
-    status: string;
-    created_at: string;
-    secure_token: string;
-    communications?: any[];
-    dispatches?: any[];
-}
+export default function MembersIndex({
+    members,
+    organizations = [],
+    filters,
+    auth,
+    flash,
+}: PageProps) {
+    const isPresident = auth?.user?.role === 'president';
+    const userOrgId = auth?.user?.organization_id;
 
-interface IndexProps {
-    members: {
-        data: Member[];
-        meta?: { total: number; links: any[] };
-        links?: any[];
-    };
-    organizations: any[];
-    filters: any;
-}
+    // Filters State
+    const [searchQuery, setSearchQuery] = useState(filters?.search || '');
+    const [selectedOrg, setSelectedOrg] = useState(
+        filters?.organization_id || (isPresident && userOrgId ? String(userOrgId) : 'all')
+    );
+    const [pendingClaimsOnly, setPendingClaimsOnly] = useState(filters?.pending_claims === '1');
 
-export default function MembersIndex({ members, organizations, filters }: IndexProps) {
-    const { props } = usePage<any>();
-    const flash = props.flash as { success?: string; error?: string } | undefined;
-    const authUser = props.auth?.user;
-    const isPresident = authUser?.role === 'president';
-
+    // Dialogs State
     const [selectedMember, setSelectedMember] = useState<Member | null>(null);
-    const [individualModalOpen, setIndividualModalOpen] = useState(false);
-    const [bulkModalOpen, setBulkModalOpen] = useState(false);
-    const [beneficiaryModalOpen, setBeneficiaryModalOpen] = useState(false);
-    const [historyModalOpen, setHistoryModalOpen] = useState(false);
+    const [detailOpen, setDetailOpen] = useState(false);
+    const [tagBenefitOpen, setTagBenefitOpen] = useState(false);
+    const [sendEmailOpen, setSendEmailOpen] = useState(false);
+    const [broadcastOpen, setBroadcastOpen] = useState(false);
 
-    const [searchQuery, setSearchQuery] = useState(filters.search || '');
-    const [orgFilter, setOrgFilter] = useState(filters.organization_id || (isPresident && organizations[0] ? String(organizations[0].id) : 'All'));
-    const [pendingClaimsFilter, setPendingClaimsFilter] = useState(filters.pending_claims === '1');
-    const [formData, setFormData] = useState({ subject: '', body: '', recipient_group: isPresident && organizations[0] ? String(organizations[0].id) : 'all', benefit_name: '', instructions: '' });
+    // Live search debouncing
+    const debouncedSearch = useDebounce(searchQuery, 300);
+    const isInitialMount = useRef(true);
 
-    const openPresetDispatch = (subject: string, body: string) => {
-        setFormData(prev => ({
-            ...prev,
-            subject,
-            body,
-        }));
-        setBulkModalOpen(true);
-    };
+    useEffect(() => {
+        if (isInitialMount.current) {
+            isInitialMount.current = false;
+            return;
+        }
 
-    const handleFilter = (key: string, value: string) => {
-        const newFilters = { ...filters, [key]: value };
-        if (!value || value === 'All') delete newFilters[key];
-        router.get('/admin/members', newFilters, { preserveState: true, replace: true });
-    };
-
-    const submitIndividual = (e: React.FormEvent) => {
-        e.preventDefault();
-        router.post(route('admin.members.email.individual', selectedMember?.id), {
-            subject: formData.subject,
-            body: formData.body,
-        }, {
-            onSuccess: () => {
-                setIndividualModalOpen(false);
-                setFormData({ ...formData, subject: '', body: '' });
+        router.get(
+            '/admin/members',
+            {
+                search: debouncedSearch || undefined,
+                organization_id: selectedOrg !== 'all' ? selectedOrg : undefined,
+                pending_claims: pendingClaimsOnly ? '1' : undefined,
             },
-        });
-    };
-
-    const submitBulk = (e: React.FormEvent) => {
-        e.preventDefault();
-        router.post(route('admin.members.email.bulk'), {
-            subject: formData.subject,
-            body: formData.body,
-            recipient_group: formData.recipient_group,
-        }, {
-            onSuccess: () => {
-                setBulkModalOpen(false);
-                setFormData({ ...formData, subject: '', body: '' });
-            },
-        });
-    };
-
-    const submitBeneficiary = (e: React.FormEvent) => {
-        e.preventDefault();
-        router.post(route('admin.members.beneficiary.tag', selectedMember?.id), {
-            benefit_name: formData.benefit_name,
-            instructions: formData.instructions,
-        }, {
-            onSuccess: () => {
-                setBeneficiaryModalOpen(false);
-                setFormData({ ...formData, benefit_name: '', instructions: '' });
-            },
-        });
-    };
-
-    const claimDispatch = (dispatchId: number) => {
-        router.patch(
-            route('admin.members.beneficiary.claim', { member: selectedMember?.id, dispatch: dispatchId }),
-            {},
-            { preserveScroll: true }
+            {
+                preserveState: true,
+                preserveScroll: true,
+                replace: true,
+            }
         );
+    }, [debouncedSearch, selectedOrg, pendingClaimsOnly]);
+
+    // Keep selectedMember in sync with updated members data after Inertia reloads (e.g. benefit claimed)
+    useEffect(() => {
+        if (selectedMember) {
+            const updated = members.data.find(m => m.id === selectedMember.id);
+            if (updated) {
+                setSelectedMember(updated);
+            }
+        }
+    }, [members.data]);
+
+    const handleClearFilters = () => {
+        setSearchQuery('');
+        setSelectedOrg(isPresident && userOrgId ? String(userOrgId) : 'all');
+        setPendingClaimsOnly(false);
+        router.get('/admin/members', {}, { preserveState: true, replace: true });
+    };
+
+    const handleClaimDispatch = (memberId: number, dispatchId: number) => {
+        router.patch(
+            route('admin.members.beneficiary.claim', { member: memberId, dispatch: dispatchId }),
+            {},
+            {
+                preserveScroll: true,
+            }
+        );
+    };
+
+    const handleQuickClaim = (member: Member) => {
+        const pending = member.dispatches?.filter(d => d.status === 'Pending') || [];
+        if (pending.length === 1) {
+            handleClaimDispatch(member.id, pending[0].id);
+        } else {
+            setSelectedMember(member);
+            setDetailOpen(true);
+        }
+    };
+
+    const handleViewDetail = (member: Member) => {
+        setSelectedMember(member);
+        setDetailOpen(true);
+    };
+
+    const handleTagBenefit = (member: Member) => {
+        setSelectedMember(member);
+        setDetailOpen(false);
+        setTagBenefitOpen(true);
+    };
+
+    const handleSendEmail = (member: Member) => {
+        setSelectedMember(member);
+        setDetailOpen(false);
+        setSendEmailOpen(true);
     };
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Dashboard', href: '/admin/dashboard' },
-        { title: 'Members', href: '#' },
+        { title: 'Members Directory', href: '/admin/members' },
     ];
 
-    const paginationLinks = members.meta?.links || members.links || [];
-    const totalMembers = members.meta?.total || members.data.length;
+    const totalCount = members.meta?.total ?? members.data.length;
+    const paginationLinks = members.meta?.links || members.links;
+    const hasActiveFilters = Boolean(
+        searchQuery || (selectedOrg && selectedOrg !== 'all') || pendingClaimsOnly
+    );
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Citizen Master Ledger" />
+            <Head title="Members Directory" />
 
-            <div className="p-6 space-y-6">
-
+            <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-8xl mx-auto">
                 {/* ── Flash Banners ── */}
                 {flash?.success && (
                     <div className="flex items-center gap-3 px-4 py-3 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-lg text-emerald-700 dark:text-emerald-400 text-sm font-medium">
                         <CheckCircle className="w-4 h-4 shrink-0" />
-                        {flash.success}
+                        <span>{flash.success}</span>
                     </div>
                 )}
                 {flash?.error && (
                     <div className="flex items-center gap-3 px-4 py-3 bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800 rounded-lg text-rose-700 dark:text-rose-400 text-sm font-medium">
                         <AlertCircle className="w-4 h-4 shrink-0" />
-                        {flash.error}
+                        <span>{flash.error}</span>
                     </div>
                 )}
 
-                {/* ── Header ── */}
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                    <div>
-                        <h1 className="text-2xl font-bold tracking-tight uppercase">Citizen Master Ledger & Distribution Console</h1>
-                        <p className="text-muted-foreground text-[10px] font-black uppercase tracking-widest mt-1">Centralized Registry for Approved Resident Profiles</p>
-                    </div>
+                {/* ── HEADER ── */}
+                <MembersHeader onOpenBroadcast={() => setBroadcastOpen(true)} />
 
-                    {/* Benefit Dispatch & Message Hub Dropdown */}
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button className="h-9 px-4 text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs flex items-center gap-2 cursor-pointer">
-                                <Send className="w-4 h-4" /> Benefit Dispatch & Message Hub
-                                <ChevronDown className="w-3.5 h-3.5 opacity-80" />
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-72">
-                            <DropdownMenuLabel className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">
-                                Preset Community Dispatches
-                            </DropdownMenuLabel>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                                onClick={() => openPresetDispatch(
-                                    'Social Welfare Financial Assistance (Ayuda) Schedule',
-                                    'Notice to accredited organization members: You are eligible to receive social welfare financial assistance. Please bring a valid government ID to the Barangay 183 Hall on the designated schedule.'
-                                )}
-                                className="cursor-pointer gap-2.5 text-xs py-2"
-                            >
-                                <span className="text-base">💰</span>
-                                <div>
-                                    <strong className="block font-semibold">Financial Aid (Ayuda)</strong>
-                                    <span className="text-[10px] text-muted-foreground">Cash assistance & social relief notice</span>
-                                </div>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                                onClick={() => openPresetDispatch(
-                                    'Barangay 183 Rice & Food Ration Distribution Schedule',
-                                    'Notice to accredited organization members: Food ration and rice packs will be distributed at the Barangay 183 Covered Court. Please present your registered membership QR code or ID upon claiming.'
-                                )}
-                                className="cursor-pointer gap-2.5 text-xs py-2"
-                            >
-                                <span className="text-base">🌾</span>
-                                <div>
-                                    <strong className="block font-semibold">Rice / Food Ration Schedule</strong>
-                                    <span className="text-[10px] text-muted-foreground">Ration distribution claim details</span>
-                                </div>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                                onClick={() => openPresetDispatch(
-                                    'Barangay 183 Medical Mission & Health Voucher Schedule',
-                                    'Notice: Barangay 183 Health Center is conducting free medical checkups, diagnostic screening, and prescription voucher distribution for registered sector members.'
-                                )}
-                                className="cursor-pointer gap-2.5 text-xs py-2"
-                            >
-                                <span className="text-base">🩺</span>
-                                <div>
-                                    <strong className="block font-semibold">Medical Mission / Health Voucher</strong>
-                                    <span className="text-[10px] text-muted-foreground">Free health clinic & diagnostic check</span>
-                                </div>
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                                onClick={() => openPresetDispatch('', '')}
-                                className="cursor-pointer gap-2.5 text-xs py-2"
-                            >
-                                <Mail className="w-4 h-4 text-indigo-600 shrink-0" />
-                                <div>
-                                    <strong className="block font-semibold">Custom Sector Announcement</strong>
-                                    <span className="text-[10px] text-muted-foreground">Compose custom email/SMS broadcast</span>
-                                </div>
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                </div>
+                {/* ── DATA CARD & TABLE ── */}
+                <Card className="border shadow-xs overflow-hidden">
+                    <MembersFilterBar
+                        totalCount={totalCount}
+                        hasActiveFilters={hasActiveFilters}
+                        searchQuery={searchQuery}
+                        onSearchChange={setSearchQuery}
+                        selectedOrg={selectedOrg}
+                        onOrgChange={setSelectedOrg}
+                        organizations={organizations}
+                        isPresident={isPresident}
+                        pendingClaimsOnly={pendingClaimsOnly}
+                        onTogglePendingClaims={() => setPendingClaimsOnly(prev => !prev)}
+                        onClearFilters={handleClearFilters}
+                    />
 
-                {/* ── Table ── */}
-                <Card className="border-muted shadow-sm overflow-hidden">
-                    <CardHeader className="pb-3 border-b bg-muted/5">
-                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                            <CardTitle className="text-sm font-semibold flex items-center gap-2 whitespace-nowrap">
-                                Active Citizens
-                                <Badge variant="secondary" className="ml-2 h-5">{totalMembers}</Badge>
-                            </CardTitle>
-
-                            <div className="flex flex-1 flex-col sm:flex-row items-center justify-end gap-2 w-full">
-                                <Button
-                                    type="button"
-                                    variant={pendingClaimsFilter ? "default" : "outline"}
-                                    className="h-9 w-full sm:w-auto text-xs font-semibold flex items-center gap-2"
-                                    onClick={() => {
-                                        const nextVal = !pendingClaimsFilter;
-                                        setPendingClaimsFilter(nextVal);
-                                        handleFilter('pending_claims', nextVal ? '1' : '0');
-                                    }}
-                                >
-                                    <CreditCard className="w-4 h-4" /> Pending Claims Only
-                                </Button>
-
-                                <Select value={orgFilter} onValueChange={(val) => { setOrgFilter(val); handleFilter('organization_id', val); }} disabled={isPresident}>
-                                    <SelectTrigger className="h-9 w-full sm:w-[220px]">
-                                        <SelectValue placeholder="Organization" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {!isPresident && <SelectItem value="All">All Organizations</SelectItem>}
-                                        {organizations.map(org => (
-                                            <SelectItem key={org.id} value={String(org.id)}>{org.name}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-
-                                <div className="relative w-full sm:w-64">
-                                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                                    <Input
-                                        placeholder="Search citizen identity..."
-                                        className="pl-9 h-9 w-full"
-                                        value={searchQuery}
-                                        onChange={(e) => { setSearchQuery(e.target.value); handleFilter('search', e.target.value); }}
-                                        autoComplete="off"
-                                    />
-                                    {searchQuery && (
-                                        <button onClick={() => { setSearchQuery(''); handleFilter('search', ''); }}
-                                            className="absolute right-2.5 top-2.5 text-muted-foreground hover:text-foreground">
-                                            <X className="h-4 w-4" />
-                                        </button>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-                    </CardHeader>
-
-                    <CardContent className="p-0">
-                        <Table>
-                            <TableHeader className="bg-muted/10">
-                                <TableRow>
-                                    <TableHead className="w-[300px] font-bold py-4">Resident Identity</TableHead>
-                                    <TableHead className="font-bold">Affiliation</TableHead>
-                                    <TableHead className="font-bold">Status</TableHead>
-                                    <TableHead className="text-right font-bold pr-6">Action Hub</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {members.data.length === 0 ? (
-                                    <TableRow>
-                                        <TableCell colSpan={4} className="h-32 text-center text-muted-foreground italic">
-                                            No citizen records found matching your criteria.
-                                        </TableCell>
-                                    </TableRow>
-                                ) : (
-                                    members.data.map((member) => (
-                                        <TableRow key={member.id} className="hover:bg-muted/5">
-                                            <TableCell>
-                                                <div className="flex items-center gap-4">
-                                                    <div className="h-10 w-10 shrink-0 rounded-full border flex items-center justify-center overflow-hidden bg-muted">
-                                                        <Users className="h-5 w-5 text-muted-foreground" />
-                                                    </div>
-                                                    <div className="flex flex-col overflow-hidden">
-                                                        <div className="flex items-center gap-2">
-                                                            <span className="font-bold text-sm tracking-tight truncate">{member.fullname}</span>
-                                                            {member.dispatches?.some(disp => disp.status === 'Pending') && (
-                                                                <Badge variant="outline" className="h-4 px-1.5 text-[8px] font-extrabold text-amber-600 border-amber-200 bg-amber-50 dark:bg-amber-400/10 dark:border-amber-400/30 whitespace-nowrap animate-pulse uppercase tracking-wider">
-                                                                    Pending Claim
-                                                                </Badge>
-                                                            )}
-                                                        </div>
-                                                        <span className="text-[10px] text-muted-foreground font-medium flex items-center gap-1 uppercase tracking-wide truncate mt-0.5">
-                                                            <MapPin className="h-3 w-3 text-muted-foreground/70" />
-                                                            {member.application?.address ?? (member as any).member_meta?.address ?? 'No address on record'}
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                            </TableCell>
-
-                                            <TableCell>
-                                                <Badge variant="outline" className="h-6 text-[10px] font-bold uppercase tracking-wider bg-transparent">
-                                                    {member.organization.name}
-                                                </Badge>
-                                            </TableCell>
-
-                                            <TableCell>
-                                                <div className="flex items-center gap-2">
-                                                    {member.status === 'Active' ? (
-                                                        <>
-                                                            <div className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
-                                                            <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest">Active</span>
-                                                        </>
-                                                    ) : (
-                                                        <>
-                                                            <div className="w-2.5 h-2.5 rounded-full bg-slate-300" />
-                                                            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{member.status}</span>
-                                                        </>
-                                                    )}
-                                                </div>
-                                            </TableCell>
-
-                                            <TableCell className="text-right pr-6">
-                                                <div className="flex items-center justify-end gap-2">
-                                                    <Button variant="outline" size="icon"
-                                                        className="h-8 w-8 text-muted-foreground hover:text-blue-600"
-                                                        title="Send Email"
-                                                        onClick={() => { setSelectedMember(member); setIndividualModalOpen(true); }}>
-                                                        <Mail className="h-4 w-4" />
-                                                    </Button>
-                                                    <Button variant="outline" size="icon"
-                                                        className="h-8 w-8 text-muted-foreground hover:text-emerald-600"
-                                                        title="Tag for Benefit"
-                                                        onClick={() => { setSelectedMember(member); setBeneficiaryModalOpen(true); }}>
-                                                        <CreditCard className="h-4 w-4" />
-                                                    </Button>
-                                                    {member.dispatches?.some(d => d.status === 'Pending') && (
-                                                        <Button variant="outline" size="icon"
-                                                            className="h-8 w-8 border-emerald-200 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 hover:text-emerald-700 dark:bg-emerald-950/20 dark:border-emerald-800 dark:text-emerald-400"
-                                                            title="Claim Benefit"
-                                                            onClick={() => {
-                                                                const pend = member.dispatches?.filter(d => d.status === 'Pending') || [];
-                                                                if (pend.length === 1) {
-                                                                    setSelectedMember(member);
-                                                                    router.patch(
-                                                                        route('admin.members.beneficiary.claim', { member: member.id, dispatch: pend[0].id }),
-                                                                        {},
-                                                                        { preserveScroll: true }
-                                                                    );
-                                                                } else {
-                                                                    setSelectedMember(member);
-                                                                    setHistoryModalOpen(true);
-                                                                }
-                                                            }}>
-                                                            <CheckCheck className="h-4 w-4" />
-                                                        </Button>
-                                                    )}
-                                                    <Button variant="secondary" size="sm"
-                                                        className="h-8 text-[10px] font-bold uppercase tracking-wider"
-                                                        onClick={() => { setSelectedMember(member); setHistoryModalOpen(true); }}>
-                                                        History <ChevronRight className="h-3.5 w-3.5 ml-1" />
-                                                    </Button>
-                                                </div>
-                                            </TableCell>
-                                        </TableRow>
-                                    ))
-                                )}
-                            </TableBody>
-                        </Table>
-                    </CardContent>
+                    <MembersTable
+                        members={members.data}
+                        hasActiveFilters={hasActiveFilters}
+                        onViewDetail={handleViewDetail}
+                        onTagBenefit={handleTagBenefit}
+                        onSendEmail={handleSendEmail}
+                        onQuickClaim={handleQuickClaim}
+                    />
                 </Card>
 
-                {/* ── Pagination ── */}
-                {paginationLinks.length > 0 && (
-                    <div className="flex justify-center items-center gap-1 py-4">
-                        {paginationLinks.map((link: any, i: number) => (
-                            <Link key={i} href={link.url || '#'}
-                                dangerouslySetInnerHTML={{ __html: link.label }}
-                                className={`px-3 py-1 text-xs font-semibold rounded-md border transition-all ${link.active
-                                    ? 'bg-primary text-primary-foreground border-primary'
-                                    : 'bg-background hover:bg-muted text-muted-foreground'
-                                    } ${!link.url && 'opacity-40 cursor-not-allowed pointer-events-none'}`}
-                            />
-                        ))}
-                    </div>
-                )}
+                {/* ── NUMBERED PAGINATION ── */}
+                <MembersPagination links={paginationLinks} />
             </div>
 
-            {/* ══════════════════ MODALS ══════════════════ */}
+            {/* ── MODALS & DIALOGS ── */}
+            <MemberDetailDialog
+                member={selectedMember}
+                open={detailOpen}
+                onOpenChange={setDetailOpen}
+                onClaimDispatch={handleClaimDispatch}
+                onTagBenefit={(m) => {
+                    setSelectedMember(m);
+                    setDetailOpen(false);
+                    setTagBenefitOpen(true);
+                }}
+                onSendEmail={(m) => {
+                    setSelectedMember(m);
+                    setDetailOpen(false);
+                    setSendEmailOpen(true);
+                }}
+            />
 
-            {/* Individual Email */}
-            <Dialog open={individualModalOpen} onOpenChange={setIndividualModalOpen}>
-                <DialogContent className="sm:max-w-[480px]">
-                    <DialogHeader>
-                        <DialogTitle className="flex items-center gap-2">
-                            <Mail className="w-5 h-5 text-blue-600" /> Individual Email
-                        </DialogTitle>
-                        <DialogDescription>
-                            Secure dispatch to: <span className="font-semibold text-foreground">{selectedMember?.fullname}</span>
-                        </DialogDescription>
-                    </DialogHeader>
-                    <form onSubmit={submitIndividual} className="space-y-4 pt-2">
-                        <div className="space-y-2">
-                            <Label>Message Subject</Label>
-                            <Input value={formData.subject} onChange={e => setFormData({ ...formData, subject: e.target.value })}
-                                placeholder="Enter subject..." required />
-                        </div>
-                        <div className="space-y-2">
-                            <Label>Email Body</Label>
-                            <Textarea value={formData.body} onChange={e => setFormData({ ...formData, body: e.target.value })}
-                                placeholder="Type your message..." className="min-h-[160px]" required />
-                        </div>
-                        {!selectedMember?.email && (
-                            <p className="text-xs text-rose-500 font-medium flex items-center gap-1">
-                                <AlertCircle className="w-3 h-3" /> This member has no email address on record.
-                            </p>
-                        )}
-                        <DialogFooter>
-                            <Button type="button" variant="outline" onClick={() => setIndividualModalOpen(false)}>Cancel</Button>
-                            <Button type="submit" disabled={!selectedMember?.email}>
-                                <Send className="w-4 h-4 mr-2" /> Dispatch Message
-                            </Button>
-                        </DialogFooter>
-                    </form>
-                </DialogContent>
-            </Dialog>
+            <TagBenefitDialog
+                member={selectedMember}
+                open={tagBenefitOpen}
+                onOpenChange={setTagBenefitOpen}
+            />
 
-            {/* Bulk Broadcast */}
-            <Dialog open={bulkModalOpen} onOpenChange={setBulkModalOpen}>
-                <DialogContent className="sm:max-w-[480px]">
-                    <DialogHeader>
-                        <DialogTitle className="flex items-center gap-2">
-                            <Mail className="w-5 h-5 text-blue-600" /> Bulk Broadcast
-                        </DialogTitle>
-                        <DialogDescription>
-                            Message will be queued and delivered to all members with a registered email.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <form onSubmit={submitBulk} className="space-y-4 pt-2">
-                        <div className="space-y-2">
-                            <Label>Recipient Group</Label>
-                            <Select value={isPresident && organizations[0] ? String(organizations[0].id) : formData.recipient_group} onValueChange={v => setFormData({ ...formData, recipient_group: v })} disabled={isPresident}>
-                                <SelectTrigger className="h-9">
-                                    <SelectValue placeholder="Select recipients..." />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {!isPresident && <SelectItem value="all">All Members (All Organizations)</SelectItem>}
-                                    {organizations.map(org => (
-                                        <SelectItem key={org.id} value={String(org.id)}>{org.name} — Members Only</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        <div className="space-y-2">
-                            <Label>Broadcast Subject</Label>
-                            <Input value={formData.subject} onChange={e => setFormData({ ...formData, subject: e.target.value })}
-                                placeholder="Enter broadcast subject..." required />
-                        </div>
-                        <div className="space-y-2">
-                            <Label>Broadcast Content</Label>
-                            <Textarea value={formData.body} onChange={e => setFormData({ ...formData, body: e.target.value })}
-                                placeholder="Enter announcement content..." className="min-h-[140px]" required />
-                        </div>
-                        <DialogFooter>
-                            <Button type="button" variant="outline" onClick={() => setBulkModalOpen(false)}>Cancel</Button>
-                            <Button type="submit">
-                                <Send className="w-4 h-4 mr-2" /> Queue Broadcast
-                            </Button>
-                        </DialogFooter>
-                    </form>
-                </DialogContent>
-            </Dialog>
+            <SendEmailDialog
+                member={selectedMember}
+                open={sendEmailOpen}
+                onOpenChange={setSendEmailOpen}
+            />
 
-            {/* Benefit Dispatch */}
-            <Dialog open={beneficiaryModalOpen} onOpenChange={setBeneficiaryModalOpen}>
-                <DialogContent className="sm:max-w-[480px]">
-                    <DialogHeader>
-                        <DialogTitle className="flex items-center gap-2">
-                            <CreditCard className="w-5 h-5 text-emerald-600" /> Benefit Dispatch
-                        </DialogTitle>
-                        <DialogDescription>
-                            Tagging resident: <span className="font-semibold text-foreground">{selectedMember?.fullname}</span>
-                        </DialogDescription>
-                    </DialogHeader>
-                    <form onSubmit={submitBeneficiary} className="space-y-4 pt-2">
-                        <div className="space-y-2">
-                            <Label>Entitlement Name <span className="text-rose-500">*</span></Label>
-                            <Input value={formData.benefit_name} onChange={e => setFormData({ ...formData, benefit_name: e.target.value })}
-                                placeholder="e.g. Educational Assistance, Relief Goods" required />
-                        </div>
-                        <div className="space-y-2">
-                            <Label>
-                                Claiming Instructions{' '}
-                                <span className="text-muted-foreground text-xs font-normal">(optional)</span>
-                            </Label>
-                            <Textarea value={formData.instructions} onChange={e => setFormData({ ...formData, instructions: e.target.value })}
-                                placeholder="Leave blank to use the default: Present Reference ID at Barangay Hall..."
-                                className="min-h-[100px]" />
-                        </div>
-                        <DialogFooter>
-                            <Button type="button" variant="outline" onClick={() => setBeneficiaryModalOpen(false)}>Cancel</Button>
-                            <Button type="submit" className="bg-emerald-600 hover:bg-emerald-700 text-white">
-                                <PlusCircle className="w-4 h-4 mr-2" /> Generate & Notify
-                            </Button>
-                        </DialogFooter>
-                    </form>
-                </DialogContent>
-            </Dialog>
-
-            {/* Lifecycle History */}
-            <Dialog open={historyModalOpen} onOpenChange={setHistoryModalOpen}>
-                <DialogContent className="sm:max-w-2xl p-0 overflow-hidden">
-                    <div className="bg-muted p-8 relative overflow-hidden">
-                        <div className="relative z-10">
-                            <h2 className="text-2xl font-bold tracking-tight mb-1">Citizen Lifecycle</h2>
-                            <p className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                                <History className="h-4 w-4" /> Audit Log for {selectedMember?.fullname}
-                            </p>
-                        </div>
-                        <History className="absolute -right-4 -top-4 h-32 w-32 opacity-5" />
-                    </div>
-
-                    <div className="p-8 max-h-[60vh] overflow-y-auto">
-                        <div className="space-y-8 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-muted before:to-transparent">
-
-                            {/* Enrollment */}
-                            <div className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group">
-                                <div className="flex items-center justify-center w-10 h-10 rounded-full border border-background bg-primary text-primary-foreground shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10">
-                                    <CheckCircle className="h-5 w-5" />
-                                </div>
-                                <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] bg-background border rounded-lg p-4 shadow-sm">
-                                    <div className="flex items-center justify-between space-x-2 mb-1">
-                                        <div className="font-semibold text-sm">Account Activated</div>
-                                        <div className="text-[10px] text-muted-foreground font-mono">{selectedMember?.created_at}</div>
-                                    </div>
-                                    <div className="text-xs text-muted-foreground">System Onboarding Complete</div>
-                                </div>
-                            </div>
-
-                            {/* Communications */}
-                            {(selectedMember as any)?.communications?.map((comm: any, i: number) => (
-                                <div key={`comm-${i}`} className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group">
-                                    <div className="flex items-center justify-center w-10 h-10 rounded-full border border-background bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10">
-                                        <Mail className="h-4 w-4" />
-                                    </div>
-                                    <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] bg-background border rounded-lg p-4 shadow-sm">
-                                        <div className="flex items-center justify-between space-x-2 mb-1">
-                                            <div className="font-semibold text-sm line-clamp-1">{comm.subject}</div>
-                                            <div className="text-[10px] text-muted-foreground font-mono whitespace-nowrap">{new Date(comm.created_at).toLocaleDateString()}</div>
-                                        </div>
-                                        <div className="text-[10px] font-medium text-blue-600 uppercase mb-1">{comm.type} Dispatch</div>
-                                        <div className="text-xs text-muted-foreground line-clamp-2">{comm.body}</div>
-                                    </div>
-                                </div>
-                            ))}
-
-                            {/* Dispatches */}
-                            {(selectedMember as any)?.dispatches?.map((disp: any, i: number) => (
-                                <div key={`disp-${i}`} className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group">
-                                    <div className="flex items-center justify-center w-10 h-10 rounded-full border border-background bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400 shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10">
-                                        <CreditCard className="h-4 w-4" />
-                                    </div>
-                                    <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] bg-background border rounded-lg p-4 shadow-sm">
-                                        <div className="flex items-center justify-between space-x-2 mb-1">
-                                            <div className="font-semibold text-sm line-clamp-1">{disp.benefit_name}</div>
-                                            <div className="text-[10px] text-muted-foreground font-mono whitespace-nowrap">{new Date(disp.created_at).toLocaleDateString()}</div>
-                                        </div>
-                                        <div className="flex items-center gap-2 mt-2 flex-wrap">
-                                            <Badge variant="secondary" className="text-[9px] uppercase">Ref: {disp.reference_number}</Badge>
-                                            <Badge variant="outline" className={`text-[9px] font-semibold ${disp.status === 'Claimed'
-                                                ? 'text-emerald-600 border-emerald-200 bg-emerald-50 dark:bg-emerald-400/10 dark:border-emerald-400/30'
-                                                : 'text-amber-600 border-amber-200 bg-amber-50 dark:bg-amber-400/10 dark:border-amber-400/30'}`}>
-                                                {disp.status}
-                                            </Badge>
-                                            {disp.status === 'Pending' && (
-                                                <button onClick={() => claimDispatch(disp.id)}
-                                                    className="ml-auto flex items-center gap-1 text-[10px] text-emerald-700 dark:text-emerald-400 font-bold uppercase hover:underline">
-                                                    <CheckCheck className="h-3 w-3" /> Mark Claimed
-                                                </button>
-                                            )}
-                                        </div>
-                                        {disp.claimed_at && (
-                                            <p className="text-[9px] text-muted-foreground mt-1">
-                                                Claimed on: {new Date(disp.claimed_at).toLocaleDateString()}
-                                            </p>
-                                        )}
-                                    </div>
-                                </div>
-                            ))}
-
-                            {/* Empty state */}
-                            {(!selectedMember?.communications?.length && !selectedMember?.dispatches?.length) && (
-                                <div className="text-center py-6 opacity-50 relative z-10">
-                                    <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">No further activity recorded</p>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-
-                    <div className="p-4 border-t bg-muted/20 flex justify-end">
-                        <Button variant="outline" size="sm" onClick={() => setHistoryModalOpen(false)}>Close Record</Button>
-                    </div>
-                </DialogContent>
-            </Dialog>
+            <BulkBroadcastDialog
+                open={broadcastOpen}
+                onOpenChange={setBroadcastOpen}
+                organizations={organizations}
+                isPresident={isPresident}
+                userOrgId={userOrgId}
+            />
         </AppLayout>
     );
 }

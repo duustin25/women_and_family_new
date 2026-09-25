@@ -4,7 +4,13 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 
 interface AppealsFilterBarProps {
     totalCount: number;
@@ -30,11 +36,11 @@ export function AppealsFilterBar({
     onClearFilters,
 }: AppealsFilterBarProps) {
     return (
-        <CardHeader className="pb-3 border-b bg-card">
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        <CardHeader className="py-3.5 px-4 sm:px-6 border-b bg-muted/20">
+            <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
                 {/* Left: Title + Count Badge + Reset */}
                 <div className="flex items-center gap-2 flex-wrap">
-                    <CardTitle className="text-base font-semibold">
+                    <CardTitle className="text-sm font-semibold tracking-tight">
                         Membership Appeals
                     </CardTitle>
                     <Badge variant="secondary" className="text-xs font-semibold px-2 py-0.5">
@@ -45,38 +51,39 @@ export function AppealsFilterBar({
                             variant="ghost"
                             size="sm"
                             onClick={onClearFilters}
-                            className="h-7 text-xs text-muted-foreground hover:text-foreground px-2"
+                            className="h-7 text-xs text-muted-foreground hover:text-foreground px-2 cursor-pointer"
                         >
                             <X className="w-3.5 h-3.5 mr-1" /> Reset
                         </Button>
                     )}
                 </div>
 
-                {/* Right: Tab switcher & Search */}
+                {/* Right: Dropdown Queue Selector & Search */}
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
-                    {/* Tab Navigation: Active vs History */}
-                    <Tabs
+                    {/* Dropdown Queue Switcher matching Membership Applications size */}
+                    <Select
                         value={currentTab}
                         onValueChange={(val) => onTabChange(val as 'active' | 'history')}
-                        className="w-full sm:w-auto"
                     >
-                        <TabsList className="h-9">
-                            <TabsTrigger value="active" className="text-xs gap-1.5 font-medium">
-                                <ListFilter className="w-3.5 h-3.5" />
-                                <span>Active Queue</span>
-                                <Badge variant="secondary" className="ml-1 text-[10px] font-bold px-1.5 py-0 h-4">
-                                    {activeCount}
-                                </Badge>
-                            </TabsTrigger>
-                            <TabsTrigger value="history" className="text-xs gap-1.5 font-medium">
-                                <History className="w-3.5 h-3.5" />
-                                <span>History Log</span>
-                                <Badge variant="secondary" className="ml-1 text-[10px] font-bold px-1.5 py-0 h-4">
-                                    {totalResolved}
-                                </Badge>
-                            </TabsTrigger>
-                        </TabsList>
-                    </Tabs>
+                        <SelectTrigger className="h-9 w-full sm:w-[190px] text-xs font-medium">
+                            <div className="flex items-center gap-1.5 truncate">
+                                {currentTab === 'active' ? (
+                                    <ListFilter className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                                ) : (
+                                    <History className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                                )}
+                                <SelectValue placeholder="Queue View" />
+                            </div>
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="active">
+                                Active Queue ({activeCount})
+                            </SelectItem>
+                            <SelectItem value="history">
+                                History Log ({totalResolved})
+                            </SelectItem>
+                        </SelectContent>
+                    </Select>
 
                     {/* Search Field */}
                     <div className="relative w-full sm:w-64">
@@ -85,13 +92,13 @@ export function AppealsFilterBar({
                             placeholder="Search applicant, ID, org, email..."
                             value={searchQuery}
                             onChange={(e) => onSearchChange(e.target.value)}
-                            className="pl-9 pr-8 h-9 text-xs"
+                            className="pl-8 pr-8 h-9 text-xs"
                         />
                         {searchQuery && (
                             <button
                                 type="button"
                                 onClick={() => onSearchChange('')}
-                                className="absolute right-2.5 top-2.5 text-muted-foreground hover:text-foreground transition-colors"
+                                className="absolute right-2.5 top-2.5 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
                             >
                                 <X className="h-4 w-4" />
                             </button>

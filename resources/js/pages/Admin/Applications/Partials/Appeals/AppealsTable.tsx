@@ -8,7 +8,8 @@ import {
     Mail,
     Eye,
     Clock,
-    Paperclip
+    Paperclip,
+    ChevronRight
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -33,6 +34,15 @@ export default function AppealsTable({
     onSelectAppeal,
     onClearFilters,
 }: AppealsTableProps) {
+    const getInitials = (name?: string) => {
+        if (!name) return '??';
+        const parts = name.trim().split(' ');
+        if (parts.length >= 2) {
+            return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
+        }
+        return name.slice(0, 2).toUpperCase();
+    };
+
     const formatDateOnly = (dateStr?: string) => {
         if (!dateStr) return 'N/A';
         try {
@@ -51,44 +61,53 @@ export default function AppealsTable({
     const renderStatusBadge = (item: ApplicationAppeal) => {
         if (item.status === 'approved' || item.approval_type === 'admin_overrule') {
             return (
-                <Badge
-                    variant="outline"
-                    className="bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800 font-bold text-[10px] uppercase tracking-wider px-2.5 py-0.5 inline-flex items-center gap-1.5"
-                >
-                    <CheckCircle2 className="w-3.5 h-3.5" />
-                    <span>Overruled & Approved</span>
-                </Badge>
+                <div className="flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+                    <Badge
+                        variant="outline"
+                        className="text-xs font-semibold text-emerald-700 bg-emerald-50 border-emerald-300 dark:bg-emerald-950/40"
+                    >
+                        Overruled & Approved
+                    </Badge>
+                </div>
             );
         }
         if (item.status === 'final_disapproved' || item.approval_type === 'admin_sustained') {
             return (
-                <Badge
-                    variant="outline"
-                    className="bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/40 dark:text-rose-400 dark:border-rose-800 font-bold text-[10px] uppercase tracking-wider px-2.5 py-0.5 inline-flex items-center gap-1.5"
-                >
-                    <XCircle className="w-3.5 h-3.5" />
-                    <span>Disapproval Sustained</span>
-                </Badge>
+                <div className="flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-rose-500 shrink-0" />
+                    <Badge
+                        variant="outline"
+                        className="text-xs font-semibold text-rose-700 bg-rose-50 border-rose-300 dark:bg-rose-950/40"
+                    >
+                        Disapproval Sustained
+                    </Badge>
+                </div>
             );
         }
         if (item.status === 'appealed' || item.status === 'Appealed') {
             return (
-                <Badge
-                    variant="outline"
-                    className="bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-800 font-bold text-[10px] uppercase tracking-wider px-2.5 py-0.5 inline-flex items-center gap-1.5"
-                >
-                    <Scale className="w-3.5 h-3.5" />
-                    <span>Appealed</span>
-                </Badge>
+                <div className="flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0 animate-pulse" />
+                    <Badge
+                        variant="outline"
+                        className="text-xs font-semibold text-amber-700 bg-amber-50 border-amber-300 dark:bg-amber-950/40"
+                    >
+                        Appealed
+                    </Badge>
+                </div>
             );
         }
         return (
-            <Badge
-                variant="outline"
-                className="bg-muted text-muted-foreground font-bold text-[10px] uppercase tracking-wider px-2.5 py-0.5"
-            >
-                {item.status}
-            </Badge>
+            <div className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-muted-foreground shrink-0" />
+                <Badge
+                    variant="outline"
+                    className="text-xs font-semibold text-muted-foreground bg-muted"
+                >
+                    {item.status}
+                </Badge>
+            </div>
         );
     };
 
@@ -96,22 +115,22 @@ export default function AppealsTable({
         <CardContent className="p-0">
             <div className="overflow-x-auto">
                 <Table>
-                    <TableHeader className="bg-muted/40">
+                    <TableHeader className="bg-muted/30">
                         <TableRow>
-                            <TableHead className="font-bold text-xs uppercase tracking-wider py-3.5 pl-4 sm:pl-6 w-[280px]">
-                                Resident
+                            <TableHead className="w-[300px] font-semibold text-xs py-3.5 pl-6">
+                                Resident Identity
                             </TableHead>
-                            <TableHead className="font-bold text-xs uppercase tracking-wider py-3.5 w-[170px]">
+                            <TableHead className="font-semibold text-xs py-3.5 w-[180px]">
                                 Timeline
                             </TableHead>
-                            <TableHead className="font-bold text-xs uppercase tracking-wider py-3.5 min-w-[280px]">
+                            <TableHead className="font-semibold text-xs py-3.5 min-w-[280px]">
                                 Appeal Reason
                             </TableHead>
-                            <TableHead className="font-bold text-xs uppercase tracking-wider py-3.5 w-[180px]">
-                                Status
+                            <TableHead className="font-semibold text-xs py-3.5 w-[200px]">
+                                Review Status
                             </TableHead>
-                            <TableHead className="text-right font-bold text-xs uppercase tracking-wider py-3.5 pr-4 sm:pr-6 w-[110px]">
-                                Action
+                            <TableHead className="text-right font-semibold text-xs py-3.5 pr-6 w-[120px]">
+                                Actions
                             </TableHead>
                         </TableRow>
                     </TableHeader>
@@ -160,32 +179,34 @@ export default function AppealsTable({
                                 return (
                                     <TableRow
                                         key={item.id}
-                                        className="hover:bg-muted/40 transition-colors cursor-pointer group"
+                                        className="hover:bg-muted/20 transition-colors cursor-pointer group"
                                         onClick={() => onSelectAppeal(item)}
                                     >
-                                        {/* 1. Resident Details */}
-                                        <TableCell className="py-3.5 pl-4 sm:pl-6 align-middle">
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-9 h-9 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-xs shrink-0 border">
-                                                    {item.fullname ? item.fullname.charAt(0).toUpperCase() : 'A'}
+                                        {/* 1. Resident Identity */}
+                                        <TableCell className="py-3 pl-6">
+                                            <div className="flex items-start gap-3">
+                                                <div className="h-10 w-10 shrink-0 rounded-full border bg-primary/10 text-primary font-bold text-xs flex items-center justify-center select-none shadow-2xs mt-0.5">
+                                                    {getInitials(item.fullname)}
                                                 </div>
-                                                <div className="min-w-0">
-                                                    <p className="font-semibold text-sm text-foreground group-hover:text-primary transition-colors truncate">
+                                                <div className="flex flex-col min-w-0">
+                                                    <span className="font-semibold text-sm tracking-tight text-foreground group-hover:text-primary transition-colors truncate">
                                                         {item.fullname}
-                                                    </p>
-                                                    <p className="text-xs text-muted-foreground flex items-center gap-1 truncate mt-0.5">
-                                                        <Mail className="w-3 h-3 shrink-0" />
-                                                        <span>{item.email}</span>
-                                                    </p>
-                                                    <div className="flex items-center gap-1.5 flex-wrap pt-1">
-                                                        <Badge variant="outline" className="font-mono text-[10px] text-muted-foreground px-1.5 py-0">
+                                                    </span>
+                                                    {item.email && (
+                                                        <span className="text-[11px] text-muted-foreground flex items-center gap-1 truncate mt-0.5">
+                                                            <Mail className="h-3 w-3 shrink-0 text-muted-foreground/70" />
+                                                            <span>{item.email}</span>
+                                                        </span>
+                                                    )}
+                                                    <div className="flex items-center gap-1.5 flex-wrap mt-1">
+                                                        <Badge variant="outline" className="font-mono text-[9px] text-muted-foreground px-1.5 py-0 h-4">
                                                             #{item.id}
                                                         </Badge>
                                                         <Badge
                                                             variant="outline"
-                                                            className="text-[11px] font-medium inline-flex items-center gap-1 bg-purple-50/50 dark:bg-purple-950/20 border-purple-200 dark:border-purple-800 text-purple-700 dark:text-purple-300 py-0 px-1.5"
+                                                            className="text-[10px] font-medium inline-flex items-center gap-1 bg-muted/30 text-foreground py-0.5 px-2"
                                                         >
-                                                            <Building className="w-2.5 h-2.5 shrink-0" />
+                                                            <Building className="w-2.5 h-2.5 shrink-0 text-muted-foreground" />
                                                             <span className="truncate max-w-[150px]">
                                                                 {item.organization?.name || 'Community Organization'}
                                                             </span>
@@ -196,41 +217,39 @@ export default function AppealsTable({
                                         </TableCell>
 
                                         {/* 2. Timeline */}
-                                        <TableCell className="py-3.5 align-middle text-xs space-y-1">
-                                            <div className="flex items-center gap-1.5 text-muted-foreground">
-                                                <Calendar className="w-3.5 h-3.5 text-muted-foreground/70 shrink-0" />
-                                                <span>
-                                                    Applied:{' '}
-                                                    <strong className="text-foreground font-semibold">
-                                                        {formatDateOnly(item.created_at)}
-                                                    </strong>
-                                                </span>
+                                        <TableCell className="py-3 text-xs">
+                                            <div className="flex flex-col gap-1">
+                                                <div className="flex items-center gap-1.5 text-muted-foreground">
+                                                    <Calendar className="w-3.5 h-3.5 text-muted-foreground/70 shrink-0" />
+                                                    <span>
+                                                        Applied: <strong className="text-foreground font-medium">{formatDateOnly(item.created_at)}</strong>
+                                                    </span>
+                                                </div>
+                                                {item.appealed_at && (
+                                                    <div className="flex items-center gap-1.5 text-amber-700 dark:text-amber-400 font-medium text-[11px]">
+                                                        <Clock className="w-3.5 h-3.5 shrink-0" />
+                                                        <span>Appealed: {formatDateOnly(item.appealed_at)}</span>
+                                                    </div>
+                                                )}
+                                                {isResolved && item.actioned_at && (
+                                                    <div className="flex items-center gap-1.5 text-emerald-700 dark:text-emerald-400 font-medium text-[11px]">
+                                                        <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+                                                        <span>Resolved: {formatDateOnly(item.actioned_at)}</span>
+                                                    </div>
+                                                )}
                                             </div>
-                                            {item.appealed_at && (
-                                                <div className="flex items-center gap-1.5 text-amber-700 dark:text-amber-400 font-medium">
-                                                    <Clock className="w-3.5 h-3.5 shrink-0" />
-                                                    <span>Appealed: {formatDateOnly(item.appealed_at)}</span>
-                                                </div>
-                                            )}
-                                            {/* Only show Resolved if the appeal was actually resolved by admin */}
-                                            {isResolved && item.actioned_at && (
-                                                <div className="flex items-center gap-1.5 text-emerald-700 dark:text-emerald-400 font-medium">
-                                                    <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
-                                                    <span>Resolved: {formatDateOnly(item.actioned_at)}</span>
-                                                </div>
-                                            )}
                                         </TableCell>
 
                                         {/* 3. Appeal Reason */}
-                                        <TableCell className="py-3.5 align-middle" onClick={(e) => e.stopPropagation()}>
+                                        <TableCell className="py-3" onClick={(e) => e.stopPropagation()}>
                                             <div className="space-y-1.5 max-w-md">
-                                                <p className="text-xs sm:text-sm text-foreground/90 font-medium line-clamp-2 italic leading-relaxed">
+                                                <p className="text-xs text-foreground/90 font-medium line-clamp-2 italic leading-relaxed">
                                                     "{item.appeal_reason || 'Pending resident appeal statement.'}"
                                                 </p>
                                                 {item.appeal_docs && item.appeal_docs.length > 0 && (
                                                     <Badge
-                                                        variant="secondary"
-                                                        className="text-[10px] font-semibold text-amber-800 dark:text-amber-300 bg-amber-100/60 dark:bg-amber-950/40 border border-amber-300/40 inline-flex items-center gap-1 py-0 px-1.5"
+                                                        variant="outline"
+                                                        className="text-[10px] font-semibold text-amber-800 dark:text-amber-300 bg-amber-50 border-amber-300 dark:bg-amber-950/40 inline-flex items-center gap-1 py-0 px-1.5"
                                                     >
                                                         <Paperclip className="w-3 h-3" />
                                                         <span>
@@ -242,14 +261,14 @@ export default function AppealsTable({
                                             </div>
                                         </TableCell>
 
-                                        {/* 4. Status */}
-                                        <TableCell className="py-3.5 align-middle">
+                                        {/* 4. Review Status */}
+                                        <TableCell className="py-3">
                                             {renderStatusBadge(item)}
                                         </TableCell>
 
-                                        {/* 5. Action: Only a single clean Review button */}
+                                        {/* 5. Actions */}
                                         <TableCell
-                                            className="py-3.5 pr-4 sm:pr-6 align-middle text-right"
+                                            className="py-3 pr-6 text-right"
                                             onClick={(e) => e.stopPropagation()}
                                         >
                                             <Button
@@ -257,10 +276,11 @@ export default function AppealsTable({
                                                 size="sm"
                                                 variant="outline"
                                                 onClick={() => onSelectAppeal(item)}
-                                                className="h-8 px-3 text-xs font-semibold gap-1.5"
+                                                className="h-8 text-xs font-medium gap-1.5 shadow-2xs cursor-pointer"
                                             >
-                                                <Eye className="w-3.5 h-3.5" />
+                                                <Eye className="w-3.5 h-3.5 text-muted-foreground" />
                                                 <span>Review</span>
+                                                <ChevronRight className="w-3 h-3 text-muted-foreground/70 ml-0.5" />
                                             </Button>
                                         </TableCell>
                                     </TableRow>
