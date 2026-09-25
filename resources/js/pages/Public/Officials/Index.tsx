@@ -170,6 +170,40 @@ export default function Index({ head, secretary, staff }: Props) {
                         )}
                     </div>
 
+                    {/* LINE SEPARATOR */}
+                    <div className="flex items-center justify-center py-4">
+                        <div className="h-px bg-slate-200 dark:bg-neutral-800 w-full max-w-4xl"></div>
+                    </div>
+
+                    {/* MISSION & VISION */}
+                    <section aria-label="Mission and Vision" className="max-w-5xl mx-auto w-full">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8">
+                            {/* Mission */}
+                            <Card className="bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-2xl shadow-sm">
+                                <CardContent className="p-6 sm:p-8 space-y-3">
+                                    <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">
+                                        Mission
+                                    </h3>
+                                    <p className="text-slate-700 dark:text-slate-300 text-sm sm:text-base leading-relaxed">
+                                        The Office of Women and Family is committed to supporting women and families in the barangay by advancing their rights and welfare through community programs, advocacy, coordination of services, and the promotion of gender equality, strong family relationships, and social protection.
+                                    </p>
+                                </CardContent>
+                            </Card>
+
+                            {/* Vision Statement */}
+                            <Card className="bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-2xl shadow-sm">
+                                <CardContent className="p-6 sm:p-8 space-y-3">
+                                    <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">
+                                        Vision Statement
+                                    </h3>
+                                    <p className="text-slate-700 dark:text-slate-300 text-sm sm:text-base leading-relaxed">
+                                        A just, inclusive, and gender-responsive community where women and families are protected, empowered, and able to participate fully in community development.
+                                    </p>
+                                </CardContent>
+                            </Card>
+                        </div>
+                    </section>
+
                 </div>
             </div>
         </PublicLayout>
