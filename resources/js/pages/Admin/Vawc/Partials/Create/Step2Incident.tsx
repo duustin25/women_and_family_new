@@ -162,7 +162,7 @@ export function Step2Incident({
                                 <ShieldAlert className="w-4 h-4 text-red-600 shrink-0" />
                                 <div>
                                     <span className="text-sm font-bold text-foreground">Is the Offender Armed or in Possession of Weapons?</span>
-                                    <p className="text-xs text-muted-foreground">Automatic high-lethality indicator for immediate BPO issuance and PNP intervention.</p>
+                                    <p className="text-xs text-muted-foreground">High-lethality triage indicator recommending prioritized protective review and police coordination options.</p>
                                 </div>
                             </div>
                             <Switch

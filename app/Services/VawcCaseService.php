@@ -152,7 +152,7 @@ class VawcCaseService
             $caseReport = $this->caseManagementService->createCase($baseData, 'VAWC');
 
             // 3. Create the VawcCase extension
-            $hasWeapon = !empty($data['has_weapon_involved']) || !empty($data['is_offender_armed']) || !empty($data['weapons_confiscated']);
+            $hasWeapon = !empty($data['has_weapon_involved']) || !empty($data['weapons_confiscated']) || (!empty($data['weapons_used']) && is_array($data['weapons_used']) && count($data['weapons_used']) > 0);
 
             $vawcCase = VawcCase::create([
                 'dossier_id' => $dossier->id,

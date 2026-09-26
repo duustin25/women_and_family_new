@@ -492,6 +492,7 @@ class VawcController extends Controller
             'requires_medical' => 'boolean',
             'requires_alternative_housing' => 'boolean',
             'is_repeat_offense' => 'boolean',
+            'is_offender_armed' => 'boolean',
             'has_weapon_involved' => 'boolean',
             'weapons_confiscated' => 'boolean',
             'perpetrator_present' => 'boolean',
@@ -502,6 +503,7 @@ class VawcController extends Controller
         DB::transaction(function () use ($case, $request) {
             $case->update([
                 'is_repeat_offense' => $request->boolean('is_repeat_offense'),
+                'is_offender_armed' => $request->boolean('is_offender_armed'),
                 'has_weapon_involved' => $request->boolean('has_weapon_involved'),
                 'weapons_confiscated' => $request->boolean('weapons_confiscated'),
                 'perpetrator_present' => $request->boolean('perpetrator_present'),

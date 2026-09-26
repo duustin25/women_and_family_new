@@ -1,11 +1,12 @@
 import { Head, Link, router } from '@inertiajs/react';
 import {
-    Search, ChevronRight, Users, ArrowLeft, ArrowUp, ArrowDown, Download
+    Search, ChevronRight, Users, ArrowLeft, ArrowUp, ArrowDown, Download, Upload
 } from 'lucide-react';
 import { useState, useMemo } from 'react';
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import AppLayout from '@/layouts/app-layout';
+import BulkImportModal from './Partials/BulkImportModal';
 
 declare function route(name: string, params?: any, absolute?: boolean): string;
 
@@ -47,6 +48,7 @@ interface PageProps {
 export default function Members({ organization, members, filters }: PageProps) {
     const org = organization?.data ?? organization;
     const [searchQuery, setSearchQuery] = useState(filters?.search ?? '');
+    const [importModalOpen, setImportModalOpen] = useState(false);
 
     const membersData = members?.data ?? [];
     const currentSort = filters?.sort ?? 'fullname';
@@ -215,6 +217,14 @@ export default function Members({ organization, members, filters }: PageProps) {
                                 <span className="text-[10px] font-bold uppercase text-neutral-400 tracking-widest">Active Members</span>
                             </div>
 
+                            <Button 
+                                variant="outline" 
+                                className="h-10 rounded-lg border-emerald-300 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 shadow-sm" 
+                                onClick={() => setImportModalOpen(true)}
+                            >
+                                <Upload size={16} className="mr-2" /> Bulk Import
+                            </Button>
+
                             <Button variant="outline" className="h-10 rounded-lg border-neutral-200 dark:border-neutral-800 text-neutral-700 dark:text-neutral-300 shadow-sm" onClick={handleExportCsv}>
                                 <Download size={16} className="mr-2" /> Export CSV
                             </Button>
@@ -363,6 +373,13 @@ export default function Members({ organization, members, filters }: PageProps) {
                 .dark .excel-scrollbar::-webkit-scrollbar-thumb { background: var(--bg-neutral-700); }
                 .dark .excel-scrollbar::-webkit-scrollbar-thumb:hover { background: var(--bg-neutral-600); }
             `}} />
+
+            {/* Bulk Import Modal */}
+            <BulkImportModal
+                open={importModalOpen}
+                onOpenChange={setImportModalOpen}
+                organization={org}
+            />
         </AppLayout>
     );
 }

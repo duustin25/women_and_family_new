@@ -30,7 +30,7 @@ export default function Show({ case: vawcCase, crossStats, survivorStats }: Show
     const workflow = useVawcCaseWorkflow(vawcCase);
     const { stepNum } = workflow;
 
-    const isCriticalAlert = (vawcCase.risk_score ?? 0) >= 9 || (workflow.activeBpo?.status === 'Applied');
+    const isCriticalAlert = (vawcCase.assessment?.risk_level === 'CRITICAL' || vawcCase.risk_level === 'CRITICAL') || (workflow.activeBpo?.status === 'Applied');
 
     return (
         <AppLayout breadcrumbs={[
@@ -48,7 +48,7 @@ export default function Show({ case: vawcCase, crossStats, survivorStats }: Show
                     setIsRedacted={workflow.setIsRedacted}
                 />
 
-                {/* 🚨 CRITICAL CASES HERO ACTION DOCK (TRIGGERED IF RISK SCORE >= 9 OR PENDING BPO) */}
+                {/* 🚨 CRITICAL CASES HERO ACTION DOCK (TRIGGERED IF RISK LEVEL IS CRITICAL OR PENDING BPO) */}
                 {isCriticalAlert && (
                     <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-red-500/15 via-rose-500/10 to-amber-500/15 border-2 border-red-500/40 text-red-950 dark:text-red-100 shadow-md">
                         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -58,9 +58,11 @@ export default function Show({ case: vawcCase, crossStats, survivorStats }: Show
                                 </div>
                                 <div className="space-y-1">
                                     <div className="flex flex-wrap items-center gap-2">
-                                        <Badge className="bg-red-600 text-white font-black text-[11px] px-2.5 py-0.5 uppercase tracking-wider">
-                                            EMERGENCY LETHALITY: Score {vawcCase.risk_score ?? 10}/12
-                                        </Badge>
+                                        {(vawcCase.assessment?.risk_level === 'CRITICAL' || vawcCase.risk_level === 'CRITICAL') && (
+                                            <Badge className="bg-red-600 text-white font-black text-[11px] px-2.5 py-0.5 uppercase tracking-wider">
+                                                EMERGENCY LETHALITY: Score {vawcCase.risk_score ?? 10}/12
+                                            </Badge>
+                                        )}
                                         {workflow.activeBpo?.status === 'Applied' && (
                                             <Badge variant="outline" className="border-red-400 bg-red-50 dark:bg-red-950/60 text-red-700 dark:text-red-300 font-bold text-[11px] px-2.5 py-0.5 flex items-center gap-1">
                                                 <Clock className="w-3.5 h-3.5" /> 24-HR STATUTORY SLA ACTIVE
@@ -71,7 +73,7 @@ export default function Show({ case: vawcCase, crossStats, survivorStats }: Show
                                         Critical Lethality & Immediate Protection Action Center
                                     </h2>
                                     <p className="text-xs text-red-900/80 dark:text-red-200/80 font-medium leading-relaxed max-w-3xl">
-                                        Under RA 9262 Section 14 and DILG Joint Memorandum Circular 2010-2, emergency protective actions and PNP transmittal must be executed swiftly within the statutory SLA.
+                                        Under RA 9262 Section 14 and DILG Joint Memorandum Circular 2010-2, authorized desk officers are guided to execute emergency protective reviews and PNP transmittals within statutory SLA windows.
                                     </p>
                                 </div>
                             </div>

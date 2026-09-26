@@ -49,14 +49,14 @@ export const Step2BpoApplication: React.FC<Props> = ({
                         <div className="flex items-center justify-between gap-2 flex-wrap font-bold text-red-700 dark:text-red-400">
                             <span className="flex items-center gap-1.5">
                                 <AlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
-                                CRITICAL RESCUE PROTOCOL (Score {vawcCase.assessment.risk_score} / 12)
+                                CRITICAL RESCUE ADVISORY (Score {vawcCase.assessment.risk_score} / 12)
                             </span>
                             <Badge className="bg-red-600 text-white font-bold text-xs">
                                 Ex-Officio Fast-Track
                             </Badge>
                         </div>
                         <p className="text-muted-foreground leading-relaxed">
-                            Under <strong>RA 9262 Sec. 14</strong>, when a victim is in acute life danger or incapacitated, an <em>ex-officio</em> emergency protection application can be executed immediately by the Punong Barangay or VAW Desk Officer to dispatch police rescue.
+                            Under <strong>RA 9262 Sec. 14</strong>, when a victim is in acute life danger or incapacitated, an <em>ex-officio</em> emergency protection application may be filed by the Punong Barangay or authorized VAW Desk Officer to coordinate emergency police assistance.
                         </p>
                     </div>
                 )}

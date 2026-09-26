@@ -64,10 +64,19 @@ class RiskAssessmentService
         if (!$case) return;
 
         // 1. WEAPON ACCESS:
-        if ($case->has_weapon_involved || $case->weapons_confiscated) {
-            $assessment->weapon_access = 3;
+        // Score 3: Weapon was used, displayed, or threatened during the incident (or confiscated)
+        // Score 2: Weapon is accessible or reportedly possessed, but was not used, displayed, or threatened
+        // Score 1: No weapon involved or accessible
+        $isWeaponUsedOrThreatened = $case->has_weapon_involved 
+            || $case->weapons_confiscated 
+            || (!empty($case->weapons_used) && is_array($case->weapons_used) && count($case->weapons_used) > 0);
+
+        if ($isWeaponUsedOrThreatened) {
+            $assessment->weapon_access = 3; // Weapon used, displayed, or threatened during incident
+        } elseif ($case->is_offender_armed) {
+            $assessment->weapon_access = 2; // Weapon accessible or reportedly possessed, but not used/threatened
         } else {
-            $assessment->weapon_access = 1;
+            $assessment->weapon_access = 1; // No weapon involved or accessible
         }
 
         // 2. FREQUENCY / HISTORY (Intra-dossier + Cross-dossier Serial History):
@@ -82,16 +91,15 @@ class RiskAssessmentService
             $crossIncidentsCount = (int) $otherDossiers->sum('incident_count');
         }
 
-        $isRecidivist = $case->is_repeat_offense 
-            || $crossIncidentsCount > 0 
-            || ($case->incident_sequence ?? 1) > 1;
+        $priorIntraIncidents = max(0, ($case->incident_sequence ?? 1) - 1);
+        $totalPriorIncidents = $priorIntraIncidents + $crossIncidentsCount;
 
-        if ($isRecidivist || $crossIncidentsCount >= 2) {
-            $assessment->abuse_frequency = 3; // Maximum score: established recidivist / serial abuser
-        } elseif ($crossIncidentsCount === 1) {
-            $assessment->abuse_frequency = 2; // Moderate prior history
+        if ($totalPriorIncidents >= 2) {
+            $assessment->abuse_frequency = 3; // Maximum score: established recidivist / serial abuser (3rd+ incident total)
+        } elseif ($totalPriorIncidents === 1 || $case->is_repeat_offense) {
+            $assessment->abuse_frequency = 2; // Moderate prior history (2nd incident total or repeat offense flag)
         } else {
-            $assessment->abuse_frequency = 1;
+            $assessment->abuse_frequency = 1; // First-time offense / no documented prior history
         }
 
         // 3. SEVERITY / INJURIES:
@@ -124,8 +132,7 @@ class RiskAssessmentService
 
         // If survivor has multiple active perpetrator dossiers in the same domestic/household environment:
         if ($survivorOtherDossiersCount > 0 && $isSameHousehold) {
-            $assessment->requires_alternative_housing = true;
-            $assessment->life_threat_level = 3; // Critical: multi-perpetrator domestic environment requires mandatory emergency shelter escalation
+            $assessment->life_threat_level = 3; // Critical: multi-perpetrator domestic environment elevates lethality triage priority
         } elseif ($case->warrantless_arrest_made) {
             $assessment->life_threat_level = 3; // Extreme threat justifying warrantless arrest
         } elseif ($case->children_count > 0 || $assessment->requires_alternative_housing || $survivorOtherDossiersCount > 0) {
@@ -143,22 +150,22 @@ class RiskAssessmentService
         if ($score >= 10) {
             return [
                 'level' => 'CRITICAL',
-                'recommendation' => 'EMERGENCY: Immediate police escort and medical intervention required. Shelter placement recommended.'
+                'recommendation' => 'EMERGENCY ADVISORY: Immediate police coordination, medical evaluation, and emergency shelter placement recommended for authorized personnel review.'
             ];
         } elseif ($score >= 8) {
             return [
                 'level' => 'HIGH',
-                'recommendation' => 'URGENT: Legal protection order (Barangay Protection Order/Temporary Protection Order) recommended. Safety planning and temporary relocation required.'
+                'recommendation' => 'HIGH ADVISORY: Protection order (BPO/TPO) application, safety planning, and alternative housing coordination recommended for authorized personnel evaluation.'
             ];
         } elseif ($score >= 6) {
             return [
                 'level' => 'MODERATE',
-                'recommendation' => 'MONITORING: Regular counseling and social worker check-ins required. Legal consultation recommended.'
+                'recommendation' => 'MONITORING ADVISORY: Regular counseling, social worker case monitoring, and legal consultation recommended for authorized personnel review.'
             ];
         } else {
             return [
                 'level' => 'LOW',
-                'recommendation' => 'ROUTINE: Case monitoring and standard support services. No immediate danger detected.'
+                'recommendation' => 'ROUTINE ADVISORY: Standard case monitoring and support services recommended according to standard intake procedures.'
             ];
         }
     }

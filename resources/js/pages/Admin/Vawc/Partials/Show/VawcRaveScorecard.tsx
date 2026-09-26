@@ -73,13 +73,13 @@ export const VawcRaveScorecard: React.FC<Props> = ({ vawcCase }) => {
                 {/* Recommendation Content Spanning Full Width */}
                 <div className="space-y-1.5 bg-card/30 p-4 rounded-xl border border-border/80">
                     <span className="text-sm font-extrabold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                        Action Recommendation:
+                        Recommended Action Considerations:
                     </span>
                     <p className="text-lg leading-relaxed text-foreground">
-                        {risk_level === 'CRITICAL' && "Immediate QRT dispatch and police escort required. Prioritize physical rescue/medical triage before processing legal documents! Secure temporary shelter."}
-                        {risk_level === 'HIGH' && "Expedite BPO issuance. Inform Punong Barangay immediately for same-day processing. Initiate DSWD safety planning and alternative housing coordination."}
-                        {risk_level === 'MODERATE' && "Proceed with standard BPO application. Assign social worker for active counseling and schedule frequent compliance check-ins to monitor the situation."}
-                        {risk_level === 'LOW' && "Standard intake processing. Issue BPO normally and schedule routine monthly check-ins for compliance monitoring."}
+                        {risk_level === 'CRITICAL' && "Critical urgency detected. Recommend immediate Punong Barangay review for emergency police coordination, medical evaluation, and temporary shelter placement before administrative document processing."}
+                        {risk_level === 'HIGH' && "High vulnerability detected. Recommend expedited review for BPO application, MSWDO/DSWD safety planning coordination, and alternative housing assessment."}
+                        {risk_level === 'MODERATE' && "Moderate risk identified. Recommend evaluating standard BPO protection options, social worker counseling, and regular compliance check-ins."}
+                        {risk_level === 'LOW' && "Low immediate risk identified. Recommend standard intake monitoring and routine compliance check-ins according to standard barangay procedures."}
                     </p>
                 </div>
             </div>
