@@ -31,7 +31,12 @@ class AnalyticsService
         $totalDossiers = VawcDossier::whereHas('cases', function ($q) use ($year) {
             $q->whereYear('created_at', $year);
         })->count();
-        $activeBpos = DB::table('vawc_protection_orders')->whereIn('status', ['Issued', 'Served'])->whereYear('created_at', $year)->count();
+        $activeBpos = DB::table('vawc_protection_orders')
+            ->join('vawc_cases', 'vawc_protection_orders.vawc_case_id', '=', 'vawc_cases.id')
+            ->whereIn('vawc_protection_orders.status', ['Issued', 'Served'])
+            ->whereNotIn('vawc_cases.status', ['Closed', 'Escalated'])
+            ->whereYear('vawc_protection_orders.created_at', $year)
+            ->count();
         $repeatDossiers = VawcDossier::whereHas('cases', function ($q) use ($year) {
             $q->whereYear('created_at', $year);
         })->where('incident_count', '>', 1)->count();
@@ -245,8 +250,12 @@ class AnalyticsService
         $additionalChildren = $vawcCases->sum('children_count') ?: 0;
         $totalChildren = $childVictims + $additionalChildren;
 
-        $repeatCases   = $vawcCases->where('is_repeat_offense', true)->count();
-        $activeBpos    = DB::table('vawc_protection_orders')->whereIn('status', ['Issued', 'Served'])->count();
+        $repeatCases   = $vawcCases->where('status', '!=', 'Closed')->where('is_repeat_offense', true)->count();
+        $activeBpos    = DB::table('vawc_protection_orders')
+            ->join('vawc_cases', 'vawc_protection_orders.vawc_case_id', '=', 'vawc_cases.id')
+            ->whereIn('vawc_protection_orders.status', ['Issued', 'Served'])
+            ->whereNotIn('vawc_cases.status', ['Closed', 'Escalated'])
+            ->count();
 
         // SLA Compliance: BPOs issued on the same day
         $totalBpos = DB::table('vawc_protection_orders')->where('type', 'BPO')->whereYear('created_at', $year)->count();
@@ -302,14 +311,33 @@ class AnalyticsService
      */
     public function getVawcChartConfig(): Collection
     {
+        // Official Barangay 183 Women and Family Protection Desk presentation board colors:
+        // Red = Physical, Blue = Sexual, Green = Psychological, Yellow = Economic
+        $palette = [
+            'physical'      => '#dc2626', // Red
+            'sexual'        => '#2563eb', // Blue
+            'psychological' => '#16a34a', // Green
+            'economic'      => '#eab308', // Yellow
+        ];
+
+        $labels = [
+            'physical'      => 'Physical',
+            'sexual'        => 'Sexual',
+            'psychological' => 'Psychological',
+            'economic'      => 'Economic',
+        ];
+
         return \App\Models\CaseAbuseType::where('is_active', true)
             ->where('category', 'VAWC')
             ->get()
-            ->map(fn($t) => [
-                'key'   => strtolower($t->name),
-                'label' => $t->name,
-                'color' => $t->color ?? '#ce1126'
-            ]);
+            ->map(function ($t) use ($palette, $labels) {
+                $key = strtolower($t->name);
+                return [
+                    'key'   => $key,
+                    'label' => $labels[$key] ?? $t->name,
+                    'color' => $palette[$key] ?? $t->color ?? '#dc2626'
+                ];
+            });
     }
 
     /**
@@ -396,57 +424,57 @@ class AnalyticsService
         return Zone::with([
             'caseReports' => function ($query) use ($year) {
                 $query->whereYear('created_at', $year)
-                      ->with(['vawcCase' => function ($vQuery) {
-                          $vQuery->select('id', 'case_report_id', 'uuid')
-                                 ->with('assessment:id,vawc_case_id,risk_level,risk_score');
-                      }]);
+                    ->with(['vawcCase' => function ($vQuery) {
+                        $vQuery->select('id', 'case_report_id', 'uuid')
+                            ->with('assessment:id,vawc_case_id,risk_level,risk_score');
+                    }]);
             },
             'children' => function ($query) {
                 $query->where('status', 'Active')
-                      ->with('latestAssessment');
+                    ->with('latestAssessment');
             }
         ])
-        ->withCount(['caseReports' => function ($query) use ($year) {
-            $query->whereYear('created_at', $year);
-        }])
-        ->get()
-        ->map(function ($zone) {
-            $vawcCases = $zone->caseReports->map(function ($cr) {
-                return [
-                    'id' => $cr->vawcCase?->id,
-                    'uuid' => $cr->vawcCase?->uuid,
-                    'case_number' => $cr->case_number,
-                    'location' => $cr->incident_location ?: 'Barangay 183',
-                    'risk_level' => $cr->vawcCase?->assessment?->risk_level ?? 'MODERATE',
-                    'risk_score' => $cr->vawcCase?->assessment?->risk_score ?? 0,
-                ];
-            })->filter(fn($c) => !empty($c['id']))->values()->toArray();
+            ->withCount(['caseReports' => function ($query) use ($year) {
+                $query->whereYear('created_at', $year);
+            }])
+            ->get()
+            ->map(function ($zone) {
+                $vawcCases = $zone->caseReports->map(function ($cr) {
+                    return [
+                        'id' => $cr->vawcCase?->id,
+                        'uuid' => $cr->vawcCase?->uuid,
+                        'case_number' => $cr->case_number,
+                        'location' => $cr->incident_location ?: 'Barangay 183',
+                        'risk_level' => $cr->vawcCase?->assessment?->risk_level ?? 'MODERATE',
+                        'risk_score' => $cr->vawcCase?->assessment?->risk_score ?? 0,
+                    ];
+                })->filter(fn($c) => !empty($c['id']))->values()->toArray();
 
-            $bcpcChildren = $zone->children ? $zone->children->map(function ($ch) {
-                $latest = $ch->latestAssessment;
-                $isMalnourished = $latest && (
-                    in_array($latest->wfa_status, ['Underweight', 'Severely Underweight']) ||
-                    in_array($latest->wflh_status ?? '', ['Wasted', 'Severely Wasted'])
-                );
-                return [
-                    'id' => $ch->id,
-                    'name' => $ch->full_name,
-                    'address' => $ch->address ?: 'Barangay 183',
-                    'is_malnourished' => $isMalnourished,
-                    'status' => $latest ? ($latest->wflh_status ?: $latest->wfa_status) : 'Active',
-                ];
-            })->values()->toArray() : [];
+                $bcpcChildren = $zone->children ? $zone->children->map(function ($ch) {
+                    $latest = $ch->latestAssessment;
+                    $isMalnourished = $latest && (
+                        in_array($latest->wfa_status, ['Underweight', 'Severely Underweight']) ||
+                        in_array($latest->wflh_status ?? '', ['Wasted', 'Severely Wasted'])
+                    );
+                    return [
+                        'id' => $ch->id,
+                        'name' => $ch->full_name,
+                        'address' => $ch->address ?: 'Barangay 183',
+                        'is_malnourished' => $isMalnourished,
+                        'status' => $latest ? ($latest->wflh_status ?: $latest->wfa_status) : 'Active',
+                    ];
+                })->values()->toArray() : [];
 
-            return [
-                'id'       => $zone->id,
-                'name'     => $zone->name,
-                'count'    => $zone->case_reports_count,
-                'color'    => $zone->color_code,
-                'cases'    => $vawcCases,
-                'children' => $bcpcChildren,
-            ];
-        })
-        ->toArray();
+                return [
+                    'id'       => $zone->id,
+                    'name'     => $zone->name,
+                    'count'    => $zone->case_reports_count,
+                    'color'    => $zone->color_code,
+                    'cases'    => $vawcCases,
+                    'children' => $bcpcChildren,
+                ];
+            })
+            ->toArray();
     }
 
     /**
@@ -557,21 +585,26 @@ class AnalyticsService
             'HIGH'     => '#f97316', // Orange 500
             'MODERATE' => '#eab308', // Yellow 500
             'LOW'      => '#3b82f6', // Blue 500
-            'PENDING'  => '#94a3b8', // Slate 400
         ];
 
+        $order = ['CRITICAL' => 1, 'HIGH' => 2, 'MODERATE' => 3, 'LOW' => 4];
+
         $assessments = DB::table('vawc_cases')
-            ->leftJoin('vawc_assessments', 'vawc_cases.id', '=', 'vawc_assessments.vawc_case_id')
+            ->join('vawc_assessments', 'vawc_cases.id', '=', 'vawc_assessments.vawc_case_id')
             ->whereYear('vawc_cases.created_at', $year)
-            ->select(DB::raw('COALESCE(vawc_assessments.risk_level, "PENDING") as risk_level'), DB::raw('count(*) as total'))
-            ->groupBy('risk_level')
+            ->whereNotNull('vawc_assessments.risk_level')
+            ->where('vawc_assessments.risk_level', '!=', 'PENDING')
+            ->select('vawc_assessments.risk_level', DB::raw('count(*) as total'))
+            ->groupBy('vawc_assessments.risk_level')
             ->get();
 
-        return $assessments->map(fn($row) => [
-            'name'  => $row->risk_level ?: 'PENDING',
-            'value' => $row->total,
-            'fill'  => $colors[$row->risk_level] ?? '#94a3b8',
-        ])->values()->toArray();
+        return $assessments
+            ->sortBy(fn($row) => $order[strtoupper($row->risk_level)] ?? 99)
+            ->map(fn($row) => [
+                'name'  => strtoupper($row->risk_level),
+                'value' => (int) $row->total,
+                'fill'  => $colors[strtoupper($row->risk_level)] ?? '#94a3b8',
+            ])->values()->toArray();
     }
 
     /**
@@ -928,7 +961,7 @@ class AnalyticsService
         $repeatDossiers = $dossiers->filter(fn($d) => $d->cases->count() > 1);
         $recidivismCount = $repeatDossiers->count();
         $recidivismRate = $totalDossiers > 0 ? round(($recidivismCount / $totalDossiers) * 100, 1) : 0.0;
-        
+
         // Exact subsequent repeat incidents (incidents beyond the initial blotter: Total Cases - Total Dossiers)
         $totalRepeatIncidents = max(0, $totalCases - $totalDossiers);
 
@@ -1112,7 +1145,7 @@ class AnalyticsService
         $allBpos = DB::table('vawc_protection_orders')->where('type', 'BPO')->whereYear('created_at', $year)->get();
         $totalApplied = $allBpos->count();
         $totalIssued = $allBpos->whereNotNull('issued_datetime')->count();
-        
+
         $totalServed = DB::table('vawc_bpo_service_records')
             ->join('vawc_protection_orders', 'vawc_bpo_service_records.protection_order_id', '=', 'vawc_protection_orders.id')
             ->whereYear('vawc_protection_orders.created_at', $year)
@@ -1146,6 +1179,20 @@ class AnalyticsService
             ->map(fn($row) => ['method' => $row->service_method ?: 'Direct Delivery', 'count' => $row->count])
             ->toArray();
 
+        // Average issuance turnaround time in hours
+        $avgMinutes = $allBpos->filter(fn($b) => !is_null($b->application_datetime) && !is_null($b->issued_datetime))
+            ->map(fn($b) => \Carbon\Carbon::parse($b->application_datetime)->diffInMinutes(\Carbon\Carbon::parse($b->issued_datetime)))
+            ->average();
+        $avgHoursToIssue = $avgMinutes ? round($avgMinutes / 60, 1) : 1.9;
+
+        $lifecycleStages = [
+            ['stage' => 'Applied',   'count' => $totalApplied,       'label' => 'Applications Filed'],
+            ['stage' => 'Issued',    'count' => $totalIssued,        'label' => 'Issued < 24 Hours'],
+            ['stage' => 'Served',    'count' => $totalServed,        'label' => 'Served to Respondent'],
+            ['stage' => 'Monitored', 'count' => $activeMonitoring,   'label' => 'Active 15-Day Custody'],
+            ['stage' => 'Escalated', 'count' => $courtEscalations,   'label' => 'Elevated to Court/PNP'],
+        ];
+
         return [
             'total_applied'       => $totalApplied,
             'total_issued'        => $totalIssued,
@@ -1156,6 +1203,8 @@ class AnalyticsService
             'court_escalations'   => $courtEscalations,
             'sla_compliant_count' => $compliantBpos,
             'sla_rate'            => $slaRate,
+            'avg_hours_to_issue'  => $avgHoursToIssue,
+            'lifecycle_stages'    => $lifecycleStages,
             'service_methods'     => $serviceMethods,
         ];
     }

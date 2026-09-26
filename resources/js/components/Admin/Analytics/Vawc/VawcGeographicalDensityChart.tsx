@@ -1,49 +1,34 @@
 import React from 'react';
-import { Map, Flame } from 'lucide-react';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 
 interface Props {
     data: any[];
     onSelectZone?: (zoneName: string) => void;
+    className?: string;
 }
 
-export default function VawcGeographicalDensityChart({ data, onSelectZone }: Props) {
+export default function VawcGeographicalDensityChart({ data, onSelectZone, className }: Props) {
     // Find top incident zone
     const sorted = [...(data || [])].sort((a, b) => (b.count || 0) - (a.count || 0));
     const topZone = sorted.length > 0 && (sorted[0].count || 0) > 0 ? sorted[0] : null;
 
     return (
-        <Card className="shadow-xs border bg-card flex flex-col justify-between print:break-inside-avoid">
-            <CardHeader className="border-b bg-muted/20 px-4 py-3 sm:px-5 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                <div>
-                    <div className="flex items-center gap-2">
-                        <Map className="w-4 h-4 text-orange-600 dark:text-orange-400 shrink-0" />
-                        <CardTitle className="text-sm font-bold text-foreground">
-                            Geographical Case Density
-                        </CardTitle>
-                    </div>
-                    <CardDescription className="text-xs text-muted-foreground mt-0.5">
-                        Incidents mapped across the 10 administrative zones of Barangay 183.
-                    </CardDescription>
-                </div>
-
-                {/* #1 Highest Incident Zone Callout Pill */}
-                {topZone ? (
-                    <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-950/40 dark:text-orange-300 font-bold text-xs py-1 px-2.5 gap-1 w-fit">
-                        <Flame className="w-3.5 h-3.5 text-orange-600" />
-                        <span>Top Hotspot: {topZone.name} ({topZone.count} cases)</span>
-                    </Badge>
-                ) : (
-                    <Badge variant="outline" className="text-xs font-semibold py-0.5 px-2">
-                        Zero Recorded Hotspots
-                    </Badge>
-                )}
+        <Card className={cn("shadow-xs border bg-card flex flex-col justify-between print:break-inside-avoid h-full", className)}>
+            <CardHeader className="border-b bg-muted/20 px-4 py-3 sm:px-5">
+                <CardTitle className="text-sm font-bold text-foreground">
+                    Geographical Case Distribution
+                </CardTitle>
+                <CardDescription className="text-xs text-muted-foreground mt-0.5">
+                    {topZone
+                        ? `Cases across 10 zones in Barangay 183 • Highest: ${topZone.name} (${topZone.count} cases)`
+                        : 'Cases across 10 zones in Barangay 183'}
+                </CardDescription>
             </CardHeader>
 
-            <CardContent className="p-4 sm:p-5">
-                <div className="h-[300px] w-full">
+            <CardContent className="p-4 sm:p-5 flex-1 flex flex-col justify-center">
+                <div className="h-[320px] sm:h-[350px] w-full flex-1">
                     {data && data.length > 0 ? (
                         <ResponsiveContainer width="100%" height="100%">
                             <BarChart
@@ -59,7 +44,7 @@ export default function VawcGeographicalDensityChart({ data, onSelectZone }: Pro
                                     axisLine={false}
                                     tickLine={false}
                                     tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))', fontWeight: 600 }}
-                                    width={85}
+                                    width={70}
                                 />
                                 <Tooltip
                                     contentStyle={{

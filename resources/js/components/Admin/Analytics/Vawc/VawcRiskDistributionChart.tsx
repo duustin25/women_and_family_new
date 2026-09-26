@@ -1,64 +1,100 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, Legend } from 'recharts';
-import { ShieldAlert, AlertTriangle } from 'lucide-react';
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Cell, Tooltip } from 'recharts';
 import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 
 interface Props {
     data: { name: string; value: number; fill: string }[];
+    className?: string;
 }
 
-export default function VawcRiskDistributionChart({ data }: Props) {
-    const totalAssessed = data.reduce((acc, curr) => acc + curr.value, 0);
-    const criticalOrHigh = data
-        .filter(d => ['CRITICAL', 'HIGH'].includes(d.name.toUpperCase()))
-        .reduce((acc, curr) => acc + curr.value, 0);
-    const highRiskPct = totalAssessed > 0 ? Math.round((criticalOrHigh / totalAssessed) * 100) : 0;
+export default function VawcRiskDistributionChart({ data, className }: Props) {
+    // Filter out non-assessed / pending cases to strictly reflect risk severity tiers
+    const chartData = (data || []).filter(d => d.name && d.name.toUpperCase() !== 'PENDING');
+
+    const tierColors: Record<string, string> = {
+        CRITICAL: '#ef4444',
+        HIGH: '#f97316',
+        MODERATE: '#eab308',
+        LOW: '#3b82f6',
+    };
+
+    const renderCustomTick = ({ x, y, payload }: any) => {
+        const color = tierColors[payload.value?.toUpperCase()] || 'hsl(var(--muted-foreground))';
+        return (
+            <text
+                x={x}
+                y={y + 14}
+                textAnchor="middle"
+                fill={color}
+                fontSize={11}
+                fontWeight={800}
+                letterSpacing="0.025em"
+            >
+                {payload.value}
+            </text>
+        );
+    };
 
     return (
-        <Card className="shadow-sm border">
-            <CardHeader className="border-b bg-muted/20 pb-4">
+        <Card className={cn("shadow-xs border bg-card flex flex-col justify-between h-full", className)}>
+            <CardHeader className="border-b bg-muted/20 px-4 py-3 sm:px-5">
                 <div className="flex items-center justify-between">
-                    <CardTitle className="uppercase tracking-widest text-xs font-black text-red-600 flex items-center gap-2">
-                        <ShieldAlert className="w-4 h-4 text-red-600" />
-                        VAWC-RAVE Triage Risk Severity
+                    <CardTitle className="text-sm font-bold text-foreground">
+                        Risk Assessment Severity Breakdown
                     </CardTitle>
-                    {highRiskPct > 0 && (
-                        <Badge variant="destructive" className="text-[10px] font-mono">
-                            {highRiskPct}% High Danger
-                        </Badge>
-                    )}
                 </div>
-                <CardDescription className="text-[10px] font-bold uppercase text-muted-foreground">
-                    Algorithmic Lethality & Imminent Danger Classification
+                <CardDescription className="text-xs text-muted-foreground mt-0.5">
+                    Case distribution evaluated across standard threat tiers
                 </CardDescription>
             </CardHeader>
 
-            <CardContent className="h-[280px] pt-4">
-                <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                        <Pie
-                            data={data}
-                            cx="38%"
-                            cy="50%"
-                            innerRadius={50}
-                            outerRadius={80}
-                            paddingAngle={4}
-                            dataKey="value"
+            <CardContent className="p-4 sm:p-5 flex-1 flex flex-col justify-between space-y-4">
+                <div className="flex-1 min-h-[220px] w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <BarChart
+                            data={chartData}
+                            margin={{ top: 20, right: 15, left: -15, bottom: 5 }}
                         >
-                            {data.map((entry, index) => (
-                                <Cell key={`cell-${index}`} fill={entry.fill} />
-                            ))}
-                        </Pie>
-                        <Tooltip formatter={(val: any) => [`${val} Incidents`, 'Severity']} />
-                        <Legend
-                            verticalAlign="middle"
-                            align="right"
-                            layout="vertical"
-                            wrapperStyle={{ fontSize: '11px', fontWeight: 'bold' }}
-                        />
-                    </PieChart>
-                </ResponsiveContainer>
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
+                            <XAxis
+                                dataKey="name"
+                                axisLine={false}
+                                tickLine={false}
+                                tick={renderCustomTick}
+                                interval={0}
+                            />
+                            <YAxis
+                                allowDecimals={false}
+                                axisLine={false}
+                                tickLine={false}
+                                tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
+                            />
+                            <Tooltip
+                                formatter={(val: any, name: any) => [`${val} Cases`, String(name).toUpperCase()]}
+                                contentStyle={{
+                                    backgroundColor: 'hsl(var(--popover))',
+                                    borderColor: 'hsl(var(--border))',
+                                    borderRadius: '8px',
+                                    color: 'hsl(var(--popover-foreground))',
+                                    fontSize: '12px',
+                                    fontWeight: 'bold',
+                                }}
+                            />
+                            <Bar
+                                dataKey="value"
+                                radius={[6, 6, 0, 0]}
+                                maxBarSize={46}
+                                label={{ position: 'top', fontSize: 12, fontWeight: 'bold', fill: 'hsl(var(--foreground))' }}
+                            >
+                                {chartData.map((entry, index) => (
+                                    <Cell key={`cell-${index}`} fill={entry.fill || tierColors[entry.name?.toUpperCase()] || '#94a3b8'} />
+                                ))}
+                            </Bar>
+                        </BarChart>
+                    </ResponsiveContainer>
+                </div>
             </CardContent>
         </Card>
     );

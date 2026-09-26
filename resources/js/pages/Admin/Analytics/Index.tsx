@@ -19,10 +19,8 @@ import AnalyticsSkeleton from '@/components/Admin/Analytics/Common/AnalyticsSkel
 // VAWC Components
 import VawcMonthlyAbuseChart from '@/components/Admin/Analytics/Vawc/VawcMonthlyAbuseChart';
 import VawcRiskDistributionChart from '@/components/Admin/Analytics/Vawc/VawcRiskDistributionChart';
-import VawcDossierRecidivismCard from '@/components/Admin/Analytics/Vawc/VawcDossierRecidivismCard';
-import VawcBpoMilestonesChart from '@/components/Admin/Analytics/Vawc/VawcBpoMilestonesChart';
+import VawcLegalSafeguardsCard from '@/components/Admin/Analytics/Vawc/VawcLegalSafeguardsCard';
 import VawcGeographicalDensityChart from '@/components/Admin/Analytics/Vawc/VawcGeographicalDensityChart';
-import VawcVictimDemographicsChart from '@/components/Admin/Analytics/Vawc/VawcVictimDemographicsChart';
 
 // BCPC Components
 import BcpcNutritionStatusBarChart from '@/components/Admin/Analytics/Bcpc/BcpcNutritionStatusBarChart';
@@ -397,28 +395,34 @@ export default function Index({
                                 <AnalyticsSkeleton />
                             ) : (
                                 <div className="space-y-5">
-                                    {/* Row 1: Monthly Rates (2 cols) + RAVE Risk Severity (1 col) */}
-                                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-                                        <VawcMonthlyAbuseChart data={vawcData} config={vawcChartConfig} />
-                                        <VawcRiskDistributionChart data={riskDistribution || []} />
-                                    </div>
+                                    {/* 60% / 40% Proportional Analytics Grid on Desktop, Stacks Cleanly on Mobile/Tablet */}
+                                    <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
+                                        {/* Row 1 Left: Monthly Abuse Reports (60% width) */}
+                                        <div className="lg:col-span-3 min-w-0">
+                                            <VawcMonthlyAbuseChart data={vawcData} config={vawcChartConfig} />
+                                        </div>
 
-                                    {/* Row 2: Dossier Recidivism (1 col) + BPO Milestones & SLA (2 cols) */}
-                                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-                                        <VawcDossierRecidivismCard data={dossierAnalytics} />
-                                        <VawcBpoMilestonesChart monthlyTrends={bpoTrends || []} metrics={bpoMetrics} />
-                                    </div>
+                                        {/* Row 1 Right: Geographical Case Distribution (40% width) */}
+                                        <div className="lg:col-span-2 min-w-0">
+                                            <VawcGeographicalDensityChart
+                                                data={zoneDistribution || []}
+                                                onSelectZone={handleOpenZoneInspector}
+                                            />
+                                        </div>
 
-                                    {/* Row 3: Geographical Density (1 col) + Demographics (1 col) */}
-                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-                                        <VawcGeographicalDensityChart
-                                            data={zoneDistribution || []}
-                                            onSelectZone={handleOpenZoneInspector}
-                                        />
-                                        <VawcVictimDemographicsChart
-                                            data={ageDemographics || []}
-                                            colors={DEMO_COLORS}
-                                        />
+                                        {/* Row 2 Left: Statutory Safeguards & Repeat Tracking (60% width) */}
+                                        <div className="lg:col-span-3 min-w-0">
+                                            <VawcLegalSafeguardsCard
+                                                bpoMetrics={bpoMetrics}
+                                                dossierAnalytics={dossierAnalytics}
+                                                stats={stats}
+                                            />
+                                        </div>
+
+                                        {/* Row 2 Right: Risk Assessment Severity Donut (40% width, below Zone) */}
+                                        <div className="lg:col-span-2 min-w-0">
+                                            <VawcRiskDistributionChart data={riskDistribution || []} />
+                                        </div>
                                     </div>
                                 </div>
                             )}
@@ -643,9 +647,8 @@ export default function Index({
                                             <div className="space-y-0.5">
                                                 <div className="flex items-center gap-2">
                                                     <span className="font-bold text-foreground">{cs.case_number}</span>
-                                                    <Badge variant="outline" className={`text-[10px] font-bold ${
-                                                        cs.risk_level === 'CRITICAL' ? 'border-rose-500 text-rose-600 bg-rose-50 dark:bg-rose-950/30' : 'border-amber-500 text-amber-600'
-                                                    }`}>
+                                                    <Badge variant="outline" className={`text-[10px] font-bold ${cs.risk_level === 'CRITICAL' ? 'border-rose-500 text-rose-600 bg-rose-50 dark:bg-rose-950/30' : 'border-amber-500 text-amber-600'
+                                                        }`}>
                                                         {cs.risk_level}
                                                     </Badge>
                                                 </div>
@@ -683,9 +686,8 @@ export default function Index({
                                             <div className="space-y-0.5">
                                                 <div className="flex items-center gap-2">
                                                     <span className="font-bold text-foreground">{ch.name}</span>
-                                                    <Badge variant="outline" className={`text-[10px] font-bold ${
-                                                        ch.is_malnourished ? 'border-rose-500 text-rose-600 bg-rose-50 dark:bg-rose-950/30' : 'border-teal-500 text-teal-600'
-                                                    }`}>
+                                                    <Badge variant="outline" className={`text-[10px] font-bold ${ch.is_malnourished ? 'border-rose-500 text-rose-600 bg-rose-50 dark:bg-rose-950/30' : 'border-teal-500 text-teal-600'
+                                                        }`}>
                                                         {ch.status}
                                                     </Badge>
                                                 </div>

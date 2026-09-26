@@ -638,27 +638,36 @@ class VawcController extends Controller
     }
 
     /**
-     * Show a printable transmittal letter for the PNP (Step 7).
+     * Show a printable transmittal letter for the PNP (Step 7 & Escalation).
      */
     public function pnpTransmittal(string|int $id)
     {
-        $case = $this->findCase($id, ['caseReport.abuseType', 'involvedParties', 'protectionOrders', 'dossier.cases.caseReport']);
+        $case = $this->findCase($id, [
+            'caseReport.abuseType',
+            'involvedParties',
+            'protectionOrders.serviceRecords',
+            'dossier.cases.caseReport',
+            'escalations',
+        ]);
 
         if (!Str::isUuid($id)) {
             return redirect()->route('admin.vawc.pnp-transmittal', $case->uuid);
         }
 
-        /** @var \App\Models\VawcProtectionOrder $order */
+        /** @var \App\Models\VawcProtectionOrder|null $order */
         $order = $case->protectionOrders()
-            ->whereIn('status', ['Issued', 'Served'])
+            ->whereIn('status', ['Issued', 'Served', 'Expired', 'Applied'])
             ->latest()
-            ->firstOrFail();
+            ->first()
+            ?? $case->protectionOrders()->latest()->first();
 
         AuditLogger::logRead($case, 'VAWC_PNP_TRANSMITTAL_VIEWED', [
-            'order_number' => $order->order_number ?? 'BPO',
+            'sub_case_number' => $case->sub_case_number ?? $case->caseReport?->case_number,
+            'order_number' => $order?->order_number ?? 'N/A',
+            'referral_target' => $case->escalations->last()?->referral_target ?? 'PNP WCPD',
         ]);
 
-        if ($order->transmittals()->where('agency', 'PNP Women and Children Protection')->count() === 0) {
+        if ($order && $order->transmittals()->where('agency', 'PNP Women and Children Protection')->count() === 0) {
             $this->bpoService->recordTransmittal($order);
         }
 
@@ -822,15 +831,30 @@ class VawcController extends Controller
             ];
         };
 
-        // 1. Critical & High Risk Queue
+        // 1. Critical Risk Queue
         $criticalQuery = VawcCase::select('vawc_cases.*')
-            ->with(['caseReport.abuseType', 'assessment', 'dossier', 'protectionOrders'])
+            ->with(['caseReport.abuseType', 'assessment', 'dossier', 'protectionOrders.serviceRecords'])
             ->join('vawc_assessments', 'vawc_assessments.vawc_case_id', '=', 'vawc_cases.id')
-            ->whereIn('vawc_assessments.risk_level', ['CRITICAL', 'HIGH'])
+            ->where('vawc_assessments.risk_level', 'CRITICAL')
             ->where('vawc_cases.status', '!=', 'Closed');
 
         $criticalTotal = (clone $criticalQuery)->count();
         $criticalQueue = (clone $criticalQuery)
+            ->orderByDesc('vawc_assessments.risk_score')
+            ->orderByDesc('vawc_cases.created_at')
+            ->take(10)
+            ->get()
+            ->map($mapCase);
+
+        // 1b. High Risk Queue
+        $highQuery = VawcCase::select('vawc_cases.*')
+            ->with(['caseReport.abuseType', 'assessment', 'dossier', 'protectionOrders.serviceRecords'])
+            ->join('vawc_assessments', 'vawc_assessments.vawc_case_id', '=', 'vawc_cases.id')
+            ->where('vawc_assessments.risk_level', 'HIGH')
+            ->where('vawc_cases.status', '!=', 'Closed');
+
+        $highTotal = (clone $highQuery)->count();
+        $highQueue = (clone $highQuery)
             ->orderByDesc('vawc_assessments.risk_score')
             ->orderByDesc('vawc_cases.created_at')
             ->take(10)
@@ -885,6 +909,8 @@ class VawcController extends Controller
         return Inertia::render('Admin/Vawc/Dashboard', [
             'criticalQueue'   => $criticalQueue,
             'criticalTotal'   => $criticalTotal,
+            'highQueue'       => $highQueue,
+            'highTotal'       => $highTotal,
             'moderateQueue'   => $moderateQueue,
             'moderateTotal'   => $moderateTotal,
             'lowQueue'        => $lowQueue,
