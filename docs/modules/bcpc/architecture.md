@@ -35,7 +35,7 @@ flowchart TD
 
     subgraph TransportLayer ["2. Transport Layer (Inertia.js Protocol)"]
         InertiaRouter["Inertia Router (GET / POST / PUT)"]
-        AuthMiddleware["Middleware: auth + role:admin,bns,head"]
+        AuthMiddleware["Middleware: auth + role:admin,head"]
         InertiaRouter --> AuthMiddleware
     end
 

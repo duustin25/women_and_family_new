@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { Send, Bot, User, Sparkles, RefreshCcw } from 'lucide-react';
+import { Send, Bot, User, Sparkles, RefreshCcw, AlertTriangle } from 'lucide-react';
 import React, { useState, useRef, useEffect } from 'react';
 import { route } from 'ziggy-js';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -39,7 +39,7 @@ export default function Chatbot({ className }: { className?: string }) {
         {
             id: 'welcome',
             role: 'assistant',
-            content: "Greetings. I am The Sentinel, your dedicated AI assistant for the Women & Family Protection system. How may I be of service today?",
+            content: "Mabuhay! I am The Sentinel, an automated informational guide for Barangay 183.\n\n⚠️ IMPORTANT NOTICE: I do not provide formal legal advice, legal counsel, or legal determinations, and I do not replace authorized VAWC desk officers or legal authorities. In an emergency or immediate threat, please dial 911 or the PNP Women and Children Protection Center at 177.\n\n🔒 PRIVACY WARNING: Please do not enter real victim names, child names, addresses, contact numbers, detailed case narratives, or other sensitive personal information into this chat. If you need to report an incident or seek confidential protection, please visit the Barangay 183 VAWC Desk in person.\n\nHow may I assist you with barangay information or public services today?",
             timestamp: new Date()
         }
     ]);
@@ -168,6 +168,20 @@ export default function Chatbot({ className }: { className?: string }) {
                 </div>
             </CardHeader>
 
+            {/* Clearly Visible Legal & Safety Disclaimer Banner */}
+            <div className="bg-amber-500/10 dark:bg-amber-500/5 border-b border-amber-500/20 px-3.5 py-2.5 flex items-start gap-2.5 text-slate-700 dark:text-slate-300 shrink-0">
+                <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                <div className="text-[11px] leading-tight space-y-1">
+                    <div>
+                        <span className="font-bold text-amber-800 dark:text-amber-300 uppercase tracking-wider text-[10px] inline-block mr-1">Informational Guide:</span>
+                        The Sentinel does <u>not</u> provide formal legal advice or replace authorized VAWC desk personnel. Emergencies: call <strong>911</strong> / WCPC (<strong>177</strong>).
+                    </div>
+                    <div className="text-[10px] text-amber-900/80 dark:text-amber-200/80">
+                        <span className="font-semibold text-amber-800 dark:text-amber-300">Privacy Notice:</span> Do not type real victim names, child identities, addresses, phone numbers, or incident narratives in this chat.
+                    </div>
+                </div>
+            </div>
+
             {/* Offline/Fallback Banner */}
             {isEngineOffline && (
                 <div className="bg-amber-500/10 dark:bg-amber-500/5 border-b border-amber-500/20 px-4 py-2 flex items-center gap-2 text-amber-600 dark:text-amber-400 text-[11px] font-bold">
@@ -266,6 +280,9 @@ export default function Chatbot({ className }: { className?: string }) {
                         <Send className="h-4 w-4" />
                     </Button>
                 </form>
+                <p className="text-[10px] text-center text-slate-400 dark:text-slate-500 mt-2 w-full px-1">
+                    Advisory decision-support & informational guide only • Not a substitute for authorized legal or law-enforcement assistance.
+                </p>
             </CardFooter>
         </Card>
     );

@@ -234,3 +234,15 @@
     to { transform: translateX(calc(-100% - var(--gap))); }
   }
 }
+
+/* Remove default spin buttons from number inputs for clean user keyboard input */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}

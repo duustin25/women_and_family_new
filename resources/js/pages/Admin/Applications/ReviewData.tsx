@@ -12,7 +12,12 @@ import {
     Calendar, 
     ShieldCheck, 
     AlertCircle,
-    FileText
+    FileText,
+    Archive,
+    RotateCcw,
+    Gift,
+    FileSpreadsheet,
+    ExternalLink
 } from "lucide-react";
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -97,7 +102,7 @@ export default function ReviewData({ application, organization }: { application:
                 {label}
             </span>
             <span className="text-sm font-medium text-foreground break-words w-full sm:w-3/5">
-                {value ? String(value) : <span className="text-muted-foreground/60 italic">—</span>}
+                {value !== null && value !== undefined && value !== '' ? (typeof value === 'object' && !Array.isArray(value) ? value : String(value)) : <span className="text-muted-foreground/60 italic">—</span>}
             </span>
         </div>
     );
@@ -105,8 +110,9 @@ export default function ReviewData({ application, organization }: { application:
     return (
         <AppLayout breadcrumbs={[
             { title: 'Dashboard', href: '/admin/dashboard' },
-            { title: 'Membership Applications', href: '/admin/applications' },
-            { title: 'Review Applicant Data', href: '#' }
+            { title: 'Applications', href: '/admin/applications' },
+            ...(org?.slug ? [{ title: `${org.name} Directory`, href: `/admin/organizations/${org.slug}/members` }] : []),
+            { title: record.fullname, href: '#' }
         ]}>
             <Head title={`Review Application - ${record.fullname}`} />
 
@@ -130,6 +136,7 @@ export default function ReviewData({ application, organization }: { application:
                                     variant="outline" 
                                     className={`text-xs font-semibold px-2 py-0.5 ${
                                         statusLower === 'approved' ? 'bg-emerald-50 text-emerald-700 border-emerald-300 dark:bg-emerald-950/40' :
+                                        statusLower === 'inactive' ? 'bg-neutral-100 text-neutral-700 border-neutral-300 dark:bg-neutral-800 dark:text-neutral-300' :
                                         statusLower === 'disapproved' || statusLower === 'rejected' ? 'bg-rose-50 text-rose-700 border-rose-300 dark:bg-rose-950/40' :
                                         statusLower === 'appealed' ? 'bg-blue-50 text-blue-700 border-blue-300 dark:bg-blue-950/40' :
                                         'bg-amber-50 text-amber-700 border-amber-300 dark:bg-amber-950/40'
@@ -140,12 +147,92 @@ export default function ReviewData({ application, organization }: { application:
                             </div>
                             <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1.5">
                                 <Building2 className="w-3.5 h-3.5 text-muted-foreground/70" />
-                                <span>{org.name || 'Accredited Sector'} Application</span>
+                                {org.slug ? (
+                                    <Link 
+                                        href={`/admin/organizations/${org.slug}/members`} 
+                                        className="hover:underline hover:text-foreground transition-colors font-medium"
+                                    >
+                                        {org.name || 'Accredited Sector'} Directory →
+                                    </Link>
+                                ) : (
+                                    <span>{org.name || 'Accredited Sector'} Application</span>
+                                )}
                             </p>
                         </div>
                     </div>
 
                     <div className="flex items-center gap-2 flex-wrap">
+                        {statusLower === 'approved' && (
+                            <>
+                                <Button 
+                                    variant="outline" 
+                                    size="sm" 
+                                    asChild
+                                    className="h-9 text-xs font-semibold cursor-pointer shadow-2xs text-blue-700 hover:text-blue-800 border-blue-300 hover:bg-blue-50 dark:border-blue-800 dark:hover:bg-blue-950/40"
+                                >
+                                    <Link href={`/admin/members?search=${encodeURIComponent(record.fullname)}`}>
+                                        <Gift className="w-3.5 h-3.5 mr-1.5 text-blue-600" />
+                                        Aid & CRM Profile
+                                    </Link>
+                                </Button>
+
+                                {org.slug && (
+                                    <Button 
+                                        variant="outline" 
+                                        size="sm" 
+                                        asChild
+                                        className="h-9 text-xs font-semibold cursor-pointer shadow-2xs text-emerald-700 hover:text-emerald-800 border-emerald-300 hover:bg-emerald-50 dark:border-emerald-800 dark:hover:bg-emerald-950/40"
+                                    >
+                                        <Link href={`/admin/organizations/${org.slug}/members?search=${encodeURIComponent(record.fullname)}`}>
+                                            <FileSpreadsheet className="w-3.5 h-3.5 mr-1.5 text-emerald-600" />
+                                            Directory Sheet
+                                        </Link>
+                                    </Button>
+                                )}
+
+                                <Button 
+                                    variant="outline" 
+                                    size="sm" 
+                                    onClick={() => {
+                                        confirm({
+                                            title: 'Archive Member',
+                                            message: `Are you sure you want to archive "${record.fullname}"? This moves them to the Inactive roster.`,
+                                            confirmText: 'Archive Member',
+                                            variant: 'destructive',
+                                            onConfirm: () => {
+                                                router.patch(`/admin/organizations/${org.slug}/members/${record.id}/toggle-status`, { status: 'Inactive' });
+                                            }
+                                        });
+                                    }}
+                                    className="h-9 text-xs font-semibold cursor-pointer text-amber-700 hover:text-amber-800 border-amber-300 hover:bg-amber-50 dark:border-amber-800 dark:hover:bg-amber-950/40 shadow-2xs"
+                                >
+                                    <Archive className="w-3.5 h-3.5 mr-1.5" />
+                                    Archive
+                                </Button>
+                            </>
+                        )}
+
+                        {statusLower === 'inactive' && (
+                            <Button 
+                                variant="outline" 
+                                size="sm" 
+                                onClick={() => {
+                                    confirm({
+                                        title: 'Reactivate Member',
+                                        message: `Reactivate "${record.fullname}" back to the active accredited members roster?`,
+                                        confirmText: 'Reactivate',
+                                        onConfirm: () => {
+                                            router.patch(`/admin/organizations/${org.slug}/members/${record.id}/toggle-status`, { status: 'Approved' });
+                                        }
+                                    });
+                                }}
+                                className="h-9 text-xs font-semibold cursor-pointer text-emerald-700 hover:text-emerald-800 border-emerald-300 hover:bg-emerald-50 dark:border-emerald-800 dark:hover:bg-emerald-950/40 shadow-2xs"
+                            >
+                                <RotateCcw className="w-3.5 h-3.5 mr-1.5" />
+                                Reactivate
+                            </Button>
+                        )}
+
                         <Button 
                             variant="outline" 
                             size="sm" 
@@ -165,7 +252,7 @@ export default function ReviewData({ application, organization }: { application:
                         >
                             <a href={`/admin/applications/${record.id}/print`} target="_blank" rel="noopener noreferrer">
                                 <Printer className="w-3.5 h-3.5 mr-1.5" />
-                                Print Official Form
+                                Print Form
                             </a>
                         </Button>
                     </div>
@@ -292,13 +379,28 @@ export default function ReviewData({ application, organization }: { application:
                                             {/* Standard Entries */}
                                             {standardEntries.length > 0 ? (
                                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1">
-                                                    {standardEntries.map(([key, value]) => (
-                                                        <DataRow 
-                                                            key={key} 
-                                                            label={getFieldLabel(key)} 
-                                                            value={formatDisplayValue(value)} 
-                                                        />
-                                                    ))}
+                                                    {standardEntries.map(([key, value]) => {
+                                                        const isFileField = getFieldType(key) === 'file' || (typeof value === 'string' && (value.startsWith('uploads/requirements') || value.startsWith('uploads/')));
+                                                        const renderVal = isFileField && value ? (
+                                                            <a
+                                                                href={`/admin/applications/${record.id}/documents/requirement/${key}`}
+                                                                target="_blank"
+                                                                rel="noreferrer"
+                                                                className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline font-semibold bg-primary/5 hover:bg-primary/10 border border-primary/20 px-2.5 py-1 rounded-md transition-colors"
+                                                            >
+                                                                <ExternalLink className="w-3.5 h-3.5 text-primary" />
+                                                                <span>View Secure Verification Doc</span>
+                                                            </a>
+                                                        ) : formatDisplayValue(value);
+
+                                                        return (
+                                                            <DataRow 
+                                                                key={key} 
+                                                                label={getFieldLabel(key)} 
+                                                                value={renderVal} 
+                                                            />
+                                                        );
+                                                    })}
                                                 </div>
                                             ) : complexEntries.length === 0 ? (
                                                 <p className="text-xs text-muted-foreground italic py-3 text-center">

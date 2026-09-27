@@ -18,6 +18,12 @@ class MembershipController extends Controller
 
     public function create(Organization $organization)
     {
+        // Guard: If organization is inactive, block application
+        if (!$organization->is_active && !Auth::check()) {
+            return redirect()->route('public.organizations.show', $organization->slug)
+                ->with('error', "Membership applications for {$organization->name} are currently paused or under administrative review.");
+        }
+
         // Default to dynamic form
         $view = 'Public/Organizations/Apply/DynamicForm';
 
@@ -30,6 +36,13 @@ class MembershipController extends Controller
     public function store(Request $request, Organization $organization)
     {
         $isAdmin = Auth::check();
+
+        // Guard: If organization is inactive, block submission unless admin
+        if (!$organization->is_active && !$isAdmin) {
+            return back()->withErrors([
+                'organization' => "Membership applications for {$organization->name} are currently paused or disabled."
+            ]);
+        }
 
         // 1. DEFENSIVE MERGE: If top-level fields are empty, pull from form_data
         $fullname = trim((string) ($request->input('fullname') ?: $request->input('form_data.fullname')));
@@ -144,8 +157,8 @@ class MembershipController extends Controller
                     if ($request->hasFile("form_data.$fieldId")) {
                         $file = $request->file("form_data.$fieldId");
                         if ($file->isValid()) {
-                            // Store file
-                            $path = $file->store('uploads/requirements', 'public');
+                            // Store file in private storage
+                            $path = $file->store('uploads/requirements', 'local');
                             // Update the data array with the path string
                             $finalSubmissionData[$fieldId] = $path;
                         }
@@ -251,7 +264,7 @@ class MembershipController extends Controller
         if ($request->hasFile('appeal_docs')) {
             foreach ($request->file('appeal_docs') as $file) {
                 if ($file->isValid()) {
-                    $uploadedDocs[] = $file->store('uploads/appeals', 'public');
+                    $uploadedDocs[] = $file->store('uploads/appeals', 'local');
                 }
             }
         }

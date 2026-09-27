@@ -7,20 +7,21 @@
 
 ---
 
-## 📌 1. Module Overview & Purpose
+## 📌 1. Module Overview & Decision Support System (DSS) Framework
 
-The **BCPC Child Nutrition & Health Module** is an enterprise-grade, medically validated public health tracking system engineered for Barangay 183, Pasay City. It automates the annual **Operation Timbang Plus (OPT+)** preschooler census, provides real-time preliminary WHO growth diagnostics across 3 axes, manages the statutory **120-Day Supplemental Feeding Program (SFP)**, prevents clerical error via biological range guardrails, and maintains permanent longitudinal records for government audits (COA, DOH, NNC).
+The **BCPC Child Nutrition Module** operates strictly as a **Clinical & Administrative Decision Support System (DSS)** engineered for Barangay 183, Pasay City. It assists human health workers (Barangay Nutrition Scholars, Barangay Health Workers, and Committee Officials) during the annual **Operation Timbang Plus (OPT+)** preschooler census, provides preliminary WHO growth screening across 3 axes, assists with the administrative monitoring of the statutory **120-Day Supplemental Feeding Program (SFP)**, prevents clerical error via biological range sanity checks, and prepares formatted documents for executive sign-off (COA, DOH, NNC).
 
 > [!IMPORTANT]
-> **Statutory Advisory Disclaimer (Adviser & NNC Compliance):**  
-> *"The system generates a preliminary nutritional-status result for verification by authorized nutrition or health personnel. It does not provide a medical diagnosis or automatically enroll a child in a feeding program."*  
-> SFP intake and clinical actions require human-in-the-loop verification by a certified Barangay Nutrition Scholar (BNS), Barangay Health Worker (BHW), or City Health Office (CHO) medical professional with guardian consent.
+> **Core Decision Support System (DSS) Mandate:**  
+> 1. **No Autonomous Diagnoses:** Software calculations serve as decision-support telemetry to guide authorized personnel; they do **not** replace professional clinical judgment.
+> 2. **No Automatic SFP Enrollment:** Supplemental Feeding Program (SFP) enrollment is strictly an authorized clinical decision requiring guardian consent and human activation by the BNS.
+> 3. **No Unilateral Referrals or Certifications:** The system generates draft documents (CHO Referral Slips and e-OPT Plus Masterlists) which require physical review and handwritten/tripartite certification by the BNS, Kagawad on Health, and Punong Barangay.
 
 ### 🎯 Key System Highlights
 1. **0–59 Months Statutory Scope**: Dedicated to infant and preschool nutrition from birth up to 4 years, 11 months, and 29 days. Automated lockout and non-destructive archival trigger on the child's 5th birthday (60 months), transferring jurisdiction to DepEd School-Based Feeding.
 2. **Modular Clean-Partials Architecture**: Re-architected following the system's VAWC paradigm into clean page orchestrators supported by isolated, single-responsibility components in `Partials/` subdirectories (`Partials/Index`, `Partials/Create`, `Partials/Show`, `Partials/Dashboard`).
 3. **WHO 3-Axis Precision Calculator**: Computes preliminary classifications for **Weight-for-Age (WFA)**, **Height-for-Age (HFA)**, and **Weight-for-Length/Height (WFL/H)** using continuous linear interpolation against official 2006 WHO reference standards.
-4. **Biological Range Sanity Checks ($\pm 5\text{ SD}$)**: Interactive confirmation dialog intercepts extreme biological outliers (weight outside 1.5–35 kg, height outside 40–125 cm) before saving.
+4. **Biological Range Sanity Checks ($\pm 5\text{ SD}$)**: Interactive confirmation dialog intercepts extreme biological outliers (weight outside 1.5–35 kg, height outside 40–125 cm) before saving to prevent field typing mistakes.
 5. **120-Day SFP Lifecycle & Velocity Tracking**: Voluntary, guardian-consented intake monitoring across 5 statutory milestones (Day 1 Baseline, Day 30, Day 60, Day 90, Day 120 Graduation) with longitudinal relapse handling.
 6. **Real-Time Nutrition Action Center**: High-velocity dashboard with 10s auto-polling, interactive clinical action triage queues (SAM, MAM, Double Burden, Stunting, Overdue), active SFP roster, and Zone 1–10 malnutrition density heatmaps.
 7. **DOH/NNC Official Print Engine**: Generates official formatted OPT+ masterlists with tripartite certification signature blocks (BNS, BCPC Chair, Punong Barangay).

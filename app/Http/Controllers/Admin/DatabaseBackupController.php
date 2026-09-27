@@ -92,6 +92,13 @@ class DatabaseBackupController extends Controller implements HasMiddleware
      */
     public function download(Request $request, string $filename): SymfonyResponse
     {
+        $request->validate([
+            'password' => ['required', 'string', 'min:6'],
+        ], [
+            'password.required' => 'An encryption passphrase is strictly required to download a database backup.',
+            'password.min' => 'Encryption passphrase must be at least 6 characters.',
+        ]);
+
         try {
             $user = $request->user();
             $archivePassword = $request->input('password');
@@ -109,16 +116,12 @@ class DatabaseBackupController extends Controller implements HasMiddleware
                         'filename' => $filename,
                         'downloaded_by' => $user->name,
                         'role' => $user->role,
-                        'protected_with_aes256_zip' => !empty($archivePassword),
+                        'protected_with_aes256_zip' => true,
                     ],
                 ]);
             }
 
-            if (!empty($archivePassword)) {
-                return $this->backupService->downloadPasswordProtectedZip($filename, $archivePassword);
-            }
-
-            return $this->backupService->downloadBackup($filename);
+            return $this->backupService->downloadPasswordProtectedZip($filename, $archivePassword);
         } catch (Exception $e) {
             abort(404, "Backup file not found: " . $e->getMessage());
         }

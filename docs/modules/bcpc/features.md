@@ -6,11 +6,14 @@
 
 ---
 
-## ⚠️ Advisory Notice
+## ⚠️ Decision Support System (DSS) Governance
 
 > [!IMPORTANT]
-> **Advisory Disclaimer:**  
-> *"The system generates a preliminary nutritional-status result for verification by authorized nutrition or health personnel. It does not provide a medical diagnosis or automatically enroll a child in a feeding program."*
+> **Decision Support Mandate:**  
+> The BCPC module functions as a **Decision Support System (DSS)**. It generates preliminary screening results to assist certified Barangay Nutrition Scholars (BNS), Barangay Health Workers (BHW), and Committee Officials. The system:
+> 1. Does **not** autonomously diagnose medical conditions or issue clinical orders.
+> 2. Does **not** automatically enroll children into Supplemental Feeding without parental consent and human activation by the BNS.
+> 3. Does **not** automatically dispatch external referrals; it prepares draft referral slips requiring physical signature by the BNS and Kagawad on Health.
 
 ---
 

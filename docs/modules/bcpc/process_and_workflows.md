@@ -1,120 +1,145 @@
-# 🔄 BCPC Module: Operational Process & Workflows
+# 🔄 BCPC Module: Operational Process & Decision Support Workflows
 
 > **Municipal & Barangay Women and Family Protection Information System (WFPIS)**  
 > **Module:** Barangay Council for the Protection of Children (BCPC) Child Nutrition Module  
-> **Protocols:** NNC Operation Timbang Plus & DOH Guidelines (Compliant with Republic Act No. 11037)
+> **Framework:** Clinical & Administrative Decision Support System (DSS)  
+> **Statutory Basis:** Republic Act No. 11037 (*Masustansyang Pagkain para sa Batang Pilipino Act*), Presidential Decree No. 1567 (*BNS Program Decree*)  
+> **Authorized Personnel:** Barangay Nutrition Scholar (BNS), Kagawad on Health & Sanitation (BCPC Committee Head), Punong Barangay
 
 ---
 
-## ⚠️ Statutory Clinical Disclaimer
+## ⚠️ Core Decision Support System (DSS) Governance
 
 > [!IMPORTANT]
-> **Advisory Disclaimer (Adviser & NNC Compliance):**  
-> *"The system generates a preliminary nutritional-status result for verification by authorized nutrition or health personnel. It does not provide a medical diagnosis or automatically enroll a child in a feeding program."*  
-> Software calculations serve as decision-support telemetry. Formal clinical diagnoses and Supplementary Feeding Program (SFP) enrollments require human-in-the-loop validation by a certified Barangay Nutrition Scholar (BNS), Barangay Health Worker (BHW), or City Health Office (CHO) medical officer with parent/guardian consent.
+> **Decision Support Mandate (Human-in-the-Loop Authority):**  
+> 1. **No Autonomous Clinical Diagnoses:** The system calculates preliminary Z-score thresholds and flags nutritional anomalies to assist authorized human health workers. It does **not** provide definitive medical diagnoses.
+> 2. **No Automatic SFP Enrollment:** Supplemental Feeding Program (SFP) enrollment is strictly an authorized clinical and administrative decision requiring parental/guardian consent and manual activation by the BNS/health committee. The system only provides recommendation guidance based on WHO triage cutoffs.
+> 3. **No Unilateral Medical Referrals:** The system drafts official referral slips with telemetry data, but formal transmission to the Pasay City Health Office (CHO) requires review and physical signature by the BNS and the Kagawad on Health & Sanitation.
+> 4. **No Automated Legal/Census Certification:** The e-OPT Plus Masterlist requires manual review and tripartite physical certification by the BNS, BCPC Committee Chair, and Punong Barangay.
 
 ---
 
-## 🚦 End-to-End Operational Lifecycle
+## 🚦 End-to-End Decision Support Lifecycle
 
 ```mermaid
 sequenceDiagram
     autonumber
     actor Parent as Parent / Guardian
     actor BNS as Barangay Nutrition Scholar (BNS)
-    actor BCPC as BCPC Committee Chair
+    actor DSS as WFPIS BCPC DSS Engine
+    actor Kagawad as Kagawad on Health / BCPC Chair
     actor PB as Punong Barangay
-    actor CHO as Pasay City Health Office
-    participant System as WFPIS BCPC Engine
+    actor CHO as Pasay City Health Office (CHO)
 
-    BNS->>Parent: 1. Door-to-Door OPT+ Census / Health Center Visit
-    BNS->>System: 2. Enter Child Demographics & Birth Date
-    alt Age >= 60 Months (5 Years)
-        System-->>BNS: Statutory Lockout Alert: Reject Intake (Redirect to DepEd SBFP)
-    else Age 0 - 59 Months
-        System-->>BNS: Approve Intake & Advance to Physical Measurement Step
-    end
-    
-    BNS->>System: 3. Input Weight (kg), Height (cm), Edema Status
-    System->>System: 4. Execute Biological Range Sanity Check (±5 SD)
-    opt Value is Biological Outlier (>5 SD)
-        System-->>BNS: Display Extreme Outlier Warning Dialog (Request Re-weigh Verification)
-    end
-    System->>System: 5. Interpolate Z-Scores across 3 Axes (WFA, HFA, WFL/H)
-    System-->>BNS: 6. Display Preliminary Nutritional Assessment & Advisory Disclaimer
+    Note over Parent,BNS: Phase 1: Community Census & Physical Weighing
+    BNS->>Parent: 1. Conducts door-to-door e-OPT+ census & checks Bakuna card
+    BNS->>BNS: 2. Calibrates Salter scale / infantometer & weighs/measures child
+    BNS->>DSS: 3. Enters child demographics, DOB, weight, height, and edema status
 
-    alt Child has SAM or Bilateral Oedema
-        System->>CHO: 7. Generate Emergency Medical Referral Slip
-        BNS->>CHO: Expedite child for clinical examination & therapeutic feeding
-    else Child is Identified with MAM / Wasted / Underweight
-        BNS->>Parent: 8. Counsel Parent & Seek Supplementary Feeding Consent
-        opt Guardian Consents & Clinical Intake Approved
-            BNS->>System: 9. Manually Enroll Child into 120-Day SFP (Baseline Recorded)
-            loop Statutory Milestones: Day 30, Day 60, Day 90, Day 120
-                BNS->>System: 10. Record Periodic Follow-up Weighing & Rations
-                System->>System: Compute Net Weight Velocity (g/day)
+    Note over DSS: Phase 2: Decision Support Telemetry & Guardrails
+    DSS->>DSS: 4. Evaluates Age (0-59m statutory lockout boundary check)
+    DSS->>DSS: 5. Executes Biological Outlier Check (±5 SD)
+    opt Measurement is Extreme Outlier (>5 SD)
+        DSS-->>BNS: Alert: Outlier prompt (Requests physical re-measurement to prevent typo)
+    end
+    DSS->>DSS: 6. Computes preliminary WFA, HFA, and WFL/H classifications
+    DSS-->>BNS: 7. Displays preliminary status badges & clinical guidance notes
+
+    Note over BNS,Parent: Phase 3: Clinical Verification & SFP Counseling
+    alt Child is Severely Wasted (SAM) or has Bilateral Oedema
+        DSS-->>BNS: High-Priority Triage Alert (Priority 1: SAM)
+        BNS->>Kagawad: Notifies Kagawad on Health of immediate medical risk
+        DSS-->>Kagawad: Generates draft CHO Medical Referral Slip with baseline telemetry
+        Kagawad->>BNS: Co-signs physical paper referral slip
+        BNS->>CHO: Expedites child and guardian to Pasay City Health Office
+    else Child is Underweight, Wasted (MAM), or Stunted
+        BNS->>Parent: 8. Explains preliminary findings & counsels guardian on SFP intake
+        alt Guardian Agrees to 120-Day Feeding Intake
+            BNS->>DSS: 9. Manually activates voluntary SFP Enrollment toggle
+            DSS->>DSS: 10. Initializes 120-Day SFP milestone schedule (Cycle 1)
+            
+            loop Milestones: Day 1, Day 30, Day 60, Day 90, Day 120
+                BNS->>Parent: Administers fortified hot meals / rations
+                BNS->>DSS: 11. Records periodic follow-up weight & height
+                DSS->>DSS: Computes net weight velocity (g/day) & milestone adherence
+                DSS-->>BNS: Displays recovery progress or non-responder warnings
             end
-            alt Child Recovers (Normal WFL/H at Day 120)
-                BNS->>System: 11. Mark SFP Status: GRADUATED
-            else Child Fails to Recover / Exhibits Relapse
-                System->>CHO: 12. Escalate to CHO Pediatrician for Medical Investigation
+
+            alt Child Recovers (Normal WFL/H & WFA)
+                DSS-->>BNS: Flags candidate for graduation recommendation
+                BNS->>DSS: 12. Confirms graduation & issues completion certificate
+            else Child Fails to Recover after 120 Days (Velocity < 2 g/day)
+                DSS-->>BNS: Flags child as Persistent Non-Responder
+                DSS-->>Kagawad: Prepares CHO Medical Referral Slip draft
+                Kagawad->>CHO: Refers for clinical investigation (pediatric workup)
             end
+        else Guardian Declines
+            BNS->>DSS: Leaves SFP status as "None" (logs dietary counseling only)
         end
     end
 
-    BCPC->>System: 13. Review Zone Prevalence & Action Center Triage Queues
-    PB->>System: 14. Electronically Sign DOH/NNC e-OPT Plus Masterlist
+    Note over Kagawad,PB: Phase 4: Executive Masterlist Certification
+    DSS->>Kagawad: 13. Aggregates zone malnutrition density & triage rosters
+    DSS->>PB: 14. Compiles official DOH/NNC e-OPT Plus Masterlist format
+    BNS->>PB: 15. Formally signs as Preparer
+    Kagawad->>PB: Endorses as Committee Reviewer
+    PB->>PB: 16. Signs executive approval for Pasay City & NNC submission
 ```
 
 ---
 
-## 📋 Step-by-Step Field Manual for BNS & Encoders
+## 📋 Step-by-Step Field Operating Manual for Authorized Personnel
 
-### Step 1: Pre-Weighing Demographics & Household Verification
-- Confirm child resides within one of the 10 Zones of Barangay 183 (Villamor Airbase).
-- Verify child date of birth via Philippine Statistics Authority (PSA) Birth Certificate or Barangay Immunization Card (*Bakuna Card*).
-- Check chronological age: Child must be strictly between 0 and 59 months. Children $\ge 60$ months are automatically locked out per RA 11037 and transitioned to the Department of Education's School-Based Feeding Program (DepEd SBFP).
-- Gather guardian details, relationship, contact numbers, and address in Step 1 of the registration wizard.
-
-### Step 2: Physical Measurement Protocol
-- **Weight Measurement:**
-  - Children $< 24\text{ months}$: Use an infant beam balance or hanging Salter scale with clean weighing trousers.
-  - Children $\ge 24\text{ months}$: Use a calibrated digital or mechanical floor scale. Ensure light clothing and no footwear.
-- **Length / Height Measurement:**
-  - Children $< 24\text{ months}$: Measure recumbent length using a wooden infantometer board with sliding headboard and footpiece.
+### Step 1: Physical Examination Protocol (BNS Field Mandate)
+- **Age Verification:** Inspect child PSA Birth Certificate or Barangay Immunization Card (*Bakuna Card*). Calculate age: Child must be strictly between 0 and 59 months.
+  - Children $\ge 60$ months (5 years) are statutory responsibility of the Department of Education (DepEd SBFP) under RA 11037.
+- **Physical Weight Protocol:**
+  - Children $< 24\text{ months}$: Use hanging Salter scale or infant beam balance with calibrated weighing pants.
+  - Children $\ge 24\text{ months}$: Use calibrated digital/beam floor scale in light clothing without footwear.
+- **Length / Height Protocol:**
+  - Children $< 24\text{ months}$: Measure recumbent length using a wooden infantometer board.
   - Children $\ge 24\text{ months}$: Measure standing height using a vertical stadiometer.
-- **Bilateral Pitting Oedema Check:**
-  - Press thumbs gently on the tops of both feet for 3 seconds.
-  - If visible indentations remain on both feet upon release, mark `has_edema = true`.
+- **Bilateral Pitting Oedema Inspection:**
+  - Press thumbs gently on the tops of both feet for 3 seconds. Check for indentation to detect fluid retention.
 
-### Step 3: Encoding & Preliminary Assessment Verification
-- Open `/admin/bcpc/cases/create` (3-Step Intake Wizard):
-  - **Step 1:** Guardian & household details.
-  - **Step 2:** Child identity and date of birth (system calculates exact decimal age in months).
-  - **Step 3:** Baseline measurements (Weight in kg to 2 decimals, Height in cm to 1 decimal).
-- Review the preliminary assessment result:
-  - **Weight-for-Age (WFA):** Severely Underweight, Underweight, Normal, Overweight
-  - **Height-for-Age (HFA):** Severely Stunted, Stunted, Normal, Tall
-  - **Weight-for-Length/Height (WFL/H):** Severely Wasted / SAM, Moderately Wasted / MAM, Normal, Overweight, Obese
-- Review the prominent **Advisory Disclaimer**: Confirm that this result represents preliminary decision-support data for health worker verification.
+### Step 2: DSS Data Encoding & Preliminary Screening
+- An authorized staff member (Admin or Committee Head) opens `/admin/bcpc/cases/create` (3-Step Wizard):
+  - **Step 1:** Guardian contact, household address, and Barangay Zone (Zones 1–10).
+  - **Step 2:** Child identity, sex, and date of birth.
+  - **Step 3:** Date of weighing, weight (kg), height (cm), and oedema checkbox.
+- The DSS immediately processes the inputs and displays:
+  - Preliminary WFA, HFA, and WFL/H diagnostic classifications.
+  - Outlier verification prompts if values deviate $> 5\text{ SD}$ from biological norms.
+  - **Mandatory Advisory Notice:** Confirming this is preliminary screening telemetry for BNS validation.
 
-### Step 4: Supplemental Feeding Program (SFP) Voluntary Intake
-- If the child is identified as malnourished (SAM, MAM, Underweight, or Stunted):
-  - SFP is **not automatically enforced** by code. Instead, the BNS engages the guardian, explains the program, and checks the voluntary enrollment toggle (`Enroll in 120-Day SFP`).
-  - Active feeding entails daily fortified hot meals and micronutrient distribution over a 120-day cycle.
-  - The BNS logs scheduled follow-up evaluations on Day 30, Day 60, Day 90, and Day 120 via the child's longitudinal profile (`/admin/bcpc/cases/{id}`).
+### Step 3: SFP Intake Authorization (Human Decision)
+- If the child exhibits wasting, stunting, or underweight status:
+  - The system **recommends** intervention but **does not force enrollment**.
+  - The BNS explains the program requirements to the guardian (daily feeding for 120 days).
+  - If the guardian gives consent, the encoder marks the voluntary toggle `Enroll in 120-Day SFP`.
+  - **Contraindication Rule:** If preliminary screening indicates Overweight or Obese status, the system prevents caloric SFP enrollment to prevent overnutrition complications.
 
-### Step 5: Clinical Escalation & City Health Office (CHO) Referral
-- When a child presents with **Severe Acute Malnutrition (SAM)** or **Bilateral Pitting Oedema**:
-  - The system highlights the red-flag clinical badge.
-  - The BNS clicks **"Generate CHO Referral Slip"** from the profile header.
-  - The child is immediately expedited to the Pasay City Health Office or nearest health center for medical evaluation and therapeutic feeding (RUTF).
+### Step 4: Follow-up Weighings & Velocity Monitoring
+- BNS schedules weighings aligned with the 5 statutory milestones: Day 1 (Baseline), Day 30, Day 60 (Mid-term), Day 90, and Day 120 (Graduation evaluation).
+- At each visit, BNS records new weight and height via the child's profile (`/admin/bcpc/cases/{id}`).
+- The DSS calculates:
+  $$\text{Net Weight Velocity } (V) = \left( \frac{W_{\text{latest}} - W_{\text{baseline}}}{\Delta t_{\text{days}}} \right) \times 1000 \quad [\text{g/day}]$$
+- If velocity is positive ($\ge 5\text{ g/day}$), recovery is progressing well.
+- If velocity falters ($< 2\text{ g/day}$ at or after Day 60), the DSS alerts the BNS of potential non-response.
 
-### Step 6: Annual Masterlist Generation & Executive Certification
-- At the conclusion of the annual OPT+ census campaign:
-  - Access the printable masterlist at `/admin/bcpc/print`.
-  - Filter by Zone (1–10) or view the consolidated Barangay 183 registry.
-  - Print the standardized NNC e-OPT Plus format featuring official certification and signature blocks for:
-    1. **Barangay Nutrition Scholar (BNS)** (Preparer)
-    2. **BCPC Committee Chairperson** (Reviewer)
-    3. **Punong Barangay** (Approving Official)
+### Step 5: Clinical Escalation & Paper Referral Slips
+- For severe cases (SAM, Bilateral Oedema, or Day 120 Non-Responders):
+  - The DSS provides an official **City Health Office (CHO) Medical Referral Slip** generator.
+  - The encoder prints the paper slip containing baseline weight, latest weight, net velocity, and preliminary diagnostic classifications.
+  - The **BNS (Assessor)** and **Kagawad on Health & Sanitation (Committee Head)** physically sign the referral slip.
+  - The guardian takes the signed paper slip to the Pasay City Health Office for pediatrician workup.
+
+### Step 6: Annual e-OPT Plus Census Sign-Off
+- At the end of the annual Operation Timbang Plus campaign:
+  - Authorized staff navigates to `/admin/bcpc/print`.
+  - The DSS formats the registry into the standardized National Nutrition Council (NNC) tabular layout.
+  - The document is printed on legal paper and signed by:
+    1. **Barangay Nutrition Scholar (BNS)** — Preparer
+    2. **Kagawad on Health & Sanitation / BCPC Chair** — Reviewer
+    3. **Punong Barangay (Barangay Captain)** — Executive Approval
+  - The certified document is submitted to the Pasay City Nutrition Committee and the DOH.

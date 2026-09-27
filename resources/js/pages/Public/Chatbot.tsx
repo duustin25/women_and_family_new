@@ -13,8 +13,8 @@ export default function ChatbotPage() {
                         <h1 className="text-3xl font-bold text-gray-900 tracking-tight sm:text-4xl">
                             The Sentinel AI Assistant
                         </h1>
-                        <p className="mt-4 text-lg text-gray-500 max-w-2xl">
-                            Your 24/7 assistant for guidance on RA 9262, organization membership, and available services.
+                        <p className="mt-4 text-base text-gray-500 max-w-2xl">
+                            Your 24/7 automated informational guide for Barangay 183 public procedures, community services, and statutory protection references (advisory information only; does not provide legal advice or replace authorized personnel).
                         </p>
                     </div>
 

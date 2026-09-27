@@ -178,7 +178,13 @@ export default function DynamicFields({ schema, data, setData, errors, mode = 'e
                                     return (
                                         <div className="flex flex-col gap-2 w-full" key={idx}>
                                             <div className={`flex items-center space-x-3 ${theme === 'modern' ? 'p-1' : ''}`}>
-                                                <RadioGroupItem value={opt} id={`${field.id}-${idx}`} className={`${theme === 'modern' ? 'border-neutral-400 text-blue-600 w-5 h-5' : 'border-black text-black'}`} />
+                                                {mode === 'view' && theme === 'paper' ? (
+                                                    <div className="w-4 h-4 rounded-full border border-black flex items-center justify-center shrink-0 bg-white">
+                                                        {isSelected && <div className="w-2 h-2 rounded-full bg-black"></div>}
+                                                    </div>
+                                                ) : (
+                                                    <RadioGroupItem value={opt} id={`${field.id}-${idx}`} className={`${theme === 'modern' ? 'border-neutral-400 text-blue-600 w-5 h-5' : 'border-black text-black'}`} />
+                                                )}
                                                 <Label htmlFor={`${field.id}-${idx}`} className={theme === 'modern' ? 'text-sm font-normal text-neutral-800 dark:text-neutral-200 cursor-pointer' : 'text-sm font-medium'}>
                                                     {opt} {mode === 'view' && isSelected && data[`${field.id}_specify_${idx}`] ? ` (${data[`${field.id}_specify_${idx}`]})` : ''}
                                                 </Label>
@@ -203,15 +209,21 @@ export default function DynamicFields({ schema, data, setData, errors, mode = 'e
             case 'checkbox': // Single checkbox (boolean)
                 return (
                     <div key={field.id} className={`${theme === 'modern' ? 'w-full bg-white dark:bg-neutral-900 p-6 rounded-xl shadow-sm border border-neutral-200/60 dark:border-neutral-800 transition-all hover:shadow-md' : widthClass} space-y-4`}>
-                        <div className={`flex items-start space-x-3 ${theme === 'modern' ? 'mt-2' : 'mt-6'}`}>
-                            <Checkbox
-                                id={field.id}
-                                required={field.required}
-                                checked={!!data[field.id]}
-                                onCheckedChange={(checked) => mode === 'edit' && setData(field.id, checked)}
-                                className={theme === 'modern' ? 'mt-1 border-neutral-400 data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600 w-5 h-5 rounded' : 'border-black data-[state=checked]:bg-black data-[state=checked]:text-white'}
-                                disabled={mode === 'view'}
-                            />
+                        <div className={`flex items-start space-x-3 ${theme === 'modern' ? 'mt-2' : 'mt-4'}`}>
+                            {mode === 'view' && theme === 'paper' ? (
+                                <div className={`w-4 h-4 border border-black flex items-center justify-center text-[10px] font-black shrink-0 ${!!data[field.id] ? 'bg-black text-white' : 'bg-white'}`}>
+                                    {!!data[field.id] ? '✓' : ''}
+                                </div>
+                            ) : (
+                                <Checkbox
+                                    id={field.id}
+                                    required={field.required}
+                                    checked={!!data[field.id]}
+                                    onCheckedChange={(checked) => mode === 'edit' && setData(field.id, checked)}
+                                    className={theme === 'modern' ? 'mt-1 border-neutral-400 data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600 w-5 h-5 rounded' : 'border-black data-[state=checked]:bg-black data-[state=checked]:text-white'}
+                                    disabled={mode === 'view'}
+                                />
+                            )}
                             <Label htmlFor={field.id} className={`${theme === 'modern' ? 'text-base font-normal text-neutral-800' : 'text-sm font-bold uppercase text-black dark:text-neutral-400'} cursor-pointer leading-tight`}>
                                 {field.label} {field.required && mode === 'edit' && <span className="text-red-500">*</span>}
                             </Label>
@@ -256,7 +268,7 @@ export default function DynamicFields({ schema, data, setData, errors, mode = 'e
                         <Label className={theme === 'modern' ? 'text-base font-medium text-neutral-900 dark:text-neutral-100 block' : 'text-[10pt] font-bold uppercase text-black dark:text-neutral-400'}>
                             {field.label} {field.required && mode === 'edit' && <span className="text-red-500">*</span>}
                         </Label>
-                        <div className={`flex ${theme === 'modern' ? 'flex-col gap-3' : `flex-wrap gap-4 border rounded-none p-4 border-black/10 ${field.layout === 'block' ? 'flex-col' : ''}`}`}>
+                        <div className={`flex ${theme === 'modern' ? 'flex-col gap-3' : `flex-wrap gap-4 ${field.layout === 'block' ? 'flex-col' : ''}`}`}>
                             {field.options?.map((opt: string, idx: number) => {
                                 const currentValues = Array.isArray(data[field.id]) ? data[field.id] : [];
                                 const isChecked = currentValues.includes(opt);
@@ -264,19 +276,25 @@ export default function DynamicFields({ schema, data, setData, errors, mode = 'e
                                 return (
                                     <div className="flex flex-col gap-2 w-full" key={idx}>
                                         <div className={`flex items-start space-x-3 ${theme === 'modern' ? 'p-1' : ''}`}>
-                                            <Checkbox
-                                                id={`${field.id}-${idx}`}
-                                                checked={isChecked}
-                                                onCheckedChange={(checked) => {
-                                                    if (mode === 'view') return;
-                                                    const newValues = checked
-                                                        ? [...currentValues, opt]
-                                                        : currentValues.filter((v: string) => v !== opt);
-                                                    setData(field.id, newValues);
-                                                }}
-                                                className={theme === 'modern' ? 'mt-0.5 border-neutral-400 data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600 w-5 h-5 rounded' : 'border-black data-[state=checked]:bg-black data-[state=checked]:text-white'}
-                                                disabled={mode === 'view'}
-                                            />
+                                            {mode === 'view' && theme === 'paper' ? (
+                                                <div className={`w-4 h-4 border border-black flex items-center justify-center text-[10px] font-black shrink-0 ${isChecked ? 'bg-black text-white' : 'bg-white'}`}>
+                                                    {isChecked ? '✓' : ''}
+                                                </div>
+                                            ) : (
+                                                <Checkbox
+                                                    id={`${field.id}-${idx}`}
+                                                    checked={isChecked}
+                                                    onCheckedChange={(checked) => {
+                                                        if (mode === 'view') return;
+                                                        const newValues = checked
+                                                            ? [...currentValues, opt]
+                                                            : currentValues.filter((v: string) => v !== opt);
+                                                        setData(field.id, newValues);
+                                                    }}
+                                                    className={theme === 'modern' ? 'mt-0.5 border-neutral-400 data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600 w-5 h-5 rounded' : 'border-black data-[state=checked]:bg-black data-[state=checked]:text-white'}
+                                                    disabled={mode === 'view'}
+                                                />
+                                            )}
                                             <Label htmlFor={`${field.id}-${idx}`} className={`${theme === 'modern' ? 'text-sm font-normal text-neutral-800 dark:text-neutral-200 cursor-pointer pt-1' : 'text-sm font-medium leading-none cursor-pointer pt-0.5'}`}>
                                                 {opt} {mode === 'view' && isChecked && data[`${field.id}_specify_${idx}`] ? ` (${data[`${field.id}_specify_${idx}`]})` : ''}
                                             </Label>
@@ -369,6 +387,74 @@ export default function DynamicFields({ schema, data, setData, errors, mode = 'e
 
             case 'table': {
                 const tableRows = Array.isArray(data[field.id]) ? data[field.id] : [];
+                const cols = field.columns || [];
+
+                // ── OFFICIAL PAPER PRINT THEME ──
+                if (theme === 'paper') {
+                    // Compute balanced percentage widths strictly summing to 100% so table never overflows
+                    const rawWeights = cols.map((col: any) => {
+                        const name = (col.name || '').toLowerCase();
+                        if (col.type === 'number' || name.includes('age')) return 8;
+                        if (name.includes('income')) return 11;
+                        if (name.includes('name')) return 20;
+                        if (name.includes('relation')) return 14;
+                        if (name.includes('attainment') || name.includes('education')) return 16;
+                        if (name.includes('occupation')) return 14;
+                        if (name.includes('remark')) return 17;
+                        return 14;
+                    });
+                    const totalWeight = rawWeights.reduce((a: number, b: number) => a + b, 0) || 1;
+                    const colWidths = rawWeights.map((w: number) => `${((w / totalWeight) * 100).toFixed(1)}%`);
+
+                    return (
+                        <div key={field.id} className="w-full space-y-2 pt-2 break-inside-avoid">
+                            <Label className="text-[10pt] font-black uppercase text-black block">
+                                {field.label}
+                            </Label>
+                            <div className="w-full overflow-hidden border border-black">
+                                <table className="w-full table-fixed border-collapse text-black text-left">
+                                    <thead>
+                                        <tr className="bg-neutral-100 print:bg-neutral-100 border-b border-black text-[7.5pt] sm:text-[8pt] font-bold uppercase tracking-tight text-center">
+                                            {cols.map((col: any, cIdx: number) => (
+                                                <th
+                                                    key={cIdx}
+                                                    style={{ width: colWidths[cIdx] }}
+                                                    className="p-1 px-1.5 border-r border-black last:border-r-0 break-words align-middle text-center"
+                                                >
+                                                    {col.name}
+                                                </th>
+                                            ))}
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-black">
+                                        {tableRows.map((row: any, rIdx: number) => (
+                                            <tr key={rIdx} className="min-h-[1.75rem]">
+                                                {cols.map((col: any, cIdx: number) => (
+                                                    <td
+                                                        key={cIdx}
+                                                        className="p-1 px-1.5 border-r border-black last:border-r-0 text-[8pt] sm:text-[8.5pt] text-black break-words align-middle"
+                                                    >
+                                                        {row[col.name] || '—'}
+                                                    </td>
+                                                ))}
+                                            </tr>
+                                        ))}
+                                        {/* In official print view, if fewer than 3 rows, render neat blank lines matching official paper form */}
+                                        {mode === 'view' && Array.from({ length: Math.max(0, 3 - tableRows.length) }).map((_, bIdx) => (
+                                            <tr key={`blank-${bIdx}`} className="h-6">
+                                                {cols.map((_: any, cIdx: number) => (
+                                                    <td key={cIdx} className="p-1 border-r border-black last:border-r-0">&nbsp;</td>
+                                                ))}
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    );
+                }
+
+                // ── MODERN WEB APP THEME ──
                 return (
                     <div key={field.id} className={`${theme === 'modern' ? 'w-full bg-white dark:bg-neutral-900 p-6 rounded-xl shadow-sm border border-neutral-200/60 dark:border-neutral-800 transition-all hover:shadow-md' : widthClass} space-y-4 pt-4`}>
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2">
@@ -394,39 +480,62 @@ export default function DynamicFields({ schema, data, setData, errors, mode = 'e
                             )}
                         </div>
 
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-left border-collapse border border-neutral-200 dark:border-neutral-800">
+                        <div className="overflow-x-auto rounded-lg border border-neutral-200 dark:border-neutral-800">
+                            <table className="w-full text-left border-collapse min-w-[750px]">
                                 <thead>
                                     <tr className="bg-neutral-50 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 text-xs font-bold uppercase tracking-wider border-b border-neutral-200 dark:border-neutral-800">
-                                        {(field.columns || []).map((col: any, cIdx: number) => (
-                                            <th key={cIdx} className="px-4 py-2 border-r border-neutral-200 dark:border-neutral-800">{col.name}</th>
-                                        ))}
-                                        {mode === 'edit' && <th className="px-4 py-2 w-12 text-center">Actions</th>}
+                                        {(field.columns || []).map((col: any, cIdx: number) => {
+                                            const isNarrow = col.type === 'number' || (col.name || '').toLowerCase().includes('age');
+                                            const isWide = (col.name || '').length > 20 || (col.name || '').toLowerCase().includes('remark');
+                                            return (
+                                                <th 
+                                                    key={cIdx} 
+                                                    className={`px-3 py-2.5 border-r border-neutral-200 dark:border-neutral-800 ${
+                                                        isNarrow ? 'w-24 min-w-[85px]' : isWide ? 'min-w-[220px]' : 'min-w-[140px]'
+                                                    }`}
+                                                >
+                                                    {col.name}
+                                                </th>
+                                            );
+                                        })}
+                                        {mode === 'edit' && <th className="px-3 py-2.5 w-14 text-center">Actions</th>}
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {tableRows.map((row: any, rIdx: number) => (
                                         <tr key={rIdx} className="border-b border-neutral-200 dark:border-neutral-800 hover:bg-neutral-50/50 dark:hover:bg-neutral-800/50">
-                                            {(field.columns || []).map((col: any, cIdx: number) => (
-                                                <td key={cIdx} className="px-4 py-2 border-r border-neutral-200 dark:border-neutral-800">
-                                                    {mode === 'view' ? (
-                                                        <span className="text-sm font-bold text-neutral-800 dark:text-neutral-200">{row[col.name] || ''}</span>
-                                                    ) : (
-                                                        <Input
-                                                            type={col.type === 'number' ? 'number' : 'text'}
-                                                            value={row[col.name] || ''}
-                                                            onChange={(e) => {
-                                                                const updatedRows = [...tableRows];
-                                                                updatedRows[rIdx] = { ...updatedRows[rIdx], [col.name]: e.target.value };
-                                                                setData(field.id, updatedRows);
-                                                            }}
-                                                            className="h-9 px-2 text-sm bg-transparent border border-neutral-200 dark:border-neutral-700 focus:ring-1 focus:ring-blue-500 rounded text-neutral-900 dark:text-white"
-                                                        />
-                                                    )}
-                                                </td>
-                                            ))}
+                                            {(field.columns || []).map((col: any, cIdx: number) => {
+                                                const isNarrow = col.type === 'number' || (col.name || '').toLowerCase().includes('age');
+                                                const isWide = (col.name || '').length > 20 || (col.name || '').toLowerCase().includes('remark');
+                                                return (
+                                                    <td 
+                                                        key={cIdx} 
+                                                        className={`px-2 py-2 border-r border-neutral-200 dark:border-neutral-800 ${
+                                                            isNarrow ? 'w-24 min-w-[85px]' : isWide ? 'min-w-[220px]' : 'min-w-[140px]'
+                                                        }`}
+                                                    >
+                                                        {mode === 'view' ? (
+                                                            <span className="text-sm font-medium text-neutral-800 dark:text-neutral-200 block px-1">{row[col.name] || '—'}</span>
+                                                        ) : (
+                                                            <Input
+                                                                type="text"
+                                                                inputMode={col.type === 'number' ? 'numeric' : 'text'}
+                                                                value={row[col.name] || ''}
+                                                                onChange={(e) => {
+                                                                    const val = col.type === 'number' ? e.target.value.replace(/[^0-9]/g, '') : e.target.value;
+                                                                    const updatedRows = [...tableRows];
+                                                                    updatedRows[rIdx] = { ...updatedRows[rIdx], [col.name]: val };
+                                                                    setData(field.id, updatedRows);
+                                                                }}
+                                                                placeholder={col.type === 'number' ? '0' : ''}
+                                                                className="h-9 px-2.5 text-sm bg-background border border-neutral-200 dark:border-neutral-700 focus:ring-1 focus:ring-primary rounded w-full"
+                                                            />
+                                                        )}
+                                                    </td>
+                                                );
+                                            })}
                                             {mode === 'edit' && (
-                                                <td className="px-4 py-2 text-center">
+                                                <td className="px-2 py-2 text-center">
                                                     <Button
                                                         type="button"
                                                         variant="ghost"
@@ -435,7 +544,7 @@ export default function DynamicFields({ schema, data, setData, errors, mode = 'e
                                                             const updatedRows = tableRows.filter((_: any, i: number) => i !== rIdx);
                                                             setData(field.id, updatedRows);
                                                         }}
-                                                        className="h-8 w-8 text-neutral-400 hover:text-red-500 hover:bg-red-50 rounded no-print"
+                                                        className="h-8 w-8 text-neutral-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 rounded no-print"
                                                     >
                                                         <Trash2 className="w-4 h-4" />
                                                     </Button>
@@ -446,7 +555,7 @@ export default function DynamicFields({ schema, data, setData, errors, mode = 'e
                                     {tableRows.length === 0 && (
                                         <tr>
                                             <td colSpan={(field.columns || []).length + (mode === 'edit' ? 1 : 0)} className="text-center py-6 text-xs italic text-neutral-400 bg-neutral-50/20 dark:bg-neutral-800/10">
-                                                No entries added. Click "Add Row" to start.
+                                                {mode === 'edit' ? 'No entries added. Click "Add Row" to start.' : 'No entries recorded.'}
                                             </td>
                                         </tr>
                                     )}
@@ -476,11 +585,9 @@ export default function DynamicFields({ schema, data, setData, errors, mode = 'e
                 if (!content) return null;
 
                 return (
-                    <React.Fragment key={index}>
+                    <React.Fragment key={field.id || index}>
                         {field.start_row && theme === 'paper' && <div className="basis-full h-0"></div>}
-                        <div className={theme === 'modern' ? 'w-full' : ''}>
-                            {content}
-                        </div>
+                        {content}
                     </React.Fragment>
                 );
             })}

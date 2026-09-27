@@ -211,40 +211,11 @@ class DatabaseBackupService
     }
 
     /**
-     * Download backup file (automatically decrypts encrypted snapshots for download)
+     * Download backup file (Disabled for unencrypted downloads; use downloadPasswordProtectedZip).
      */
     public function downloadBackup(string $filename)
     {
-        $relativePath = "{$this->backupDir}/{$filename}";
-        if (!Storage::disk($this->disk)->exists($relativePath)) {
-            throw new Exception("Backup file not found.");
-        }
-
-        $rawContent = Storage::disk($this->disk)->get($relativePath);
-
-        // If file is encrypted on disk, decrypt it so admin gets a ready-to-use database archive
-        $wasEncrypted = false;
-        try {
-            $decrypted = Crypt::decryptString($rawContent);
-            $rawContent = $decrypted;
-            $wasEncrypted = true;
-        } catch (\Throwable $e) {
-            // Not encrypted
-        }
-
-        if ($wasEncrypted || str_ends_with($filename, '.enc')) {
-            $downloadName = preg_replace('/\.enc$/', '', $filename);
-            $isGzip = str_starts_with($rawContent, "\x1f\x8b") || str_contains($downloadName, '.gz');
-            $contentType = $isGzip ? 'application/gzip' : 'application/sql';
-
-            return response()->streamDownload(function () use ($rawContent) {
-                echo $rawContent;
-            }, $downloadName, [
-                'Content-Type' => $contentType,
-            ]);
-        }
-
-        return response()->download(Storage::disk($this->disk)->path($relativePath));
+        throw new Exception("Direct unencrypted backup download is disabled to prevent sensitive data leakage. All backup downloads require an AES-256 encryption passphrase via downloadPasswordProtectedZip.");
     }
 
     /**

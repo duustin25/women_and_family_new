@@ -108,11 +108,22 @@ export default function Show({ organization }: { organization: any }) {
                                         )}
                                     </ul>
 
-                                    <Link href={`/organizations/${record.slug}/apply`}>
-                                        <Button className="w-full bg-[#ce1126] hover:bg-red-700 text-white font-black uppercase h-14 rounded-none tracking-widest text-xs shadow-lg transition-all active:scale-95">
-                                            Open Membership Form <Briefcase className="ml-2 w-4 h-4" />
-                                        </Button>
-                                    </Link>
+                                    {record.is_active === false ? (
+                                        <div className="p-4 rounded-sm bg-amber-500/10 border border-amber-500/30 text-center space-y-1.5">
+                                            <p className="text-xs font-black text-amber-400 uppercase tracking-widest">
+                                                Applications Paused
+                                            </p>
+                                            <p className="text-[11px] text-slate-300 leading-relaxed">
+                                                Public membership applications for this organization are temporarily inactive or under administrative review.
+                                            </p>
+                                        </div>
+                                    ) : (
+                                        <Link href={`/organizations/${record.slug}/apply`}>
+                                            <Button className="w-full bg-[#ce1126] hover:bg-red-700 text-white font-black uppercase h-14 rounded-none tracking-widest text-xs shadow-lg transition-all active:scale-95">
+                                                Open Membership Form <Briefcase className="ml-2 w-4 h-4" />
+                                            </Button>
+                                        </Link>
+                                    )}
                                 </div>
 
                                 <div className="bg-blue-50 dark:bg-slate-900 p-6 rounded-sm border border-blue-100 dark:border-slate-800">

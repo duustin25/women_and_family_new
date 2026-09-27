@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from '@inertiajs/react';
 import { 
     Users, 
     MapPin, 
@@ -9,7 +10,11 @@ import {
     Eye, 
     PlusCircle, 
     Send,
-    CheckCircle2
+    CheckCircle2,
+    FileText,
+    FileSpreadsheet,
+    Printer,
+    ExternalLink
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -85,6 +90,8 @@ export function MembersTable({
                     </TableRow>
                 ) : (
                     members.map((member) => {
+                        const applicationId = member.membership_application_id || member.application?.id;
+                        const orgSlug = member.organization?.slug;
                         const pendingDispatches = member.dispatches?.filter(d => d.status === 'Pending') || [];
                         const address = member.application?.address || member.member_meta?.address;
                         const email = member.email || member.member_meta?.email;
@@ -104,9 +111,23 @@ export function MembersTable({
                                             {getInitials(member.fullname)}
                                         </div>
                                         <div className="flex flex-col min-w-0">
-                                            <span className="font-semibold text-sm tracking-tight text-foreground truncate">
-                                                {member.fullname}
-                                            </span>
+                                            <div className="flex items-center gap-2">
+                                                <button
+                                                    onClick={() => onViewDetail(member)}
+                                                    className="font-semibold text-sm tracking-tight text-foreground hover:text-primary hover:underline transition-colors text-left truncate cursor-pointer"
+                                                >
+                                                    {member.fullname}
+                                                </button>
+                                                {applicationId && (
+                                                    <Link 
+                                                        href={`/admin/applications/${applicationId}`} 
+                                                        title="Go to official application record"
+                                                        className="text-[10px] text-muted-foreground hover:text-primary hover:underline font-mono bg-muted/60 px-1 py-0.2 rounded"
+                                                    >
+                                                        App #{applicationId}
+                                                    </Link>
+                                                )}
+                                            </div>
                                             
                                             {email && (
                                                 <span className="text-[11px] text-muted-foreground flex items-center gap-1 truncate">
@@ -134,9 +155,22 @@ export function MembersTable({
 
                                 {/* Organization */}
                                 <TableCell className="py-3">
-                                    <Badge variant="outline" className="text-xs font-medium py-1 px-2.5 bg-muted/30">
-                                        {member.organization?.name || 'General Sector'}
-                                    </Badge>
+                                    {orgSlug ? (
+                                        <Link 
+                                            href={`/admin/organizations/${orgSlug}/members?search=${encodeURIComponent(member.fullname)}`}
+                                            title={`Open ${member.organization?.name || 'Sector'} Directory`}
+                                            className="inline-block group"
+                                        >
+                                            <Badge variant="outline" className="text-xs font-medium py-1 px-2.5 bg-muted/30 group-hover:bg-primary/10 group-hover:border-primary/40 transition-colors flex items-center gap-1">
+                                                <span>{member.organization?.name || 'General Sector'}</span>
+                                                <ExternalLink className="w-2.5 h-2.5 opacity-40 group-hover:opacity-100" />
+                                            </Badge>
+                                        </Link>
+                                    ) : (
+                                        <Badge variant="outline" className="text-xs font-medium py-1 px-2.5 bg-muted/30">
+                                            {member.organization?.name || 'General Sector'}
+                                        </Badge>
+                                    )}
                                 </TableCell>
 
                                 {/* Status & Entitlements */}
@@ -189,7 +223,7 @@ export function MembersTable({
                                                     <MoreHorizontal className="h-4 w-4" />
                                                 </Button>
                                             </DropdownMenuTrigger>
-                                            <DropdownMenuContent align="end" className="w-48">
+                                            <DropdownMenuContent align="end" className="w-52">
                                                 <DropdownMenuLabel className="text-xs font-semibold">
                                                     Member Actions
                                                 </DropdownMenuLabel>
@@ -200,8 +234,36 @@ export function MembersTable({
                                                     className="cursor-pointer text-xs gap-2"
                                                 >
                                                     <Eye className="w-3.5 h-3.5 text-primary" />
-                                                    <span>View Full Dossier</span>
+                                                    <span>View Member Dossier</span>
                                                 </DropdownMenuItem>
+
+                                                {applicationId && (
+                                                    <>
+                                                        <DropdownMenuItem asChild className="cursor-pointer text-xs gap-2">
+                                                            <Link href={`/admin/applications/${applicationId}`}>
+                                                                <FileText className="w-3.5 h-3.5 text-blue-600" />
+                                                                <span>Full Application Details</span>
+                                                            </Link>
+                                                        </DropdownMenuItem>
+                                                        <DropdownMenuItem asChild className="cursor-pointer text-xs gap-2">
+                                                            <a href={`/admin/applications/${applicationId}/print`} target="_blank" rel="noopener noreferrer">
+                                                                <Printer className="w-3.5 h-3.5 text-muted-foreground" />
+                                                                <span>Print Official Form</span>
+                                                            </a>
+                                                        </DropdownMenuItem>
+                                                    </>
+                                                )}
+
+                                                {orgSlug && (
+                                                    <DropdownMenuItem asChild className="cursor-pointer text-xs gap-2">
+                                                        <Link href={`/admin/organizations/${orgSlug}/members?search=${encodeURIComponent(member.fullname)}`}>
+                                                            <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
+                                                            <span>Open in Org Directory</span>
+                                                        </Link>
+                                                    </DropdownMenuItem>
+                                                )}
+
+                                                <DropdownMenuSeparator />
 
                                                 <DropdownMenuItem 
                                                     onClick={() => onTagBenefit(member)}

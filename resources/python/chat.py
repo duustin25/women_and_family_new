@@ -85,8 +85,8 @@ def predict_class(sentence, model):
     res = model.predict_proba([p])[0]
     
     # 3. FILTER
-    # Only accept predictions with > 25% confidence to avoid random guessing.
-    ERROR_THRESHOLD = 0.25
+    # Only accept predictions with > 70% confidence to avoid arbitrary assignment of unsupported queries.
+    ERROR_THRESHOLD = 0.70
     results = [[i, r] for i, r in enumerate(res) if r > ERROR_THRESHOLD]
     
     # Sort by probability strength

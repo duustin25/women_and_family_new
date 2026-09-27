@@ -58,6 +58,11 @@ class AuditObserver
                 }
             }
 
+            // Organization Activation / Deactivation audit action
+            if ($model instanceof \App\Models\Organization && isset($dirty['is_active'])) {
+                $action = $dirty['is_active'] ? 'ORGANIZATION_ACTIVATED' : 'ORGANIZATION_DEACTIVATED';
+            }
+
             $this->logAction(
                 $model,
                 $action,

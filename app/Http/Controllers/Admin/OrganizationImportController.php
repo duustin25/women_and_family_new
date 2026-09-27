@@ -47,10 +47,18 @@ class OrganizationImportController extends Controller
             $file = $request->file('csv_file');
             $result = $this->importService->importCsv($organization, $file->getRealPath());
 
-            $msg = "Bulk import completed! Successfully imported {$result['imported_count']} member(s).";
-            if ($result['skipped_count'] > 0) {
-                $msg .= " ({$result['skipped_count']} duplicate/invalid row(s) skipped).";
+            $parts = [];
+            if ($result['imported_count'] > 0) {
+                $parts[] = "{$result['imported_count']} new member(s) enrolled";
             }
+            if ($result['updated_count'] > 0) {
+                $parts[] = "{$result['updated_count']} existing member(s) updated";
+            }
+            if ($result['skipped_count'] > 0) {
+                $parts[] = "{$result['skipped_count']} row(s) skipped";
+            }
+
+            $msg = "Bulk import completed! " . (empty($parts) ? "No member rows found." : implode(', ', $parts) . ".");
 
             return redirect()->back()->with('success', $msg)->with('import_errors', $result['errors']);
         } catch (Exception $e) {

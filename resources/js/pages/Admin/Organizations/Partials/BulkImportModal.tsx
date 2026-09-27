@@ -54,12 +54,13 @@ export default function BulkImportModal({ open, onOpenChange, organization }: Bu
             onFinish: () => {
                 setUploading(false);
             },
-            onSuccess: () => {
-                toast.success(`Bulk member import for '${organization.name}' completed!`);
+            onSuccess: (page: any) => {
+                const flashSuccess = page.props?.flash?.success;
+                toast.success(flashSuccess || `Bulk member import for '${organization.name}' completed!`);
                 setFile(null);
                 onOpenChange(false);
             },
-            onError: (errors) => {
+            onError: () => {
                 toast.error('Failed to import CSV. Check file format or required columns.');
             },
         });
@@ -74,7 +75,7 @@ export default function BulkImportModal({ open, onOpenChange, organization }: Bu
                         Bulk Import Logbook Members ({organization.name})
                     </DialogTitle>
                     <DialogDescription className="text-xs text-muted-foreground mt-1">
-                        Batch import physical logbook entries directly into the system database using custom CSV schema mapping.
+                        Batch import physical logbook entries or re-import exported member spreadsheets directly into the system database.
                     </DialogDescription>
                 </DialogHeader>
 
@@ -86,7 +87,7 @@ export default function BulkImportModal({ open, onOpenChange, organization }: Bu
                             Step 1: Download Custom CSV Schema Template
                         </div>
                         <p className="text-xs text-muted-foreground leading-relaxed">
-                            The template contains predefined base columns (`fullname`, `email`, `address`, `phone`, `gender`, `birthdate`) plus dynamic custom JSON fields matching **{organization.name}**.
+                            The template contains the exact fields and sample entries customized for **{organization.name}**. Any existing members in your file will be updated, while new members will be automatically enrolled.
                         </p>
                         <Button
                             type="button"

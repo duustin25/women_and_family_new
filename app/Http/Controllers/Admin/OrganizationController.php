@@ -32,11 +32,19 @@ class OrganizationController extends Controller
             });
         }
 
-        $organization = $query->paginate(7)->withQueryString();
+        if ($request->filled('status') && $request->input('status') !== 'all') {
+            if ($request->input('status') === 'active') {
+                $query->where('is_active', true);
+            } elseif ($request->input('status') === 'inactive') {
+                $query->where('is_active', false);
+            }
+        }
+
+        $organization = $query->paginate(10)->withQueryString();
 
         return Inertia::render('Admin/Organizations/Index', [
             'organization' => OrganizationResource::collection($organization),
-            'filters' => $request->only(['search'])
+            'filters' => $request->only(['search', 'status'])
         ]);
     }
 
@@ -206,33 +214,32 @@ class OrganizationController extends Controller
             ->with('success', 'Organization updated successfully.');
     }
 
+    public function toggleActive(Request $request, Organization $organization)
+    {
+        // RBAC: Only Admin and Head Committee can activate/deactivate (Org Presidents cannot)
+        if (!$request->user()->isStaff()) {
+            abort(403, 'Only Administrators and Committee Heads can activate or deactivate organizations.');
+        }
+
+        $organization->update([
+            'is_active' => !$organization->is_active
+        ]);
+
+        $statusText = $organization->is_active ? 'activated' : 'deactivated';
+
+        return back()->with('success', "Organization '{$organization->name}' has been {$statusText} successfully.");
+    }
+
     public function destroy(Request $request, Organization $organization)
     {
-        // Only Admin can destroy
-        if (!$request->user()->isAdmin()) {
-            abort(403, 'Only Admins can delete organizations.');
+        // RBAC: Only Admin and Head Committee can delete (Org Presidents cannot)
+        if (!$request->user()->isStaff()) {
+            abort(403, 'Org Presidents are not authorized to delete organizations.');
         }
 
-        if ($organization->image_path) {
-            Storage::disk('public')->delete($organization->image_path);
-        }
-
-        if ($organization->left_logo_path) {
-            Storage::disk('public')->delete($organization->left_logo_path);
-        }
-
-        if ($organization->right_logo_path) {
-            Storage::disk('public')->delete($organization->right_logo_path);
-        }
-
-        // Unlink president before deleting
-        $president = $organization->president;
-        if ($president) {
-            $president->update(['organization_id' => null]);
-        }
-
+        // Soft delete the organization without purging uploaded media or breaking relations
         $organization->delete();
-        return redirect()->route('admin.organizations.index')->with('success', 'Organization deleted.');
+        return redirect()->route('admin.organizations.index')->with('success', "Organization '{$organization->name}' moved to trash.");
     }
 
     public function members(Request $request, Organization $organization)
@@ -243,9 +250,24 @@ class OrganizationController extends Controller
             abort(403, 'You can only view members of your own organization.');
         }
 
-        $query = \App\Models\MembershipApplication::approved()
-            ->with('organization')
+        $tab = $request->input('tab', 'active') === 'archived' ? 'archived' : 'active';
+
+        $activeCount = \App\Models\MembershipApplication::where('organization_id', $organization->id)
+            ->whereIn('status', ['Approved', 'approved'])
+            ->count();
+
+        $archivedCount = \App\Models\MembershipApplication::where('organization_id', $organization->id)
+            ->whereIn('status', ['Inactive', 'inactive'])
+            ->count();
+
+        $query = \App\Models\MembershipApplication::with('organization')
             ->where('organization_id', $organization->id);
+
+        if ($tab === 'archived') {
+            $query->whereIn('status', ['Inactive', 'inactive']);
+        } else {
+            $query->whereIn('status', ['Approved', 'approved']);
+        }
 
         if ($request->filled('search')) {
             $searchTerm = $request->input('search');
@@ -277,7 +299,12 @@ class OrganizationController extends Controller
         return Inertia::render('Admin/Organizations/Members', [
             'organization' => new OrganizationResource($organization),
             'members' => \App\Http\Resources\MembershipApplicationResource::collection($members),
-            'filters' => $request->only(['search', 'sort', 'direction'])
+            'filters' => $request->only(['search', 'sort', 'direction', 'tab']),
+            'tab' => $tab,
+            'counts' => [
+                'active' => $activeCount,
+                'archived' => $archivedCount,
+            ]
         ]);
     }
 
@@ -289,8 +316,15 @@ class OrganizationController extends Controller
             abort(403, 'You can only view members of your own organization.');
         }
 
-        $query = \App\Models\MembershipApplication::approved()
-            ->where('organization_id', $organization->id);
+        $tab = $request->input('tab', 'active') === 'archived' ? 'archived' : 'active';
+
+        $query = \App\Models\MembershipApplication::where('organization_id', $organization->id);
+
+        if ($tab === 'archived') {
+            $query->whereIn('status', ['Inactive', 'inactive']);
+        } else {
+            $query->whereIn('status', ['Approved', 'approved']);
+        }
 
         if ($request->filled('search')) {
             $searchTerm = $request->input('search');
@@ -325,15 +359,23 @@ class OrganizationController extends Controller
         $dynamicColumnKeys = [];
         $dynamicColumnLabels = [];
 
+        $ignoredKeys = [
+            'fullname', 'full_name', 'name', 'address', 'registered_address',
+            'email', 'email_address', 'imported_via', 'imported_at', 'status',
+            'actioned_at', 'approval_date', 'approved_by', 'recommended_by',
+            'created_at', 'updated_at', 'id', 'organization_id', 'consent'
+        ];
+
         foreach ($schemaFields as $field) {
-            if (isset($field['id']) && 
+            $type = $field['type'] ?? 'text';
+            $id = $field['id'] ?? null;
+            if ($id && 
                 empty($field['is_core']) && 
-                ($field['type'] ?? '') !== 'section' && 
-                $field['id'] !== 'fullname' && 
-                $field['id'] !== 'address'
+                !in_array($type, ['section', 'paragraph']) && 
+                !in_array($id, $ignoredKeys)
             ) {
-                $dynamicColumnKeys[] = $field['id'];
-                $dynamicColumnLabels[$field['id']] = $field['label'] ?? str_replace('_', ' ', strtoupper($field['id']));
+                $dynamicColumnKeys[] = $id;
+                $dynamicColumnLabels[$id] = $field['label'] ?? ucwords(str_replace('_', ' ', $id));
             }
         }
 
@@ -341,14 +383,21 @@ class OrganizationController extends Controller
         foreach ($members as $member) {
             $formData = $member->form_data ?: [];
             foreach (array_keys($formData) as $key) {
-                if ($key !== 'fullname' && $key !== 'address' && !in_array($key, $dynamicColumnKeys)) {
+                $cleanKey = preg_replace('/_retired$/i', '', $key);
+                if (!in_array($key, $ignoredKeys) && 
+                    !in_array($cleanKey, $ignoredKeys) && 
+                    !in_array($key, $dynamicColumnKeys) && 
+                    !in_array($cleanKey, $dynamicColumnKeys) &&
+                    strlen($key) < 50
+                ) {
                     $dynamicColumnKeys[] = $key;
-                    $dynamicColumnLabels[$key] = str_replace('_', ' ', strtoupper($key)) . ' (Retired)';
+                    $dynamicColumnLabels[$key] = ucwords(str_replace(['_', '-'], ' ', $cleanKey));
                 }
             }
         }
 
-        $filename = Str::slug($organization->name) . "_members_" . now()->format('Ymd_His') . ".csv";
+        $statusLabel = $tab === 'archived' ? 'archived_members' : 'active_members';
+        $filename = Str::slug($organization->name) . "_{$statusLabel}_" . now()->format('Ymd_His') . ".csv";
 
         $headers = [
             "Content-type"        => "text/csv",
@@ -462,5 +511,43 @@ class OrganizationController extends Controller
         };
 
         return response()->stream($callback, 200, $headers);
+    }
+
+    public function toggleMemberStatus(Request $request, Organization $organization, \App\Models\MembershipApplication $application)
+    {
+        // RBAC: President check
+        $user = $request->user();
+        if ($user->isPresident() && (int)$user->organization_id !== (int)$organization->id) {
+            abort(403, 'Unauthorized.');
+        }
+
+        if ((int)$application->organization_id !== (int)$organization->id) {
+            abort(404, 'Application does not belong to this organization.');
+        }
+
+        $validated = $request->validate([
+            'status' => 'required|in:Approved,Inactive',
+            'reason' => 'nullable|string|max:255',
+        ]);
+
+        $newStatus = $validated['status'];
+        $application->update([
+            'status' => $newStatus,
+            'actioned_at' => now(),
+        ]);
+
+        // Synchronize corresponding Member model
+        $member = \App\Models\Member::where('membership_application_id', $application->id)->first();
+        if ($member) {
+            $member->update([
+                'status' => $newStatus === 'Approved' ? \App\Models\Member::STATUS_ACTIVE : \App\Models\Member::STATUS_INACTIVE,
+            ]);
+        }
+
+        $msg = $newStatus === 'Approved' 
+            ? "Member '{$application->fullname}' has been reactivated to the Active roster."
+            : "Member '{$application->fullname}' has been archived / marked as Inactive.";
+
+        return back()->with('success', $msg);
     }
 }

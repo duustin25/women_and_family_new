@@ -1,6 +1,7 @@
 import { Head, Link, router } from '@inertiajs/react';
 import {
-    Search, ChevronRight, Users, ArrowLeft, ArrowUp, ArrowDown, Download, Upload
+    Search, ChevronRight, Users, ArrowLeft, ArrowUp, ArrowDown, Download, Upload,
+    Archive, RotateCcw, UserCheck
 } from 'lucide-react';
 import { useState, useMemo } from 'react';
 import { Badge } from "@/components/ui/badge";
@@ -42,11 +43,18 @@ interface PageProps {
         search?: string;
         sort?: string;
         direction?: string;
+        tab?: string;
+    };
+    tab?: string;
+    counts?: {
+        active: number;
+        archived: number;
     };
 }
 
-export default function Members({ organization, members, filters }: PageProps) {
+export default function Members({ organization, members, filters, tab = 'active', counts }: PageProps) {
     const org = organization?.data ?? organization;
+    const activeTab = filters?.tab || tab || 'active';
     const [searchQuery, setSearchQuery] = useState(filters?.search ?? '');
     const [importModalOpen, setImportModalOpen] = useState(false);
 
@@ -57,6 +65,13 @@ export default function Members({ organization, members, filters }: PageProps) {
     const dynamicColumns = useMemo(() => {
         const keys = new Set<string>();
 
+        const ignoredKeys = new Set([
+            'fullname', 'full_name', 'name', 'address', 'registered_address',
+            'email', 'email_address', 'imported_via', 'imported_at', 'status',
+            'actioned_at', 'approval_date', 'approved_by', 'recommended_by',
+            'created_at', 'updated_at', 'id', 'organization_id', 'consent'
+        ]);
+
         // 1. Gather all fields defined in the current form schema (Active Fields)
         const schemaRaw = org.form_schema;
         let schemaFields: any[] = [];
@@ -66,8 +81,15 @@ export default function Members({ organization, members, filters }: PageProps) {
 
         if (Array.isArray(schemaFields)) {
             schemaFields.forEach((field: any) => {
-                // Exclude core static columns (fullname, address) and section dividers
-                if (field.id && !field.is_core && field.type !== 'section' && field.id !== 'fullname' && field.id !== 'address') {
+                const type = field.type || 'text';
+                // Exclude layout dividers (section, paragraph) and core static columns
+                if (
+                    field.id && 
+                    !field.is_core && 
+                    type !== 'section' && 
+                    type !== 'paragraph' && 
+                    !ignoredKeys.has(field.id)
+                ) {
                     keys.add(field.id);
                 }
             });
@@ -80,7 +102,13 @@ export default function Members({ organization, members, filters }: PageProps) {
                 : member.form_data || {};
 
             Object.keys(formData).forEach(key => {
-                if (key !== 'fullname' && key !== 'address') {
+                const cleanKey = key.replace(/_retired$/i, '');
+                if (
+                    !ignoredKeys.has(key) && 
+                    !ignoredKeys.has(cleanKey) &&
+                    !keys.has(cleanKey) &&
+                    key.length < 50
+                ) {
                     keys.add(key);
                 }
             });
@@ -90,9 +118,12 @@ export default function Members({ organization, members, filters }: PageProps) {
     }, [membersData, org.form_schema]);
 
     const getFieldLabel = (fieldId: string) => {
-        if (!org.form_schema || !Array.isArray(org.form_schema)) return fieldId.replace(/_/g, ' ').toUpperCase();
-        const field = org.form_schema.find((f: any) => f.id === fieldId);
-        return field ? field.label : fieldId.replace(/_/g, ' ').toUpperCase();
+        if (org.form_schema && Array.isArray(org.form_schema)) {
+            const field = org.form_schema.find((f: any) => f.id === fieldId);
+            if (field?.label) return field.label;
+        }
+        const clean = fieldId.replace(/_retired$/i, '').replace(/_/g, ' ');
+        return clean.toUpperCase();
     };
 
     const isFieldRetired = (fieldId: string) => {
@@ -149,8 +180,33 @@ export default function Members({ organization, members, filters }: PageProps) {
         applyFilters(searchQuery, column, newDirection);
     };
 
+    const handleTabChange = (newTab: 'active' | 'archived') => {
+        const query: any = { tab: newTab, page: 1 };
+        if (searchQuery) query.search = searchQuery;
+        if (currentSort) query.sort = currentSort;
+        if (currentDirection) query.direction = currentDirection;
+
+        router.get(`/admin/organizations/${org.slug}/members`, query, { preserveState: true });
+    };
+
+    const handleToggleStatus = (member: Member) => {
+        const isCurrentActive = (member.status || '').toLowerCase() === 'approved';
+        const targetStatus = isCurrentActive ? 'Inactive' : 'Approved';
+        const actionPrompt = isCurrentActive 
+            ? `Archive "${member.fullname}" and mark them as Inactive? They will be removed from the active roster and GAD notifications.`
+            : `Reactivate "${member.fullname}" back to the active members roster?`;
+
+        if (confirm(actionPrompt)) {
+            router.patch(
+                `/admin/organizations/${org.slug}/members/${member.id}/toggle-status`,
+                { status: targetStatus },
+                { preserveScroll: true }
+            );
+        }
+    };
+
     const applyFilters = (search: string, sort: string, direction: string) => {
-        const query: any = {};
+        const query: any = { tab: activeTab };
         if (search) query.search = search;
         if (sort) query.sort = sort;
         if (direction) query.direction = direction;
@@ -159,7 +215,7 @@ export default function Members({ organization, members, filters }: PageProps) {
     };
 
     const handleExportCsv = () => {
-        const queryParams: any = {};
+        const queryParams: any = { tab: activeTab };
         if (searchQuery) queryParams.search = searchQuery;
         if (currentSort) queryParams.sort = currentSort;
         if (currentDirection) queryParams.direction = currentDirection;
@@ -205,37 +261,42 @@ export default function Members({ organization, members, filters }: PageProps) {
                                 </h2>
                             </div>
                             <p className="text-neutral-500 dark:text-neutral-400 font-medium text-sm ml-11">
-                                Comprehensive spreadsheet view of active members.
+                                {activeTab === 'archived' 
+                                    ? 'Archived and inactive members roster (soft-deleted records preserved for audit history).' 
+                                    : 'Comprehensive spreadsheet view of active accredited members.'}
                             </p>
                         </div>
 
                         <div className="flex items-center gap-4">
                             <div className="text-right hidden md:block mr-4">
                                 <span className="block text-3xl font-black text-neutral-900 dark:text-white leading-none">
-                                    {members.meta?.total || 0}
+                                    {activeTab === 'archived' ? (counts?.archived ?? members.meta?.total ?? 0) : (counts?.active ?? members.meta?.total ?? 0)}
                                 </span>
-                                <span className="text-[10px] font-bold uppercase text-neutral-400 tracking-widest">Active Members</span>
+                                <span className="text-[10px] font-bold uppercase text-neutral-400 tracking-widest">
+                                    {activeTab === 'archived' ? 'Archived Members' : 'Active Members'}
+                                </span>
                             </div>
 
-                            <Button 
-                                variant="outline" 
-                                className="h-10 rounded-lg border-emerald-300 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 shadow-sm" 
-                                onClick={() => setImportModalOpen(true)}
-                            >
-                                <Upload size={16} className="mr-2" /> Bulk Import
-                            </Button>
+                            {activeTab === 'active' && (
+                                <Button 
+                                    variant="outline" 
+                                    className="h-10 rounded-lg border-emerald-300 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 shadow-sm" 
+                                    onClick={() => setImportModalOpen(true)}
+                                >
+                                    <Upload size={16} className="mr-2" /> Bulk Import
+                                </Button>
+                            )}
 
                             <Button variant="outline" className="h-10 rounded-lg border-neutral-200 dark:border-neutral-800 text-neutral-700 dark:text-neutral-300 shadow-sm" onClick={handleExportCsv}>
-                                <Download size={16} className="mr-2" /> Export CSV
+                                <Download size={16} className="mr-2" /> Export {activeTab === 'archived' ? 'Archived' : 'Active'} CSV
                             </Button>
                         </div>
                     </div>
-
                     {/* CONTROL BAR */}
                     <div className="sticky top-4 z-30 bg-white dark:bg-neutral-900 p-1.5 rounded-lg shadow-sm border border-neutral-200 dark:border-neutral-800 flex flex-col md:flex-row items-center justify-between gap-4 mb-6">
-                        <div className="flex items-center gap-2 w-full md:w-auto flex-1">
+                        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto flex-1">
                             {/* SEARCH BAR */}
-                            <div className="bg-neutral-100 dark:bg-neutral-950 px-3 h-9 rounded flex items-center gap-2 w-full md:max-w-[320px] focus-within:ring-2 ring-blue-500/20 transition-shadow">
+                            <div className="bg-neutral-100 dark:bg-neutral-950 px-3 h-9 rounded flex items-center gap-2 w-full sm:max-w-[320px] focus-within:ring-2 ring-blue-500/20 transition-shadow">
                                 <Search size={14} className="text-neutral-400" />
                                 <input
                                     placeholder="SEARCH BY FULL NAME..."
@@ -244,6 +305,45 @@ export default function Members({ organization, members, filters }: PageProps) {
                                     onChange={(e) => handleSearch(e.target.value)}
                                     autoComplete="off"
                                 />
+                            </div>
+
+                            {/* ROSTER TABS */}
+                            <div className="flex items-center gap-1 bg-neutral-100 dark:bg-neutral-950 p-1 rounded-md border border-neutral-200/80 dark:border-neutral-800">
+                                <button
+                                    type="button"
+                                    onClick={() => handleTabChange('active')}
+                                    className={`px-3 py-1 rounded text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 ${
+                                        activeTab === 'active'
+                                            ? 'bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white shadow-xs'
+                                            : 'text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-200'
+                                    }`}
+                                >
+                                    <UserCheck size={13} className={activeTab === 'active' ? 'text-emerald-600 dark:text-emerald-400' : 'text-neutral-400'} />
+                                    <span>Active</span>
+                                    <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-black ${
+                                        activeTab === 'active' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300' : 'bg-neutral-200 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400'
+                                    }`}>
+                                        {counts?.active ?? 0}
+                                    </span>
+                                </button>
+
+                                <button
+                                    type="button"
+                                    onClick={() => handleTabChange('archived')}
+                                    className={`px-3 py-1 rounded text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 ${
+                                        activeTab === 'archived'
+                                            ? 'bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white shadow-xs'
+                                            : 'text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-200'
+                                    }`}
+                                >
+                                    <Archive size={13} className={activeTab === 'archived' ? 'text-amber-600 dark:text-amber-400' : 'text-neutral-400'} />
+                                    <span>Archived / Inactive</span>
+                                    <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-black ${
+                                        activeTab === 'archived' ? 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300' : 'bg-neutral-200 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400'
+                                    }`}>
+                                        {counts?.archived ?? 0}
+                                    </span>
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -280,19 +380,23 @@ export default function Members({ organization, members, filters }: PageProps) {
                                         <th className={thClasses} onClick={() => handleSort('status')}>
                                             Status <SortIcon column="status" />
                                         </th>
-                                        <th className="p-3 px-4 text-center w-[60px]">
-                                            {/* Actions */}
+                                        <th className="p-3 px-4 text-center w-[90px]">
+                                            Actions
                                         </th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-neutral-200 dark:divide-neutral-800 text-xs font-medium text-neutral-800 dark:text-neutral-200">
+                                <tbody className="divide-y divide-neutral-200 dark:border-neutral-800 text-xs font-medium text-neutral-800 dark:text-neutral-200">
                                     {membersData.length === 0 ? (
                                         <tr>
                                             <td colSpan={5 + dynamicColumns.length} className="p-12 text-center bg-neutral-50/50 dark:bg-neutral-900/50">
                                                 <div className="flex flex-col items-center justify-center opacity-40">
                                                     <Users size={32} className="mb-3" />
                                                     <h3 className="text-sm font-bold uppercase tracking-tight">Empty Sheet</h3>
-                                                    <p className="text-xs">No records available or matching your search.</p>
+                                                    <p className="text-xs">
+                                                        {activeTab === 'archived'
+                                                            ? 'No archived or inactive members. All approved residents are currently active.'
+                                                            : 'No active records available or matching your search.'}
+                                                    </p>
                                                 </div>
                                             </td>
                                         </tr>
@@ -300,7 +404,13 @@ export default function Members({ organization, members, filters }: PageProps) {
                                         membersData.map((member) => (
                                             <tr key={member.id} className="hover:bg-blue-50/50 dark:hover:bg-blue-900/10 transition-colors">
                                                 <td className={`${tdClasses} font-bold`}>
-                                                    {member.fullname}
+                                                    <Link 
+                                                        href={`/admin/applications/${member.id}`}
+                                                        className="hover:text-blue-600 dark:hover:text-blue-400 hover:underline transition-colors block truncate"
+                                                        title="Click to view full application details"
+                                                    >
+                                                        {member.fullname}
+                                                    </Link>
                                                 </td>
                                                 <td className={tdClasses} title={member.address || ''}>
                                                     <span className="truncate block opacity-80">{member.address || '—'}</span>
@@ -320,16 +430,38 @@ export default function Members({ organization, members, filters }: PageProps) {
                                                     <span className="opacity-80">{member.actioned_at || '—'}</span>
                                                 </td>
                                                 <td className={tdClasses}>
-                                                    <Badge variant="outline" className={`px-1.5 py-0 uppercase text-[9px] tracking-widest font-bold border-transparent ${member.status?.toLowerCase() === 'approved' ? 'text-emerald-700 bg-emerald-100/50 dark:text-emerald-400 dark:bg-emerald-900/20' : 'text-neutral-500 bg-neutral-100 dark:bg-neutral-800'}`}>
-                                                        {member.status}
+                                                    <Badge variant="outline" className={`px-1.5 py-0 uppercase text-[9px] tracking-widest font-bold border-transparent ${
+                                                        member.status?.toLowerCase() === 'approved' 
+                                                            ? 'text-emerald-700 bg-emerald-100/50 dark:text-emerald-400 dark:bg-emerald-900/20' 
+                                                            : member.status?.toLowerCase() === 'inactive'
+                                                            ? 'text-amber-700 bg-amber-100/50 dark:text-amber-400 dark:bg-amber-900/20'
+                                                            : 'text-neutral-500 bg-neutral-100 dark:bg-neutral-800'
+                                                    }`}>
+                                                        {member.status?.toLowerCase() === 'approved' ? 'Active' : member.status}
                                                     </Badge>
                                                 </td>
                                                 <td className="p-1 px-2 align-middle text-center border-l border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900/50">
-                                                    <Link href={`/admin/applications/${member.id}`} title="View Full Record">
-                                                        <Button variant="ghost" size="sm" className="h-7 w-7 p-0 rounded text-neutral-400 hover:text-blue-600 hover:bg-white dark:hover:bg-neutral-800 shadow-sm border border-transparent hover:border-blue-200 dark:hover:border-blue-900 transition-all">
-                                                            <ChevronRight size={14} />
+                                                    <div className="flex items-center justify-center gap-1">
+                                                        <Button
+                                                            type="button"
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            onClick={() => handleToggleStatus(member)}
+                                                            title={activeTab === 'archived' ? 'Reactivate Member to Active Roster' : 'Archive / Inactivate Member'}
+                                                            className={`h-7 w-7 p-0 rounded shadow-xs border transition-all ${
+                                                                activeTab === 'archived'
+                                                                    ? 'text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 border-transparent hover:border-emerald-300'
+                                                                    : 'text-neutral-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/40 border-transparent hover:border-amber-300'
+                                                            }`}
+                                                        >
+                                                            {activeTab === 'archived' ? <RotateCcw size={13} /> : <Archive size={13} />}
                                                         </Button>
-                                                    </Link>
+                                                        <Link href={`/admin/applications/${member.id}`} title="View Full Record">
+                                                            <Button variant="ghost" size="sm" className="h-7 w-7 p-0 rounded text-neutral-400 hover:text-blue-600 hover:bg-white dark:hover:bg-neutral-800 shadow-xs border border-transparent hover:border-blue-200 dark:hover:border-blue-900 transition-all">
+                                                                <ChevronRight size={14} />
+                                                            </Button>
+                                                        </Link>
+                                                    </div>
                                                 </td>
                                             </tr>
                                         ))

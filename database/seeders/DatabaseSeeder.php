@@ -26,6 +26,24 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        // Production Safeguard: Never allow weak/default credentials to seed in production
+        if (app()->isProduction()) {
+            $adminPass = env('SEED_ADMIN_PASSWORD');
+            $headPass = env('SEED_HEAD_PASSWORD');
+
+            if (empty($adminPass) || in_array($adminPass, ['ChangeMeInProduction!2026', 'password', 'admin', '12345678'])) {
+                throw new \RuntimeException(
+                    'SECURITY SAFEGUARD: In a production environment, you must explicitly set a strong, unique SEED_ADMIN_PASSWORD via environment variables. Default credentials cannot be seeded in production.'
+                );
+            }
+
+            if (empty($headPass) || in_array($headPass, ['ChangeMeInProduction!2026', 'password', 'admin', '12345678'])) {
+                throw new \RuntimeException(
+                    'SECURITY SAFEGUARD: In a production environment, you must explicitly set a strong, unique SEED_HEAD_PASSWORD via environment variables. Default credentials cannot be seeded in production.'
+                );
+            }
+        }
+
         $faker = Faker::create('en_PH'); // Use Philippine localized names/addresses
 
         // 1. Seed Default Zones (Zone 1 - 10)

@@ -16,7 +16,7 @@
 
 ## 🌐 1. HTTP Route & Controller Matrix
 
-All BCPC routes are prefixed under `/admin/bcpc` and protected by the `auth` and `role:admin,bns,head` middleware stack.
+All BCPC routes are prefixed under `/admin/bcpc` and protected by the `auth` and `role:admin,head` middleware stack.
 
 | HTTP Method | Route URI | Route Name | Action / Method | Description |
 | :--- | :--- | :--- | :--- | :--- |

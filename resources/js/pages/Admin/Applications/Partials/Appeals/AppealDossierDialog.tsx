@@ -159,7 +159,7 @@ export default function AppealDossierDialog({
                                 {appeal.appeal_docs.map((doc, idx) => (
                                     <a
                                         key={idx}
-                                        href={`/storage/${doc}`}
+                                        href={`/admin/applications/${appeal.id}/documents/appeal/${idx}`}
                                         target="_blank"
                                         rel="noreferrer"
                                         className="inline-flex items-center gap-1 text-xs bg-background hover:bg-amber-100 dark:hover:bg-amber-900/40 border border-amber-300 dark:border-amber-700 text-amber-900 dark:text-amber-200 px-2 py-0.5 rounded font-medium transition-colors"

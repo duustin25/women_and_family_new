@@ -18,7 +18,9 @@ class MembershipApplicationResource extends JsonResource
             'id' => $this->id,
             'organization_id' => $this->organization_id,
             'organization_name' => $this->organization->name ?? 'N/A',
+            'organization_slug' => $this->organization->slug ?? '',
             'organization_color' => $this->organization->color_theme ?? '#000000',
+            'member_id' => $this->member->id ?? null,
 
             // Primary Identity
             'fullname' => $this->fullname,

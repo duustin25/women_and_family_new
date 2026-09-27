@@ -27,7 +27,7 @@ use App\Http\Controllers\Public\ChatbotController;
 
 Route::post('/chatbot/query', [ChatbotController::class, 'query'])->middleware('throttle:10,1');
 Route::get('/chat', [ChatbotController::class, 'index'])->name('chat.index');
-Route::post('/chat/send', [ChatbotController::class, 'chat'])->name('chat.send');
+Route::post('/chat/send', [ChatbotController::class, 'chat'])->middleware('throttle:10,1')->name('chat.send');
 
 
 // 1. Public Landing Page
@@ -88,6 +88,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::resource('announcements', AnnouncementController::class);
         Route::get('organizations/{organization:slug}/members', [OrganizationController::class, 'members'])->name('organizations.members');
         Route::get('organizations/{organization:slug}/members/export', [OrganizationController::class, 'exportMembers'])->name('organizations.members.export');
+        Route::patch('organizations/{organization:slug}/members/{application}/toggle-status', [OrganizationController::class, 'toggleMemberStatus'])->name('organizations.members.toggle-status');
+        Route::patch('organizations/{organization:slug}/toggle-active', [OrganizationController::class, 'toggleActive'])->name('organizations.toggle-active');
         Route::get('organizations/{organization:slug}/sample-csv', [\App\Http\Controllers\Admin\OrganizationImportController::class, 'downloadSample'])->name('organizations.sample-csv');
         Route::post('organizations/{organization:slug}/import-csv', [\App\Http\Controllers\Admin\OrganizationImportController::class, 'import'])->name('organizations.import-csv');
         Route::resource('organizations', OrganizationController::class);
@@ -118,6 +120,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('applications/{application}/sustain', [MembershipApplicationController::class, 'sustain'])->name('applications.sustain');
         Route::get('applications/{application}/edit', [MembershipApplicationController::class, 'edit'])->name('applications.edit');
         Route::put('applications/{application}', [MembershipApplicationController::class, 'update'])->name('applications.update');
+        Route::get('applications/{application}/documents/requirement/{fieldId}', [MembershipApplicationController::class, 'streamRequirementDocument'])->name('applications.documents.requirement');
+        Route::get('applications/{application}/documents/appeal/{index}', [MembershipApplicationController::class, 'streamAppealDocument'])->name('applications.documents.appeal');
 
 
         Route::get('analytics/print', [AnalyticsController::class, 'print'])->name('analytics.print');
@@ -183,7 +187,8 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.', 'middleware' => ['auth', 'v
     Route::get('bcpc/dashboard', [\App\Http\Controllers\Admin\BcpcMonitoringController::class, 'dashboard'])->name('bcpc.dashboard');
     Route::get('bcpc/cases/{id}', [\App\Http\Controllers\Admin\BcpcMonitoringController::class, 'show'])->name('bcpc.show');
     Route::put('bcpc/cases/{id}', [\App\Http\Controllers\Admin\BcpcMonitoringController::class, 'update'])->name('bcpc.update');
-    Route::post('bcpc/cases/{id}/photo', [\App\Http\Controllers\Admin\BcpcMonitoringController::class, 'uploadPhoto'])->name('bcpc.photo');
+    Route::get('bcpc/cases/{child}/photo', [\App\Http\Controllers\Admin\BcpcMonitoringController::class, 'photo'])->name('bcpc.photo');
+    Route::post('bcpc/cases/{id}/photo', [\App\Http\Controllers\Admin\BcpcMonitoringController::class, 'uploadPhoto'])->name('bcpc.photo.upload');
     Route::post('bcpc/cases/{id}/reenroll-cycle', [\App\Http\Controllers\Admin\BcpcMonitoringController::class, 'reenrollCycle'])->name('bcpc.reenroll-cycle');
     // ------------------------------------------------------------
 });

@@ -56,7 +56,7 @@ class BcpcChild extends Model
     public function getPhotoUrlAttribute(): ?string
     {
         if ($this->photo_path) {
-            return asset('storage/' . $this->photo_path);
+            return route('admin.bcpc.photo', $this->id);
         }
         return null;
     }

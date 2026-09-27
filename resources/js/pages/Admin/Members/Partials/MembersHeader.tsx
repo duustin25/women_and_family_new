@@ -1,5 +1,6 @@
 import React from 'react';
-import { Users, Send } from 'lucide-react';
+import { Link } from '@inertiajs/react';
+import { Users, Send, Building2, FileSearch } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface MembersHeaderProps {
@@ -13,22 +14,48 @@ export function MembersHeader({ onOpenBroadcast }: MembersHeaderProps) {
                 <div className="flex items-center gap-2">
                     <Users className="w-6 h-6 text-primary" />
                     <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
-                        Members Directory
+                        Members Directory & Aid CRM
                     </h1>
                 </div>
                 <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
-                    Centralized registry of verified community sector members, benefit entitlements, and notices.
+                    Cross-sector beneficiary records, assistance claim verification, and member communication trails.
                 </p>
             </div>
 
-            <Button
-                onClick={onOpenBroadcast}
-                size="sm"
-                className="min-h-[40px] px-4 font-bold shadow-xs flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white cursor-pointer"
-            >
-                <Send className="w-4 h-4" />
-                <span>Broadcast Notice</span>
-            </Button>
+            <div className="flex items-center gap-2 flex-wrap">
+                <Button
+                    variant="outline"
+                    size="sm"
+                    asChild
+                    className="min-h-[38px] text-xs font-semibold gap-1.5 shadow-2xs"
+                >
+                    <Link href="/admin/organizations">
+                        <Building2 className="w-3.5 h-3.5 text-muted-foreground" />
+                        Organizations
+                    </Link>
+                </Button>
+
+                <Button
+                    variant="outline"
+                    size="sm"
+                    asChild
+                    className="min-h-[38px] text-xs font-semibold gap-1.5 shadow-2xs"
+                >
+                    <Link href="/admin/applications">
+                        <FileSearch className="w-3.5 h-3.5 text-muted-foreground" />
+                        Intake Applications
+                    </Link>
+                </Button>
+
+                <Button
+                    onClick={onOpenBroadcast}
+                    size="sm"
+                    className="min-h-[38px] px-4 font-bold shadow-xs flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white cursor-pointer"
+                >
+                    <Send className="w-4 h-4" />
+                    <span>Broadcast Notice</span>
+                </Button>
+            </div>
         </div>
     );
 }

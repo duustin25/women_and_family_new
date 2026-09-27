@@ -9,6 +9,7 @@ class MembershipApplication extends Model
 {
     public const STATUS_PENDING = 'Pending';
     public const STATUS_APPROVED = 'Approved';
+    public const STATUS_INACTIVE = 'Inactive';
     public const STATUS_DISAPPROVED = 'Disapproved';
     public const STATUS_REJECTED = 'Disapproved';
     public const STATUS_APPEALED = 'Appealed';
@@ -53,6 +54,8 @@ class MembershipApplication extends Model
         $lower = strtolower(trim($value));
         if ($lower === 'approved') {
             $this->attributes['status'] = self::STATUS_APPROVED;
+        } elseif ($lower === 'inactive') {
+            $this->attributes['status'] = self::STATUS_INACTIVE;
         } elseif (in_array($lower, ['disapproved', 'rejected'])) {
             $this->attributes['status'] = self::STATUS_DISAPPROVED;
         } elseif ($lower === 'appealed') {
@@ -70,6 +73,14 @@ class MembershipApplication extends Model
     public function scopeApproved($query)
     {
         return $query->whereIn('status', ['Approved', 'approved']);
+    }
+
+    /**
+     * Scope for inactive / archived applications.
+     */
+    public function scopeInactive($query)
+    {
+        return $query->whereIn('status', ['Inactive', 'inactive']);
     }
 
     /**
@@ -94,5 +105,13 @@ class MembershipApplication extends Model
     public function organization(): BelongsTo
     {
         return $this->belongsTo(Organization::class);
+    }
+
+    /**
+     * Link to accredited member profile if approved.
+     */
+    public function member()
+    {
+        return $this->hasOne(Member::class, 'membership_application_id');
     }
 }

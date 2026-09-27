@@ -1,14 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { FormSchemaField, FormFieldType, OrganizationTemplate } from '../../types';
 import FieldPalette from './FieldPalette';
 import FieldConfigCard from './FieldConfigCard';
 import { officialTemplates } from './templates';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import {
-    Sparkles, HelpCircle, AlertCircle, RotateCcw,
-    Layers, CheckCircle2
+    Sparkles, AlertCircle, Layers, Search,
+    ChevronsUpDown, ChevronsDownUp, Plus, FilterX
 } from 'lucide-react';
 import {
     Dialog,
@@ -29,6 +30,29 @@ interface Props {
 export default function FormBuilderCanvas({ schema, onChange, onApplyTemplate }: Props) {
     const [templateModalOpen, setTemplateModalOpen] = useState(false);
     const [selectedTemplate, setSelectedTemplate] = useState<OrganizationTemplate | null>(null);
+    const [searchQuery, setSearchQuery] = useState('');
+    // Start with all collapsed by default to save space (user's suggestion)
+    const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+
+    const toggleExpand = (id: string) => {
+        setExpandedIds((prev) => {
+            const next = new Set(prev);
+            if (next.has(id)) {
+                next.delete(id);
+            } else {
+                next.add(id);
+            }
+            return next;
+        });
+    };
+
+    const handleExpandAll = () => {
+        setExpandedIds(new Set(schema.map((f) => f.id)));
+    };
+
+    const handleCollapseAll = () => {
+        setExpandedIds(new Set());
+    };
 
     const handleAddField = (type: FormFieldType) => {
         const idTimestamp = Date.now().toString().slice(-6);
@@ -53,8 +77,9 @@ export default function FormBuilderCanvas({ schema, onChange, onApplyTemplate }:
             ];
         }
 
+        const newId = `field_${type}_${idTimestamp}`;
         const newField: FormSchemaField = {
-            id: `field_${type}_${idTimestamp}`,
+            id: newId,
             type,
             label: defaultLabel,
             required: false,
@@ -64,6 +89,13 @@ export default function FormBuilderCanvas({ schema, onChange, onApplyTemplate }:
         };
 
         onChange([...schema, newField]);
+
+        // Auto-expand the newly added field so the user can immediately edit it
+        setExpandedIds((prev) => {
+            const next = new Set(prev);
+            next.add(newId);
+            return next;
+        });
     };
 
     const handleUpdateField = (index: number, updated: FormSchemaField) => {
@@ -73,6 +105,14 @@ export default function FormBuilderCanvas({ schema, onChange, onApplyTemplate }:
     };
 
     const handleRemoveField = (index: number) => {
+        const removedField = schema[index];
+        if (removedField) {
+            setExpandedIds((prev) => {
+                const next = new Set(prev);
+                next.delete(removedField.id);
+                return next;
+            });
+        }
         const next = schema.filter((_, i) => i !== index);
         onChange(next);
     };
@@ -95,13 +135,32 @@ export default function FormBuilderCanvas({ schema, onChange, onApplyTemplate }:
         } else {
             onChange(selectedTemplate.form_schema);
         }
+        // Collapse all by default on loading template
+        setExpandedIds(new Set());
         setTemplateModalOpen(false);
     };
 
+    // Filter fields based on search query
+    const filteredFields = useMemo(() => {
+        if (!searchQuery.trim()) {
+            return schema.map((field, originalIndex) => ({ field, originalIndex }));
+        }
+        const q = searchQuery.toLowerCase();
+        return schema
+            .map((field, originalIndex) => ({ field, originalIndex }))
+            .filter(({ field }) =>
+                field.label.toLowerCase().includes(q) ||
+                field.type.toLowerCase().includes(q) ||
+                (field.description && field.description.toLowerCase().includes(q))
+            );
+    }, [schema, searchQuery]);
+
+    const requiredCount = schema.filter((f) => f.required).length;
+
     return (
-        <div className="space-y-6">
+        <div className="space-y-4">
             {/* Top Toolbar: Quick Action & Template Presets */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4 rounded-xl border bg-muted/20">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3.5 rounded-xl border bg-muted/20">
                 <div>
                     <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
                         <Layers className="w-4 h-4 text-primary" />
@@ -109,6 +168,11 @@ export default function FormBuilderCanvas({ schema, onChange, onApplyTemplate }:
                         <Badge variant="outline" className="text-[11px] font-mono ml-1">
                             {schema.length} Items
                         </Badge>
+                        {requiredCount > 0 && (
+                            <Badge variant="secondary" className="text-[10px] text-muted-foreground font-mono">
+                                {requiredCount} Required
+                            </Badge>
+                        )}
                     </h3>
                     <p className="text-xs text-muted-foreground">
                         Customize what questions, checklists, and tables applicants must complete.
@@ -203,12 +267,63 @@ export default function FormBuilderCanvas({ schema, onChange, onApplyTemplate }:
             {/* Inserter Palette */}
             <FieldPalette onAddField={handleAddField} />
 
+            {/* Question List Controls Bar: Search & Compact/Expand Density */}
+            {schema.length > 0 && (
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 px-1">
+                    {/* Search / Filter */}
+                    <div className="relative flex-1 max-w-sm">
+                        <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                        <Input
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            placeholder="Filter questions by name or type..."
+                            className="h-8 text-xs pl-8 pr-7 bg-background"
+                        />
+                        {searchQuery && (
+                            <button
+                                type="button"
+                                onClick={() => setSearchQuery('')}
+                                className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                            >
+                                <FilterX className="w-3.5 h-3.5" />
+                            </button>
+                        )}
+                    </div>
+
+                    {/* Expand All / Collapse All Controls */}
+                    <div className="flex items-center gap-1.5 self-end sm:self-auto">
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={handleCollapseAll}
+                            className="h-7 text-xs px-2 text-muted-foreground hover:text-foreground gap-1"
+                            title="Collapse all questions into compact boxes"
+                        >
+                            <ChevronsDownUp className="w-3.5 h-3.5" />
+                            Collapse All
+                        </Button>
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={handleExpandAll}
+                            className="h-7 text-xs px-2 text-muted-foreground hover:text-foreground gap-1"
+                            title="Expand all questions for full editing"
+                        >
+                            <ChevronsUpDown className="w-3.5 h-3.5" />
+                            Expand All
+                        </Button>
+                    </div>
+                </div>
+            )}
+
             {/* Questions List */}
             {schema.length === 0 ? (
                 <Card className="border-dashed bg-card/50">
-                    <CardContent className="p-12 text-center space-y-3">
-                        <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mx-auto text-muted-foreground">
-                            <Layers className="w-6 h-6" />
+                    <CardContent className="p-10 text-center space-y-3">
+                        <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center mx-auto text-muted-foreground">
+                            <Layers className="w-5 h-5" />
                         </div>
                         <h4 className="font-bold text-sm text-foreground">No questions added yet</h4>
                         <p className="text-xs text-muted-foreground max-w-sm mx-auto">
@@ -216,14 +331,29 @@ export default function FormBuilderCanvas({ schema, onChange, onApplyTemplate }:
                         </p>
                     </CardContent>
                 </Card>
+            ) : filteredFields.length === 0 ? (
+                <div className="p-8 text-center rounded-xl border border-dashed text-xs text-muted-foreground">
+                    No questions found matching "{searchQuery}".
+                    <Button
+                        type="button"
+                        variant="link"
+                        size="sm"
+                        onClick={() => setSearchQuery('')}
+                        className="text-xs h-auto p-0 ml-1"
+                    >
+                        Clear filter
+                    </Button>
+                </div>
             ) : (
-                <div className="space-y-3">
-                    {schema.map((field, idx) => (
+                <div className="space-y-2">
+                    {filteredFields.map(({ field, originalIndex }) => (
                         <FieldConfigCard
                             key={field.id}
                             field={field}
-                            index={idx}
+                            index={originalIndex}
                             totalFields={schema.length}
+                            isExpanded={expandedIds.has(field.id)}
+                            onToggleExpand={() => toggleExpand(field.id)}
                             onUpdate={handleUpdateField}
                             onRemove={handleRemoveField}
                             onMove={handleMoveField}

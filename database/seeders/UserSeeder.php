@@ -16,6 +16,16 @@ class UserSeeder extends Seeder
      */
     public function run(): void
     {
+        // Production Safeguard: Never allow weak/default credentials to seed in production
+        if (app()->isProduction()) {
+            $adminPass = env('SEED_ADMIN_PASSWORD');
+            if (empty($adminPass) || in_array($adminPass, ['ChangeMeInProduction!2026', 'password', 'admin', '12345678'])) {
+                throw new \RuntimeException(
+                    'SECURITY SAFEGUARD: In a production environment, you must explicitly set a strong, unique SEED_ADMIN_PASSWORD via environment variables. Default credentials cannot be seeded in production.'
+                );
+            }
+        }
+
         // 1. Super Admin (System Administrator)
         $adminEmail = env('SEED_ADMIN_EMAIL', 'admin@villamor183.local');
         $adminPassword = env('SEED_ADMIN_PASSWORD', 'ChangeMeInProduction!2026');

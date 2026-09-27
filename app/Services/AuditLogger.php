@@ -20,12 +20,14 @@ class AuditLogger
      * under RA 10173 (DPA 2012) and RA 9262 Sec. 44 confidentiality guidelines.
      */
     protected static array $sensitiveAttributes = [
-        // VAWC & Case Reports (Strict Statutory RA 9262 Sec. 44 & RA 7610 Abuse Confidentiality)
+        // VAWC & Case Blotters (Statutory RA 9262 Sec. 44 & RA 7610 Abuse Confidentiality)
         'victim_name',
         'victim_age',
+        'victim_contact',
         'complainant_name',
         'complainant_contact',
         'relation_to_victim',
+        'relationship_to_victim',
         'incident_location',
         'description',
         'witness_info',
@@ -34,13 +36,82 @@ class AuditLogger
         'closure_remarks',
         'narrative',
         'statement',
+        'incident_details',
+        'incident_narrative',
+        'allegations',
+        'relief_sought',
+        'orders_issued',
+        'conditions',
+        'service_notes',
+        'survivor_name',
+        'respondent_name',
+        'survivor_demographics',
+        'respondent_demographics',
+        'medical_notes',
+        'housing_notes',
+        'substance_use_history',
+        'weapons_used',
+        'weapons_confiscated',
+
+        // BCPC Child & Nutrition Information (RA 7610 Minors Confidentiality)
+        'child_first_name',
+        'child_middle_name',
+        'child_last_name',
+        'first_name',
+        'middle_name',
+        'last_name',
+        'full_name',
+        'date_of_birth',
+        'birthdate',
+        'dob',
+        'guardian_name',
+        'guardian_contact',
+        'guardian_relationship',
+        'guardian_phone',
+        'photo_path',
+        'photo_url',
+        'clinical_notes',
+        'dietary_notes',
+        'assessment_notes',
+        'intervention_logs',
+        'developmental_notes',
+
+        // Addresses & Contact Details
+        'address',
+        'permanent_address',
+        'residential_address',
+        'work_address',
+        'home_address',
+        'contact_number',
+        'phone',
+        'cellphone',
+        'mobile_number',
+        'telephone',
+        'erpat_phone',
+        'kalipi_cellphone',
+        'solo_phone',
+        'kabahagi_phone',
+
+        // Organizations & Membership Applications
+        'fullname',
+        'form_data',
+        'member_meta',
+        'appeal_reason',
+        'appeal_docs',
 
         // System Users & Security Credentials
         'password',
+        'password_confirmation',
+        'password_hash',
         'two_factor_secret',
         'two_factor_recovery_codes',
         'remember_token',
         'email_verification_hash',
+        'token',
+        'access_token',
+        'api_token',
+        'secret',
+        'otp_code',
     ];
 
     /**
@@ -54,11 +125,44 @@ class AuditLogger
 
         $masked = [];
         foreach ($attributes as $key => $value) {
-            $lowerKey = strtolower($key);
-            if (in_array($lowerKey, self::$sensitiveAttributes, true)) {
+            $lowerKey = strtolower((string) $key);
+
+            // 1. Direct exact match in sensitive attributes list
+            $isSensitive = in_array($lowerKey, self::$sensitiveAttributes, true);
+
+            // 2. Pattern-based detection for dynamic form schemas and credentials
+            if (!$isSensitive) {
+                if (
+                    str_contains($lowerKey, 'password') ||
+                    str_contains($lowerKey, 'secret') ||
+                    str_contains($lowerKey, 'token') ||
+                    str_contains($lowerKey, 'otp') ||
+                    str_contains($lowerKey, 'contact_number') ||
+                    str_contains($lowerKey, 'phone') ||
+                    str_contains($lowerKey, 'birthdate') ||
+                    str_contains($lowerKey, 'date_of_birth') ||
+                    str_contains($lowerKey, 'survivor_name') ||
+                    str_contains($lowerKey, 'respondent_name') ||
+                    str_contains($lowerKey, 'child_first_name') ||
+                    str_contains($lowerKey, 'child_last_name') ||
+                    str_contains($lowerKey, 'guardian_name') ||
+                    str_contains($lowerKey, 'guardian_contact') ||
+                    str_contains($lowerKey, 'medical_notes') ||
+                    str_contains($lowerKey, 'housing_notes') ||
+                    str_contains($lowerKey, 'incident_narrative') ||
+                    str_contains($lowerKey, 'appeal_reason') ||
+                    str_contains($lowerKey, 'appeal_doc')
+                ) {
+                    $isSensitive = true;
+                }
+            }
+
+            if ($isSensitive) {
                 $masked[$key] = '[CONFIDENTIAL PII - PROTECTED]';
             } elseif (is_array($value)) {
                 $masked[$key] = self::maskPii($value);
+            } elseif (is_string($value) && (str_starts_with($value, 'uploads/requirements') || str_starts_with($value, 'uploads/appeals') || str_starts_with($value, 'bcpc_children/'))) {
+                $masked[$key] = '[CONFIDENTIAL UPLOAD - PROTECTED]';
             } else {
                 $masked[$key] = $value;
             }

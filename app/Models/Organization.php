@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
@@ -11,12 +12,13 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Organization extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     protected $fillable = [
         'name',
         'slug',
         'description',
+        'is_active',
         'color_theme',
         'image_path',
         'left_logo_path',
@@ -28,6 +30,7 @@ class Organization extends Model
 
     // Cast requirements as array automatically
     protected $casts = [
+        'is_active' => 'boolean',
         'requirements' => 'array',
         'form_schema' => 'array',
         'print_settings' => 'array',
@@ -72,6 +75,16 @@ class Organization extends Model
     public function getRouteKeyName()
     {
         return 'slug';
+    }
+
+    public function scopeActive($query)
+    {
+        return $query->where('is_active', true);
+    }
+
+    public function scopeInactive($query)
+    {
+        return $query->where('is_active', false);
     }
 
     protected static function boot()

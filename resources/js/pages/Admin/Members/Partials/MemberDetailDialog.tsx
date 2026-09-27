@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from '@inertiajs/react';
 import { 
     Users, 
     Mail, 
@@ -11,7 +12,11 @@ import {
     Send, 
     PlusCircle,
     Building2,
-    ShieldCheck
+    ShieldCheck,
+    FileText,
+    FileSpreadsheet,
+    Printer,
+    ExternalLink
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -53,6 +58,9 @@ export function MemberDetailDialog({
         day: 'numeric'
     }) : '—';
 
+    const applicationId = member.membership_application_id || member.application?.id;
+    const orgSlug = member.organization?.slug;
+
     const dispatches: BeneficiaryDispatch[] = member.dispatches || [];
     const communications = member.communications || [];
 
@@ -67,11 +75,11 @@ export function MemberDetailDialog({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-2xl max-h-[85vh] flex flex-col p-0 overflow-hidden">
+            <DialogContent className="sm:max-w-3xl max-h-[88vh] flex flex-col p-0 overflow-hidden">
                 {/* Header Banner */}
                 <div className="bg-muted/40 border-b p-6 pb-5">
                     <DialogHeader className="text-left space-y-3">
-                        <div className="flex items-start justify-between gap-4">
+                        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                             <div className="flex items-center gap-3.5">
                                 <div className="h-12 w-12 rounded-full border bg-primary/10 text-primary font-bold text-base flex items-center justify-center select-none shadow-2xs">
                                     {getInitials(member.fullname)}
@@ -91,12 +99,69 @@ export function MemberDetailDialog({
                                     </div>
                                 </div>
                             </div>
+
+                            {/* Direct Navigation Links to Full Details */}
+                            <div className="flex items-center gap-2 flex-wrap self-start sm:self-center">
+                                {applicationId && (
+                                    <>
+                                        <Button size="sm" asChild className="h-8 text-xs font-semibold gap-1.5 bg-primary text-primary-foreground shadow-xs">
+                                            <Link href={`/admin/applications/${applicationId}`}>
+                                                <FileText className="w-3.5 h-3.5" />
+                                                Full Application Details
+                                                <ExternalLink className="w-3 h-3 ml-0.5 opacity-70" />
+                                            </Link>
+                                        </Button>
+                                        <Button size="sm" asChild variant="outline" className="h-8 text-xs font-semibold gap-1.5 shadow-2xs">
+                                            <a href={`/admin/applications/${applicationId}/print`} target="_blank" rel="noopener noreferrer">
+                                                <Printer className="w-3.5 h-3.5 text-muted-foreground" />
+                                                Print Form
+                                            </a>
+                                        </Button>
+                                    </>
+                                )}
+                                {orgSlug && (
+                                    <Button size="sm" asChild variant="outline" className="h-8 text-xs font-semibold gap-1.5 shadow-2xs">
+                                        <Link href={`/admin/organizations/${orgSlug}/members?search=${encodeURIComponent(member.fullname)}`}>
+                                            <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
+                                            Org Directory
+                                        </Link>
+                                    </Button>
+                                )}
+                            </div>
                         </div>
                     </DialogHeader>
                 </div>
 
                 {/* Scrollable Content Body */}
                 <div className="p-6 space-y-6 overflow-y-auto flex-1">
+                    {/* Official Registration & Application Linkage Banner */}
+                    <div className="p-3.5 rounded-lg border bg-blue-50/50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-900 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
+                        <div className="space-y-0.5">
+                            <span className="font-semibold text-blue-950 dark:text-blue-200 flex items-center gap-1.5">
+                                <FileText className="w-4 h-4 text-blue-600 shrink-0" />
+                                Official Intake Application & Questionnaire
+                            </span>
+                            <p className="text-muted-foreground text-[11px]">
+                                {applicationId 
+                                    ? `Linked to Membership Application #${applicationId}. Includes family composition, sectoral dynamic questionnaire answers, and uploaded verification documents.`
+                                    : 'Accredited via manual legacy roster or bulk spreadsheet import.'}
+                            </p>
+                        </div>
+                        {applicationId ? (
+                            <Button size="sm" asChild variant="default" className="h-7 text-xs font-medium bg-blue-600 hover:bg-blue-700 text-white shrink-0">
+                                <Link href={`/admin/applications/${applicationId}`}>
+                                    Inspect Full Dossier →
+                                </Link>
+                            </Button>
+                        ) : orgSlug ? (
+                            <Button size="sm" asChild variant="outline" className="h-7 text-xs font-medium shrink-0">
+                                <Link href={`/admin/organizations/${orgSlug}/members?search=${encodeURIComponent(member.fullname)}`}>
+                                    Check Directory →
+                                </Link>
+                            </Button>
+                        ) : null}
+                    </div>
+
                     {/* Resident Contact & Basic Details */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 bg-muted/20 p-4 rounded-lg border text-xs">
                         <div className="space-y-1">
@@ -258,13 +323,27 @@ export function MemberDetailDialog({
 
                 {/* Footer Controls */}
                 <DialogFooter className="p-4 border-t bg-muted/20 flex flex-col sm:flex-row justify-between items-center gap-2">
-                    <div className="text-[11px] text-muted-foreground flex items-center gap-1">
-                        <ShieldCheck className="w-3.5 h-3.5 text-primary" />
-                        Accredited Member Profile
+                    <div className="text-[11px] text-muted-foreground flex items-center gap-2">
+                        <span className="flex items-center gap-1 font-medium">
+                            <ShieldCheck className="w-3.5 h-3.5 text-primary" />
+                            Member ID #{member.id}
+                        </span>
+                        {applicationId && (
+                            <span className="text-muted-foreground/60">• App #{applicationId}</span>
+                        )}
                     </div>
-                    <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>
-                        Close
-                    </Button>
+                    <div className="flex items-center gap-2">
+                        {applicationId && (
+                            <Button variant="ghost" size="sm" asChild className="h-8 text-xs text-primary hover:text-primary">
+                                <Link href={`/admin/applications/${applicationId}`}>
+                                    Go to Full Application →
+                                </Link>
+                            </Button>
+                        )}
+                        <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>
+                            Close
+                        </Button>
+                    </div>
                 </DialogFooter>
             </DialogContent>
         </Dialog>

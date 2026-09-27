@@ -12,20 +12,20 @@
 ```
 +-----------------------------------------------------------------------------------+
 |                           CLIENT CHAT WIDGET (REACT 19)                           |
-|            Voice Speech Input  *  Optimistic UI  *  Markdown Parser               |
+|       Persistent Legal Disclaimer  *  Axios Transport  *  Interactive Chips       |
 +-----------------------------------------+-----------------------------------------+
-                                          | JSON HTTP POST (/api/chat)
+                                          | JSON HTTP POST (/chat/send) [throttle:10,1]
 +-----------------------------------------v-----------------------------------------+
 |                                LARAVEL CHATBOT SERVICE                            |
-|        ChatbotController.php  *  ChatbotService.php  *  Maintenance Toggle        |
+|        ChatbotController.php  *  ChatbotService.php  *  Feature Switch Toggle     |
 +--------------------+------------------------------------+-------------------------+
                      |                                    |
 +--------------------v----+                     +---------v-------------------------+
 |    PYTHON NLP / MLP     |                     |     LIVE DATABASE INTERCEPTOR     |
-| NLTK Lemmatizer         |                     | Real-time Queries:                |
-| Bag-of-Words (BoW)      |                     | - Active GAD Event Schedules      |
-| Scikit-Learn Neural Net |                     | - Accredited Organization Names   |
-| (MLPClassifier)         |                     | - Barangay Health Center Hours    |
+| NLTK Tokenizer          |                     | Real-time Queries:                |
+| English WordNet Lemma   |                     | - Latest Barangay Announcements   |
+| Bag-of-Words (240 dims) |                     | - Active Barangay Officials       |
+| Scikit-Learn MLP (128,64)                     | - Accredited Organization Details |
 +--------------------+----+                     +-------------------+---------------+
                      |                                              |
 +--------------------v----------------------------------------------v---------------+
@@ -39,40 +39,27 @@
 ## 🔬 2. NLP Pipeline & Machine Learning Stack
 
 ### 2.1 Natural Language Processing Pipeline
-1. **Sanitization:** Strips HTML, malicious prompt-injection payloads, and emojis.
-2. **NLTK Tokenization:** Breaks raw Tagalog/English input into atomic word tokens.
-3. **Lemmatization:** Reduces inflected forms to root lemma (e.g. *"binubugbog"* -> *"bugbog"*, *"beaten"* -> *"beat"*).
-4. **Vectorization:** Converts token sequences into a Bag-of-Words (BoW) numerical feature vector matching the training dictionary.
+1. **Input Validation & Sanitization:** Enforces string type validation and whitespace normalization via Laravel.
+2. **NLTK Tokenization:** Breaks raw Tagalog/English input into atomic word tokens via `nltk.word_tokenize`.
+3. **Lemmatization (English-Only via WordNet):** Uses `nltk.stem.WordNetLemmatizer` for English inflection reduction (e.g., *"files"* -> *"file"*, *"beaten"* -> *"beat"*).  
+   * **Language Limitation Note:** Because WordNet is an English lexical database, Filipino/Tagalog inflected words (e.g., *"binubugbog"*, *"sinasaktan"*, *"magreklamo"*) are **not** morphologically reduced to their root forms (*"bugbog"*, *"sakit"*); they are indexed and matched as distinct surface tokens in the Bag-of-Words feature dictionary.
+4. **Vectorization:** Converts token sequences into a 240-dimensional binary Bag-of-Words (BoW) feature vector matching the unique vocabulary dictionary.
 
 ### 2.2 Neural Network Classification (`MLPClassifier`)
 - The intent classification engine is a Multi-Layer Perceptron neural network implemented in Python via **Scikit-Learn**:
-  - **Input Layer:** Dimension equals training vocabulary size ($V \approx 450$ tokens).
+  - **Input Layer:** Dimension equals training vocabulary size ($V = 240$ unique lemmatized tokens).
   - **Hidden Layers:** Dual hidden layers $(128, 64)$ with ReLU activation functions.
-  - **Output Layer:** Softmax distribution over predefined intent classes (`vawc_emergency`, `bpo_procedure`, `bcpc_feeding`, `org_application`, `gad_schedule`).
-  - **Confidence Threshold:** If classification probability $P < 0.70$, the system triggers an educational fallback rather than hallucinating legal advice.
+  - **Output Layer:** Probability distribution across 16 predefined intent classes via `predict_proba`.
+  - **Confidence Threshold:** If classification probability $P \le 0.70$ (70%), the system triggers the fallback response (*"I apologize, I do not understand that yet..."*) and presents interactive category options rather than assigning an unsupported intent.
 
 ---
 
-## 🎛️ 3. Administrative Maintenance Feature Toggle
+## 🎛️ 3. Administrative Maintenance Feature Toggle & Safety Controls
 
-Per IT Expert recommendations, the administrator has full control over the AI engine via `/admin/settings`:
+Per governance requirements, the barangay administrator has full control over the AI engine via `/admin/settings` (Feature Toggles):
 
-```php
-// app/Services/ChatbotService.php
-public function respond(string $userMessage): array
-{
-    $isEnabled = (bool) Setting::get('ai_chatbot_enabled', true);
-
-    if (!$isEnabled) {
-        return [
-            'reply' => "The Barangay Virtual Assistant is currently offline for scheduled maintenance. For emergencies, please call the Pasay Police VAWC Desk at 8831-7322.",
-            'is_fallback' => true,
-        ];
-    }
-
-    // Execute Python sub-process with 5-second process timeout...
-}
-```
-
-* **Process Timeout Isolation:** Uses Symfony Process with a strict 5-second execution limit to prevent hung background Python workers from consuming web server memory.
-* **Zero Disclosures Policy:** The AI model is strictly prohibited from answering queries regarding active case identities, names of victims, or ongoing blotter records.
+- **Feature Switch (`chatbot_enabled`):** When toggled off by an administrator, the frontend widget switches to maintenance mode, displaying an advisory notice and direct emergency phone links (`tel:911`).
+- **Process Timeout Isolation:** Uses Symfony Process with an 8.0-second execution limit (`$process->setTimeout(8.0)`) to terminate hung Python processes and prevent memory starvation.
+- **Graceful Keyword Fallback:** If the Python execution environment is unavailable or times out, `ChatbotService` seamlessly fails over to deterministic PHP keyword routing (`fallbackLogic()`) and notifies the client interface.
+- **Zero Disclosures Policy:** Under `case_status_inquiry`, the assistant strictly refuses to disclose personal case statuses, names of parties, or blotter records, advising citizens to log into their authenticated dashboard or visit the Barangay VAW Desk in person with valid identification in compliance with the Data Privacy Act of 2012 (RA 10173).
+- **Mandatory Non-Legal Disclaimer:** The interface and initial greeting explicitly state that the assistant is an informational guide and does not provide formal legal advice, legal counsel, or legal determinations, nor does it replace authorized VAWC personnel.

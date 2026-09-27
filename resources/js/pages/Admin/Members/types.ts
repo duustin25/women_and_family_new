@@ -1,6 +1,7 @@
 export interface Organization {
     id: number;
     name: string;
+    slug?: string;
     code?: string;
     color_theme?: string;
 }
@@ -29,16 +30,22 @@ export interface MemberCommunication {
 
 export interface Member {
     id: number;
+    membership_application_id?: number | null;
     fullname: string;
     email?: string | null;
     phone?: string | null;
     organization_id: number;
     organization: Organization;
     application?: {
+        id?: number;
+        application_number?: string;
         address?: string;
         contact_number?: string;
         gender?: string;
         birthdate?: string;
+        form_data?: any;
+        status?: string;
+        created_at?: string;
     };
     member_meta?: {
         address?: string;

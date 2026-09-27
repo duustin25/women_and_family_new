@@ -9,7 +9,10 @@ import {
     Printer, 
     Edit, 
     ChevronRight,
-    ClipboardList
+    ClipboardList,
+    Gift,
+    FileSpreadsheet,
+    ExternalLink
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -128,9 +131,13 @@ export function ApplicationsTable({ applications, hasActiveFilters }: Applicatio
                                             {getInitials(app.fullname)}
                                         </div>
                                         <div className="flex flex-col min-w-0">
-                                            <span className="font-semibold text-sm tracking-tight text-foreground truncate">
+                                            <Link 
+                                                href={`/admin/applications/${app.id}`}
+                                                className="font-semibold text-sm tracking-tight text-foreground hover:text-primary hover:underline transition-colors truncate text-left"
+                                                title="Open applicant evaluation"
+                                            >
                                                 {app.fullname}
-                                            </span>
+                                            </Link>
 
                                             {email && (
                                                 <span className="text-[11px] text-muted-foreground flex items-center gap-1 truncate">
@@ -151,9 +158,22 @@ export function ApplicationsTable({ applications, hasActiveFilters }: Applicatio
 
                                 {/* Organization */}
                                 <TableCell className="py-3">
-                                    <Badge variant="outline" className="text-xs font-medium py-1 px-2.5 bg-muted/30">
-                                        {app.organization_name || 'General Sector'}
-                                    </Badge>
+                                    {app.organization_slug ? (
+                                        <Link 
+                                            href={`/admin/organizations/${app.organization_slug}/members?search=${encodeURIComponent(app.fullname)}`}
+                                            title={`Open ${app.organization_name || 'Sector'} Directory`}
+                                            className="inline-block group"
+                                        >
+                                            <Badge variant="outline" className="text-xs font-medium py-1 px-2.5 bg-muted/30 group-hover:bg-primary/10 group-hover:border-primary/40 transition-colors flex items-center gap-1">
+                                                <span>{app.organization_name || 'General Sector'}</span>
+                                                <ExternalLink className="w-2.5 h-2.5 opacity-40 group-hover:opacity-100" />
+                                            </Badge>
+                                        </Link>
+                                    ) : (
+                                        <Badge variant="outline" className="text-xs font-medium py-1 px-2.5 bg-muted/30">
+                                            {app.organization_name || 'General Sector'}
+                                        </Badge>
+                                    )}
                                 </TableCell>
 
                                 {/* Review Status */}
@@ -192,7 +212,7 @@ export function ApplicationsTable({ applications, hasActiveFilters }: Applicatio
                                                     <MoreHorizontal className="h-4 w-4" />
                                                 </Button>
                                             </DropdownMenuTrigger>
-                                            <DropdownMenuContent align="end" className="w-48">
+                                            <DropdownMenuContent align="end" className="w-52">
                                                 <DropdownMenuLabel className="text-xs font-semibold">
                                                     Application Actions
                                                 </DropdownMenuLabel>
@@ -218,6 +238,26 @@ export function ApplicationsTable({ applications, hasActiveFilters }: Applicatio
                                                         <span>Edit Intake Records</span>
                                                     </Link>
                                                 </DropdownMenuItem>
+
+                                                {app.status?.toLowerCase() === 'approved' && (
+                                                    <>
+                                                        <DropdownMenuSeparator />
+                                                        <DropdownMenuItem asChild className="cursor-pointer text-xs gap-2">
+                                                            <Link href={`/admin/members?search=${encodeURIComponent(app.fullname)}`}>
+                                                                <Gift className="w-3.5 h-3.5 text-blue-600" />
+                                                                <span>View Aid & CRM Profile</span>
+                                                            </Link>
+                                                        </DropdownMenuItem>
+                                                        {app.organization_slug && (
+                                                            <DropdownMenuItem asChild className="cursor-pointer text-xs gap-2">
+                                                                <Link href={`/admin/organizations/${app.organization_slug}/members?search=${encodeURIComponent(app.fullname)}`}>
+                                                                    <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
+                                                                    <span>View in Org Directory</span>
+                                                                </Link>
+                                                            </DropdownMenuItem>
+                                                        )}
+                                                    </>
+                                                )}
                                             </DropdownMenuContent>
                                         </DropdownMenu>
                                     </div>

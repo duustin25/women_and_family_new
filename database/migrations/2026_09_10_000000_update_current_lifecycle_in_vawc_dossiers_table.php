@@ -12,7 +12,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        DB::statement("ALTER TABLE `vawc_dossiers` MODIFY COLUMN `current_lifecycle` VARCHAR(50) NOT NULL DEFAULT 'Application Pending'");
+        if (DB::getDriverName() === 'mysql') {
+            DB::statement("ALTER TABLE `vawc_dossiers` MODIFY COLUMN `current_lifecycle` VARCHAR(50) NOT NULL DEFAULT 'Application Pending'");
+        }
     }
 
     /**
@@ -20,6 +22,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        DB::statement("ALTER TABLE `vawc_dossiers` MODIFY COLUMN `current_lifecycle` ENUM('Active BPO', 'Under Monitoring', 'Escalated to Court', 'Dormant/Closed') NOT NULL DEFAULT 'Under Monitoring'");
+        if (DB::getDriverName() === 'mysql') {
+            DB::statement("ALTER TABLE `vawc_dossiers` MODIFY COLUMN `current_lifecycle` ENUM('Active BPO', 'Under Monitoring', 'Escalated to Court', 'Dormant/Closed') NOT NULL DEFAULT 'Under Monitoring'");
+        }
     }
 };

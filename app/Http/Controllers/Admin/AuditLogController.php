@@ -16,9 +16,16 @@ class AuditLogController extends Controller
         $query = \App\Models\AuditLog::with(['user:id,name,role'])
             ->latest();
 
-        // RBAC: President Scoping
+        // RBAC Scoping: Least-privilege enforcement
         if ($user->isPresident()) {
             $query->where('user_id', $user->id);
+        } elseif ($user->isHead()) {
+            // Head officer can monitor casework (VAWC, BCPC, Organizations), but cannot access IT infrastructure backups
+            $query->where(function ($q) {
+                $q->where('auditable_type', 'not like', '%Backup%')
+                  ->where('action', 'not like', '%BACKUP%')
+                  ->where('action', 'not like', '%DATABASE%');
+            });
         }
 
         $query->filterMaster($filters);
@@ -39,9 +46,16 @@ class AuditLogController extends Controller
         $query = \App\Models\AuditLog::with(['user:id,name,role'])
             ->latest();
 
-        // RBAC: President Scoping
+        // RBAC Scoping: Least-privilege enforcement
         if ($user->isPresident()) {
             $query->where('user_id', $user->id);
+        } elseif ($user->isHead()) {
+            // Head officer can monitor casework (VAWC, BCPC, Organizations), but cannot access IT infrastructure backups
+            $query->where(function ($q) {
+                $q->where('auditable_type', 'not like', '%Backup%')
+                  ->where('action', 'not like', '%BACKUP%')
+                  ->where('action', 'not like', '%DATABASE%');
+            });
         }
 
         $query->filterMaster($filters);

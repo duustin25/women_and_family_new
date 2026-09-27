@@ -18,7 +18,7 @@ flowchart TD
     PB["Punong Barangay"]
     CHO["Pasay City Health Office"]
     
-    BCPC_System(("(0.0)<br/>BCPC Child Nutrition &<br/>e-OPT Plus Subsystem"))
+    BCPC_System(("(0.0)<br/>BCPC Child Nutrition<br/>Decision Support Subsystem (DSS)"))
 
     %% Flows
     Parent -->|1. Child Demographics & Consent for SFP| BCPC_System

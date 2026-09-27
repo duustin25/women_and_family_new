@@ -12,7 +12,7 @@ class PublicOrganizationController extends Controller
     public function index()
     {
         return Inertia::render('Public/Organizations/Index', [
-            'organizations' => OrganizationResource::collection(Organization::with('president')->latest()->get())
+            'organizations' => OrganizationResource::collection(Organization::active()->with('president')->latest()->get())
         ]);
     }
 

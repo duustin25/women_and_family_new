@@ -10,7 +10,9 @@ export interface Application {
     fullname: string;
     organization_id: number;
     organization_name: string;
+    organization_slug?: string;
     organization_color?: string;
+    member_id?: number | null;
     address?: string | null;
     email?: string | null;
     status: 'Pending' | 'Approved' | 'Disapproved' | 'Appealed' | string;

@@ -1,0 +1,89 @@
+{
+  "description": "Independent, unseen evaluation dataset for the Barangay 183 Sentinel AI Chatbot. Contains no exact duplicates of the 188 training patterns in intents.json. Includes English, Tagalog, and Taglish queries across supported intents, ambiguous queries, and out-of-scope queries.",
+  "metadata": {
+    "total_samples": 64,
+    "languages": ["English", "Tagalog", "Taglish"],
+    "created_at": "2026-09-28",
+    "purpose": "Academic Model Validation for Capstone Priority #8"
+  },
+  "test_samples": [
+    { "text": "Magandang araw po sa inyo Sentinel", "expected_intent": "greeting" },
+    { "text": "Good morning po, may itatanong lang sana ako", "expected_intent": "greeting" },
+    { "text": "Hi po, available po ba kayo mag-assist?", "expected_intent": "greeting" },
+    { "text": "Hello there, need some guidance today", "expected_intent": "greeting" },
+
+    { "text": "Maraming salamat po sa inyong tulong", "expected_intent": "goodbye" },
+    { "text": "Sige po, aalis na muna ako salamat", "expected_intent": "goodbye" },
+    { "text": "Thanks for the information, bye", "expected_intent": "goodbye" },
+
+    { "text": "Paano po magreklamo laban sa nananakit na asawa?", "expected_intent": "vawc_filing" },
+    { "text": "Sinasaktan po ang kapatid kong babae ng kinakasama niya", "expected_intent": "vawc_filing" },
+    { "text": "Where can a victim report domestic violence in our barangay?", "expected_intent": "vawc_filing" },
+    { "text": "Gusto ko pong maghain ng pormal na reklamo sa VAW desk", "expected_intent": "vawc_filing" },
+    { "text": "Inaabuso po ako physically ng partner ko", "expected_intent": "vawc_filing" },
+
+    { "text": "May pinapabayaang bata po sa aming kapitbahay", "expected_intent": "bcpc_report" },
+    { "text": "How do I report a child labor situation in the community?", "expected_intent": "bcpc_report" },
+    { "text": "Inaabuso po at pinapalo ang pamangkin kong menor de edad", "expected_intent": "bcpc_report" },
+    { "text": "Saan po pwedeng mag-report ng child abuse case?", "expected_intent": "bcpc_report" },
+
+    { "text": "Kailan po ang susunod na Operation Timbang sa barangay?", "expected_intent": "bcpc_nutrition" },
+    { "text": "Where can I register my underweight toddler for feeding?", "expected_intent": "bcpc_nutrition" },
+    { "text": "May libreng vitamins po ba para sa malnourished na bata?", "expected_intent": "bcpc_nutrition" },
+    { "text": "Paano po ma-check ang height and weight ng anak ko?", "expected_intent": "bcpc_nutrition" },
+
+    { "text": "Gusto ko po sanang magsumbong sa barangay hall", "expected_intent": "general_report_inquiry" },
+    { "text": "How do I file a general incident complaint?", "expected_intent": "general_report_inquiry" },
+    { "text": "May reklamo po ako pero hindi ko alam kung kanino lalapit", "expected_intent": "general_report_inquiry" },
+    { "text": "Nais ko pong mag-file ng reklamo ngayon", "expected_intent": "general_report_inquiry" },
+
+    { "text": "Ano po ang mga seminar at aktibidad ng GAD para sa kababaihan?", "expected_intent": "gad_initiatives" },
+    { "text": "Are there upcoming women empowerment programs this month?", "expected_intent": "gad_initiatives" },
+    { "text": "Saan po pwedeng malaman ang budget at proyekto ng GAD?", "expected_intent": "gad_initiatives" },
+
+    { "text": "Sino po ang kasalukuyang nakaupong Barangay Captain?", "expected_intent": "officials" },
+    { "text": "Can I see the list of active barangay councilors?", "expected_intent": "officials" },
+    { "text": "Sino po ang mga namumuno sa Barangay 183?", "expected_intent": "officials" },
+
+    { "text": "Ano po ba ang mga karapatan ng kababaihan sa ilalim ng batas?", "expected_intent": "laws_info" },
+    { "text": "Can you explain the difference between RA 9262 and Safe Spaces Act?", "expected_intent": "laws_info" },
+    { "text": "Anong batas po ang nagpoprotekta laban sa pambabastos sa kalsada?", "expected_intent": "laws_info" },
+
+    { "text": "Anong mga samahan at accredited NGOs ang pwede kong salihan?", "expected_intent": "organizations_general" },
+    { "text": "Can you show me the accredited community groups in the barangay?", "expected_intent": "organizations_general" },
+    { "text": "May organisasyon po ba para sa mga kababaihan at magulang dito?", "expected_intent": "organizations_general" },
+
+    { "text": "Ano po ang kailangan kong ipasa para makasali sa KALIPI?", "expected_intent": "organization_info" },
+    { "text": "What are the membership requirements for Solo Parents Association?", "expected_intent": "organization_info" },
+    { "text": "Paano po mag-apply sa samahan ng mga Senior Citizens?", "expected_intent": "organization_info" },
+
+    { "text": "May bagong anunsyo po ba tungkol sa medical mission?", "expected_intent": "announcements" },
+    { "text": "What are the latest advisories posted by the barangay?", "expected_intent": "announcements" },
+    { "text": "May mga paparating po bang mga aktibidad o balita?", "expected_intent": "announcements" },
+
+    { "text": "Saklolo po kailangan ko ng agarang tulong ng pulis!", "expected_intent": "emergency" },
+    { "text": "Immediate emergency help needed right now!", "expected_intent": "emergency" },
+    { "text": "Nasa panganib po ang buhay ko tulungan niyo ako!", "expected_intent": "emergency" },
+    { "text": "Emergency assistance please!", "expected_intent": "emergency" },
+
+    { "text": "Ano po ang telepono ng pinakamalapit na police station?", "expected_intent": "contact_numbers" },
+    { "text": "Can you provide the telephone directory for barangay desks?", "expected_intent": "contact_numbers" },
+    { "text": "Saan po pwedeng tumawag para sa hotline ng barangay?", "expected_intent": "contact_numbers" },
+
+    { "text": "Pwede ko bang malaman kung ano na ang nangyari sa kaso ng kapitbahay ko?", "expected_intent": "case_status_inquiry" },
+    { "text": "Can you check the blotter record and status of my pending case?", "expected_intent": "case_status_inquiry" },
+    { "text": "Sino po ang nag-file ng reklamo laban sa kapatid ko?", "expected_intent": "case_status_inquiry" },
+    { "text": "Update po sa blotter report ni Juan dela Cruz", "expected_intent": "case_status_inquiry" },
+
+    { "text": "Saan po masarap kumain ng pansit dito sa malapit?", "expected_intent": "irrelevant" },
+    { "text": "How do I bake a chocolate cake at home?", "expected_intent": "irrelevant" },
+    { "text": "Sino po ang nanalo sa basketball tournament kahapon?", "expected_intent": "irrelevant" },
+    { "text": "Can you write an essay about global warming?", "expected_intent": "irrelevant" },
+    { "text": "Magkano po magpa-renew ng driver's license sa LTO?", "expected_intent": "irrelevant" },
+    { "text": "Pautang naman po ng pambayad sa kuryente", "expected_intent": "irrelevant" },
+    { "text": "What is the capital city of Japan?", "expected_intent": "irrelevant" },
+    { "text": "Magkwento ka naman ng nakakatawang joke", "expected_intent": "irrelevant" },
+    { "text": "May libreng sine ba ngayon sa mall?", "expected_intent": "irrelevant" },
+    { "text": "Paano po gumawa ng website gamit ang WordPress?", "expected_intent": "irrelevant" }
+  ]
+}

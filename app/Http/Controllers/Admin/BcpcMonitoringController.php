@@ -544,7 +544,7 @@ class BcpcMonitoringController extends Controller
 
         $photoPath = null;
         if ($request->hasFile('photo')) {
-            $photoPath = $request->file('photo')->store('bcpc_children', 'public');
+            $photoPath = $request->file('photo')->store('bcpc_children', 'local');
         }
 
         return DB::transaction(function () use ($validated, $ageInMonthsAtRegistration, $photoPath, $request) {
@@ -837,11 +837,15 @@ class BcpcMonitoringController extends Controller
             'photo' => 'required|image|mimes:jpeg,png,jpg,webp|max:3072',
         ]);
 
-        if ($child->photo_path && Storage::disk('public')->exists($child->photo_path)) {
-            Storage::disk('public')->delete($child->photo_path);
+        if ($child->photo_path) {
+            if (Storage::disk('local')->exists($child->photo_path)) {
+                Storage::disk('local')->delete($child->photo_path);
+            } elseif (Storage::disk('public')->exists($child->photo_path)) {
+                Storage::disk('public')->delete($child->photo_path);
+            }
         }
 
-        $path = $request->file('photo')->store('bcpc_children', 'public');
+        $path = $request->file('photo')->store('bcpc_children', 'local');
         $child->update(['photo_path' => $path]);
 
         AuditLogger::logUpdate($child, 'BCPC_CHILD_PHOTO_UPDATED', [
@@ -849,6 +853,26 @@ class BcpcMonitoringController extends Controller
         ]);
 
         return Redirect::back()->with('success', 'Child profile photo updated successfully.');
+    }
+
+    /**
+     * Authenticated server-side streaming of private BCPC child photo.
+     */
+    public function photo(BcpcChild $child)
+    {
+        if (!$child->photo_path) {
+            abort(404, 'Photo not found.');
+        }
+
+        if (Storage::disk('local')->exists($child->photo_path)) {
+            return response()->file(Storage::disk('local')->path($child->photo_path));
+        }
+
+        if (Storage::disk('public')->exists($child->photo_path)) {
+            return response()->file(Storage::disk('public')->path($child->photo_path));
+        }
+
+        abort(404, 'Photo file does not exist on disk.');
     }
 
     /**

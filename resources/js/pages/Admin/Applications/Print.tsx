@@ -97,6 +97,7 @@ export default function Print({ application, organization }: PrintProps) {
                     data={formData}
                     setData={() => { }} // Read-only for print
                     mode="view"
+                    theme="paper"
                 />
             </section>
 

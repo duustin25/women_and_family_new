@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use App\Models\Organization;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 
 class MembershipApplicationController extends Controller
 {
@@ -98,7 +99,7 @@ class MembershipApplicationController extends Controller
             abort(403, 'Unauthorized. This application belongs to another organization.');
         }
 
-        $application->load('organization');
+        $application->load(['organization', 'member']);
 
         // All applications now use the unified dynamic review page
         $view = 'Admin/Applications/ReviewData';
@@ -376,5 +377,63 @@ class MembershipApplicationController extends Controller
             'filters' => $request->only('search', 'tab'),
             'stats' => $stats,
         ]);
+    }
+
+    /**
+     * Authenticated server-side streaming of private membership requirement documents.
+     */
+    public function streamRequirementDocument(Request $request, MembershipApplication $application, string $fieldId)
+    {
+        $user = $request->user();
+        if ($user->isPresident() && $application->organization_id !== $user->organization_id) {
+            abort(403, 'Unauthorized. You cannot view documents belonging to other organizations.');
+        }
+
+        $formData = is_array($application->form_data)
+            ? $application->form_data
+            : (is_string($application->form_data) ? (json_decode((string) $application->form_data, true) ?: []) : []);
+        $path = $formData[$fieldId] ?? null;
+
+        if (!$path || !is_string($path)) {
+            abort(404, 'Requested document was not found.');
+        }
+
+        if (Storage::disk('local')->exists($path)) {
+            return response()->file(Storage::disk('local')->path($path));
+        }
+
+        if (Storage::disk('public')->exists($path)) {
+            return response()->file(Storage::disk('public')->path($path));
+        }
+
+        abort(404, 'Document file does not exist on disk.');
+    }
+
+    /**
+     * Authenticated server-side streaming of private appeal evidence attachments.
+     */
+    public function streamAppealDocument(Request $request, MembershipApplication $application, int $index)
+    {
+        $user = $request->user();
+        if ($user->isPresident() && $application->organization_id !== $user->organization_id) {
+            abort(403, 'Unauthorized. You cannot view documents belonging to other organizations.');
+        }
+
+        $appealDocs = $application->appeal_docs ?? [];
+        $path = $appealDocs[$index] ?? null;
+
+        if (!$path || !is_string($path)) {
+            abort(404, 'Requested appeal document was not found.');
+        }
+
+        if (Storage::disk('local')->exists($path)) {
+            return response()->file(Storage::disk('local')->path($path));
+        }
+
+        if (Storage::disk('public')->exists($path)) {
+            return response()->file(Storage::disk('public')->path($path));
+        }
+
+        abort(404, 'Appeal document file does not exist on disk.');
     }
 }

@@ -15,6 +15,7 @@ class OrganizationResource extends JsonResource
             'slug' => $this->slug,
             'description' => $this->description,
             'president_name' => $this->president ? $this->president->name : null,
+            'is_active' => (bool) $this->is_active,
             'color_theme' => $this->color_theme ?? 'bg-blue-700',
 
             // Image URL from your Model Accessor
@@ -28,6 +29,8 @@ class OrganizationResource extends JsonResource
 
             // Dynamic Form Schema (JSON)
             'form_schema' => $this->form_schema ?? [],
+
+            'print_settings' => $this->print_settings ?? null,
 
             'created_at' => $this->created_at->format('M d, Y'),
         ];

@@ -25,13 +25,28 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->configureDefaults();
 
+        // Production HTTPS enforcement (Application-level)
+        if ($this->app->environment('production')) {
+            \Illuminate\Support\Facades\URL::forceScheme('https');
+        }
+
         // Register Observers for Audit Logging and Member Synchronization
         \App\Models\CaseReport::observe(\App\Observers\AuditObserver::class);
+        \App\Models\VawcCase::observe(\App\Observers\AuditObserver::class);
+        \App\Models\VawcDossier::observe(\App\Observers\AuditObserver::class);
+        \App\Models\VawcInvolvedParty::observe(\App\Observers\AuditObserver::class);
+        \App\Models\VawcAssessment::observe(\App\Observers\AuditObserver::class);
+        \App\Models\VawcProtectionOrder::observe(\App\Observers\AuditObserver::class);
+        \App\Models\VawcAgencyTransmittal::observe(\App\Observers\AuditObserver::class);
+        \App\Models\VawcBpoServiceRecord::observe(\App\Observers\AuditObserver::class);
+        \App\Models\VawcComplianceLog::observe(\App\Observers\AuditObserver::class);
+        \App\Models\VawcLegalEscalation::observe(\App\Observers\AuditObserver::class);
+        \App\Models\Member::observe(\App\Observers\AuditObserver::class);
+        \App\Models\BcpcChild::observe(\App\Observers\AuditObserver::class);
+        \App\Models\BcpcAssessment::observe(\App\Observers\AuditObserver::class);
         \App\Models\User::observe(\App\Observers\AuditObserver::class);
         \App\Models\Announcement::observe(\App\Observers\AuditObserver::class);
         \App\Models\Organization::observe(\App\Observers\AuditObserver::class);
-        \App\Models\BcpcChild::observe(\App\Observers\AuditObserver::class);
-        \App\Models\BcpcAssessment::observe(\App\Observers\AuditObserver::class);
         \App\Models\MembershipApplication::observe(\App\Observers\MembershipApplicationObserver::class);
 
         // Resolve polymorphic relation for custom non-model types
