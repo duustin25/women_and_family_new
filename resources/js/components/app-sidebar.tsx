@@ -198,7 +198,7 @@ export function AppSidebar() {
             <SidebarHeader>
                 <SidebarMenu>
                     <SidebarMenuItem>
-                        <SidebarMenuButton size="lg" asChild>
+                        <SidebarMenuButton size="lg" asChild tooltip="Women and Family Desk">
                             <Link href={dashboard()} prefetch>
                                 <AppLogo />
                             </Link>
