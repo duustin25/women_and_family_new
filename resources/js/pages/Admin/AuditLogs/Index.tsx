@@ -1,7 +1,7 @@
 import { Head } from '@inertiajs/react';
 import { ShieldCheck } from 'lucide-react';
 import AppLayout from '@/layouts/app-layout';
-import AuditTab from '@/pages/Admin/Settings/Partials/AuditTab';
+import AuditTab from '@/pages/Admin/Settings/Modules/Audit/AuditTab';
 
 interface AuditLogsPageProps {
     logs: any;

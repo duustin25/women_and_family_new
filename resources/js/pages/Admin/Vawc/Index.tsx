@@ -1,16 +1,16 @@
-import React, { useState, useEffect, useRef } from 'react';
 import { Head, router } from '@inertiajs/react';
-import { route } from 'ziggy-js';
 import { Folder } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { route } from 'ziggy-js';
 import { Card, CardContent } from '@/components/ui/card';
 import { useDebounce } from '@/hooks/use-debounce';
 import AppLayout from '@/layouts/app-layout';
-import { IndexProps, Dossier } from './types';
-import VawcIndexHeader from './Partials/Index/VawcIndexHeader';
-import VawcWorkflowModeSwitcher from './Partials/Index/VawcWorkflowModeSwitcher';
-import VawcIndexFilterBar from './Partials/Index/VawcIndexFilterBar';
 import VawcDossierAccordionItem from './Partials/Index/VawcDossierAccordionItem';
+import VawcIndexFilterBar from './Partials/Index/VawcIndexFilterBar';
+import VawcIndexHeader from './Partials/Index/VawcIndexHeader';
 import VawcIndexPagination from './Partials/Index/VawcIndexPagination';
+import VawcWorkflowModeSwitcher from './Partials/Index/VawcWorkflowModeSwitcher';
+import type { IndexProps, Dossier } from './types';
 
 export default function Index({ dossiers, filters }: IndexProps) {
     const [search, setSearch] = useState(filters?.search || '');

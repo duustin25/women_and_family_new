@@ -1,18 +1,18 @@
-import React from 'react';
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { FormSchemaField } from '../../types';
-import FamilyTableConfig from './FamilyTableConfig';
 import {
     ChevronUp, ChevronDown, Trash2, Plus, GripVertical, Lock,
     Type, AlignLeft, Hash, Mail, Calendar, ListFilter, Radio, CheckSquare,
     Table, UploadCloud, Heading, ShieldAlert, Check
 } from 'lucide-react';
+import React from 'react';
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import type { FormSchemaField } from '../../types';
+import FamilyTableConfig from './FamilyTableConfig';
 
 interface Props {
     field: FormSchemaField;

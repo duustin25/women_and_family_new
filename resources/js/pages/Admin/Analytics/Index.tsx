@@ -13,33 +13,33 @@ import {
 } from 'recharts';
 
 // Domain-Specific & Common Analytics Components
+import BcpcNutritionStatusBarChart from '@/components/Admin/Analytics/Bcpc/BcpcNutritionStatusBarChart';
+import BcpcSfpOutcomesChart from '@/components/Admin/Analytics/Bcpc/BcpcSfpOutcomesChart';
 import AnalyticsFilterBar from '@/components/Admin/Analytics/Common/AnalyticsFilterBar';
 import AnalyticsSkeleton from '@/components/Admin/Analytics/Common/AnalyticsSkeleton';
 
 // VAWC Components
+import GadMemberDemographicsChart from '@/components/Admin/Analytics/Gad/GadMemberDemographicsChart';
+import GadMembershipTrendsChart from '@/components/Admin/Analytics/Gad/GadMembershipTrendsChart';
+import GadProjectPipelineChart from '@/components/Admin/Analytics/Gad/GadProjectPipelineChart';
+import OrgBacklogKpiCard from '@/components/Admin/Analytics/Organizations/OrgBacklogKpiCard';
+import VawcGeographicalDensityChart from '@/components/Admin/Analytics/Vawc/VawcGeographicalDensityChart';
+import VawcLegalSafeguardsCard from '@/components/Admin/Analytics/Vawc/VawcLegalSafeguardsCard';
 import VawcMonthlyAbuseChart from '@/components/Admin/Analytics/Vawc/VawcMonthlyAbuseChart';
 import VawcRiskDistributionChart from '@/components/Admin/Analytics/Vawc/VawcRiskDistributionChart';
-import VawcLegalSafeguardsCard from '@/components/Admin/Analytics/Vawc/VawcLegalSafeguardsCard';
-import VawcGeographicalDensityChart from '@/components/Admin/Analytics/Vawc/VawcGeographicalDensityChart';
 
 // BCPC Components
-import BcpcNutritionStatusBarChart from '@/components/Admin/Analytics/Bcpc/BcpcNutritionStatusBarChart';
-import BcpcSfpOutcomesChart from '@/components/Admin/Analytics/Bcpc/BcpcSfpOutcomesChart';
 
 // GAD Components
-import GadProjectPipelineChart from '@/components/Admin/Analytics/Gad/GadProjectPipelineChart';
 
 // Organization Components
-import OrgBacklogKpiCard from '@/components/Admin/Analytics/Organizations/OrgBacklogKpiCard';
-import GadMembershipTrendsChart from '@/components/Admin/Analytics/Gad/GadMembershipTrendsChart';
-import GadMemberDemographicsChart from '@/components/Admin/Analytics/Gad/GadMemberDemographicsChart';
 
 // UI Components
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import AppLayout from '@/layouts/app-layout';
 import { cn } from '@/lib/utils';
 

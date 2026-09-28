@@ -20,17 +20,25 @@ class PublicServicesController extends Controller
 
     public function officials()
     {
-        // ADDED: with('user') to fetch the linked system account names
         $officials = \App\Models\OrganizationalMember::with('user')
             ->where('is_active', true)
             ->orderBy('display_order')
             ->get();
 
+        // Level 1: Head Committee (Top Tier)
+        $level1 = $officials->filter(fn($o) => in_array($o->level, ['head', 'level_1']))->values();
+        // Level 2: Secretary (Mid Tier)
+        $level2 = $officials->filter(fn($o) => in_array($o->level, ['secretary', 'level_2']))->values();
+        // Level 3: Staff & Officers (Operational Tier: Staff, AVAWC Officer, etc.)
+        $level3 = $officials->filter(fn($o) => in_array($o->level, ['staff', 'level_3']))->values();
+
         return Inertia::render('Public/Officials/Index', [
-            'head' => $officials->where('level', 'head')->first(),
-            'secretary' => $officials->where('level', 'secretary')->first(),
-            // values()->all() resets the array keys so React maps over it cleanly
-            'staff' => $officials->where('level', 'staff')->values()->all()
+            'level1' => $level1->all(),
+            'level2' => $level2->all(),
+            'level3' => $level3->all(),
+            'head' => $level1->first() ?? null,
+            'secretary' => $level2->first() ?? null,
+            'staff' => $level3->all(),
         ]);
     }
 

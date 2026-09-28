@@ -24,7 +24,7 @@ class OtpSecurityController extends Controller
         return Inertia::render('auth/panic-confirmation', [
             'success' => $success,
             'message' => $success 
-                ? 'Account Security Kill-Switch Triggered. All active logins and sessions have been immediately destroyed. Your account is now locked to protect confidential records. Please contact a Super Administrator to unlock your account.'
+                ? 'Account Security Kill-Switch Triggered. All active logins and sessions have been immediately destroyed. Your account is now locked to protect confidential records. Please contact an Administrator to unlock your account.'
                 : 'This emergency security link is invalid or has already been used.',
         ]);
     }
@@ -48,7 +48,7 @@ class OtpSecurityController extends Controller
                 $request->session()->regenerateToken();
 
                 return redirect()->route('login')->withErrors([
-                    'email' => 'Your account has been locked due to excessive failed verification attempts. Please contact a Super Administrator to review and unlock your account.',
+                    'email' => 'Your account has been locked due to excessive failed verification attempts. Please contact an Administrator to review and unlock your account.',
                 ]);
             }
 
@@ -84,7 +84,7 @@ class OtpSecurityController extends Controller
                 $request->session()->regenerateToken();
 
                 return redirect()->route('login')->withErrors([
-                    'email' => 'Your account has been locked due to excessive failed verification attempts. Please contact a Super Administrator to review and unlock your account.',
+                    'email' => 'Your account has been locked due to excessive failed verification attempts. Please contact an Administrator to review and unlock your account.',
                 ]);
             }
 

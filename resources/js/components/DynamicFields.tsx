@@ -211,8 +211,8 @@ export default function DynamicFields({ schema, data, setData, errors, mode = 'e
                     <div key={field.id} className={`${theme === 'modern' ? 'w-full bg-white dark:bg-neutral-900 p-6 rounded-xl shadow-sm border border-neutral-200/60 dark:border-neutral-800 transition-all hover:shadow-md' : widthClass} space-y-4`}>
                         <div className={`flex items-start space-x-3 ${theme === 'modern' ? 'mt-2' : 'mt-4'}`}>
                             {mode === 'view' && theme === 'paper' ? (
-                                <div className={`w-4 h-4 border border-black flex items-center justify-center text-[10px] font-black shrink-0 ${!!data[field.id] ? 'bg-black text-white' : 'bg-white'}`}>
-                                    {!!data[field.id] ? '✓' : ''}
+                                <div className={`w-4 h-4 border border-black flex items-center justify-center text-[10px] font-black shrink-0 ${data[field.id] ? 'bg-black text-white' : 'bg-white'}`}>
+                                    {data[field.id] ? '✓' : ''}
                                 </div>
                             ) : (
                                 <Checkbox

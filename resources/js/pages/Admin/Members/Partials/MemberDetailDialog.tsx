@@ -1,4 +1,3 @@
-import React from 'react';
 import { Link } from '@inertiajs/react';
 import { 
     Users, 
@@ -18,6 +17,7 @@ import {
     Printer,
     ExternalLink
 } from 'lucide-react';
+import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -28,7 +28,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
-import { Member, BeneficiaryDispatch } from '../types';
+import type { Member, BeneficiaryDispatch } from '../types';
 
 interface MemberDetailDialogProps {
     member: Member | null;

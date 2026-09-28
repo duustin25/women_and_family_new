@@ -18,6 +18,10 @@ export interface Zone {
 }
 
 export default function ZonesTable({ zones }: { zones: Zone[] }) {
+    const sortedZones = [...zones].sort((a, b) =>
+        a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' })
+    );
+
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const [editingId, setEditingId] = useState<number | null>(null);
@@ -76,8 +80,7 @@ export default function ZonesTable({ zones }: { zones: Zone[] }) {
         <Card className="border shadow-sm w-full">
             <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b">
                 <div>
-                    <CardTitle className="text-lg font-bold flex items-center gap-2">
-                        <MapPin className="w-5 h-5 text-emerald-600" />
+                    <CardTitle className="text-lg font-bold">
                         Barangay Zones
                     </CardTitle>
                     <CardDescription className="text-sm text-muted-foreground">
@@ -86,7 +89,7 @@ export default function ZonesTable({ zones }: { zones: Zone[] }) {
                 </div>
                 <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
                     <DialogTrigger asChild>
-                        <Button onClick={openCreate} size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold min-h-[40px] sm:min-h-[38px]">
+                        <Button onClick={openCreate} size="sm" className="font-semibold text-sm flex items-center gap-1.5 min-h-[40px] sm:min-h-[38px] bg-primary text-primary-foreground shadow-xs hover:bg-primary/90">
                             <Plus className="w-4 h-4 mr-1.5" /> Add Zone
                         </Button>
                     </DialogTrigger>
@@ -129,19 +132,25 @@ export default function ZonesTable({ zones }: { zones: Zone[] }) {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {zones.length === 0 ? (
+                            {sortedZones.length === 0 ? (
                                 <TableRow>
                                     <TableCell colSpan={3} className="text-center py-8 text-muted-foreground text-sm">
                                         No barangay zones recorded.
                                     </TableCell>
                                 </TableRow>
                             ) : (
-                                zones.map(item => (
+                                sortedZones.map(item => (
                                     <TableRow key={item.id} className="hover:bg-muted/30">
                                         <TableCell className="font-medium text-sm text-foreground">{item.name}</TableCell>
                                         <TableCell>
-                                            <Badge variant={item.is_active ? 'default' : 'secondary'} className="text-xs font-semibold">
-                                                {item.is_active ? 'Active' : 'Archived'}
+                                            <Badge
+                                                variant="outline"
+                                                className={item.is_active !== false
+                                                    ? "bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-800 text-xs font-semibold py-0.5 px-2.5 rounded-full"
+                                                    : "bg-rose-100 text-rose-800 border-rose-300 dark:bg-rose-950/50 dark:text-rose-300 dark:border-rose-800 text-xs font-semibold py-0.5 px-2.5 rounded-full"
+                                                }
+                                            >
+                                                {item.is_active !== false ? 'Active' : 'Inactive'}
                                             </Badge>
                                         </TableCell>
                                         <TableCell className="text-right">

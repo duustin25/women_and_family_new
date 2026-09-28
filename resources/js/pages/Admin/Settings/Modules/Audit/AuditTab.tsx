@@ -197,7 +197,7 @@ export default function AuditTab({ logs, filters = {}, baseUrl = '/admin/audit-l
             );
         }
 
-        let cleanText = entityText
+        const cleanText = entityText
             .replace(/^(Official Profile:|Staff Account:|System User:)/, 'User:')
             .replace(/\s*\([^)]+\)$/, '');
 

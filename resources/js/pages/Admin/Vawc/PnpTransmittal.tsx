@@ -1,7 +1,7 @@
 import { Head, Link } from '@inertiajs/react';
+import { Printer, ArrowLeft } from 'lucide-react';
 import React, { useEffect } from 'react';
 import { route } from 'ziggy-js';
-import { Printer, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface Props {

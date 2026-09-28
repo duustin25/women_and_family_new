@@ -16,7 +16,7 @@ export default function BcpcIndex() {
 
     return (
         <PublicLayout>
-            <Head title="BCPC Nutrition & Welfare - Brgy 183 Villamor" />
+            <Head title="BCPC Nutrition & Child Welfare - Brgy 183 Villamor" />
 
             <div className="min-h-screen bg-transparent font-sans text-slate-800 dark:text-slate-200 transition-colors pb-28 md:pb-24 relative z-20">
 
@@ -24,22 +24,14 @@ export default function BcpcIndex() {
                 <section className="relative z-10 bg-gradient-to-b from-emerald-100/30 via-slate-100/20 to-transparent dark:from-emerald-950/20 dark:via-neutral-900/10 dark:to-transparent border-b border-emerald-200/30 dark:border-emerald-900/30 backdrop-blur-[2px] py-16 md:py-20 mb-12">
                     <div className="w-[92%] sm:w-[88%] lg:w-[80%] max-w-7xl mx-auto px-1 sm:px-2 text-center max-w-4xl">
                         <span className="text-xs font-black tracking-widest text-emerald-600 dark:text-emerald-400 uppercase mb-3 block">
-                            Health & Nutrition Monitoring / BCPC Desk
+                            Health & Nutrition Monitoring • BCPC Desk
                         </span>
                         <h1 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white tracking-tighter uppercase leading-none">
                             Children's Protection & Health
                         </h1>
                         <p className="text-sm sm:text-base font-normal text-slate-600 dark:text-slate-400 leading-relaxed max-w-2xl mx-auto mt-4 mb-8">
-                            Ang ating Barangay Council for the Protection of Children (BCPC) ay katuwang sa pagbabantay ng kalusugan, nutrition, at karapatan ng bawat bata sa Barangay 183.
+                            The Barangay Council for the Protection of Children (BCPC) works to safeguard the health, nutrition, and fundamental rights of every child in Barangay 183.
                         </p>
-                        <div className="flex justify-center">
-                            <Button
-                                className="bg-emerald-600 hover:bg-emerald-700 text-white font-black uppercase px-8 py-6 text-xs tracking-widest rounded-md shadow-xl transition-all active:scale-95 cursor-pointer h-14"
-                                onClick={() => scrollToSection('nutrition-monitoring')}
-                            >
-                                Nutrition Programs / Mga Programa <ArrowRight className="ml-2 w-5 h-5" />
-                            </Button>
-                        </div>
                     </div>
                 </section>
 
@@ -48,44 +40,44 @@ export default function BcpcIndex() {
                     {/* --- HEALTH SERVICES GRID --- */}
                     <section id="nutrition-monitoring">
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                            <Card className="bg-white dark:bg-neutral-900 border-t-4 border-t-emerald-500 shadow-sm hover:shadow-md transition-shadow dark:border-neutral-800">
-                                <CardHeader>
+                            <Card className="bg-white dark:bg-neutral-900 border-t-4 border-t-emerald-500 shadow-sm hover:shadow-md transition-shadow dark:border-neutral-800 gap-0 py-0 overflow-hidden">
+                                <CardHeader className="p-6 pb-2">
                                     <div className="w-12 h-12 bg-emerald-50 dark:bg-emerald-900/20 rounded-full flex items-center justify-center mb-4">
                                         <Activity className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
                                     </div>
-                                    <CardTitle className="uppercase font-black text-lg text-slate-900 dark:text-white">Operation Timbang (OPT+)</CardTitle>
+                                    <CardTitle className="uppercase font-black text-lg text-slate-900 dark:text-white">Operation Timbang Plus (OPT+)</CardTitle>
                                 </CardHeader>
-                                <CardContent>
+                                <CardContent className="p-6 pt-1">
                                     <p className="text-slate-700 dark:text-slate-300 text-base leading-relaxed">
-                                        Regular na pagtitimbang at pagsukat ng height ng mga bata para ma-monitor ang kanilang nutritional status base sa WHO standards.
+                                        Regular weighing and height measurement of children to monitor their growth and nutritional status according to World Health Organization (WHO) benchmarks.
                                     </p>
                                 </CardContent>
                             </Card>
 
-                            <Card className="bg-white dark:bg-neutral-900 border-t-4 border-t-amber-500 shadow-sm hover:shadow-md transition-shadow dark:border-neutral-800">
-                                <CardHeader>
+                            <Card className="bg-white dark:bg-neutral-900 border-t-4 border-t-amber-500 shadow-sm hover:shadow-md transition-shadow dark:border-neutral-800 gap-0 py-0 overflow-hidden">
+                                <CardHeader className="p-6 pb-2">
                                     <div className="w-12 h-12 bg-amber-50 dark:bg-amber-900/20 rounded-full flex items-center justify-center mb-4">
                                         <Apple className="w-6 h-6 text-amber-600 dark:text-amber-400" />
                                     </div>
                                     <CardTitle className="uppercase font-black text-lg text-slate-900 dark:text-white">120-Day Feeding Program</CardTitle>
                                 </CardHeader>
-                                <CardContent>
+                                <CardContent className="p-6 pt-1">
                                     <p className="text-slate-700 dark:text-slate-300 text-base leading-relaxed">
-                                        Supplemental feeding para sa mga batang identified bilang malnourished upang muling makuha ang tamang timbang at lusog.
+                                        Targeted supplemental feeding for children identified as underweight or undernourished to restore healthy weight and overall wellness.
                                     </p>
                                 </CardContent>
                             </Card>
 
-                            <Card className="bg-white dark:bg-neutral-900 border-t-4 border-t-sky-500 shadow-sm hover:shadow-md transition-shadow dark:border-neutral-800">
-                                <CardHeader>
+                            <Card className="bg-white dark:bg-neutral-900 border-t-4 border-t-sky-500 shadow-sm hover:shadow-md transition-shadow dark:border-neutral-800 gap-0 py-0 overflow-hidden">
+                                <CardHeader className="p-6 pb-2">
                                     <div className="w-12 h-12 bg-sky-50 dark:bg-sky-900/20 rounded-full flex items-center justify-center mb-4">
                                         <Calendar className="w-6 h-6 text-sky-600 dark:text-sky-400" />
                                     </div>
-                                    <CardTitle className="uppercase font-black text-lg text-slate-900 dark:text-white">Early Childhood Age Registry (0–59 Months)</CardTitle>
+                                    <CardTitle className="uppercase font-black text-lg text-slate-900 dark:text-white">Early Childhood Registry (0–59 Months)</CardTitle>
                                 </CardHeader>
-                                <CardContent>
+                                <CardContent className="p-6 pt-1">
                                     <p className="text-slate-700 dark:text-slate-300 text-base leading-relaxed">
-                                        Pagsubaybay sa edad at buwan ng mga bata upang matiyak ang napapanahong bakuna at feeding intervention.
+                                        Systematic age tracking for infants and toddlers up to 59 months to guarantee on-time immunizations and vital nutritional interventions.
                                     </p>
                                 </CardContent>
                             </Card>
@@ -101,10 +93,10 @@ export default function BcpcIndex() {
 
                         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                             {[
-                                { step: "01", title: "Registration", desc: "Pagpaparehistro ng bata sa ating BCPC Registry sa pamamagitan ng ating Barangay Health Workers." },
-                                { step: "02", title: "Assessment", desc: "Pagsukat ng timbang at height para malaman ang BMI at status ng bata (Operation Timbang)." },
-                                { step: "03", title: "Categorization", desc: "Awtomatikong pag-identify kung ang bata ay Normal, Underweight, o Stunted base sa WHO standards." },
-                                { step: "04", title: "Intervention", desc: "Pagbibigay ng supplemental feeding, vitamin A, at deworming sa mga nangangailangang bata." }
+                                { step: "01", title: "Registration", desc: "Enrolling children into the community BCPC Health & Nutrition registry through Barangay Health Workers (BHWs)." },
+                                { step: "02", title: "Assessment", desc: "Precise measurement of weight, height, and age to evaluate Body Mass Index (BMI) and developmental growth." },
+                                { step: "03", title: "Categorization", desc: "Standardized classification into Normal, Underweight, Stunted, or Wasted according to WHO international growth standards." },
+                                { step: "04", title: "Intervention", desc: "Timely delivery of supplemental feeding, Vitamin A supplementation, micronutrient powder, and deworming treatments." }
                             ].map((item, index) => (
                                 <div key={index} className="relative pl-8 md:pl-0 pt-0 md:pt-12 group">
                                     <div className="hidden md:block absolute top-0 left-0 w-full h-1 bg-slate-200 dark:bg-neutral-700 group-hover:bg-emerald-400 transition-colors"></div>
@@ -129,10 +121,10 @@ export default function BcpcIndex() {
                             </div>
                             <ul className="space-y-4">
                                 {[
-                                    { title: "Vitamin A Supplementation", desc: "Ibinibigay tuwing anim na buwan para sa mga batang mula 12 hanggang 59 na buwan." },
-                                    { title: "MNP (Micronutrient Powder)", desc: "Suplemento para sa mga batang 6-11 buwan para maiwasan ang anemia." },
-                                    { title: "Deworming Services", desc: "Libreng pampurga para sa mga bata upang masiguro ang tamang pagsipsip ng sustansya." },
-                                    { title: "Parental Education", desc: "Seminars sa tamang nutrisyon at paghahanda ng pagkain para sa mga magulang." }
+                                    { title: "Vitamin A Supplementation", desc: "Administered semi-annually (every 6 months) for children aged 12 to 59 months to strengthen immune defenses." },
+                                    { title: "MNP (Micronutrient Powder)", desc: "Essential vitamin and mineral sachets for infants aged 6 to 11 months to prevent nutritional anemia." },
+                                    { title: "Deworming Services", desc: "Free bi-annual deworming tablets to prevent parasitic infections and ensure proper nutrient absorption." },
+                                    { title: "Parental Nutrition Education", desc: "Interactive seminars on balanced meal preparation, exclusive breastfeeding, and positive caregiving practices." }
                                 ].map((sign, i) => (
                                     <li key={i} className="flex items-start gap-4 p-4 bg-white dark:bg-neutral-900 border border-slate-100 dark:border-neutral-800 rounded-lg shadow-sm hover:border-emerald-200 dark:hover:border-emerald-900 transition-colors">
                                         <div className="w-6 h-6 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center shrink-0 mt-0.5">
@@ -150,25 +142,25 @@ export default function BcpcIndex() {
                         <section>
                             <div className="flex items-center gap-2 mb-6">
                                 <BookOpen className="text-sky-600 w-6 h-6" />
-                                <h2 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight">Rights of the Child / Karapatan ng Bata</h2>
+                                <h2 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight">Rights of the Child</h2>
                             </div>
                             <Accordion type="single" collapsible className="w-full">
                                 <AccordionItem value="item-1" className="border-b-slate-200 dark:border-b-neutral-800">
                                     <AccordionTrigger className="uppercase font-black text-base hover:text-emerald-600 text-slate-900 dark:text-slate-200 text-left py-4">Right to Health & Nutrition</AccordionTrigger>
                                     <AccordionContent className="text-base text-slate-700 dark:text-slate-300 leading-relaxed font-semibold pb-4">
-                                        Ang bawat bata ay may karapatan sa sapat na pagkain at serbisyong pangkalusugan para sa kanilang maayos na paglaki.
+                                        Every child has the inherent right to balanced nutrition, clean water, healthcare services, and a protective environment essential for sound physical and mental growth.
                                     </AccordionContent>
                                 </AccordionItem>
                                 <AccordionItem value="item-2" className="border-b-slate-200 dark:border-b-neutral-800">
                                     <AccordionTrigger className="uppercase font-black text-base hover:text-emerald-600 text-slate-900 dark:text-slate-200 text-left py-4">Right to be Born Well</AccordionTrigger>
                                     <AccordionContent className="text-base text-slate-700 dark:text-slate-300 leading-relaxed font-semibold pb-4">
-                                        Bawat bata ay may karapatang maisilang nang maayos at mapangalagaan ng kanilang mga magulang.
+                                        Every child has the right to safe delivery, prenatal and postnatal healthcare, and loving parental care within a supportive home.
                                     </AccordionContent>
                                 </AccordionItem>
                                 <AccordionItem value="item-3" className="border-b-slate-200 dark:border-b-neutral-800">
                                     <AccordionTrigger className="uppercase font-black text-base hover:text-emerald-600 text-slate-900 dark:text-slate-200 text-left py-4">Child Protection (RA 7610)</AccordionTrigger>
                                     <AccordionContent className="text-base text-slate-700 dark:text-slate-300 leading-relaxed font-semibold pb-4">
-                                        Proteksyon laban sa lahat ng uri ng pang-aabuso, pananamantala, at diskriminasyon.
+                                        Full legal protection against all forms of physical abuse, neglect, exploitation, child labor, and harmful discrimination under Republic Act 7610.
                                     </AccordionContent>
                                 </AccordionItem>
                             </Accordion>
@@ -181,11 +173,11 @@ export default function BcpcIndex() {
                         <div className="space-y-3 max-w-2xl">
                             <div className="flex items-center gap-2 text-red-700 dark:text-red-400">
                                 <ShieldAlert className="w-6 h-6 animate-pulse" />
-                                <span className="text-xs font-black tracking-widest uppercase">Emergency Protocol / RA 7610</span>
+                                <span className="text-xs font-black tracking-widest uppercase">Emergency Protocol • RA 7610</span>
                             </div>
                             <h3 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight">Reporting Abuse & Exploitation</h3>
                             <p className="text-slate-700 dark:text-slate-300 text-sm md:text-base leading-relaxed">
-                                Ang <strong>RA 7610</strong> ay nagtatanggol sa mga bata laban sa pang-aabuso, child labor, at pananamantala ng sinuman (kamag-anak man o dayuhan). Dahil ito ay krimen, ang Barangay ay walang legal na awtoridad na mag-areglo o magdaos ng mediation. Ito ay <strong>dapat i-report agad</strong> sa mga sumusunod na ahensya.
+                                <strong>Republic Act 7610</strong> (Special Protection of Children Against Abuse, Exploitation, and Discrimination Act) protects children from maltreatment, child labor, and exploitation by any person. Because child abuse is a public offense, the Barangay has no legal authority to conduct compromise or mediation. Incidents <strong>must be reported immediately</strong> to the designated child protection authorities below.
                             </p>
                         </div>
                         <div className="flex flex-col sm:flex-row md:flex-col gap-3.5 w-full md:w-80 shrink-0">
@@ -245,7 +237,7 @@ export default function BcpcIndex() {
                                 <Phone className="w-8 h-8 text-emerald-600 dark:text-emerald-400" />
                             </div>
                         </div>
-                        <h2 className="text-emerald-900 dark:text-emerald-300 text-2xl font-black uppercase mb-3 tracking-wider">BCPC NUTRITION HOTLINE</h2>
+                        <h2 className="text-emerald-900 dark:text-emerald-300 text-2xl font-black uppercase mb-3 tracking-wider">BCPC NUTRITION & WELFARE HOTLINE</h2>
                         <div className="flex justify-center my-2">
                             <a
                                 href="tel:0281837233"
@@ -255,7 +247,7 @@ export default function BcpcIndex() {
                                 (02) 8-183-SAFE
                             </a>
                         </div>
-                        <p className="text-slate-600 dark:text-slate-400 uppercase tracking-widest text-xs md:text-sm font-bold mt-2">Barangay 183 Villamor BCPC Desk • Open for Consultations & Nutrition Help</p>
+                        <p className="text-slate-600 dark:text-slate-400 uppercase tracking-widest text-xs md:text-sm font-bold mt-2">Barangay 183 Villamor BCPC Desk • Open for Consultations & Nutrition Assistance</p>
                     </div>
                 </section>
 

@@ -19,8 +19,8 @@ interface Organization {
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Dashboard', href: dashboard().url },
-    { title: 'System Users', href: '/admin/system-users' },
-    { title: 'Create', href: '#' },
+    { title: 'System Settings', href: '/admin/settings?tab=users' },
+    { title: 'Create System User', href: '#' },
 ];
 
 export default function Create({ organizations }: { organizations: Organization[] }) {
@@ -57,7 +57,7 @@ export default function Create({ organizations }: { organizations: Organization[
             <div className="p-6 max-w-4xl mx-auto space-y-6">
                 <div className="flex items-center justify-between">
                     <Button variant="ghost" size="sm" asChild className="-ml-2 text-muted-foreground">
-                        <Link href="/admin/system-users" className="flex items-center gap-2">
+                        <Link href="/admin/settings?tab=users" className="flex items-center gap-2">
                             <ArrowLeft className="w-4 h-4" />
                             Back to Registry
                         </Link>
@@ -121,9 +121,9 @@ export default function Create({ organizations }: { organizations: Organization[
                                         <SelectValue placeholder="Select Role" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="admin">Super Admin (System/IT)</SelectItem>
-                                        <SelectItem value="head">Committee Head (VAWC/BCPC)</SelectItem>
-                                        <SelectItem value="president">Org President (KALIPI/SoloP)</SelectItem>
+                                        <SelectItem value="admin">Admin</SelectItem>
+                                        <SelectItem value="head">Committee Head</SelectItem>
+                                        <SelectItem value="president">Org President</SelectItem>
                                     </SelectContent>
                                 </Select>
                                 {errors.role && <p className="text-destructive text-xs font-bold">{errors.role}</p>}
@@ -146,7 +146,7 @@ export default function Create({ organizations }: { organizations: Organization[
 
                     <div className="flex items-center justify-end gap-3 pt-4">
                         <Button variant="ghost" type="button" asChild>
-                            <Link href="/admin/system-users">Cancel</Link>
+                            <Link href="/admin/settings?tab=users">Cancel</Link>
                         </Button>
                         <Button
                             type="submit"

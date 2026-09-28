@@ -20,7 +20,7 @@ class EmergencyAdminResetCommand extends Command
      *
      * @var string
      */
-    protected $description = 'Break-Glass Emergency Recovery: Reset or recreate the Super Admin account from the server CLI';
+    protected $description = 'Break-Glass Emergency Recovery: Reset or recreate the Admin account from the server CLI';
 
     /**
      * Execute the console command.
@@ -33,7 +33,7 @@ class EmergencyAdminResetCommand extends Command
 
         $email = $this->option('email');
         if (!$email) {
-            $email = $this->ask('Enter the Super Admin email address (or press enter for default admin)', 'admin@barangay.gov.ph');
+            $email = $this->ask('Enter the Admin email address (or press enter for default admin)', 'admin@barangay.gov.ph');
         }
 
         $password = $this->option('password');
@@ -61,9 +61,9 @@ class EmergencyAdminResetCommand extends Command
             $user->password = Hash::make($password);
             $user->save();
 
-            $this->info("SUCCESS: Existing Super Admin account [{$email}] was restored and password successfully updated!");
+            $this->info("SUCCESS: Existing Admin account [{$email}] was restored and password successfully updated!");
         } else {
-            $name = $this->ask('Enter the Full Name for this new Super Admin', 'Barangay System Administrator');
+            $name = $this->ask('Enter the Full Name for this new Admin', 'Barangay System Administrator');
             $user = User::create([
                 'name' => $name,
                 'email' => $email,
@@ -71,7 +71,7 @@ class EmergencyAdminResetCommand extends Command
                 'password' => Hash::make($password),
             ]);
 
-            $this->info("SUCCESS: Brand-new Super Admin account [{$email}] was provisioned with role 'admin'!");
+            $this->info("SUCCESS: Brand-new Admin account [{$email}] was provisioned with role 'admin'!");
         }
 
         $this->table(['Field', 'Value'], [

@@ -1,7 +1,7 @@
-import React from 'react';
 import {
     ShieldCheck, Building2, Check, Scale, Gavel, CheckCircle2, UserX
 } from 'lucide-react';
+import type React from 'react';
 
 export interface ShowProps {
     case: any;

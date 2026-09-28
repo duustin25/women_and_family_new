@@ -45,13 +45,19 @@ export default function AbuseTypesTable({ caseAbuseTypes }: { caseAbuseTypes: Ca
         setIsAbuseModalOpen(true);
     };
 
+    const normalizeHex = (c?: string) => {
+        if (!c) return '#000000';
+        if (c.startsWith('#') && c.length === 9) return c.substring(0, 7);
+        return c;
+    };
+
     const openEditAbuse = (item: CaseAbuseType) => {
         setIsEditingAbuse(true);
         setEditingAbuseId(item.id);
         abuseForm.setData({
             name: item.name,
             category: item.category,
-            color: item.color || '#000000',
+            color: normalizeHex(item.color),
             description: ''
         });
         setIsAbuseModalOpen(true);
@@ -91,8 +97,7 @@ export default function AbuseTypesTable({ caseAbuseTypes }: { caseAbuseTypes: Ca
         <Card className="border shadow-sm w-full">
             <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b">
                 <div>
-                    <CardTitle className="text-lg font-bold flex items-center gap-2">
-                        <AlertTriangle className="w-5 h-5 text-amber-500" />
+                    <CardTitle className="text-lg font-bold">
                         Case Classifications (RA 9262)
                     </CardTitle>
                     <CardDescription className="text-sm text-muted-foreground">
@@ -101,7 +106,7 @@ export default function AbuseTypesTable({ caseAbuseTypes }: { caseAbuseTypes: Ca
                 </div>
                 <Dialog open={isAbuseModalOpen} onOpenChange={setIsAbuseModalOpen}>
                     <DialogTrigger asChild>
-                        <Button onClick={openCreateAbuse} size="sm" className="bg-[#ce1126] hover:bg-red-700 text-white font-semibold min-h-[40px] sm:min-h-[38px]">
+                        <Button onClick={openCreateAbuse} size="sm" className="font-semibold text-sm flex items-center gap-1.5 min-h-[40px] sm:min-h-[38px] bg-primary text-primary-foreground shadow-xs hover:bg-primary/90">
                             <Plus className="w-4 h-4 mr-1.5" /> Add Classification
                         </Button>
                     </DialogTrigger>
@@ -193,8 +198,14 @@ export default function AbuseTypesTable({ caseAbuseTypes }: { caseAbuseTypes: Ca
                                             </div>
                                         </TableCell>
                                         <TableCell>
-                                            <Badge variant={item.is_active ? 'default' : 'secondary'} className="text-xs font-semibold">
-                                                {item.is_active ? 'Active' : 'Archived'}
+                                            <Badge
+                                                variant="outline"
+                                                className={item.is_active !== false
+                                                    ? "bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-800 text-xs font-semibold py-0.5 px-2.5 rounded-full"
+                                                    : "bg-rose-100 text-rose-800 border-rose-300 dark:bg-rose-950/50 dark:text-rose-300 dark:border-rose-800 text-xs font-semibold py-0.5 px-2.5 rounded-full"
+                                                }
+                                            >
+                                                {item.is_active !== false ? 'Active' : 'Inactive'}
                                             </Badge>
                                         </TableCell>
                                         <TableCell className="text-right">

@@ -1,4 +1,3 @@
-import React from 'react';
 import { Link } from '@inertiajs/react';
 import { 
     Users, 
@@ -14,6 +13,7 @@ import {
     FileSpreadsheet,
     ExternalLink
 } from 'lucide-react';
+import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -32,7 +32,7 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
-import { Application } from '../types';
+import type { Application } from '../types';
 
 interface ApplicationsTableProps {
     applications: Application[];

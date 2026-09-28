@@ -1,5 +1,5 @@
-import React from 'react';
 import { Gavel, Info, ShieldCheck, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import React from 'react';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';

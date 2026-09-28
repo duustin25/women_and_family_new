@@ -1,9 +1,9 @@
-import React from 'react';
 import { Link } from '@inertiajs/react';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Cake, ChevronRight } from 'lucide-react';
-import { BcpcUpcomingBirthday } from './types';
+import React from 'react';
+import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import type { BcpcUpcomingBirthday } from './types';
 
 interface BcpcBirthdaysWidgetProps {
     upcomingBirthdays: BcpcUpcomingBirthday[];

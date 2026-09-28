@@ -1,3 +1,4 @@
+import { Baby, Activity, HeartHandshake } from 'lucide-react';
 import React from 'react';
 import {
     BarChart,
@@ -10,9 +11,8 @@ import {
     ResponsiveContainer,
     Cell
 } from 'recharts';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Baby, Activity, HeartHandshake } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 
 interface Props {
     bcpcSummary: any;

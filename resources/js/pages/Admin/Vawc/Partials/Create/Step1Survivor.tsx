@@ -1,13 +1,13 @@
+import { EyeOff, Search, Lock, Unlink } from 'lucide-react';
 import React from 'react';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { EyeOff, Search, Lock, Unlink } from 'lucide-react';
-import { PreselectedDossier } from './types';
+import type { PreselectedDossier } from './types';
 
 interface Step1SurvivorProps {
     data: any;

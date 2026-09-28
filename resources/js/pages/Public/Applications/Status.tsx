@@ -62,8 +62,8 @@ export default function ApplicationStatusPage({
         applications && applications.length > 0
             ? applications
             : application
-            ? [application]
-            : [];
+                ? [application]
+                : [];
 
     const [selectedAppId, setSelectedAppId] = useState<number | null>(
         applicationsList.length > 0 ? applicationsList[0].id : null
@@ -177,7 +177,7 @@ export default function ApplicationStatusPage({
             );
         }
         return (
-            <Badge variant="outline" className="border-blue-300 text-blue-700 bg-blue-50 font-bold text-xs px-2.5 py-0.5 inline-flex items-center gap-1.5">
+            <Badge variant="outline" className="border-purple-300 text-purple-700 bg-purple-50 dark:bg-purple-950/40 dark:text-purple-300 font-bold text-xs px-2.5 py-0.5 inline-flex items-center gap-1.5">
                 <Clock className="w-3.5 h-3.5" /> Under Review
             </Badge>
         );
@@ -199,22 +199,22 @@ export default function ApplicationStatusPage({
                 </div>
 
                 {/* Resident-Friendly Banner */}
-                <div className="bg-slate-900 text-white p-6 sm:p-7 rounded-2xl shadow-sm border border-slate-800 space-y-2">
-                    <div className="flex items-center gap-2 text-slate-400 text-xs font-semibold uppercase tracking-wider">
-                        <Building className="w-4 h-4 text-primary" />
+                <div className="bg-gradient-to-br from-purple-900 via-purple-950 to-slate-950 text-white p-6 sm:p-7 rounded-2xl shadow-sm border border-purple-800/40 space-y-2">
+                    <div className="flex items-center gap-2 text-purple-200 text-xs font-semibold uppercase tracking-wider">
+                        <Building className="w-4 h-4 text-purple-300" />
                         <span>Barangay 183 • Pasay City</span>
                     </div>
                     <h1 className="text-xl sm:text-2xl font-bold tracking-tight">
                         Track Application & Submit Appeal
                     </h1>
-                    <p className="text-xs sm:text-sm text-slate-300 leading-relaxed max-w-xl">
+                    <p className="text-xs sm:text-sm text-purple-100/80 leading-relaxed max-w-xl">
                         Check the review status of your organization membership application or submit an appeal if your submission was not approved.
                     </p>
                 </div>
 
                 {/* Search Bar Card */}
-                <Card className="shadow-xs border">
-                    <CardHeader className="pb-3 border-b bg-card">
+                <Card className="shadow-xs border gap-0 py-0 overflow-hidden">
+                    <CardHeader className="p-4 border-b bg-card space-y-1">
                         <CardTitle className="text-base font-semibold flex items-center gap-2">
                             <Search className="w-4 h-4 text-primary" />
                             <span>Find Your Application</span>
@@ -223,7 +223,7 @@ export default function ApplicationStatusPage({
                             Enter your registered email address or Application ID (e.g. 6 or #6).
                         </CardDescription>
                     </CardHeader>
-                    <CardContent className="pt-4">
+                    <CardContent className="p-4">
                         <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-2">
                             <div className="relative flex-1">
                                 <Search className="w-4 h-4 text-muted-foreground absolute left-3 top-3 pointer-events-none" />
@@ -249,7 +249,7 @@ export default function ApplicationStatusPage({
                 {initialSearch && (
                     <>
                         {applicationsList.length === 0 ? (
-                            <Card className="border-dashed border text-center p-8 bg-card">
+                            <Card className="border-dashed border text-center p-6 bg-card gap-0 py-0">
                                 <AlertCircle className="w-10 h-10 text-muted-foreground mx-auto mb-2 opacity-60" />
                                 <h3 className="font-semibold text-sm text-foreground">
                                     No Application Found
@@ -320,8 +320,8 @@ export default function ApplicationStatusPage({
 
                                 {/* Selected Application Details Card */}
                                 {activeApp && (
-                                    <Card className="shadow-xs border overflow-hidden">
-                                        <CardHeader className="border-b pb-4 bg-card">
+                                    <Card className="shadow-xs border overflow-hidden gap-0 py-0">
+                                        <CardHeader className="border-b p-4 sm:p-5 bg-card">
                                             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                                                 <div>
                                                     <div className="flex items-center gap-2 flex-wrap">
@@ -347,7 +347,7 @@ export default function ApplicationStatusPage({
                                             </div>
                                         </CardHeader>
 
-                                        <CardContent className="pt-4 space-y-4">
+                                        <CardContent className="p-4 sm:p-5 space-y-4">
                                             {/* Details Strip */}
                                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                                                 <div className="p-3 rounded-lg border bg-muted/20">
@@ -420,12 +420,12 @@ export default function ApplicationStatusPage({
                                                     return null; // Rendered below with rejection reason and appeal form
                                                 }
                                                 return (
-                                                    <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 p-4 rounded-xl text-blue-900 dark:text-blue-200 text-xs space-y-1">
-                                                        <p className="font-bold text-sm flex items-center gap-1.5 text-blue-700 dark:text-blue-300">
-                                                            <Clock className="w-4 h-4 text-blue-600 shrink-0" />
+                                                    <div className="bg-purple-50/70 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-800/60 p-4 rounded-xl text-purple-900 dark:text-purple-200 text-xs space-y-1">
+                                                        <p className="font-bold text-sm flex items-center gap-1.5 text-purple-700 dark:text-purple-300">
+                                                            <Clock className="w-4 h-4 text-purple-600 dark:text-purple-400 shrink-0" />
                                                             Application Under Review
                                                         </p>
-                                                        <p className="leading-relaxed">
+                                                        <p className="leading-relaxed text-muted-foreground">
                                                             Your application has been received and is currently being verified by organization officers. Processing is typically completed within 7 to 14 days.
                                                         </p>
                                                     </div>
@@ -437,97 +437,96 @@ export default function ApplicationStatusPage({
                                                 const norm = normalizeStatus(activeApp.status);
                                                 if (norm !== 'rejected' && norm !== 'disapproved') return null;
                                                 return (
-                                                <div className="space-y-4 pt-1">
-                                                    <div className="bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800 p-4 rounded-xl text-rose-900 dark:text-rose-200 text-xs space-y-1.5">
-                                                        <p className="font-bold text-sm flex items-center gap-1.5 text-rose-700 dark:text-rose-300">
-                                                            <XCircle className="w-4 h-4 text-rose-600 shrink-0" />
-                                                            Application Not Approved
-                                                        </p>
-                                                        <p className="text-muted-foreground">Reason provided by organization:</p>
-                                                        <div className="bg-background/90 p-3 rounded-lg border border-rose-200 text-foreground text-xs font-medium italic">
-                                                            "{activeApp.rejection_reason || 'No specific reason documented.'}"
+                                                    <div className="space-y-4 pt-1">
+                                                        <div className="bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800 p-4 rounded-xl text-rose-900 dark:text-rose-200 text-xs space-y-1.5">
+                                                            <p className="font-bold text-sm flex items-center gap-1.5 text-rose-700 dark:text-rose-300">
+                                                                <XCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                                                                Application Not Approved
+                                                            </p>
+                                                            <p className="text-muted-foreground">Reason provided by organization:</p>
+                                                            <div className="bg-background/90 p-3 rounded-lg border border-rose-200 text-foreground text-xs font-medium italic">
+                                                                "{activeApp.rejection_reason || 'No specific reason documented.'}"
+                                                            </div>
                                                         </div>
-                                                    </div>
 
-                                                    {/* Appeal Form */}
-                                                    <Card className="border border-amber-300 dark:border-amber-700 shadow-xs bg-card">
-                                                        <CardHeader className="bg-amber-500/10 border-b pb-3">
-                                                            <CardTitle className="text-sm sm:text-base font-bold flex items-center gap-2 text-foreground">
-                                                                <Scale className="w-4 h-4 text-amber-600 shrink-0" />
-                                                                <span>Submit an Appeal for {activeApp.fullname}</span>
-                                                            </CardTitle>
-                                                            <CardDescription className="text-xs">
-                                                                If you believe this application was rejected in error or you have updated information to provide, write your appeal statement below for review by the Barangay Administrator.
-                                                            </CardDescription>
-                                                        </CardHeader>
-                                                        <CardContent className="pt-4">
-                                                            <form onSubmit={handleAppealSubmit} className="space-y-4">
-                                                                <div className="space-y-1.5">
-                                                                    <div className="flex items-center justify-between">
-                                                                        <Label htmlFor="appeal_reason" className="text-xs font-semibold">
-                                                                            Your Explanation / Statement <span className="text-destructive">*</span>
-                                                                        </Label>
-                                                                        <span
-                                                                            className={`text-[11px] font-mono ${
-                                                                                data.appeal_reason.length > 450
-                                                                                    ? 'text-amber-600 font-bold'
-                                                                                    : 'text-muted-foreground'
-                                                                            }`}
-                                                                        >
-                                                                            {data.appeal_reason.length}/500 chars
-                                                                        </span>
+                                                        {/* Appeal Form */}
+                                                        <Card className="border border-amber-300 dark:border-amber-700 shadow-xs bg-card gap-0 py-0 overflow-hidden">
+                                                            <CardHeader className="bg-amber-500/10 border-b p-4 space-y-1">
+                                                                <CardTitle className="text-sm sm:text-base font-bold flex items-center gap-2 text-foreground">
+                                                                    <Scale className="w-4 h-4 text-amber-600 shrink-0" />
+                                                                    <span>Submit an Appeal for {activeApp.fullname}</span>
+                                                                </CardTitle>
+                                                                <CardDescription className="text-xs">
+                                                                    If you believe this application was rejected in error or you have updated information to provide, write your appeal statement below for review by the Barangay Administrator.
+                                                                </CardDescription>
+                                                            </CardHeader>
+                                                            <CardContent className="p-4">
+                                                                <form onSubmit={handleAppealSubmit} className="space-y-4">
+                                                                    <div className="space-y-1.5">
+                                                                        <div className="flex items-center justify-between">
+                                                                            <Label htmlFor="appeal_reason" className="text-xs font-semibold">
+                                                                                Your Explanation / Statement <span className="text-destructive">*</span>
+                                                                            </Label>
+                                                                            <span
+                                                                                className={`text-[11px] font-mono ${data.appeal_reason.length > 450
+                                                                                        ? 'text-amber-600 font-bold'
+                                                                                        : 'text-muted-foreground'
+                                                                                    }`}
+                                                                            >
+                                                                                {data.appeal_reason.length}/500 chars
+                                                                            </span>
+                                                                        </div>
+                                                                        <Textarea
+                                                                            id="appeal_reason"
+                                                                            rows={4}
+                                                                            maxLength={500}
+                                                                            placeholder="Explain clearly why your application should be approved (keep it concise, 10–500 characters)..."
+                                                                            value={data.appeal_reason}
+                                                                            onChange={(e) => setData('appeal_reason', e.target.value)}
+                                                                            className="text-xs leading-relaxed"
+                                                                            required
+                                                                        />
+                                                                        {errors.appeal_reason && (
+                                                                            <p className="text-[11px] font-semibold text-destructive">
+                                                                                {errors.appeal_reason}
+                                                                            </p>
+                                                                        )}
                                                                     </div>
-                                                                    <Textarea
-                                                                        id="appeal_reason"
-                                                                        rows={4}
-                                                                        maxLength={500}
-                                                                        placeholder="Explain clearly why your application should be approved (keep it concise, 10–500 characters)..."
-                                                                        value={data.appeal_reason}
-                                                                        onChange={(e) => setData('appeal_reason', e.target.value)}
-                                                                        className="text-xs leading-relaxed"
-                                                                        required
-                                                                    />
-                                                                    {errors.appeal_reason && (
-                                                                        <p className="text-[11px] font-semibold text-destructive">
-                                                                            {errors.appeal_reason}
+
+                                                                    <div className="space-y-1.5">
+                                                                        <Label htmlFor="appeal_docs" className="text-xs font-semibold flex items-center gap-1.5">
+                                                                            <Upload className="w-3.5 h-3.5 text-muted-foreground" />
+                                                                            <span>Attach Supporting Document or Proof (Optional)</span>
+                                                                        </Label>
+                                                                        <Input
+                                                                            id="appeal_docs"
+                                                                            type="file"
+                                                                            multiple
+                                                                            accept=".jpg,.jpeg,.png,.pdf"
+                                                                            onChange={(e) => {
+                                                                                if (e.target.files) {
+                                                                                    setData('appeal_docs', Array.from(e.target.files));
+                                                                                }
+                                                                            }}
+                                                                            className="text-xs"
+                                                                        />
+                                                                        <p className="text-[11px] text-muted-foreground">
+                                                                            Images (JPG, PNG) or PDF documents (Max 5MB each).
                                                                         </p>
-                                                                    )}
-                                                                </div>
+                                                                    </div>
 
-                                                                <div className="space-y-1.5">
-                                                                    <Label htmlFor="appeal_docs" className="text-xs font-semibold flex items-center gap-1.5">
-                                                                        <Upload className="w-3.5 h-3.5 text-muted-foreground" />
-                                                                        <span>Attach Supporting Document or Proof (Optional)</span>
-                                                                    </Label>
-                                                                    <Input
-                                                                        id="appeal_docs"
-                                                                        type="file"
-                                                                        multiple
-                                                                        accept=".jpg,.jpeg,.png,.pdf"
-                                                                        onChange={(e) => {
-                                                                            if (e.target.files) {
-                                                                                setData('appeal_docs', Array.from(e.target.files));
-                                                                            }
-                                                                        }}
-                                                                        className="text-xs"
-                                                                    />
-                                                                    <p className="text-[11px] text-muted-foreground">
-                                                                        Images (JPG, PNG) or PDF documents (Max 5MB each).
-                                                                    </p>
-                                                                </div>
-
-                                                                <Button
-                                                                    type="submit"
-                                                                    disabled={processing}
-                                                                    className="w-full min-h-[40px] bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs gap-1.5 shadow-xs"
-                                                                >
-                                                                    <Scale className="w-4 h-4" />
-                                                                    <span>{processing ? 'Submitting Appeal...' : 'Submit Appeal to Barangay Administrator'}</span>
-                                                                </Button>
-                                                            </form>
-                                                        </CardContent>
-                                                    </Card>
-                                                </div>
+                                                                    <Button
+                                                                        type="submit"
+                                                                        disabled={processing}
+                                                                        className="w-full min-h-[40px] bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs gap-1.5 shadow-xs"
+                                                                    >
+                                                                        <Scale className="w-4 h-4" />
+                                                                        <span>{processing ? 'Submitting Appeal...' : 'Submit Appeal to Barangay Administrator'}</span>
+                                                                    </Button>
+                                                                </form>
+                                                            </CardContent>
+                                                        </Card>
+                                                    </div>
                                                 );
                                             })()}
                                         </CardContent>

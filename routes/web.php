@@ -216,7 +216,7 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.', 'middleware' => ['auth', 'v
     })->name('system-users.index');
     Route::resource('system-users', \App\Http\Controllers\Admin\SystemUserController::class)->except(['index'])->middleware('throttle:10,1');
 
-    // Database Backup & Disaster Recovery Routes (SUPER ADMIN ONLY)
+    // Database Backup & Disaster Recovery Routes (ADMIN ONLY)
     Route::get('backup-recovery', function (\Illuminate\Http\Request $request) {
         return redirect()->route('admin.settings.index', array_merge(['tab' => 'backup'], $request->query()));
     })->name('backups.index');

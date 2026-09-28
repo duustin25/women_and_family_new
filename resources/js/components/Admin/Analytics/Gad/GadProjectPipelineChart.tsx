@@ -1,5 +1,6 @@
-import React from 'react';
 import { Link } from '@inertiajs/react';
+import { Calendar, CheckCircle2, Clock, XCircle, Sparkles, ArrowUpRight } from 'lucide-react';
+import React from 'react';
 import {
     PieChart,
     Pie,
@@ -8,11 +9,10 @@ import {
     ResponsiveContainer,
     Legend
 } from 'recharts';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { route } from 'ziggy-js';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Calendar, CheckCircle2, Clock, XCircle, Sparkles, ArrowUpRight } from 'lucide-react';
-import { route } from 'ziggy-js';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 
 interface Props {
     gadAnalytics: {

@@ -1,4 +1,4 @@
-import { OrganizationTemplate } from '../../../types';
+import type { OrganizationTemplate } from '../../../types';
 
 export const soloParentOfficialTemplate: OrganizationTemplate = {
     id: 'solo_parent',

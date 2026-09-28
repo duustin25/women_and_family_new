@@ -1,6 +1,6 @@
-import React from 'react';
 import { Link } from '@inertiajs/react';
 import { Users, Send, Building2, FileSearch } from 'lucide-react';
+import React from 'react';
 import { Button } from '@/components/ui/button';
 
 interface MembersHeaderProps {
@@ -14,11 +14,11 @@ export function MembersHeader({ onOpenBroadcast }: MembersHeaderProps) {
                 <div className="flex items-center gap-2">
                     <Users className="w-6 h-6 text-primary" />
                     <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
-                        Members Directory & Aid CRM
+                        Community Members
                     </h1>
                 </div>
                 <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
-                    Cross-sector beneficiary records, assistance claim verification, and member communication trails.
+                    Approved members, their applications, and assistance claims across all organizations.
                 </p>
             </div>
 
@@ -43,7 +43,7 @@ export function MembersHeader({ onOpenBroadcast }: MembersHeaderProps) {
                 >
                     <Link href="/admin/applications">
                         <FileSearch className="w-3.5 h-3.5 text-muted-foreground" />
-                        Intake Applications
+                        Applications
                     </Link>
                 </Button>
 

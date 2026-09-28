@@ -125,7 +125,7 @@ class OtpSecurityService
                 return [
                     'success' => false,
                     'locked' => true,
-                    'message' => 'Too many failed verification attempts. For security, your account has been locked. Please contact a Super Administrator.',
+                    'message' => 'Too many failed verification attempts. For security, your account has been locked. Please contact an Administrator.',
                 ];
             }
 

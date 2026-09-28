@@ -1,9 +1,9 @@
-import React from 'react';
 import { Link } from '@inertiajs/react';
 import {
     Calendar, MapPin, Building2, Clock, CheckCircle2,
     Pencil, AlertCircle
 } from 'lucide-react';
+import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -13,7 +13,7 @@ import {
     DialogTitle,
     DialogDescription
 } from '@/components/ui/dialog';
-import { GadEvent } from '../types';
+import type { GadEvent } from '../types';
 
 interface GadEventPreviewDialogProps {
     event: GadEvent | null;

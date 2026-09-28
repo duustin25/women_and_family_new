@@ -13,8 +13,8 @@ export function RoleBadge({ role = 'resident' }: RoleBadgeProps) {
     };
 
     const label: Record<string, string> = {
-        'admin': 'Super Admin',
-        'head': 'Committee Head',
+        'admin': 'Admin',
+        'head': 'Head Committee',
         'president': 'Org President',
         'resident': 'Resident',
     };

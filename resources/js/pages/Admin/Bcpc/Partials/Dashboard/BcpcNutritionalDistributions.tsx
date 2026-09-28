@@ -1,7 +1,7 @@
 import { BarChart3 } from 'lucide-react';
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { DashboardDistributions } from './types';
+import type { DashboardDistributions } from './types';
 
 interface BcpcNutritionalDistributionsProps {
     distributions: DashboardDistributions;

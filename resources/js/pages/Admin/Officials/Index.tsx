@@ -128,11 +128,14 @@ export default function Index({ officials, users }: { officials: Official[], use
                                                             {official.user ? official.user.name : (official.name || 'Vacant Position')}
                                                         </span>
                                                         <div className="mt-0.5">
-                                                            <Badge variant="outline" className={`h-5 text-[9px] uppercase tracking-wider ${official.level === 'head' ? 'bg-purple-100/50 text-purple-700 border-purple-200' :
-                                                                    official.level === 'secretary' ? 'bg-blue-100/50 text-blue-700 border-blue-200' :
-                                                                        'bg-muted/50 text-muted-foreground border-border'
-                                                                }`}>
-                                                                {official.level}
+                                                            <Badge variant="outline" className={`h-5 text-[9px] font-semibold tracking-wider ${
+                                                                official.level === 'head' || official.level === 'level_1' ? 'bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-950/50 dark:text-amber-300' :
+                                                                official.level === 'secretary' || official.level === 'level_2' ? 'bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-950/50 dark:text-blue-300' :
+                                                                'bg-slate-100 text-slate-800 border-slate-300 dark:bg-slate-900 dark:text-slate-300'
+                                                            }`}>
+                                                                {official.level === 'head' || official.level === 'level_1' ? 'Level 1 - Head Committee' :
+                                                                 official.level === 'secretary' || official.level === 'level_2' ? 'Level 2 - Secretary' :
+                                                                 'Level 3 - Staff & Officers'}
                                                             </Badge>
                                                         </div>
                                                     </div>

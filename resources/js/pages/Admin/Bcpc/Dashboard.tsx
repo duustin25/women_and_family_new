@@ -2,14 +2,14 @@ import { Head, usePoll } from '@inertiajs/react';
 import React, { useState } from 'react';
 import AppLayout from '@/layouts/app-layout';
 
+import { BcpcBirthdaysWidget } from './Partials/Dashboard/BcpcBirthdaysWidget';
 import BcpcDashboardHeader from './Partials/Dashboard/BcpcDashboardHeader';
 import BcpcKpiStrip from './Partials/Dashboard/BcpcKpiStrip';
-import BcpcTriageQueueSection from './Partials/Dashboard/BcpcTriageQueueSection';
-import BcpcSfpRosterSection from './Partials/Dashboard/BcpcSfpRosterSection';
-import BcpcZoneHeatmapTable from './Partials/Dashboard/BcpcZoneHeatmapTable';
 import BcpcNutritionalDistributions from './Partials/Dashboard/BcpcNutritionalDistributions';
-import { BcpcBirthdaysWidget } from './Partials/Dashboard/BcpcBirthdaysWidget';
-import { ZoneBreakdownItem, DashboardDistributions, DashboardMetrics, BcpcUpcomingBirthday } from './Partials/Dashboard/types';
+import BcpcSfpRosterSection from './Partials/Dashboard/BcpcSfpRosterSection';
+import BcpcTriageQueueSection from './Partials/Dashboard/BcpcTriageQueueSection';
+import BcpcZoneHeatmapTable from './Partials/Dashboard/BcpcZoneHeatmapTable';
+import type { ZoneBreakdownItem, DashboardDistributions, DashboardMetrics, BcpcUpcomingBirthday } from './Partials/Dashboard/types';
 
 interface BcpcDashboardProps {
     monitoredChildren?: any[];

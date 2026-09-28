@@ -5,12 +5,12 @@ import { useConfirm } from '@/hooks/use-confirm';
 import { useDebounce } from '@/hooks/use-debounce';
 import AppLayout from '@/layouts/app-layout';
 
-import { Announcement, PageProps } from './types';
-import { AnnouncementsHeader } from './Partials/AnnouncementsHeader';
-import { AnnouncementsFilterBar } from './Partials/AnnouncementsFilterBar';
-import { AnnouncementsTable } from './Partials/AnnouncementsTable';
-import { AnnouncementsPagination } from './Partials/AnnouncementsPagination';
 import { AnnouncementPreviewDialog } from './Partials/AnnouncementPreviewDialog';
+import { AnnouncementsFilterBar } from './Partials/AnnouncementsFilterBar';
+import { AnnouncementsHeader } from './Partials/AnnouncementsHeader';
+import { AnnouncementsPagination } from './Partials/AnnouncementsPagination';
+import { AnnouncementsTable } from './Partials/AnnouncementsTable';
+import type { Announcement, PageProps } from './types';
 
 export default function Index({ announcements, filters, stats, categories = [] }: PageProps) {
     const [searchQuery, setSearchQuery] = useState(filters?.search ?? '');

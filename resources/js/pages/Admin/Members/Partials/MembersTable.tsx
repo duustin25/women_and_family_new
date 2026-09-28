@@ -1,14 +1,13 @@
-import React from 'react';
 import { Link } from '@inertiajs/react';
-import { 
-    Users, 
-    MapPin, 
-    Mail, 
-    Phone, 
-    Gift, 
-    MoreHorizontal, 
-    Eye, 
-    PlusCircle, 
+import {
+    Users,
+    MapPin,
+    Mail,
+    Phone,
+    Gift,
+    MoreHorizontal,
+    Eye,
+    PlusCircle,
     Send,
     CheckCircle2,
     FileText,
@@ -16,6 +15,7 @@ import {
     Printer,
     ExternalLink
 } from 'lucide-react';
+import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -34,7 +34,7 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
-import { Member } from '../types';
+import type { Member } from '../types';
 
 interface MembersTableProps {
     members: Member[];
@@ -119,8 +119,8 @@ export function MembersTable({
                                                     {member.fullname}
                                                 </button>
                                                 {applicationId && (
-                                                    <Link 
-                                                        href={`/admin/applications/${applicationId}`} 
+                                                    <Link
+                                                        href={`/admin/applications/${applicationId}`}
                                                         title="Go to official application record"
                                                         className="text-[10px] text-muted-foreground hover:text-primary hover:underline font-mono bg-muted/60 px-1 py-0.2 rounded"
                                                     >
@@ -128,7 +128,7 @@ export function MembersTable({
                                                     </Link>
                                                 )}
                                             </div>
-                                            
+
                                             {email && (
                                                 <span className="text-[11px] text-muted-foreground flex items-center gap-1 truncate">
                                                     <Mail className="h-3 w-3 shrink-0 text-muted-foreground/70" />
@@ -156,7 +156,7 @@ export function MembersTable({
                                 {/* Organization */}
                                 <TableCell className="py-3">
                                     {orgSlug ? (
-                                        <Link 
+                                        <Link
                                             href={`/admin/organizations/${orgSlug}/members?search=${encodeURIComponent(member.fullname)}`}
                                             title={`Open ${member.organization?.name || 'Sector'} Directory`}
                                             className="inline-block group"
@@ -184,8 +184,8 @@ export function MembersTable({
                                         </div>
 
                                         {pendingDispatches.length > 0 && (
-                                            <Badge 
-                                                variant="outline" 
+                                            <Badge
+                                                variant="outline"
                                                 className="text-[10px] font-semibold text-amber-700 border-amber-300 bg-amber-50 dark:bg-amber-950/40 flex items-center gap-1 py-0.5"
                                             >
                                                 <Gift className="w-3 h-3 text-amber-600" />
@@ -203,15 +203,7 @@ export function MembersTable({
                                 {/* Actions */}
                                 <TableCell className="py-3 text-right pr-6">
                                     <div className="flex items-center justify-end gap-1.5">
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            className="h-8 text-xs font-medium gap-1.5 cursor-pointer shadow-2xs"
-                                            onClick={() => onViewDetail(member)}
-                                        >
-                                            <Eye className="w-3.5 h-3.5 text-muted-foreground" />
-                                            <span>Profile</span>
-                                        </Button>
+
 
                                         <DropdownMenu>
                                             <DropdownMenuTrigger asChild>
@@ -228,13 +220,13 @@ export function MembersTable({
                                                     Member Actions
                                                 </DropdownMenuLabel>
                                                 <DropdownMenuSeparator />
-                                                
-                                                <DropdownMenuItem 
+
+                                                <DropdownMenuItem
                                                     onClick={() => onViewDetail(member)}
                                                     className="cursor-pointer text-xs gap-2"
                                                 >
                                                     <Eye className="w-3.5 h-3.5 text-primary" />
-                                                    <span>View Member Dossier</span>
+                                                    <span>View Member Profile</span>
                                                 </DropdownMenuItem>
 
                                                 {applicationId && (
@@ -242,13 +234,13 @@ export function MembersTable({
                                                         <DropdownMenuItem asChild className="cursor-pointer text-xs gap-2">
                                                             <Link href={`/admin/applications/${applicationId}`}>
                                                                 <FileText className="w-3.5 h-3.5 text-blue-600" />
-                                                                <span>Full Application Details</span>
+                                                                <span>View Full Application</span>
                                                             </Link>
                                                         </DropdownMenuItem>
                                                         <DropdownMenuItem asChild className="cursor-pointer text-xs gap-2">
                                                             <a href={`/admin/applications/${applicationId}/print`} target="_blank" rel="noopener noreferrer">
                                                                 <Printer className="w-3.5 h-3.5 text-muted-foreground" />
-                                                                <span>Print Official Form</span>
+                                                                <span>Print Application Form</span>
                                                             </a>
                                                         </DropdownMenuItem>
                                                     </>
@@ -258,33 +250,33 @@ export function MembersTable({
                                                     <DropdownMenuItem asChild className="cursor-pointer text-xs gap-2">
                                                         <Link href={`/admin/organizations/${orgSlug}/members?search=${encodeURIComponent(member.fullname)}`}>
                                                             <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
-                                                            <span>Open in Org Directory</span>
+                                                            <span>Open Org Member List</span>
                                                         </Link>
                                                     </DropdownMenuItem>
                                                 )}
 
                                                 <DropdownMenuSeparator />
 
-                                                <DropdownMenuItem 
+                                                <DropdownMenuItem
                                                     onClick={() => onTagBenefit(member)}
                                                     className="cursor-pointer text-xs gap-2"
                                                 >
                                                     <PlusCircle className="w-3.5 h-3.5 text-emerald-600" />
-                                                    <span>Tag for Benefit</span>
+                                                    <span>Give Benefit</span>
                                                 </DropdownMenuItem>
 
-                                                <DropdownMenuItem 
+                                                <DropdownMenuItem
                                                     onClick={() => onSendEmail(member)}
                                                     className="cursor-pointer text-xs gap-2"
                                                 >
                                                     <Send className="w-3.5 h-3.5 text-blue-600" />
-                                                    <span>Send Direct Message</span>
+                                                    <span>Send Message</span>
                                                 </DropdownMenuItem>
 
                                                 {pendingDispatches.length > 0 && (
                                                     <>
                                                         <DropdownMenuSeparator />
-                                                        <DropdownMenuItem 
+                                                        <DropdownMenuItem
                                                             onClick={() => onQuickClaim(member)}
                                                             className="cursor-pointer text-xs gap-2 text-emerald-700 dark:text-emerald-400 font-medium"
                                                         >

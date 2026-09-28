@@ -154,7 +154,7 @@ export default function VerifyAccount({ email: initialEmail }: Props) {
                         Account Security Notice
                     </div>
                     <p>
-                        Entering 3 consecutive incorrect codes will automatically lock this account to protect confidential barangay case data. Contact your Super Administrator if your account gets locked.
+                        Entering 3 consecutive incorrect codes will automatically lock this account to protect confidential barangay case data. Contact your Administrator if your account gets locked.
                     </p>
                 </div>
             </div>

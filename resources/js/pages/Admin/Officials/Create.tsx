@@ -20,7 +20,7 @@ export default function Create({ users }: { users: User[] }) {
         name: '',
         position: '',
         committee: '',
-        level: 'staff',
+        level: 'level_3',
         image_path: null as File | null,
     });
 
@@ -128,9 +128,9 @@ export default function Create({ users }: { users: User[] }) {
                                                 <SelectValue placeholder="Select Level" />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                <SelectItem value="head">Head Committee (Only 1 allowed)</SelectItem>
-                                                <SelectItem value="secretary">Secretary (Only 1 allowed)</SelectItem>
-                                                <SelectItem value="staff">Office Staff (Multiple allowed)</SelectItem>
+                                                <SelectItem value="level_1">Level 1 - Head Committee</SelectItem>
+                                                <SelectItem value="level_2">Level 2 - Secretary</SelectItem>
+                                                <SelectItem value="level_3">Level 3 - Staff & Officers (e.g. Staff, AVAWC Officer)</SelectItem>
                                             </SelectContent>
                                         </Select>
                                         {form.errors.level && (

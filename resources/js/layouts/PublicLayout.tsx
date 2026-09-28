@@ -82,7 +82,7 @@ export default function PublicLayout({
                     <img
                         src="/Logo/barangay183LOGO.webp"
                         alt="Barangay 183 Logo"
-                        className="w-[300px] sm:w-[500px] opacity-10 dark:opacity-5"
+                        className="w-[300px] sm:w-[500px] opacity-4 dark:opacity-2"
                     />
                 </div>
             )}

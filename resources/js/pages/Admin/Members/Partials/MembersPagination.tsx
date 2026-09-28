@@ -1,6 +1,6 @@
-import React from 'react';
 import { router } from '@inertiajs/react';
-import { PaginationLink } from '../types';
+import React from 'react';
+import type { PaginationLink } from '../types';
 
 interface MembersPaginationProps {
     links?: PaginationLink[];

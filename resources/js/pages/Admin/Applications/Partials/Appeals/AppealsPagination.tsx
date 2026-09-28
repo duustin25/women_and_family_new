@@ -1,5 +1,5 @@
-import React from 'react';
 import { router } from '@inertiajs/react';
+import React from 'react';
 
 interface AppealsPaginationProps {
     links?: any;

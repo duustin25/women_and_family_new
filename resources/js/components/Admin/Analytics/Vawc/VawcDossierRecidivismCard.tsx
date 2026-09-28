@@ -1,7 +1,7 @@
-import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { FolderGit2, Repeat, Users, ShieldAlert, CheckCircle2, Clock } from 'lucide-react';
+import React from 'react';
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { cn } from '@/lib/utils';
 
 interface DossierAnalytics {

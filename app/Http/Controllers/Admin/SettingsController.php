@@ -10,6 +10,7 @@ use App\Models\Organization;
 use App\Models\OrganizationalMember;
 use App\Models\AuditLog;
 use App\Services\DatabaseBackupService;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Routing\Controllers\HasMiddleware;
@@ -58,7 +59,7 @@ class SettingsController extends Controller implements HasMiddleware
             'backups' => [],
             'logs' => null,
             'logFilters' => [],
-            'chatbotEnabled' => (bool) session('chatbot_enabled', true),
+            'chatbotEnabled' => (bool) Cache::get('chatbot_enabled', session('chatbot_enabled', true)),
         ];
 
         // 1. Taxonomies
@@ -66,7 +67,7 @@ class SettingsController extends Controller implements HasMiddleware
             $data['abuseTypes'] = CaseAbuseType::where('category', 'VAWC')
                 ->orderBy('name')
                 ->get();
-            $data['zones'] = Zone::orderBy('name')->get();
+            $data['zones'] = Zone::all()->sortBy('name', SORT_NATURAL | SORT_FLAG_CASE)->values();
         }
 
         // 2. Users Tab
@@ -106,7 +107,7 @@ class SettingsController extends Controller implements HasMiddleware
 
         // 4. Features Tab
         if ($activeTab === 'features') {
-            $data['chatbotEnabled'] = (bool) session('chatbot_enabled', true);
+            $data['chatbotEnabled'] = (bool) Cache::get('chatbot_enabled', session('chatbot_enabled', true));
         }
 
         // 5. Backup Tab
@@ -188,6 +189,7 @@ class SettingsController extends Controller implements HasMiddleware
         ]);
 
         if ($validated['feature'] === 'chatbot_enabled') {
+            Cache::forever('chatbot_enabled', (bool)$validated['enabled']);
             session(['chatbot_enabled' => (bool)$validated['enabled']]);
         }
 

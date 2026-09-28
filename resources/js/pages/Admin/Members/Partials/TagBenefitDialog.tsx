@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
 import { router } from '@inertiajs/react';
 import { Gift, PlusCircle, AlertCircle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -13,7 +13,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Member } from '../types';
+import type { Member } from '../types';
 
 declare function route(name: string, params?: any): string;
 

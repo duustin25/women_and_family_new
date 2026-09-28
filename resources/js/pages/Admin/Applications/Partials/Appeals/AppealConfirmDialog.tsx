@@ -1,5 +1,5 @@
-import React from 'react';
 import { CheckCircle2, XCircle } from 'lucide-react';
+import React from 'react';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -9,7 +9,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
-import { ApplicationAppeal } from './types';
+import type { ApplicationAppeal } from './types';
 
 interface AppealConfirmDialogProps {
     confirmAction: {

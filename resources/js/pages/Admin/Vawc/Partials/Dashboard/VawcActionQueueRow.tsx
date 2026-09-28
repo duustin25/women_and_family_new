@@ -4,8 +4,9 @@ import React from 'react';
 import { route } from 'ziggy-js';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import type {
+    CaseQueueItem} from '../../types';
 import {
-    CaseQueueItem,
     redactName,
     simplifyRelationship,
     getScoreBadgeVariant,

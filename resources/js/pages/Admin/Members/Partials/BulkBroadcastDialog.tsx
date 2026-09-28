@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
 import { router } from '@inertiajs/react';
 import { Send, Users, Building2 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -20,7 +20,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from '@/components/ui/textarea';
-import { Organization } from '../types';
+import type { Organization } from '../types';
 
 declare function route(name: string, params?: any): string;
 
@@ -91,8 +91,8 @@ export function BulkBroadcastDialog({
                         <Send className="w-5 h-5 text-indigo-600" />
                         Community Broadcast Notice
                     </DialogTitle>
-                    <DialogDescription className="text-xs text-muted-foreground">
-                        Dispatch an official community notification to all accredited members within the chosen sector.
+                    <DialogDescription className="text-m text-muted-foreground">
+                        Dispatch an official community notification to all members within the chosen sector.
                     </DialogDescription>
                 </DialogHeader>
 
@@ -138,7 +138,7 @@ export function BulkBroadcastDialog({
                                         'Notice to accredited sector members: You are scheduled to receive social welfare financial assistance. Please bring a valid government-issued ID to the Barangay Hall on the designated date.'
                                     )
                                 }
-                                className="text-[10px] bg-muted hover:bg-muted/80 text-foreground px-2 py-1 rounded border transition-colors cursor-pointer"
+                                className="text-[12px] bg-muted hover:bg-muted/80 text-foreground px-2 py-1 rounded border transition-colors cursor-pointer"
                             >
                                 Financial Aid Notice
                             </button>
@@ -150,7 +150,7 @@ export function BulkBroadcastDialog({
                                         'Notice to accredited sector members: Food and subsidy packages will be distributed at the Barangay Covered Court. Please present your membership reference or digital ID upon claiming.'
                                     )
                                 }
-                                className="text-[10px] bg-muted hover:bg-muted/80 text-foreground px-2 py-1 rounded border transition-colors cursor-pointer"
+                                className="text-[12px] bg-muted hover:bg-muted/80 text-foreground px-2 py-1 rounded border transition-colors cursor-pointer"
                             >
                                 Subsidy Distribution
                             </button>
@@ -162,7 +162,7 @@ export function BulkBroadcastDialog({
                                         'Notice: You are invited to attend our upcoming general sector consultation meeting. Agenda includes upcoming barangay programs, accreditation updates, and community inquiries.'
                                     )
                                 }
-                                className="text-[10px] bg-muted hover:bg-muted/80 text-foreground px-2 py-1 rounded border transition-colors cursor-pointer"
+                                className="text-[12px] bg-muted hover:bg-muted/80 text-foreground px-2 py-1 rounded border transition-colors cursor-pointer"
                             >
                                 Sector Assembly
                             </button>

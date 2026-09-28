@@ -1,10 +1,9 @@
 import axios from 'axios';
-import { Send, Bot, User, Sparkles, RefreshCcw, AlertTriangle } from 'lucide-react';
+import { Send, User, RefreshCcw, MessageSquare, X, Info } from 'lucide-react';
 import React, { useState, useRef, useEffect } from 'react';
 import { route } from 'ziggy-js';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 
@@ -16,33 +15,38 @@ type Message = {
 };
 
 const SUGGESTIONS = [
-    "How do I file a VAWC case?",
-    "Report child abuse",
+    "How to file a VAWC case?",
+    "Report child protection concern",
     "Nutrition Program",
     "Latest Announcements",
-    "Who are the officials?",
-    "View emergency hotlines",
+    "Barangay Officials",
+    "Emergency Hotlines",
     "What is RA 9262?",
-    "List of accredited orgs"
+    "Accredited Organizations"
 ];
 
 const TypingIndicator = () => (
-    <div className="flex items-center gap-1.5 px-3.5 py-2.5 bg-slate-100 dark:bg-neutral-800 rounded-2xl w-fit">
-        <div className="w-1.5 h-1.5 bg-slate-400 dark:bg-slate-500 rounded-full animate-bounce [animation-delay:-0.3s]" />
-        <div className="w-1.5 h-1.5 bg-slate-400 dark:bg-slate-500 rounded-full animate-bounce [animation-delay:-0.15s]" />
-        <div className="w-1.5 h-1.5 bg-slate-400 dark:bg-slate-500 rounded-full animate-bounce" />
+    <div className="flex items-center gap-1.5 px-3 py-2 bg-muted/70 dark:bg-muted/40 rounded-2xl w-fit">
+        <div className="w-1.5 h-1.5 bg-muted-foreground/60 rounded-full animate-bounce [animation-delay:-0.3s]" />
+        <div className="w-1.5 h-1.5 bg-muted-foreground/60 rounded-full animate-bounce [animation-delay:-0.15s]" />
+        <div className="w-1.5 h-1.5 bg-muted-foreground/60 rounded-full animate-bounce" />
     </div>
 );
 
-export default function Chatbot({ className }: { className?: string }) {
-    const [messages, setMessages] = useState<Message[]>([
-        {
-            id: 'welcome',
-            role: 'assistant',
-            content: "Mabuhay! I am The Sentinel, an automated informational guide for Barangay 183.\n\n⚠️ IMPORTANT NOTICE: I do not provide formal legal advice, legal counsel, or legal determinations, and I do not replace authorized VAWC desk officers or legal authorities. In an emergency or immediate threat, please dial 911 or the PNP Women and Children Protection Center at 177.\n\n🔒 PRIVACY WARNING: Please do not enter real victim names, child names, addresses, contact numbers, detailed case narratives, or other sensitive personal information into this chat. If you need to report an incident or seek confidential protection, please visit the Barangay 183 VAWC Desk in person.\n\nHow may I assist you with barangay information or public services today?",
-            timestamp: new Date()
-        }
-    ]);
+interface ChatbotProps {
+    className?: string;
+    onClose?: () => void;
+}
+
+export default function Chatbot({ className, onClose }: ChatbotProps) {
+    const welcomeMessage: Message = {
+        id: 'welcome',
+        role: 'assistant',
+        content: "Magandang araw! Welcome to the Women & Family Helpdesk.\n\nI can assist you with public procedures, office schedules, filing requirements, officials directory, and barangay hotlines.\n\nHow may I help you today?",
+        timestamp: new Date()
+    };
+
+    const [messages, setMessages] = useState<Message[]>([welcomeMessage]);
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [isEngineOffline, setIsEngineOffline] = useState(false);
@@ -82,7 +86,6 @@ export default function Chatbot({ className }: { className?: string }) {
         setCurrentSuggestions([]);
 
         try {
-            // Always use a relative endpoint so it dynamically inherits the current protocol (http/https), host, and port
             const endpoint = typeof route === 'function' ? route('chat.send', undefined, false) : '/chat/send';
             const response = await axios.post(
                 endpoint,
@@ -98,7 +101,7 @@ export default function Chatbot({ className }: { className?: string }) {
             const botMessage: Message = {
                 id: (Date.now() + 1).toString(),
                 role: 'assistant',
-                content: response.data.response || "I apologize, but I couldn't process that request.",
+                content: response.data.response || "I apologize, but I could not process your inquiry. Please try again or visit the Barangay Hall.",
                 timestamp: new Date()
             };
             setMessages(prev => [...prev, botMessage]);
@@ -116,8 +119,8 @@ export default function Chatbot({ className }: { className?: string }) {
             console.error("Chat error:", error);
             const serverMessage = error?.response?.data?.message;
             const content = serverMessage
-                ? `System Notice: ${serverMessage}`
-                : "Unable to connect to the server. Please check your network connection or try again later.";
+                ? `Notice: ${serverMessage}`
+                : "Unable to connect to the helpdesk service. Please check your network connection or try again later.";
             const errorMessage: Message = {
                 id: (Date.now() + 1).toString(),
                 role: 'assistant',
@@ -131,85 +134,85 @@ export default function Chatbot({ className }: { className?: string }) {
     };
 
     return (
-        <Card className={cn(
-            "w-full mx-auto flex flex-col overflow-hidden transition-all duration-300",
-            "border border-slate-200 dark:border-neutral-800 shadow-2xl bg-white dark:bg-neutral-900",
+        <div className={cn(
+            "w-full h-full flex flex-col overflow-hidden bg-card text-card-foreground",
             className
         )}>
-            {/* Clean Modern Header */}
-            <CardHeader className="border-b border-slate-100 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-4 shrink-0">
-                <div className="flex items-center gap-3">
-                    <div className="relative">
-                        <div className="bg-purple-50 dark:bg-purple-950/40 p-2 rounded-full border border-purple-100 dark:border-purple-900/50">
-                            <Bot className="h-5 w-5 text-purple-700 dark:text-purple-400" />
-                        </div>
-                        <div className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full border-2 border-white dark:border-neutral-900 bg-green-500" />
+            {/* ── HEADER (ZERO UNWANTED GAPS OR MARGINS) ── */}
+            <div className="border-b border-border/70 bg-card px-4 py-3 shrink-0 flex items-center gap-3">
+                <div className="relative">
+                    <div className="bg-primary/10 dark:bg-primary/20 p-2 rounded-xl border border-primary/20 flex items-center justify-center">
+                        <MessageSquare className="h-5 w-5 text-primary" />
                     </div>
-                    <div className="flex flex-col">
-                        <CardTitle className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight flex items-center gap-1.5">
-                            The Sentinel <Sparkles className="h-3.5 w-3.5 text-purple-700 dark:text-purple-400" />
-                        </CardTitle>
-                        <span className="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 tracking-wider">
-                            AI-Powered Assistant
-                        </span>
+                    <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-background bg-emerald-500" />
+                </div>
+                <div className="flex flex-col min-w-0">
+                    <h3 className="text-sm font-bold text-foreground tracking-tight truncate leading-tight">
+                        Chatbot
+                    </h3>
+                    <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground font-medium mt-0.5">
+                        <span>Online Citizen Assistance</span>
                     </div>
+                </div>
+                <div className="ml-auto flex items-center gap-1">
                     <Button
                         variant="ghost"
                         size="icon"
-                        className="ml-auto text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-neutral-800 rounded-full"
+                        className="h-8 w-8 text-muted-foreground hover:text-foreground rounded-lg"
                         onClick={() => {
-                            setMessages([messages[0]]);
+                            setMessages([welcomeMessage]);
                             setIsLoading(false);
+                            setCurrentSuggestions([]);
                         }}
-                        title="Reset Chat"
+                        title="Start New Conversation"
                     >
-                        <RefreshCcw className="h-4 w-4" />
+                        <RefreshCcw className="h-3.5 w-3.5" />
                     </Button>
-                </div>
-            </CardHeader>
-
-            {/* Clearly Visible Legal & Safety Disclaimer Banner */}
-            <div className="bg-amber-500/10 dark:bg-amber-500/5 border-b border-amber-500/20 px-3.5 py-2.5 flex items-start gap-2.5 text-slate-700 dark:text-slate-300 shrink-0">
-                <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
-                <div className="text-[11px] leading-tight space-y-1">
-                    <div>
-                        <span className="font-bold text-amber-800 dark:text-amber-300 uppercase tracking-wider text-[10px] inline-block mr-1">Informational Guide:</span>
-                        The Sentinel does <u>not</u> provide formal legal advice or replace authorized VAWC desk personnel. Emergencies: call <strong>911</strong> / WCPC (<strong>177</strong>).
-                    </div>
-                    <div className="text-[10px] text-amber-900/80 dark:text-amber-200/80">
-                        <span className="font-semibold text-amber-800 dark:text-amber-300">Privacy Notice:</span> Do not type real victim names, child identities, addresses, phone numbers, or incident narratives in this chat.
-                    </div>
+                    {onClose && (
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-muted-foreground hover:text-foreground rounded-lg"
+                            onClick={onClose}
+                            title="Close Helpdesk"
+                        >
+                            <X className="h-4 w-4" />
+                        </Button>
+                    )}
                 </div>
             </div>
 
-            {/* Offline/Fallback Banner */}
+            {/* ── COMPACT ADVISORY NOTICE (ATTACHED DIRECTLY UNDER HEADER) ── */}
+            <div className="bg-muted/50 border-b border-border/50 px-3.5 py-1.5 flex items-center gap-2 text-[11px] text-muted-foreground shrink-0">
+                <Info className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                <span className="truncate">For life-threatening emergencies, dial <strong>911</strong> immediately.</span>
+            </div>
+
+            {/* Offline Engine Notice */}
             {isEngineOffline && (
-                <div className="bg-amber-500/10 dark:bg-amber-500/5 border-b border-amber-500/20 px-4 py-2 flex items-center gap-2 text-amber-600 dark:text-amber-400 text-[11px] font-bold">
-                    <span className="relative flex h-2 w-2">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
-                    </span>
-                    <span>NLP Classification Engine Offline. Operating in keyword fallback mode.</span>
+                <div className="bg-amber-500/10 border-b border-amber-500/20 px-3.5 py-1.5 flex items-center gap-2 text-amber-700 dark:text-amber-400 text-[11px] font-medium shrink-0">
+                    <span className="h-2 w-2 rounded-full bg-amber-500 animate-pulse shrink-0" />
+                    <span>Operating in keyword reference mode.</span>
                 </div>
             )}
 
-            {/* Chat Area */}
-            <CardContent className="flex-1 overflow-hidden p-0 relative flex flex-col bg-slate-50/50 dark:bg-neutral-950/30">
+            {/* ── CHAT MESSAGES CANVAS (FILLS ALL REMAINING SPACE DIRECTLY) ── */}
+            <div className="flex-1 overflow-hidden relative flex flex-col bg-background/50">
                 <div
                     ref={scrollRef}
-                    className="flex-1 overflow-y-auto p-4 space-y-6 scroll-smooth custom-scrollbar"
+                    className="flex-1 overflow-y-auto p-3.5 space-y-3.5 scroll-smooth"
                 >
                     {messages.map((msg) => (
                         <div
                             key={msg.id}
                             className={cn(
-                                "flex w-full gap-3 max-w-[85%] animate-in fade-in slide-in-from-bottom-2 duration-300",
+                                "flex w-full gap-2.5 max-w-[88%] animate-in fade-in slide-in-from-bottom-1 duration-200",
                                 msg.role === 'user' ? "ml-auto flex-row-reverse" : "mr-auto"
                             )}
                         >
-                            <Avatar className="h-8 w-8 shrink-0 border border-slate-200 dark:border-neutral-800 shadow-sm bg-slate-100 dark:bg-neutral-800">
-                                <AvatarFallback className="font-bold text-xs bg-slate-100 dark:bg-neutral-850">
-                                    {msg.role === 'assistant' ? <Bot size={16} className="text-purple-700 dark:text-purple-400" /> : <User size={16} className="text-slate-600" />}
+                            <Avatar className="h-7 w-7 shrink-0 border border-border shadow-2xs mt-0.5">
+                                <AvatarFallback className="text-[11px] font-semibold bg-muted text-muted-foreground">
+                                    {msg.role === 'assistant' ? '183' : <User size={13} />}
                                 </AvatarFallback>
                             </Avatar>
 
@@ -217,14 +220,14 @@ export default function Chatbot({ className }: { className?: string }) {
                                 "flex flex-col gap-1",
                                 msg.role === 'user' ? "items-end" : "items-start"
                             )}>
-                                <div className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider px-1">
-                                    {msg.role === 'user' ? 'You' : 'Sentinel'}
-                                </div>
+                                <span className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider px-1">
+                                    {msg.role === 'user' ? 'You' : 'Helpdesk'}
+                                </span>
                                 <div className={cn(
-                                    "p-3.5 text-sm shadow-sm leading-relaxed font-semibold transition-all duration-200 whitespace-pre-wrap",
+                                    "p-3 text-sm leading-relaxed transition-all whitespace-pre-wrap rounded-2xl",
                                     msg.role === 'user'
-                                        ? "bg-purple-700 text-white rounded-2xl rounded-tr-sm"
-                                        : "bg-white dark:bg-neutral-800 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-neutral-800 rounded-2xl rounded-tl-sm"
+                                        ? "bg-primary text-primary-foreground font-medium rounded-tr-xs shadow-2xs"
+                                        : "bg-muted/70 dark:bg-muted/40 text-foreground border border-border/60 rounded-tl-xs shadow-2xs font-normal"
                                 )}>
                                     {msg.content}
                                 </div>
@@ -233,57 +236,58 @@ export default function Chatbot({ className }: { className?: string }) {
                     ))}
 
                     {isLoading && (
-                        <div className="flex w-full gap-3 mr-auto max-w-[85%] animate-in fade-in">
-                            <Avatar className="h-8 w-8 shrink-0 border border-slate-200 dark:border-neutral-850 shadow-sm bg-slate-100 dark:bg-neutral-800">
-                                <AvatarFallback><Bot size={16} className="text-purple-700 dark:text-purple-400" /></AvatarFallback>
+                        <div className="flex w-full gap-2.5 mr-auto max-w-[88%] animate-in fade-in">
+                            <Avatar className="h-7 w-7 shrink-0 border border-border shadow-2xs mt-0.5">
+                                <AvatarFallback className="text-[11px] font-semibold bg-muted text-muted-foreground">183</AvatarFallback>
                             </Avatar>
                             <div className="flex flex-col gap-1 items-start">
-                                <div className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider px-1">Sentinel</div>
+                                <span className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider px-1">Helpdesk</span>
                                 <TypingIndicator />
                             </div>
                         </div>
                     )}
                 </div>
 
-                {/* Suggestions Area - Glassy Pills */}
+                {/* ── SUGGESTION CHIPS (FLUSH AT BOTTOM OF CHAT WITH HIDDEN SCROLLBAR) ── */}
                 {!isLoading && (
-                    <div className="px-4 py-3 flex gap-2 overflow-x-auto scrollbar-hide shrink-0 bg-white/80 dark:bg-neutral-900 border-t border-slate-100 dark:border-neutral-800">
+                    <div className="px-3 py-2 flex gap-1.5 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden shrink-0 bg-card border-t border-border/60">
                         {(currentSuggestions.length > 0 ? currentSuggestions : SUGGESTIONS).map((suggestion, idx) => (
                             <button
                                 key={idx}
                                 onClick={() => handleSend(undefined, suggestion)}
-                                className="whitespace-nowrap px-4 py-2 text-xs font-bold text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-950/30 border border-purple-100 dark:border-purple-900/50 rounded-full hover:bg-purple-700 hover:text-white dark:hover:bg-purple-700 transition-all duration-200 hover:shadow-sm active:scale-95 cursor-pointer"
+                                className="whitespace-nowrap px-3 py-1.5 text-xs font-medium text-foreground bg-muted/60 hover:bg-primary hover:text-primary-foreground border border-border/70 rounded-full transition-colors shrink-0 cursor-pointer shadow-2xs active:scale-95"
                             >
                                 {suggestion}
                             </button>
                         ))}
                     </div>
                 )}
-            </CardContent>
+            </div>
 
-            {/* Input Area */}
-            <CardFooter className="p-3 bg-white dark:bg-neutral-900 shrink-0 border-t border-slate-100 dark:border-neutral-800">
-                <form onSubmit={(e) => handleSend(e)} className="flex w-full gap-2 items-end relative">
+            {/* ── INPUT FOOTER (SEAMLESSLY ATTACHED AT BOTTOM, NO GAP) ── */}
+            <div className="p-3 bg-card shrink-0 border-t border-border/70 flex flex-col gap-1.5">
+                <form onSubmit={(e) => handleSend(e)} className="flex w-full gap-2 items-center">
                     <Input
-                        placeholder="Type your query..."
+                        placeholder="Type your message..."
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
-                        className="flex-1 min-h-[44px] max-h-32 bg-slate-50 dark:bg-neutral-800 border-slate-200 dark:border-slate-800 hover:border-purple-300 focus:border-purple-700 dark:focus:border-purple-500 focus:ring-1 focus:ring-purple-700 rounded-xl pl-4 pr-10 py-3 transition-all text-slate-900 dark:text-slate-100 placeholder:text-slate-500 dark:placeholder:text-slate-400 outline-none"
+                        className="flex-1 h-10 bg-muted/40 border-border/80 focus-visible:ring-1 focus-visible:ring-primary rounded-xl px-3.5 text-sm"
                         disabled={isLoading}
                     />
                     <Button
                         type="submit"
                         size="icon"
                         disabled={isLoading || !input.trim()}
-                        className="absolute right-1 bottom-1 h-[36px] w-[36px] rounded-lg bg-purple-700 hover:bg-purple-800 text-white shadow-sm hover:shadow-md transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                        className="h-10 w-10 shrink-0 rounded-xl bg-primary text-primary-foreground shadow-xs hover:bg-primary/90 transition-all active:scale-95 disabled:opacity-40 cursor-pointer"
+                        title="Send message"
                     >
                         <Send className="h-4 w-4" />
                     </Button>
                 </form>
-                <p className="text-[10px] text-center text-slate-400 dark:text-slate-500 mt-2 w-full px-1">
-                    Advisory decision-support & informational guide only • Not a substitute for authorized legal or law-enforcement assistance.
+                <p className="text-[10px] text-center text-muted-foreground leading-tight w-full">
+                    Informational public assistance &bull; In-person services available at the Barangay Hall
                 </p>
-            </CardFooter>
-        </Card>
+            </div>
+        </div>
     );
 }

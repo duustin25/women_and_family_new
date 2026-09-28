@@ -1,12 +1,12 @@
-import React, { useState } from 'react';
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { FormFieldType } from '../../types';
 import {
     Type, AlignLeft, Hash, Mail, Calendar,
     ListFilter, CheckSquare, Radio, UploadCloud,
     Table, ShieldAlert, Heading, Plus, Sparkles
 } from 'lucide-react';
+import React, { useState } from 'react';
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import type { FormFieldType } from '../../types';
 
 interface Props {
     onAddField: (type: FormFieldType) => void;

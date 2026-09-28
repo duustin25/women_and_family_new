@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
 import { useForm } from '@inertiajs/react';
+import type React from 'react';
+import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { route } from 'ziggy-js';
 import { useDebounce } from '@/hooks/use-debounce';
-import { PreselectedDossier } from '@/pages/Admin/Vawc/Partials/Create/types';
+import type { PreselectedDossier } from '@/pages/Admin/Vawc/Partials/Create/types';
 
 export function useVawcCreateWorkflow(preselectedDossier?: PreselectedDossier | null) {
     const [currentStep, setCurrentStep] = useState(1);

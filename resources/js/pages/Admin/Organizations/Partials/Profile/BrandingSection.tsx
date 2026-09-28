@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
 import { Building2, UploadCloud, Trash2 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+
 
 interface Props {
     imageFile: File | null;
@@ -44,9 +44,8 @@ export default function BrandingSection({
             </CardHeader>
             <CardContent className="space-y-4">
                 <div
-                    className={`aspect-video w-full rounded-xl border-2 border-dashed relative overflow-hidden bg-muted/30 flex items-center justify-center transition-all group ${
-                        error ? 'border-destructive' : 'border-muted-foreground/20 hover:border-primary/50'
-                    }`}
+                    className={`aspect-video w-full rounded-xl border-2 border-dashed relative overflow-hidden bg-muted/30 flex items-center justify-center transition-all group ${error ? 'border-destructive' : 'border-muted-foreground/20 hover:border-primary/50'
+                        }`}
                 >
                     {activeDisplayUrl ? (
                         <>

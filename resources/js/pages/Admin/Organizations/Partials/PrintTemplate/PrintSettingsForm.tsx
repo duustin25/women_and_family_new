@@ -1,15 +1,16 @@
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
-import SignatoryConfigSection, { SignatureRow } from './SignatoryConfigSection';
 import {
     Printer, AlignCenter, AlignLeft, Image as ImageIcon,
     UploadCloud, Trash2, Building
 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import type { SignatureRow } from './SignatoryConfigSection';
+import SignatoryConfigSection from './SignatoryConfigSection';
 
 interface Props {
     printSettings: any;

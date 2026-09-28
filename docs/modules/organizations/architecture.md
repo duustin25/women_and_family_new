@@ -7,7 +7,7 @@
 
 ## 🏛️ 1. Multi-Tier & Multi-Tenant Layered Architecture
 
-The Organizations module employs role-based tenant isolation: Super Administrators have global visibility across all accredited entities, while Organization Heads are scoped strictly to their designated organization.
+The Organizations module employs role-based tenant isolation: Administrators have global visibility across all accredited entities, while Organization Heads are scoped strictly to their designated organization.
 
 ```mermaid
 flowchart TD

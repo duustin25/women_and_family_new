@@ -8,7 +8,7 @@ import {
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { GadEvent } from '../types';
+import type { GadEvent } from '../types';
 
 interface GadEventStatusDialogProps {
     open: boolean;

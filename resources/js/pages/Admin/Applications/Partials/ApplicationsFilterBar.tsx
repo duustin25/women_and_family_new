@@ -1,5 +1,5 @@
-import React from 'react';
 import { Search, X, Building2, Filter } from 'lucide-react';
+import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,7 +11,7 @@ import {
     SelectTrigger,
     SelectValue
 } from "@/components/ui/select";
-import { Organization } from '../types';
+import type { Organization } from '../types';
 
 interface ApplicationsFilterBarProps {
     totalCount: number;

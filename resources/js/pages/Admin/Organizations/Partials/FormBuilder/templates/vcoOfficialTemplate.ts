@@ -1,4 +1,4 @@
-import { OrganizationTemplate } from '../../../types';
+import type { OrganizationTemplate } from '../../../types';
 
 export const vcoOfficialTemplate: OrganizationTemplate = {
     id: 'vco',

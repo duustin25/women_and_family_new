@@ -1,6 +1,6 @@
-import React from 'react';
 import { Link } from '@inertiajs/react';
 import { ClipboardList, Plus, Building2, Users } from 'lucide-react';
+import React from 'react';
 import { Button } from '@/components/ui/button';
 
 export function ApplicationsHeader() {

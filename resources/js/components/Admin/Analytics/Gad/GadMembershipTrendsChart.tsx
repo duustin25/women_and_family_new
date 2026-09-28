@@ -1,8 +1,8 @@
+import { TrendingUp } from 'lucide-react';
 import React from 'react';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { TrendingUp } from 'lucide-react';
 
 interface Props {
     data: any[];

@@ -264,17 +264,6 @@ export default function GadIndex({ activities = [] }: { activities?: GadEvent[] 
                         <p className="text-slate-600 dark:text-slate-400 font-bold uppercase text-xs md:text-sm tracking-widest leading-relaxed max-w-2xl mx-auto mt-4 mb-8">
                             Promoting women's empowerment and inclusive growth for every family in Barangay 183 Villamor.
                         </p>
-                        <div className="flex justify-center">
-                            <Button
-                                asChild
-                                className="bg-purple-700 hover:bg-purple-800 text-white font-black uppercase px-8 py-6 text-xs tracking-widest rounded-md shadow-xl transition-all active:scale-95 cursor-pointer h-14"
-                                onClick={scrollToPrograms}
-                            >
-                                <a href="#programs-board">
-                                    View All Events <ChevronDown className="ml-2 w-5 h-5" />
-                                </a>
-                            </Button>
-                        </div>
                     </div>
                 </section>
 

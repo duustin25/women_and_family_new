@@ -1,5 +1,6 @@
 import { usePage, router } from '@inertiajs/react';
 import { Bot, MessageSquare } from 'lucide-react';
+import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { route } from 'ziggy-js';
 import { Badge } from '@/components/ui/badge';
@@ -8,17 +9,35 @@ import { Switch } from '@/components/ui/switch';
 
 export default function FeatureToggles() {
     const { props } = usePage<any>();
-    const isChatbotEnabled = props.chatbot_enabled ?? true;
+    const serverValue = props.chatbot_enabled ?? true;
+    const [isChatbotEnabled, setIsChatbotEnabled] = useState<boolean>(serverValue);
+    const [isUpdating, setIsUpdating] = useState<boolean>(false);
+
+    useEffect(() => {
+        if (props.chatbot_enabled !== undefined) {
+            setIsChatbotEnabled(props.chatbot_enabled);
+        }
+    }, [props.chatbot_enabled]);
 
     const handleToggleChatbot = (enabled: boolean) => {
+        // Optimistic UI update: instantly update UI without waiting for network
+        setIsChatbotEnabled(enabled);
+        setIsUpdating(true);
+
         router.post(route('admin.settings.feature-toggle'), {
             feature: 'chatbot_enabled',
             enabled: enabled,
         }, {
+            preserveScroll: true,
+            preserveState: true,
             onSuccess: () => {
-                toast.success(`AI Chatbot Assistant ${enabled ? 'ENABLED' : 'DISABLED'}.`);
+                setIsUpdating(false);
+                toast.success(`Chatbot Assistant ${enabled ? 'ENABLED' : 'DISABLED (Maintenance Mode)'}.`);
             },
             onError: () => {
+                // Revert on error
+                setIsChatbotEnabled(!enabled);
+                setIsUpdating(false);
                 toast.error('Failed to update system feature setting.');
             }
         });
@@ -29,7 +48,7 @@ export default function FeatureToggles() {
             <CardHeader className="pb-4 border-b">
                 <CardTitle className="text-lg font-bold flex items-center gap-2">
                     <Bot className="w-5 h-5 text-primary" />
-                    System Feature Switches & Module Controls
+                    System Feature & Module Controls Con
                 </CardTitle>
                 <CardDescription className="text-sm text-muted-foreground">
                     Toggle individual system services during scheduled maintenance, emergency downtimes, or system updates.
@@ -43,7 +62,7 @@ export default function FeatureToggles() {
                         </div>
                         <div className="space-y-1.5">
                             <div className="flex items-center gap-2.5 flex-wrap">
-                                <h4 className="font-bold text-base text-foreground">AI Sentinel Chatbot Assistant</h4>
+                                <h4 className="font-bold text-base text-foreground">Barangay Helpdesk Chatbot</h4>
                                 <Badge
                                     variant={isChatbotEnabled ? "default" : "secondary"}
                                     className="text-xs font-semibold px-2.5 py-0.5"
@@ -52,7 +71,7 @@ export default function FeatureToggles() {
                                 </Badge>
                             </div>
                             <p className="text-sm text-muted-foreground max-w-2xl leading-relaxed">
-                                Controls citizen access to the AI conversational assistant on the public portal. When disabled, citizens are presented with a maintenance notice and redirected to barangay emergency contact numbers.
+                                Controls citizen access to the virtual assistant on the public portal and floating widget. When disabled, citizens are presented with a maintenance notice and redirected to barangay emergency contact numbers.
                             </p>
                         </div>
                     </div>
@@ -64,7 +83,8 @@ export default function FeatureToggles() {
                         <Switch
                             checked={isChatbotEnabled}
                             onCheckedChange={handleToggleChatbot}
-                            aria-label="Toggle AI Sentinel Chatbot"
+                            disabled={isUpdating}
+                            aria-label="Toggle Barangay Helpdesk Chatbot"
                         />
                     </div>
                 </div>

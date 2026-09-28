@@ -178,7 +178,7 @@ export default function UserActivity({
 
     const renderTargetEntity = (log: AuditLog) => {
         const sealed = isSealedRecord(log);
-        let entityText = log.formatted_entity || `${log.auditable_type ? log.auditable_type.split('\\').pop() : 'System'} #${log.auditable_id}`;
+        const entityText = log.formatted_entity || `${log.auditable_type ? log.auditable_type.split('\\').pop() : 'System'} #${log.auditable_id}`;
 
         if (sealed) {
             return (
@@ -190,7 +190,7 @@ export default function UserActivity({
         }
 
         // Clean and shorten: "System User: Name (Role)" -> "User: Name"
-        let cleanText = entityText
+        const cleanText = entityText
             .replace(/^(Official Profile:|Staff Account:|System User:)/, 'User:')
             .replace(/\s*\([^)]+\)$/, '');
 

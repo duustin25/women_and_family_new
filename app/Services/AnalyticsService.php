@@ -311,31 +311,28 @@ class AnalyticsService
      */
     public function getVawcChartConfig(): Collection
     {
-        // Official Barangay 183 Women and Family Protection Desk presentation board colors:
-        // Red = Physical, Blue = Sexual, Green = Psychological, Yellow = Economic
-        $palette = [
-            'physical'      => '#dc2626', // Red
-            'sexual'        => '#2563eb', // Blue
-            'psychological' => '#16a34a', // Green
-            'economic'      => '#eab308', // Yellow
-        ];
-
-        $labels = [
-            'physical'      => 'Physical',
-            'sexual'        => 'Sexual',
-            'psychological' => 'Psychological',
-            'economic'      => 'Economic',
+        $defaultPalette = [
+            'physical'      => '#ef4444',
+            'sexual'        => '#2563eb',
+            'psychological' => '#16a34a',
+            'economic'      => '#eab308',
         ];
 
         return \App\Models\CaseAbuseType::where('is_active', true)
-            ->where('category', 'VAWC')
+            ->whereIn('category', ['VAWC', 'Both'])
+            ->orderBy('name')
             ->get()
-            ->map(function ($t) use ($palette, $labels) {
-                $key = strtolower($t->name);
+            ->map(function ($t) use ($defaultPalette) {
+                $key = strtolower(trim($t->name));
+                $color = $t->color;
+                if ($color && str_starts_with($color, '#') && strlen($color) === 9) {
+                    $color = substr($color, 0, 7);
+                }
+
                 return [
                     'key'   => $key,
-                    'label' => $labels[$key] ?? $t->name,
-                    'color' => $palette[$key] ?? $t->color ?? '#dc2626'
+                    'label' => $t->name,
+                    'color' => !empty($color) ? $color : ($defaultPalette[$key] ?? '#64748b'),
                 ];
             });
     }

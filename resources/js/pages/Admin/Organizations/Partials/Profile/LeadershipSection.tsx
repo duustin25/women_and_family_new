@@ -1,8 +1,8 @@
+import { Users, Palette } from 'lucide-react';
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Users, Palette } from 'lucide-react';
 
 interface Props {
     presidentName: string;

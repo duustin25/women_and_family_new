@@ -19,7 +19,7 @@ class RoleMiddleware
             abort(403, 'Unauthorized');
         }
 
-        // Super Admin Bypass (optional, but good for safety)
+        // Admin Bypass (optional, but good for safety)
         if ($request->user()->role === \App\Models\User::ROLE_ADMIN) {
             return $next($request);
         }

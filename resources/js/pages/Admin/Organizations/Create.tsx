@@ -1,19 +1,19 @@
 import { Head, useForm, Link, router } from '@inertiajs/react';
 import { ArrowLeft, Save, LayoutTemplate, Settings, FileText, Loader2, Sparkles, Eye } from "lucide-react";
 import React, { useState, useRef } from 'react';
-import BasicInfoSection from './Partials/Profile/BasicInfoSection';
-import LeadershipSection from './Partials/Profile/LeadershipSection';
-import BrandingSection from './Partials/Profile/BrandingSection';
-import RequirementsSection from './Partials/Profile/RequirementsSection';
-import FormBuilderCanvas from './Partials/FormBuilder/FormBuilderCanvas';
-import PrintSettingsForm from './Partials/PrintTemplate/PrintSettingsForm';
-import OfficialPaperPreview from './Partials/PrintTemplate/OfficialPaperPreview';
-import { FormSchemaField, OrganizationTemplate, PrintSettings } from './types';
 import { UnsavedChangesDialog } from '@/components/Admin/UnsavedChangesDialog';
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useUnsavedChanges } from '@/hooks/use-unsaved-changes';
 import AppLayout from '@/layouts/app-layout';
+import FormBuilderCanvas from './Partials/FormBuilder/FormBuilderCanvas';
+import OfficialPaperPreview from './Partials/PrintTemplate/OfficialPaperPreview';
+import PrintSettingsForm from './Partials/PrintTemplate/PrintSettingsForm';
+import BasicInfoSection from './Partials/Profile/BasicInfoSection';
+import BrandingSection from './Partials/Profile/BrandingSection';
+import LeadershipSection from './Partials/Profile/LeadershipSection';
+import RequirementsSection from './Partials/Profile/RequirementsSection';
+import type { FormSchemaField, OrganizationTemplate, PrintSettings } from './types';
 
 interface Props {
     users: any[];

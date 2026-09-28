@@ -11,15 +11,15 @@ import { Badge } from "@/components/ui/badge";
 import AppLayout from '@/layouts/app-layout';
 import { cn } from "@/lib/utils";
 
-// Partials
-import AbuseTypesTable from './Partials/AbuseTypesTable';
-import AppearanceSettings from './Partials/AppearanceSettings';
-import type { BackupFile } from './Partials/BackupTab';
-import BackupTab from './Partials/BackupTab';
-import FeatureToggles from './Partials/FeatureToggles';
-import OfficialsTab from './Partials/OfficialsTab';
-import UsersTab from './Partials/UsersTab';
-import ZonesTable from './Partials/ZonesTable';
+// Modules
+import type { BackupFile } from './Modules/Backups/BackupTab';
+import BackupTab from './Modules/Backups/BackupTab';
+import FeatureToggles from './Modules/Features/FeatureToggles';
+import OfficialsTab from './Modules/Officials/OfficialsTab';
+import AbuseTypesTable from './Modules/Taxonomies/AbuseTypesTable';
+import ZonesTable from './Modules/Taxonomies/ZonesTable';
+import AppearanceSettings from './Modules/Theme/AppearanceSettings';
+import UsersTab from './Modules/Users/UsersTab';
 
 interface PageProps {
     currentTab?: string;

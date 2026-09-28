@@ -1,9 +1,9 @@
+import { Link } from '@inertiajs/react';
+import { Users, Clock, CheckCircle2, AlertTriangle, ArrowRight } from 'lucide-react';
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Users, Clock, CheckCircle2, AlertTriangle, ArrowRight } from 'lucide-react';
-import { Link } from '@inertiajs/react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 
 interface Props {
     applications: {

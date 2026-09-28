@@ -304,7 +304,7 @@ export default function BackupTab({ backups = [] }: BackupTabProps) {
                             <Input
                                 id="admin_restore_pass"
                                 type="password"
-                                placeholder="Your Super Admin password"
+                                placeholder="Your Admin password"
                                 value={data.password}
                                 onChange={(e) => setData('password', e.target.value)}
                                 className="text-sm"

@@ -1,5 +1,4 @@
 import { Head, Link } from '@inertiajs/react';
-import React, { useState, useMemo } from 'react';
 import { 
     Building2, 
     Users, 
@@ -11,6 +10,7 @@ import {
     X,
     ChevronLeft
 } from "lucide-react";
+import React, { useState, useMemo } from 'react';
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";

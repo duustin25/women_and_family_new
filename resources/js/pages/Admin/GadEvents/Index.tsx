@@ -5,13 +5,13 @@ import { useConfirm } from '@/hooks/use-confirm';
 import { useDebounce } from '@/hooks/use-debounce';
 import AppLayout from '@/layouts/app-layout';
 
-import { GadEvent, PageProps } from './types';
-import { GadEventsHeader } from './Partials/GadEventsHeader';
-import { GadEventsFilterBar } from './Partials/GadEventsFilterBar';
-import { GadEventsTable } from './Partials/GadEventsTable';
-import { GadEventsPagination } from './Partials/GadEventsPagination';
 import { GadEventPreviewDialog } from './Partials/GadEventPreviewDialog';
+import { GadEventsFilterBar } from './Partials/GadEventsFilterBar';
+import { GadEventsHeader } from './Partials/GadEventsHeader';
+import { GadEventsPagination } from './Partials/GadEventsPagination';
+import { GadEventsTable } from './Partials/GadEventsTable';
 import { GadEventStatusDialog } from './Partials/GadEventStatusDialog';
+import type { GadEvent, PageProps } from './types';
 
 export default function Index({ events, filters }: PageProps) {
     const [searchQuery, setSearchQuery] = useState(filters?.search ?? '');

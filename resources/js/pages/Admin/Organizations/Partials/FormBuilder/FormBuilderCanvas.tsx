@@ -1,16 +1,11 @@
-import React, { useState, useMemo } from 'react';
-import { FormSchemaField, FormFieldType, OrganizationTemplate } from '../../types';
-import FieldPalette from './FieldPalette';
-import FieldConfigCard from './FieldConfigCard';
-import { officialTemplates } from './templates';
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent } from "@/components/ui/card";
 import {
     Sparkles, AlertCircle, Layers, Search,
     ChevronsUpDown, ChevronsDownUp, Plus, FilterX
 } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import {
     Dialog,
     DialogContent,
@@ -20,6 +15,11 @@ import {
     DialogTrigger,
     DialogFooter
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import type { FormSchemaField, FormFieldType, OrganizationTemplate } from '../../types';
+import FieldConfigCard from './FieldConfigCard';
+import FieldPalette from './FieldPalette';
+import { officialTemplates } from './templates';
 
 interface Props {
     schema: FormSchemaField[];
@@ -57,7 +57,7 @@ export default function FormBuilderCanvas({ schema, onChange, onApplyTemplate }:
     const handleAddField = (type: FormFieldType) => {
         const idTimestamp = Date.now().toString().slice(-6);
         let defaultLabel = 'New Question';
-        let defaultWidth = 'w-full';
+        const defaultWidth = 'w-full';
         let defaultOptions: string[] | undefined = undefined;
         let defaultColumns = undefined;
 

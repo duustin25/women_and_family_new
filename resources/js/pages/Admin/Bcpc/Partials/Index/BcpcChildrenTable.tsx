@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { CardContent, CardFooter } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { BcpcChildListItem } from './types';
+import type { BcpcChildListItem } from './types';
 
 interface BcpcChildrenTableProps {
     childrenList: BcpcChildListItem[];

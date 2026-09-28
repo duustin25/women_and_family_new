@@ -1,4 +1,3 @@
-import React from 'react';
 import {
     Scale,
     CheckCircle2,
@@ -11,11 +10,12 @@ import {
     Paperclip,
     ChevronRight
 } from 'lucide-react';
+import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { CardContent } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { ApplicationAppeal } from './types';
+import type { ApplicationAppeal } from './types';
 
 interface AppealsTableProps {
     appeals: ApplicationAppeal[];

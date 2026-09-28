@@ -1,9 +1,9 @@
-import React from 'react';
 import { Link } from '@inertiajs/react';
 import {
     Info, EyeOff, ShieldCheck, AlertTriangle, ExternalLink, ShieldAlert,
     Search, MapPin, ClipboardList
 } from 'lucide-react';
+import React from 'react';
 import { route } from 'ziggy-js';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';

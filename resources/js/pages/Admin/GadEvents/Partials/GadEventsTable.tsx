@@ -1,10 +1,10 @@
-import React from 'react';
 import { Link } from '@inertiajs/react';
 import {
     Sparkles, Plus, Calendar, MapPin, Building2,
     FileText, Eye, MoreHorizontal, Pencil, Trash2, CheckCircle2,
     Clock, AlertCircle
 } from 'lucide-react';
+import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { CardContent } from '@/components/ui/card';
@@ -16,7 +16,7 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { GadEvent } from '../types';
+import type { GadEvent } from '../types';
 
 interface GadEventsTableProps {
     events: GadEvent[];

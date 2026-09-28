@@ -12,7 +12,7 @@ import BcpcChoReferralModal from './Partials/Show/Modals/BcpcChoReferralModal';
 import BcpcExtremeOutlierModal from './Partials/Show/Modals/BcpcExtremeOutlierModal';
 import BcpcMeasurementModal from './Partials/Show/Modals/BcpcMeasurementModal';
 import BcpcPhotoUploadModal from './Partials/Show/Modals/BcpcPhotoUploadModal';
-import { BcpcAssessment, BcpcChild, MilestoneStatus, TriageAlert } from './Partials/Show/types';
+import type { BcpcAssessment, BcpcChild, MilestoneStatus, TriageAlert } from './Partials/Show/types';
 
 interface BcpcShowProps {
     child: BcpcChild;

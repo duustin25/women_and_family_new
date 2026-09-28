@@ -1,10 +1,10 @@
+import { Building2, ShieldAlert, HeartPulse, Scale, ShieldCheck, MapPin, CheckSquare, Users, Check, AlertTriangle, LifeBuoy } from 'lucide-react';
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Building2, ShieldAlert, HeartPulse, Scale, ShieldCheck, MapPin, CheckSquare, Users, Check, AlertTriangle, LifeBuoy } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
 
 interface Step4VerifyProps {
     data: any;

@@ -151,18 +151,8 @@ export default function UsersTab({ users, filters, archivedCount = 0, activeCoun
         <Card className="border shadow-sm w-full">
             <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b">
                 <div>
-                    <CardTitle className="text-lg font-bold flex items-center gap-2">
-                        {isArchiveView ? (
-                            <>
-                                <Archive className="w-5 h-5 text-amber-600 dark:text-amber-500" />
-                                <span>Archived Accounts & Deactivated Users</span>
-                            </>
-                        ) : (
-                            <>
-                                <UsersIcon className="w-5 h-5 text-primary" />
-                                <span>System Users & RBAC Permissions</span>
-                            </>
-                        )}
+                    <CardTitle className="text-lg font-bold">
+                        {isArchiveView ? "Archived Accounts & Deactivated Users" : "System Users & RBAC Permissions"}
                     </CardTitle>
                     <CardDescription className="text-sm text-muted-foreground">
                         {isArchiveView
@@ -226,7 +216,7 @@ export default function UsersTab({ users, filters, archivedCount = 0, activeCoun
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="all">All Roles</SelectItem>
-                                <SelectItem value="admin">Super Admin</SelectItem>
+                                <SelectItem value="admin">Admin</SelectItem>
                                 <SelectItem value="head">Committee Head</SelectItem>
                                 <SelectItem value="president">Org President</SelectItem>
                             </SelectContent>

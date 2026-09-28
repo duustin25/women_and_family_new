@@ -1,7 +1,7 @@
 import { ShieldAlert, Clock, ShieldCheck, AlertTriangle } from 'lucide-react';
 import React from 'react';
 import { cn } from '@/lib/utils';
-import { QueueTab } from '../../types';
+import type { QueueTab } from '../../types';
 
 interface VawcKpiStripProps {
     criticalTotal: number;

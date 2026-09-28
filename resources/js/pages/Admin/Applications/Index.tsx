@@ -1,16 +1,16 @@
 import { Head, router } from '@inertiajs/react';
-import React, { useState, useEffect, useRef } from 'react';
 import { CheckCircle, AlertCircle } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Card } from "@/components/ui/card";
 import { useDebounce } from '@/hooks/use-debounce';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
 
-import { PageProps } from './types';
-import { ApplicationsHeader } from './Partials/ApplicationsHeader';
 import { ApplicationsFilterBar } from './Partials/ApplicationsFilterBar';
-import { ApplicationsTable } from './Partials/ApplicationsTable';
+import { ApplicationsHeader } from './Partials/ApplicationsHeader';
 import { ApplicationsPagination } from './Partials/ApplicationsPagination';
+import { ApplicationsTable } from './Partials/ApplicationsTable';
+import type { PageProps } from './types';
 
 export default function ApplicationsIndex({
     applications,

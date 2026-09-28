@@ -1,20 +1,20 @@
 import { Head, router } from '@inertiajs/react';
-import React, { useState, useEffect, useRef } from 'react';
 import { CheckCircle, AlertCircle } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Card } from "@/components/ui/card";
 import { useDebounce } from '@/hooks/use-debounce';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
 
-import { PageProps, Member } from './types';
-import { MembersHeader } from './Partials/MembersHeader';
-import { MembersFilterBar } from './Partials/MembersFilterBar';
-import { MembersTable } from './Partials/MembersTable';
-import { MembersPagination } from './Partials/MembersPagination';
-import { MemberDetailDialog } from './Partials/MemberDetailDialog';
-import { TagBenefitDialog } from './Partials/TagBenefitDialog';
-import { SendEmailDialog } from './Partials/SendEmailDialog';
 import { BulkBroadcastDialog } from './Partials/BulkBroadcastDialog';
+import { MemberDetailDialog } from './Partials/MemberDetailDialog';
+import { MembersFilterBar } from './Partials/MembersFilterBar';
+import { MembersHeader } from './Partials/MembersHeader';
+import { MembersPagination } from './Partials/MembersPagination';
+import { MembersTable } from './Partials/MembersTable';
+import { SendEmailDialog } from './Partials/SendEmailDialog';
+import { TagBenefitDialog } from './Partials/TagBenefitDialog';
+import type { PageProps, Member } from './types';
 
 declare function route(name: string, params?: any): string;
 

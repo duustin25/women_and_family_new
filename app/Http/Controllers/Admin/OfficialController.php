@@ -42,7 +42,7 @@ class OfficialController extends Controller
             'name' => 'required_without:user_id|nullable|string|max:255',
             'position' => 'required|string|max:255',
             'committee' => 'nullable|string|max:255',
-            'level' => 'required|in:head,secretary,staff',
+            'level' => 'required|in:level_1,level_2,level_3,head,secretary,staff',
             'image_path' => 'nullable|image|max:10240',
         ];
 
@@ -53,9 +53,15 @@ class OfficialController extends Controller
             $validated['name'] = null;
         }
 
-        if (in_array($request->level, ['head', 'secretary'])) {
-            if (OrganizationalMember::where('level', $request->level)->exists()) {
-                return back()->withErrors(['level' => 'A ' . ucfirst($request->level) . ' is already assigned. Please reassign the current one to Staff first.']);
+        if (in_array($request->level, ['head', 'level_1'])) {
+            if (OrganizationalMember::whereIn('level', ['head', 'level_1'])->exists()) {
+                return back()->withErrors(['level' => 'A Level 1 Head Committee is already assigned. Please reassign the current one first.']);
+            }
+        }
+
+        if (in_array($request->level, ['secretary', 'level_2'])) {
+            if (OrganizationalMember::whereIn('level', ['secretary', 'level_2'])->exists()) {
+                return back()->withErrors(['level' => 'A Level 2 Secretary is already assigned. Please reassign the current one first.']);
             }
         }
 
@@ -96,7 +102,7 @@ class OfficialController extends Controller
             'name' => 'required_without:user_id|nullable|string|max:255',
             'position' => 'required|string|max:255',
             'committee' => 'nullable|string|max:255',
-            'level' => 'required|in:head,secretary,staff',
+            'level' => 'required|in:level_1,level_2,level_3,head,secretary,staff',
             'image_path' => 'nullable|image|max:10240',
             'is_active' => 'boolean'
         ];
@@ -108,10 +114,15 @@ class OfficialController extends Controller
             $validated['name'] = null;
         }
 
-        // ENFORCE RULE: Only 1 Head, Only 1 Secretary (Excluding self)
-        if (in_array($request->level, ['head', 'secretary'])) {
-            if (OrganizationalMember::where('level', $request->level)->where('id', '!=', $id)->exists()) {
-                return back()->withErrors(['level' => 'A ' . ucfirst($request->level) . ' is already assigned.']);
+        // ENFORCE RULE: Only 1 Level 1 Head, Only 1 Level 2 Secretary (Excluding self)
+        if (in_array($request->level, ['head', 'level_1'])) {
+            if (OrganizationalMember::whereIn('level', ['head', 'level_1'])->where('id', '!=', $id)->exists()) {
+                return back()->withErrors(['level' => 'A Level 1 Head Committee is already assigned.']);
+            }
+        }
+        if (in_array($request->level, ['secretary', 'level_2'])) {
+            if (OrganizationalMember::whereIn('level', ['secretary', 'level_2'])->where('id', '!=', $id)->exists()) {
+                return back()->withErrors(['level' => 'A Level 2 Secretary is already assigned.']);
             }
         }
 

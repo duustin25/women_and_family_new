@@ -2,7 +2,7 @@ import { MapPin } from 'lucide-react';
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ZoneBreakdownItem } from './types';
+import type { ZoneBreakdownItem } from './types';
 
 interface BcpcZoneHeatmapTableProps {
     zonesBreakdown: ZoneBreakdownItem[];

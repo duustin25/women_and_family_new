@@ -28,6 +28,7 @@ class AnalyticsController extends Controller
 
         $vawcTypes = CaseAbuseType::where('is_active', true)
             ->whereIn('category', ['VAWC', 'Both'])
+            ->orderBy('name')
             ->get();
 
         $orgId = null;

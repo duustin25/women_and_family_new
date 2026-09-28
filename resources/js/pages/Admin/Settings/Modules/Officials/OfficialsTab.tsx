@@ -60,11 +60,13 @@ export default function OfficialsTab({ officials = [] }: OfficialsTabProps) {
     const getLevelBadge = (level: string) => {
         switch (level) {
             case 'head':
-                return <Badge className="bg-amber-600/90 text-white hover:bg-amber-700">Barangay Captain / Head</Badge>;
+            case 'level_1':
+                return <Badge variant="outline" className="bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-950/50 dark:text-amber-300 dark:border-amber-800 text-xs font-semibold py-0.5 px-2">Level 1 - Head Committee</Badge>;
             case 'secretary':
-                return <Badge className="bg-blue-600/90 text-white hover:bg-blue-700">Secretary / Administrator</Badge>;
+            case 'level_2':
+                return <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-950/50 dark:text-blue-300 dark:border-blue-800 text-xs font-semibold py-0.5 px-2">Level 2 - Secretary</Badge>;
             default:
-                return <Badge variant="secondary">Staff / Councilor</Badge>;
+                return <Badge variant="outline" className="bg-slate-100 text-slate-800 border-slate-300 dark:bg-slate-900/50 dark:text-slate-300 dark:border-slate-800 text-xs font-semibold py-0.5 px-2">Level 3 - Staff & Officers</Badge>;
         }
     };
 
@@ -72,8 +74,7 @@ export default function OfficialsTab({ officials = [] }: OfficialsTabProps) {
         <Card className="border shadow-sm w-full">
             <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b">
                 <div>
-                    <CardTitle className="text-lg font-bold flex items-center gap-2">
-                        <Award className="w-5 h-5 text-primary" />
+                    <CardTitle className="text-lg font-bold">
                         Barangay Officials Roster
                     </CardTitle>
                     <CardDescription className="text-sm text-muted-foreground">
@@ -146,11 +147,11 @@ export default function OfficialsTab({ officials = [] }: OfficialsTabProps) {
                                             </TableCell>
                                             <TableCell>
                                                 {off.is_active ? (
-                                                    <Badge variant="outline" className="text-emerald-600 border-emerald-300 bg-emerald-50 dark:bg-emerald-950/20 text-xs font-semibold">
+                                                    <Badge variant="outline" className="bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-800 text-xs font-semibold py-0.5 px-2.5 rounded-full">
                                                         Active
                                                     </Badge>
                                                 ) : (
-                                                    <Badge variant="outline" className="text-muted-foreground text-xs font-semibold">
+                                                    <Badge variant="outline" className="bg-rose-100 text-rose-800 border-rose-300 dark:bg-rose-950/50 dark:text-rose-300 dark:border-rose-800 text-xs font-semibold py-0.5 px-2.5 rounded-full">
                                                         Inactive
                                                     </Badge>
                                                 )}

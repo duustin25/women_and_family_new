@@ -1,11 +1,11 @@
-import React, { useState, useMemo } from 'react';
 import { Head, usePoll } from '@inertiajs/react';
+import React, { useState, useMemo } from 'react';
 import { route } from 'ziggy-js';
 import AppLayout from '@/layouts/app-layout';
-import { DashboardProps, QueueTab, CaseQueueItem } from './types';
+import VawcActionQueueSection from './Partials/Dashboard/VawcActionQueueSection';
 import VawcDashboardHeader from './Partials/Dashboard/VawcDashboardHeader';
 import VawcKpiStrip from './Partials/Dashboard/VawcKpiStrip';
-import VawcActionQueueSection from './Partials/Dashboard/VawcActionQueueSection';
+import type { DashboardProps, QueueTab, CaseQueueItem } from './types';
 
 export default function Dashboard({
     criticalQueue = [],

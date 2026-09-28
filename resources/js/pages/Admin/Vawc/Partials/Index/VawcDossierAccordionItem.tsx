@@ -1,6 +1,4 @@
-import React from 'react';
 import { Link, router } from '@inertiajs/react';
-import { route } from 'ziggy-js';
 import {
     ChevronRight,
     ChevronDown,
@@ -9,6 +7,8 @@ import {
     Plus,
     ArrowRight,
 } from 'lucide-react';
+import React from 'react';
+import { route } from 'ziggy-js';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -20,9 +20,10 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
-import {
+import type {
     Dossier,
-    SubCase,
+    SubCase} from '../../types';
+import {
     redactName,
     simplifyRelationship,
     getThreatBadgeClass,

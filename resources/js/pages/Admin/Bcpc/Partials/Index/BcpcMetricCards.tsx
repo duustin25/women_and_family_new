@@ -1,6 +1,6 @@
 import { Clock, Heart, ShieldAlert, Sparkles } from 'lucide-react';
 import React from 'react';
-import { BcpcIndexMetrics } from './types';
+import type { BcpcIndexMetrics } from './types';
 
 interface BcpcMetricCardsProps {
     metrics: BcpcIndexMetrics;

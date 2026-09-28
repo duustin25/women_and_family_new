@@ -8,7 +8,7 @@ import CreateHeader from './Partials/Create/CreateHeader';
 import Step1GuardianHousehold from './Partials/Create/Step1GuardianHousehold';
 import Step2ChildIdentity from './Partials/Create/Step2ChildIdentity';
 import Step3BaselineMeasurement from './Partials/Create/Step3BaselineMeasurement';
-import { BcpcCreateFormData, ResidentMember, ZoneItem } from './Partials/Create/types';
+import type { BcpcCreateFormData, ResidentMember, ZoneItem } from './Partials/Create/types';
 import BcpcExtremeOutlierModal from './Partials/Show/Modals/BcpcExtremeOutlierModal';
 
 interface BcpcCreateProps {

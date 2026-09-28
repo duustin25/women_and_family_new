@@ -7,7 +7,7 @@ import BcpcChildrenTable from './Partials/Index/BcpcChildrenTable';
 import BcpcIndexHeader from './Partials/Index/BcpcIndexHeader';
 import BcpcMetricCards from './Partials/Index/BcpcMetricCards';
 import BcpcTriageFilterBar from './Partials/Index/BcpcTriageFilterBar';
-import { BcpcChildListItem, BcpcIndexFilters, BcpcIndexMetrics } from './Partials/Index/types';
+import type { BcpcChildListItem, BcpcIndexFilters, BcpcIndexMetrics } from './Partials/Index/types';
 
 interface BcpcIndexProps {
     monitoredChildren: BcpcChildListItem[];

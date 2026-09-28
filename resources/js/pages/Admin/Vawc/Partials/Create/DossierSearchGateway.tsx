@@ -1,10 +1,11 @@
-import React from 'react';
 import { Search, Folder, Unlink, Link2 } from 'lucide-react';
+import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { PreselectedDossier, simplifyRelationship } from './types';
+import type { PreselectedDossier} from './types';
+import { simplifyRelationship } from './types';
 
 interface Props {
     attachedDossier: PreselectedDossier | null;

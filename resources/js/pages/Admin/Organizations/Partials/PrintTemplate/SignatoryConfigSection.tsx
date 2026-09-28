@@ -1,9 +1,9 @@
+import { Plus, Trash2, PenTool, Info } from 'lucide-react';
 import React from 'react';
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
-import { Plus, Trash2, PenTool, Info } from 'lucide-react';
 
 export interface SignatureColumn {
     title?: string;

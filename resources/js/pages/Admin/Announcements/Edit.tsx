@@ -4,10 +4,11 @@ import {
     FileText, Megaphone, CheckCircle2, Clock
 } from "lucide-react";
 import React, { useState } from 'react';
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import RichTextEditor from "@/components/ui/RichTextEditor";
 import {
     Select,
     SelectContent,
@@ -15,7 +16,6 @@ import {
     SelectTrigger,
     SelectValue
 } from "@/components/ui/select";
-import RichTextEditor from "@/components/ui/RichTextEditor";
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
 

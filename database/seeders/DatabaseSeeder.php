@@ -96,7 +96,7 @@ class DatabaseSeeder extends Seeder
             }
         }
 
-        // 3. Create Super Admin (System Administrator)
+        // 3. Create Admin (System Administrator)
         $adminEmail = env('SEED_ADMIN_EMAIL', 'admin@villamor183.local');
         $adminPassword = env('SEED_ADMIN_PASSWORD', 'ChangeMeInProduction!2026');
         $adminName = env('SEED_ADMIN_NAME', 'Dus Empleo');

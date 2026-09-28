@@ -2,7 +2,7 @@ import { Check, Heart } from 'lucide-react';
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { BcpcAssessment, BcpcChild, MilestoneItem, MilestoneStatus } from './types';
+import type { BcpcAssessment, BcpcChild, MilestoneItem, MilestoneStatus } from './types';
 
 interface BcpcSfpTimelineCardProps {
     child: BcpcChild;

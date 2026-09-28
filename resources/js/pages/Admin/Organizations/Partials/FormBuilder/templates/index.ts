@@ -1,8 +1,8 @@
-import { soloParentOfficialTemplate } from './soloParentOfficialTemplate';
+import type { OrganizationTemplate } from '../../../types';
 import { erpatOfficialTemplate } from './erpatOfficialTemplate';
 import { kalipiOfficialTemplate } from './kalipiOfficialTemplate';
+import { soloParentOfficialTemplate } from './soloParentOfficialTemplate';
 import { vcoOfficialTemplate } from './vcoOfficialTemplate';
-import { OrganizationTemplate } from '../../../types';
 
 export const blankOfficialTemplate: OrganizationTemplate = {
     id: 'custom_blank',

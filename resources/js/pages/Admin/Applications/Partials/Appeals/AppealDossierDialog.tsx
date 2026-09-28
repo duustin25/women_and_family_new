@@ -1,4 +1,3 @@
-import React from 'react';
 import {
     Scale,
     XCircle,
@@ -7,6 +6,7 @@ import {
     FileText,
     ExternalLink
 } from 'lucide-react';
+import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -16,7 +16,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
-import { ApplicationAppeal } from './types';
+import type { ApplicationAppeal } from './types';
 
 interface AppealDossierDialogProps {
     appeal: ApplicationAppeal | null;

@@ -1,11 +1,11 @@
 import { Form, Head, Link } from '@inertiajs/react';
 import { LoaderCircle, Lock } from 'lucide-react';
+import { route } from 'ziggy-js';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import AuthWomenFamilyLayout from '@/layouts/auth/auth-women-family-layout';
-import { route } from 'ziggy-js';
 
 interface Props {
     token: string;

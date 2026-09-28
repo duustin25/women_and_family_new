@@ -281,7 +281,7 @@ class ChatbotService
         // 1. Greetings & General Help
         if (Str::contains($q, ['hi', 'hello', 'hey', 'kamusta', 'kumusta', 'magandang', 'greetings', 'help', 'tulong'])) {
             return [
-                'response' => "Mabuhay! I am The Sentinel. I can assist you with barangay procedures, hotlines, filing VAWC or BCPC reports, officials, and accredited organizations.",
+                'response' => "Mabuhay! I am the Barangay 183 Helpdesk assistant. I can assist you with barangay procedures, hotlines, filing VAWC or BCPC reports, officials directory, and accredited organizations.",
                 'suggestions' => [
                     'How do I file a VAWC case?',
                     'Report child abuse',

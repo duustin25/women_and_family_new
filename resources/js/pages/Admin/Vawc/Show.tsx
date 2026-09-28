@@ -1,18 +1,19 @@
-import React from 'react';
 import { Head } from '@inertiajs/react';
 import { ArchiveX, ShieldAlert, Clock, Gavel, FileText, Send } from 'lucide-react';
+import React from 'react';
 import { route } from 'ziggy-js';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useVawcCaseWorkflow } from '@/hooks/useVawcCaseWorkflow';
 import AppLayout from '@/layouts/app-layout';
-import { ShowProps } from './Partials/Show/types';
-import { VawcCaseHeader } from './Partials/Show/VawcCaseHeader';
-import { VawcMasterDossierBanner } from './Partials/Show/VawcMasterDossierBanner';
-import { VawcRaveScorecard } from './Partials/Show/VawcRaveScorecard';
-import { VawcProgressionStepper } from './Partials/Show/VawcProgressionStepper';
+import { VawcAuditTrailCard } from './Partials/Show/Background/VawcAuditTrailCard';
+import { VawcDossierTimeline } from './Partials/Show/Background/VawcDossierTimeline';
+import { VawcProfileGrid } from './Partials/Show/Background/VawcProfileGrid';
+import { VawcCloseCaseModal } from './Partials/Show/Modals/VawcCloseCaseModal';
+import { VawcEscalateModal } from './Partials/Show/Modals/VawcEscalateModal';
 import { Step1TriageChecklist } from './Partials/Show/Stages/Step1TriageChecklist';
+import { VawcProgressionStepper } from './Partials/Show/VawcProgressionStepper';
 import { Step2BpoApplication } from './Partials/Show/Stages/Step2BpoApplication';
 import { Step3BpoIssuance } from './Partials/Show/Stages/Step3BpoIssuance';
 import { Step4BpoService } from './Partials/Show/Stages/Step4BpoService';
@@ -20,11 +21,10 @@ import { Step5MonitoringExit } from './Partials/Show/Stages/Step5MonitoringExit'
 import { Step6EscalationView } from './Partials/Show/Stages/Step6EscalationView';
 import { Step7ArchivedView } from './Partials/Show/Stages/Step7ArchivedView';
 import { VawcMonitoringLogSection } from './Partials/Show/Stages/VawcMonitoringLogSection';
-import { VawcProfileGrid } from './Partials/Show/Background/VawcProfileGrid';
-import { VawcDossierTimeline } from './Partials/Show/Background/VawcDossierTimeline';
-import { VawcAuditTrailCard } from './Partials/Show/Background/VawcAuditTrailCard';
-import { VawcEscalateModal } from './Partials/Show/Modals/VawcEscalateModal';
-import { VawcCloseCaseModal } from './Partials/Show/Modals/VawcCloseCaseModal';
+import { ShowProps } from './Partials/Show/types';
+import { VawcCaseHeader } from './Partials/Show/VawcCaseHeader';
+import { VawcMasterDossierBanner } from './Partials/Show/VawcMasterDossierBanner';
+import { VawcRaveScorecard } from './Partials/Show/VawcRaveScorecard';
 
 export default function Show({ case: vawcCase, crossStats, survivorStats }: ShowProps) {
     const workflow = useVawcCaseWorkflow(vawcCase);

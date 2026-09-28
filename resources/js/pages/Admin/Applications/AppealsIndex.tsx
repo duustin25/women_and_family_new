@@ -6,13 +6,13 @@ import { Card } from '@/components/ui/card';
 import { useDebounce } from '@/hooks/use-debounce';
 import AppLayout from '@/layouts/app-layout';
 
-import { ApplicationAppeal, AppealsPageProps } from './Partials/Appeals/types';
-import { AppealsHeader } from './Partials/Appeals/AppealsHeader';
-import { AppealsFilterBar } from './Partials/Appeals/AppealsFilterBar';
-import AppealsTable from './Partials/Appeals/AppealsTable';
-import { AppealsPagination } from './Partials/Appeals/AppealsPagination';
-import AppealDossierDialog from './Partials/Appeals/AppealDossierDialog';
 import AppealConfirmDialog from './Partials/Appeals/AppealConfirmDialog';
+import AppealDossierDialog from './Partials/Appeals/AppealDossierDialog';
+import { AppealsFilterBar } from './Partials/Appeals/AppealsFilterBar';
+import { AppealsHeader } from './Partials/Appeals/AppealsHeader';
+import { AppealsPagination } from './Partials/Appeals/AppealsPagination';
+import AppealsTable from './Partials/Appeals/AppealsTable';
+import type { ApplicationAppeal, AppealsPageProps } from './Partials/Appeals/types';
 
 export default function AppealsIndex({ appeals, tab = 'active', filters, stats }: AppealsPageProps) {
     const [searchQuery, setSearchQuery] = useState(filters?.search ?? '');

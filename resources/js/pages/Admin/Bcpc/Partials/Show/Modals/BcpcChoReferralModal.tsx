@@ -2,7 +2,7 @@ import { FileText, Printer } from 'lucide-react';
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { BcpcAssessment, BcpcChild } from '../types';
+import type { BcpcAssessment, BcpcChild } from '../types';
 
 interface BcpcChoReferralModalProps {
     open: boolean;

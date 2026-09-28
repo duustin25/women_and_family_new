@@ -1,19 +1,19 @@
-import React from 'react';
 import { Head } from '@inertiajs/react';
 import { ArrowLeft, ArrowRight, Save, UserPlus, MapPin, UserX, FileCheck } from 'lucide-react';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import React from 'react';
 import { Button } from '@/components/ui/button';
-import AppLayout from '@/layouts/app-layout';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 
 import { useVawcCreateWorkflow } from '@/hooks/useVawcCreateWorkflow';
-import { CreateProps } from './Partials/Create/types';
+import AppLayout from '@/layouts/app-layout';
+import { CreateConfirmModal } from './Partials/Create/CreateConfirmModal';
 import { CreateHeader } from './Partials/Create/CreateHeader';
 import { DossierSearchGateway } from './Partials/Create/DossierSearchGateway';
 import { Step1Survivor } from './Partials/Create/Step1Survivor';
 import { Step2Incident } from './Partials/Create/Step2Incident';
 import { Step3Respondent } from './Partials/Create/Step3Respondent';
 import { Step4Verify } from './Partials/Create/Step4Verify';
-import { CreateConfirmModal } from './Partials/Create/CreateConfirmModal';
+import type { CreateProps } from './Partials/Create/types';
 
 export default function Create({ abuseTypes, zones, preselectedDossier }: CreateProps) {
     const {

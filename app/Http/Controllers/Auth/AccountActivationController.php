@@ -47,7 +47,7 @@ class AccountActivationController extends Controller
 
         if ($user->isLocked()) {
             return back()->withErrors([
-                'otp' => 'This account has been locked due to excessive failed attempts. Please contact a Super Administrator to unlock your account.'
+                'otp' => 'This account has been locked due to excessive failed attempts. Please contact an Administrator to unlock your account.'
             ]);
         }
 

@@ -1,7 +1,7 @@
 import { AlertCircle, Clock, HeartHandshake, ShieldAlert, Sparkles, Users } from 'lucide-react';
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { DashboardMetrics } from './types';
+import type { DashboardMetrics } from './types';
 
 interface BcpcKpiStripProps {
     metrics: DashboardMetrics;

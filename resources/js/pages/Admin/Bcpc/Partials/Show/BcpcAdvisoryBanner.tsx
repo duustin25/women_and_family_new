@@ -2,7 +2,7 @@ import { Info, RefreshCw, ShieldAlert } from 'lucide-react';
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { BcpcChild, TriageAlert } from './types';
+import type { BcpcChild, TriageAlert } from './types';
 
 interface BcpcAdvisoryBannerProps {
     child: BcpcChild;

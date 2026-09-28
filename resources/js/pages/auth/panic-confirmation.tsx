@@ -48,7 +48,7 @@ export default function PanicConfirmation({ success, message }: Props) {
                                 Because you reported an unauthorized credential change, an attacker or compromised device cannot modify your account email or access confidential records.
                             </p>
                             <p>
-                                To restore access to your account, please reach out to the Barangay IT Super Administrator. They can verify your identity and send you a secure unlock link.
+                                To restore access to your account, please reach out to the Barangay Administrator. They can verify your identity and send you a secure unlock link.
                             </p>
                         </div>
 

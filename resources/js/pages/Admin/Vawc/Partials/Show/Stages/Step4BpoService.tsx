@@ -1,5 +1,5 @@
-import React from 'react';
 import { Printer, Info, Gavel, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import React from 'react';
 import { route } from 'ziggy-js';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';

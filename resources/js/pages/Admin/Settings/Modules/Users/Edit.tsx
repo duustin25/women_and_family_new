@@ -31,7 +31,7 @@ interface EditProps {
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Dashboard', href: dashboard().url },
-    { title: 'System Users', href: '/admin/settings?tab=users' },
+    { title: 'System Settings', href: '/admin/settings?tab=users' },
     { title: 'Edit User', href: '#' },
 ];
 
@@ -124,7 +124,7 @@ export default function Edit({ user, organizations }: EditProps) {
                                             <SelectValue placeholder="Select Role" />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value="admin">Super Admin</SelectItem>
+                                            <SelectItem value="admin">Admin</SelectItem>
                                             <SelectItem value="head">Committee Head</SelectItem>
                                             <SelectItem value="president">Org President</SelectItem>
                                         </SelectContent>

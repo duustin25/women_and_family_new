@@ -16,7 +16,7 @@ class SystemUserController extends Controller
      */
     public function index(Request $request)
     {
-        // Only Super Admins can access this
+        // Only Admins can access this
         if (!$request->user()->isAdmin()) {
             abort(403, 'Unauthorized.');
         }
@@ -36,15 +36,12 @@ class SystemUserController extends Controller
 
         $users = $query->paginate(10)->withQueryString();
 
-        return Inertia::render('Admin/SystemUsers/Index', [
-            'users' => $users,
-            'filters' => $request->only(['search', 'role'])
-        ]);
+        return redirect()->route('admin.settings.index', array_merge(['tab' => 'users'], $request->query()));
     }
 
     public function create()
     {
-        return Inertia::render('Admin/SystemUsers/Create', [
+        return Inertia::render('Admin/Settings/Modules/Users/Create', [
             'organizations' => Organization::select('id', 'name')->orderBy('name')->get()
         ]);
     }
@@ -63,7 +60,7 @@ class SystemUserController extends Controller
             ->latest('id')
             ->first();
 
-        return Inertia::render('Admin/SystemUsers/Edit', [
+        return Inertia::render('Admin/Settings/Modules/Users/Edit', [
             'user' => $system_user,
             'organizations' => Organization::select('id', 'name')->orderBy('name')->get(),
             'pending_email' => $pendingEmailOtp?->target_value,
@@ -131,7 +128,7 @@ class SystemUserController extends Controller
     /**
      * Direct Admin Commit (Zero OTP Friction):
      * Updates profile attributes, role assignments, primary email, and manual password overrides.
-     * Enforces audit logging and prevents demoting the last Super Admin.
+     * Enforces audit logging and prevents demoting the last Admin.
      */
     public function update(Request $request, User $system_user)
     {
@@ -148,9 +145,9 @@ class SystemUserController extends Controller
             'password' => ['nullable', 'confirmed', \Illuminate\Validation\Rules\Password::defaults()],
         ]);
 
-        // Prevent demoting the last Super Admin
+        // Prevent demoting the last Admin
         if ($system_user->isAdmin() && $validated['role'] !== 'admin' && User::where('role', 'admin')->count() <= 1) {
-            return back()->with('error', 'Cannot demote the last remaining Super Admin in the system.');
+            return back()->with('error', 'Cannot demote the last remaining Admin in the system.');
         }
 
         $oldValues = [
@@ -229,9 +226,9 @@ class SystemUserController extends Controller
             return back()->with('error', 'You cannot delete yourself.');
         }
 
-        // Prevent deleting the last Super Admin
+        // Prevent deleting the last Admin
         if ($system_user->isAdmin() && User::where('role', 'admin')->count() <= 1) {
-            return back()->with('error', 'Cannot delete the last Super Admin.');
+            return back()->with('error', 'Cannot delete the last Admin.');
         }
 
         $system_user->delete();

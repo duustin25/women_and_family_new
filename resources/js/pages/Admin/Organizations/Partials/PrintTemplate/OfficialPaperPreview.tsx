@@ -1,10 +1,10 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import {
     FileText, ZoomIn, ZoomOut, Maximize2, Printer,
     RotateCcw, Check, Scan, X
 } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
     Dialog,
     DialogContent,

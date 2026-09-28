@@ -1,8 +1,8 @@
+import { ListChecks, Plus, Trash2, CheckCircle2 } from 'lucide-react';
 import React, { useState } from 'react';
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { ListChecks, Plus, Trash2, CheckCircle2 } from 'lucide-react';
 
 interface Props {
     requirements: string[];

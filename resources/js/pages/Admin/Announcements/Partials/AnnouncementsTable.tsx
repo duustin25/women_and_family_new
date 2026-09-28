@@ -1,9 +1,9 @@
-import React from 'react';
 import { Link } from '@inertiajs/react';
 import {
     Calendar, MapPin, FileText, Megaphone, User, Eye,
     MoreHorizontal, Pencil, ExternalLink, Trash2, Plus
 } from "lucide-react";
+import React from 'react';
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CardContent } from "@/components/ui/card";
@@ -15,7 +15,7 @@ import {
     DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Announcement } from '../types';
+import type { Announcement } from '../types';
 
 interface AnnouncementsTableProps {
     announcements: Announcement[];
