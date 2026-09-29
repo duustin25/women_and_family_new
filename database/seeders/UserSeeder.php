@@ -27,9 +27,9 @@ class UserSeeder extends Seeder
         }
 
         // 1. Admin (System Administrator)
-        $adminEmail = env('SEED_ADMIN_EMAIL', 'admin@villamor183.local');
+        $adminEmail = env('SEED_ADMIN_EMAIL', 'b183womenandfamily@gmail.com');
         $adminPassword = env('SEED_ADMIN_PASSWORD', 'ChangeMeInProduction!2026');
-        $adminName = env('SEED_ADMIN_NAME', 'Dus Empleo');
+        $adminName = env('SEED_ADMIN_NAME', 'Administrator');
 
         $existingAdmin = User::withTrashed()->where('email', $adminEmail)->first()
             ?? User::withTrashed()->whereIn('email', ['admin@gmail.com', 'admin_B183@gmail.com', 'admin@villamor183.local'])->first()
