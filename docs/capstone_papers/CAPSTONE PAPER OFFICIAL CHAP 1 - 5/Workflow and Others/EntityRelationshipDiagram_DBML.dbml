@@ -1,0 +1,397 @@
+// ============================================================================
+// WOMEN AND FAMILY PROTECTION SYSTEM (WFPS) - CAPSTONE DATABASE SCHEMA
+// Format: DBML (Database Markup Language) - https://dbdiagram.io
+// ============================================================================
+
+Project WFPS_Database {
+  database_type: 'MySQL'
+  Note: 'Relational Database Schema for Barangay Women and Family Protection System (WFPS) with GAD, VAWC, BCPC, and Organization Management.'
+}
+
+// ------------------------------------------------------
+// 1. AUTHENTICATION & ACCESS CONTROL
+// ------------------------------------------------------
+
+Table users {
+  id bigint [pk, increment]
+  name varchar(255) [not null]
+  email varchar(255) [unique, not null]
+  email_verified_at timestamp [null]
+  password varchar(255) [not null]
+  role varchar(50) [not null, note: 'admin, head, president, resident']
+  status varchar(50) [default: 'active', note: 'active, pending_verification, locked, suspended']
+  is_active boolean [default: true]
+  invited_by_id bigint [null, ref: > users.id]
+  organization_id bigint [null, ref: > organizations.id]
+  two_factor_secret text [null]
+  two_factor_recovery_codes text [null]
+  two_factor_confirmed_at timestamp [null]
+  remember_token varchar(100) [null]
+  created_at timestamp [null]
+  updated_at timestamp [null]
+  deleted_at timestamp [null]
+}
+
+Table email_otps {
+  id bigint [pk, increment]
+  user_id bigint [not null, ref: > users.id]
+  otp_code varchar(6) [not null]
+  type varchar(50) [not null, note: 'activation, unlock, reset']
+  expires_at timestamp [not null]
+  verified_at timestamp [null]
+  created_at timestamp [null]
+  updated_at timestamp [null]
+}
+
+// ------------------------------------------------------
+// 2. ORGANIZATIONS, OFFICIALS & MEMBERSHIP
+// ------------------------------------------------------
+
+Table organizations {
+  id bigint [pk, increment]
+  name varchar(255) [not null]
+  slug varchar(255) [unique, not null]
+  description text [null]
+  mission text [null]
+  vision text [null]
+  requirements json [null, note: 'array of documentary criteria']
+  logo_url varchar(255) [null]
+  is_active boolean [default: true]
+  created_at timestamp [null]
+  updated_at timestamp [null]
+  deleted_at timestamp [null]
+}
+
+Table organizational_members {
+  id bigint [pk, increment]
+  user_id bigint [null, ref: > users.id]
+  name varchar(255) [null]
+  position varchar(255) [not null]
+  committee varchar(255) [null]
+  level varchar(50) [not null, note: 'head, level_1, level_2, level_3, secretary, staff']
+  display_order int [default: 0]
+  image_path varchar(255) [null]
+  created_at timestamp [null]
+  updated_at timestamp [null]
+}
+
+Table membership_applications {
+  id bigint [pk, increment]
+  organization_id bigint [not null, ref: > organizations.id]
+  tracking_number varchar(100) [unique, not null]
+  first_name varchar(255) [not null]
+  middle_name varchar(255) [null]
+  last_name varchar(255) [not null]
+  suffix varchar(50) [null]
+  date_of_birth date [not null]
+  age int [not null]
+  gender varchar(50) [not null]
+  civil_status varchar(50) [not null]
+  contact_number varchar(50) [not null]
+  email varchar(255) [not null]
+  address text [not null]
+  submitted_requirements json [null]
+  status varchar(50) [default: 'pending', note: 'pending, under_review, approved, rejected, appealed']
+  rejection_reason text [null]
+  rejection_date timestamp [null]
+  appealed_at timestamp [null]
+  appeal_statement text [null]
+  appeal_documents json [null]
+  appeal_status varchar(50) [null, note: 'pending, approved, rejected']
+  appeal_resolved_by bigint [null, ref: > users.id]
+  appeal_resolved_at timestamp [null]
+  appeal_resolution_notes text [null]
+  encoded_by bigint [null, ref: > users.id]
+  verified_at timestamp [null]
+  created_at timestamp [null]
+  updated_at timestamp [null]
+}
+
+Table members {
+  id bigint [pk, increment]
+  organization_id bigint [not null, ref: > organizations.id]
+  application_id bigint [null, ref: > membership_applications.id]
+  member_code varchar(100) [unique, not null]
+  first_name varchar(255) [not null]
+  middle_name varchar(255) [null]
+  last_name varchar(255) [not null]
+  suffix varchar(50) [null]
+  date_of_birth date [not null]
+  age int [not null]
+  gender varchar(50) [not null]
+  civil_status varchar(50) [not null]
+  contact_number varchar(50) [not null]
+  email varchar(255) [not null]
+  address text [not null]
+  status varchar(50) [default: 'active', note: 'active, inactive, deceased, transferred']
+  joined_date date [not null]
+  created_at timestamp [null]
+  updated_at timestamp [null]
+  deleted_at timestamp [null]
+}
+
+Table member_communications {
+  id bigint [pk, increment]
+  member_id bigint [null, ref: > members.id]
+  organization_id bigint [null, ref: > organizations.id]
+  subject varchar(255) [not null]
+  message text [not null]
+  recipient_email varchar(255) [not null]
+  type varchar(50) [not null, note: 'individual, bulk, system']
+  status varchar(50) [not null, note: 'sent, failed']
+  sent_by bigint [not null, ref: > users.id]
+  sent_at timestamp [not null]
+  created_at timestamp [null]
+  updated_at timestamp [null]
+}
+
+Table beneficiary_dispatches {
+  id bigint [pk, increment]
+  member_id bigint [not null, ref: > members.id]
+  event_name varchar(255) [not null]
+  assistance_type varchar(100) [not null]
+  batch_number varchar(100) [not null]
+  status varchar(50) [default: 'pending', note: 'pending, claimed, forfeited']
+  claimed_at timestamp [null]
+  released_by bigint [null, ref: > users.id]
+  remarks text [null]
+  created_at timestamp [null]
+  updated_at timestamp [null]
+}
+
+// ------------------------------------------------------
+// 3. COMMUNITY OUTREACH, GAD & ANNOUNCEMENTS
+// ------------------------------------------------------
+
+Table announcements {
+  id bigint [pk, increment]
+  user_id bigint [not null, ref: > users.id]
+  organization_id bigint [null, ref: > organizations.id]
+  title varchar(255) [not null]
+  slug varchar(255) [unique, not null]
+  content text [not null]
+  image_path varchar(255) [null]
+  target_audience varchar(50) [default: 'all', note: 'all, vawc, bcpc, gad, organization']
+  is_published boolean [default: true]
+  published_at timestamp [null]
+  created_at timestamp [null]
+  updated_at timestamp [null]
+}
+
+Table gad_events {
+  id bigint [pk, increment]
+  title varchar(255) [not null]
+  description text [null]
+  location varchar(255) [not null]
+  start_date datetime [not null]
+  end_date datetime [not null]
+  target_participants int [default: 0]
+  status varchar(50) [default: 'upcoming', note: 'upcoming, ongoing, completed, cancelled']
+  created_by bigint [not null, ref: > users.id]
+  created_at timestamp [null]
+  updated_at timestamp [null]
+}
+
+// ------------------------------------------------------
+// 4. BARANGAY TAXONOMY & AUDIT LEDGER
+// ------------------------------------------------------
+
+Table zones {
+  id bigint [pk, increment]
+  name varchar(255) [not null, note: 'e.g. Purok 1, Zone A']
+  description text [null]
+  created_at timestamp [null]
+  updated_at timestamp [null]
+}
+
+Table case_types {
+  id bigint [pk, increment]
+  name varchar(255) [not null]
+  code varchar(50) [unique, not null]
+  description text [null]
+  is_active boolean [default: true]
+  created_at timestamp [null]
+  updated_at timestamp [null]
+}
+
+Table audit_logs {
+  id bigint [pk, increment]
+  user_id bigint [null, ref: > users.id]
+  action varchar(100) [not null]
+  model_type varchar(255) [null]
+  model_id bigint [null]
+  details json [null]
+  ip_address varchar(45) [null]
+  user_agent text [null]
+  created_at timestamp [null]
+}
+
+// ------------------------------------------------------
+// 5. VAWC REGISTRY & BPO LIFECYCLE (RA 9262)
+// ------------------------------------------------------
+
+Table vawc_dossiers {
+  id bigint [pk, increment]
+  uuid char(36) [unique, not null]
+  dossier_number varchar(100) [unique, not null]
+  survivor_name varchar(255) [not null]
+  survivor_aliases varchar(255) [null]
+  respondent_name varchar(255) [not null]
+  respondent_aliases varchar(255) [null]
+  current_lifecycle varchar(50) [default: 'active']
+  created_by bigint [not null, ref: > users.id]
+  created_at timestamp [null]
+  updated_at timestamp [null]
+}
+
+Table vawc_cases {
+  id bigint [pk, increment]
+  uuid char(36) [unique, not null]
+  dossier_id bigint [not null, ref: > vawc_dossiers.id]
+  case_number varchar(100) [unique, not null]
+  intake_date date [not null]
+  incident_date date [not null]
+  incident_location text [not null]
+  zone_id bigint [null, ref: > zones.id]
+  abuse_types json [not null, note: 'physical, psychological, sexual, economic']
+  narrative longtext [not null]
+  status varchar(50) [default: 'open', note: 'open, under_investigation, bpo_issued, referred, closed']
+  intake_officer_id bigint [not null, ref: > users.id]
+  created_at timestamp [null]
+  updated_at timestamp [null]
+}
+
+Table vawc_involved_parties {
+  id bigint [pk, increment]
+  case_id bigint [not null, ref: > vawc_cases.id]
+  party_type varchar(50) [not null, note: 'survivor, respondent, witness, dependent']
+  full_name varchar(255) [not null]
+  alias varchar(255) [null]
+  date_of_birth date [null]
+  age int [null]
+  gender varchar(50) [null]
+  civil_status varchar(50) [null]
+  contact_number varchar(50) [null]
+  address text [null]
+  relationship_to_victim varchar(100) [null]
+  created_at timestamp [null]
+  updated_at timestamp [null]
+}
+
+Table vawc_assessments {
+  id bigint [pk, increment]
+  case_id bigint [not null, ref: > vawc_cases.id]
+  risk_level varchar(50) [not null, note: 'low, medium, high, critical']
+  immediate_needs json [null]
+  recommended_actions json [null]
+  assessed_by bigint [not null, ref: > users.id]
+  assessed_at timestamp [not null]
+  notes text [null]
+  created_at timestamp [null]
+  updated_at timestamp [null]
+}
+
+Table vawc_protection_orders {
+  id bigint [pk, increment]
+  case_id bigint [not null, ref: > vawc_cases.id]
+  order_number varchar(100) [unique, not null]
+  order_type varchar(50) [default: 'bpo', note: 'bpo, tpo, ppo']
+  application_date date [not null]
+  issue_date date [null]
+  expiry_date date [null]
+  status varchar(50) [default: 'applied', note: 'applied, issued, served, violated, expired']
+  issued_by bigint [null, ref: > users.id]
+  relief_provisions json [null]
+  created_at timestamp [null]
+  updated_at timestamp [null]
+}
+
+Table vawc_bpo_service_records {
+  id bigint [pk, increment]
+  protection_order_id bigint [not null, ref: > vawc_protection_orders.id]
+  served_at datetime [not null]
+  served_by bigint [not null, ref: > users.id]
+  respondent_accepted boolean [default: true]
+  proof_of_service varchar(255) [null]
+  witness_name varchar(255) [null]
+  remarks text [null]
+  created_at timestamp [null]
+  updated_at timestamp [null]
+}
+
+Table vawc_agency_transmittals {
+  id bigint [pk, increment]
+  case_id bigint [not null, ref: > vawc_cases.id]
+  target_agency varchar(100) [not null, note: 'pnp, dswd, court, hospital, ngo']
+  transmittal_date date [not null]
+  endorsing_officer bigint [not null, ref: > users.id]
+  received_by varchar(255) [null]
+  status varchar(50) [default: 'transmitted', note: 'transmitted, acknowledged, completed']
+  endorsed_documents json [null]
+  created_at timestamp [null]
+  updated_at timestamp [null]
+}
+
+Table vawc_compliance_logs {
+  id bigint [pk, increment]
+  case_id bigint [not null, ref: > vawc_cases.id]
+  logged_at datetime [not null]
+  logged_by bigint [not null, ref: > users.id]
+  compliance_status varchar(50) [not null, note: 'compliant, breached, unverified']
+  incident_details text [null]
+  action_taken text [null]
+  created_at timestamp [null]
+  updated_at timestamp [null]
+}
+
+Table vawc_legal_escalations {
+  id bigint [pk, increment]
+  case_id bigint [not null, ref: > vawc_cases.id]
+  court_name varchar(255) [not null]
+  case_docket_number varchar(100) [null]
+  escalation_date date [not null]
+  legal_counsel varchar(255) [null]
+  status varchar(50) [default: 'filed', note: 'filed, in_progress, decided']
+  created_at timestamp [null]
+  updated_at timestamp [null]
+}
+
+// ------------------------------------------------------
+// 6. BCPC CHILD NUTRITION & WELFARE (e-OPT Plus)
+// ------------------------------------------------------
+
+Table bcpc_children {
+  id bigint [pk, increment]
+  child_code varchar(100) [unique, not null]
+  first_name varchar(255) [not null]
+  middle_name varchar(255) [null]
+  last_name varchar(255) [not null]
+  sex varchar(10) [not null, note: 'M, F']
+  date_of_birth date [not null]
+  mother_name varchar(255) [null]
+  father_name varchar(255) [null]
+  guardian_name varchar(255) [null]
+  address text [not null]
+  zone_id bigint [null, ref: > zones.id]
+  photo_path varchar(255) [null]
+  created_at timestamp [null]
+  updated_at timestamp [null]
+}
+
+Table bcpc_assessments {
+  id bigint [pk, increment]
+  child_id bigint [not null, ref: > bcpc_children.id]
+  assessment_date date [not null]
+  age_in_months int [not null]
+  weight_kg decimal(5,2) [not null]
+  height_cm decimal(5,2) [not null]
+  weight_for_age_status varchar(50) [not null, note: 'normal, underweight, severely_underweight, overweight']
+  height_for_age_status varchar(50) [not null, note: 'normal, stunted, severely_stunted, tall']
+  weight_for_length_status varchar(50) [not null, note: 'normal, wasted, severely_wasted, overweight, obese']
+  sfp_enrolled boolean [default: false]
+  sfp_cycle varchar(50) [null]
+  assessed_by bigint [not null, ref: > users.id]
+  remarks text [null]
+  created_at timestamp [null]
+  updated_at timestamp [null]
+}

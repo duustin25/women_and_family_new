@@ -87,8 +87,8 @@ export default function Welcome({ announcements, organizations }: WelcomeProps) 
                 <div className="w-[92%] sm:w-[88%] lg:w-[80%] max-w-7xl mx-auto px-1 sm:px-2">
                     <div className="flex items-end justify-between mb-10 sm:mb-12">
                         <div>
-                            <h2 className="font-black uppercase text-xs sm:text-sm mb-2 tracking-widest text-purple-700 dark:text-purple-400">How We Help / Paano Kami Makakatulong</h2>
-                            <h3 className="font-black text-2xl sm:text-3xl uppercase tracking-tight text-slate-900 dark:text-white">Core Services / Pangunahing Serbisyo</h3>
+                            <h2 className="font-black uppercase text-xs sm:text-sm mb-2 tracking-widest text-purple-700 dark:text-purple-400">How We Help</h2>
+                            <h3 className="font-black text-2xl sm:text-3xl uppercase tracking-tight text-slate-900 dark:text-white">Core Services</h3>
                         </div>
                     </div>
 

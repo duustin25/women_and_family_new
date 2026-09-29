@@ -1,0 +1,9 @@
+Figure 6.2: Procedural Workflow (Head Committee)
+Figure 6.2 illustrates the procedural workflow of the Head Committee within the proposed system. The process begins with the Head Committee logging into the system, followed by user authentication to verify the account and assigned role. If the user is authorized, the system displays the Head Committee dashboard.
+From the dashboard, the Head Committee selects the appropriate module based on their assigned functions, which include VAWC, BCPC, GAD, and Dashboard and Analytics.
+Under the VAWC module, the Head Committee can view and review VAWC case records, view the Vulnerability Risk Assessment (VRA) results and risk table, monitor case information, update case information when authorized, and view VAWC reports. The VRA provides the corresponding vulnerability risk information for the recorded cases.
+Under the BCPC module, the Head Committee can view child monitoring records, review child information, view age and weight information, monitor nutritional status, and view BCPC monitoring reports and details.
+Under the GAD module, the Head Committee can view proposed GAD events and review the displayed event information. The Head Committee can then determine whether a proposed event is approved. Depending on the decision, the system displays the approved GAD event or the corresponding rejection/rescheduling information.
+Lastly, the Dashboard and Analytics module allows the Head Committee to view system-generated analytics related to the information available to their assigned modules. After reviewing and monitoring the necessary records, reports, and analytics, the workflow proceeds to the end of the process.
+
+C:\Users\djemp\Herd\wfp-system_captsone\docs\capstone_papers\CAPSTONE PAPER OFFICIAL CHAP 1 - 5\Workflow and Others\ProceduralWorkflowHeadcommittee.png
