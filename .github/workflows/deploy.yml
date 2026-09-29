@@ -1,0 +1,45 @@
+name: Auto Deploy
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+    steps:
+      - name: Deploy Latest Push
+        shell: powershell
+        run: |
+          Set-Location -Path "c:\Users\OWFSS\Herd\women_and_family_new"
+          Write-Host ">>> Fetching latest changes from origin..."
+          git fetch origin
+
+          Write-Host ">>> Resetting local working tree to origin/main..."
+          git reset --hard origin/main
+
+          Write-Host ">>> Installing Composer dependencies..."
+          composer install --no-interaction --prefer-dist
+
+          Write-Host ">>> Installing NPM packages..."
+          npm install
+
+          Write-Host ">>> Building production assets..."
+          npm run build
+
+          Write-Host ">>> Running database migrations..."
+          php artisan migrate --force
+
+          Write-Host ">>> Pinging and checking health status on http://10.100.0.135/ ..."
+          curl.exe -I -s http://10.100.0.135/
+          $statusCode = & curl.exe -s -o NUL -w "%{http_code}" http://10.100.0.135/
+          Write-Host "HTTP Response Code: $statusCode"
+
+          if ($statusCode -ne "200") {
+              Write-Error "Deployment verification failed: Expected HTTP 200 OK, got $statusCode"
+              exit 1
+          }
+
+          Write-Host ">>> Deployment verified successfully with HTTP 200 OK!"
