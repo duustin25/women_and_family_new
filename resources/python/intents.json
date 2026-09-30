@@ -75,10 +75,23 @@
                 "Report violence",
                 "Violence against women",
                 "Physical abuse",
-                "Emosyonal na pang-aabuso"
+                "Emosyonal na pang-aabuso",
+                "Gusto kong magsampa ng reklamo tungkol sa karahasan sa kababaihan",
+                "magsampa ng reklamo",
+                "magsampa ng kaso",
+                "karahasan sa kababaihan",
+                "karahasan",
+                "reklamo tungkol sa karahasan",
+                "magsampa ng reklamo sa vawc",
+                "paano magsampa ng kaso",
+                "paano magsampa ng reklamo",
+                "Barangay Protection Order",
+                "BPO inquiry",
+                "Paano kumuha ng BPO",
+                "Protection order"
             ],
             "responses": [
-                "To file a VAWC case, go to 'Services' > 'VAWC'. For emergencies, call 911. (Para mag-file, pumunta sa 'Services' > 'VAWC'. Sa emergency, tumawag sa 911.)"
+                "To report a VAWC concern or initiate intake documentation, please navigate to 'Services' > 'VAWC' or visit the Barangay 183 VAW Desk in person. Notice: The online portal provides intake recording assistance only; formal case assessment and the issuance of Barangay Protection Orders (BPO) are conducted solely by the Punong Barangay or authorized Barangay Kagawad in accordance with RA 9262. In an emergency, dial 911 or PNP WCPC at 177 immediately. (Para mag-record ng reklamo, pumunta sa 'Services' > 'VAWC' o personal na magtungo sa Barangay VAW Desk. Ang BPO ay pormal na ipinagkakaloob ng Punong Barangay o Kagawad, hindi ng automated system. Sa emergency, tumawag sa 911.)"
             ]
         },
         {
@@ -99,7 +112,7 @@
                 "Report child neglect"
             ],
             "responses": [
-                "To report child abuse, neglect, or child labor, go to 'Services' > 'BCPC' and select 'File Case'. In case of emergency or immediate threat, please call 911 or the PNP Women & Children Protection Center (WCPC) at 177 / (02) 8532-6690. (Para mag-report ng pang-aabuso sa bata o kaso ng child labor, pumunta sa 'Services' > 'BCPC' at i-click ang 'File Case'. Sa emergency, tumawag sa 911 o PNP WCPC 177.)"
+                "To submit an intake record for child protection, neglect, or child labor concerns, navigate to 'Services' > 'BCPC' and select 'File Case', or visit the Barangay BCPC Desk in person. Notice: This system facilitates preliminary intake documentation; official case evaluation and protective interventions are handled directly by authorized Barangay BCPC personnel and licensed social workers. In emergencies or active danger, immediately call 911 or the PNP Women & Children Protection Center (WCPC) at 177 / (02) 8532-6690. (Para mag-record ng ulat ukol sa proteksyon ng bata, pumunta sa 'Services' > 'BCPC'. Ang opisyal na pagsusuri ay isinasagawa ng mga awtorisadong BCPC desk officers. Sa emergency, tumawag sa 911 o PNP WCPC 177.)"
             ]
         },
         {
@@ -118,10 +131,16 @@
                 "Nutritional program registry",
                 "Where to get child supplements",
                 "Supplemental feeding program",
-                "Registry for malnutrition"
+                "Registry for malnutrition",
+                "May programa ba para sa mga batang kulang sa timbang?",
+                "kulang sa timbang",
+                "mga batang kulang sa timbang",
+                "bata na kulang sa timbang",
+                "programa para sa mga batang kulang sa timbang",
+                "tulong para sa kulang sa timbang"
             ],
             "responses": [
-                "For child nutrition monitoring (e-OPT Plus), checking your child's height/weight status, or registering for the Supplemental Feeding Program and receiving vitamin supplements, please navigate to the BCPC Nutrition module under 'Services' > 'BCPC'. (Para sa child nutrition monitoring, pagpaparehistro sa feeding programs, o paghingi ng bitamina at supplements para sa malnourished na bata, pumunta sa BCPC module sa 'Services' > 'BCPC'.)"
+                "For child nutrition monitoring (e-OPT Plus), checking your child's height/weight status, or registering for the Supplemental Feeding Program and receiving vitamin supplements, please navigate to the BCPC Nutrition module under 'Services' > 'BCPC' or visit the Barangay Health Center. (Para sa child nutrition monitoring, pagpaparehistro sa feeding programs, o paghingi ng bitamina at supplements para sa malnourished na bata, pumunta sa BCPC module sa 'Services' > 'BCPC' o magsadya sa Barangay Health Center.)"
             ]
         },
         {
@@ -255,10 +274,16 @@
                 "Police number",
                 "Ambulance",
                 "Who to call?",
-                "Emergency call"
+                "Emergency call",
+                "Tulong binubugbog ako",
+                "May hawak na patalim",
+                "Sinasaktan ako ngayon",
+                "Nasa panganib ako",
+                "Pulis saklolo",
+                "Kailangan ko ng tulong emergency"
             ],
             "responses": [
-                "EMERGENCY: Call 911 or the local police immediately! PNP Women and Children Protection Center (WCPC) hotline is 177 or (02) 8532-6690. (SA EMERGENCY: Tumawag agad sa 911! PNP WCPC: 177 / (02) 8532-6690.)"
+                "🚨 EMERGENCY NOTICE: If you or someone else is in immediate physical danger, call for emergency assistance right now!\n\n• National Emergency Hotline: 911\n• PNP Women and Children Protection Center (WCPC): 177 or (02) 8532-6690\n• Pasay City Police Station: (02) 8831-1544\n• Barangay 183 Operations Center: Visit the Barangay Hall or seek immediate police shelter.\n\n(SA EMERGENCY: Tumawag agad sa 911 o PNP WCPC 177! Magtungo agad sa pinakamalapit na ligtas na lugar o himpilan ng pulisya.)"
             ]
         },
         {
@@ -294,7 +319,7 @@
                 "Sino ang nagreklamo?"
             ],
             "responses": [
-                "To ensure strict confidentiality and comply with the Data Privacy Act of 2012, case statuses and private records cannot be accessed through this chatbot. Please log in to your secure account dashboard, or visit the Barangay 183 VAW Desk in person with a valid ID for case updates. (Para sa kaligtasan at privacy, hindi po natin maibibigay ang status ng kaso rito. Mangyaring mag-log in sa inyong secure dashboard o bumisita sa Barangay 183 VAW Desk.)"
+                "To protect citizen privacy and comply with the Data Privacy Act of 2012 (RA 10173), case records, statuses, and private proceedings cannot be disclosed through this automated chat. Case parties must log in to their authenticated portal or present valid identification in person to the authorized Barangay 183 VAW Desk Officer. (Para sa proteksyon ng inyong privacy, hindi naglalabas ng status ng kaso ang chatbot. Mangyaring mag-log in sa inyong account o personal na magsadya sa Barangay VAW Desk na may dalang valid ID.)"
             ]
         },
         {

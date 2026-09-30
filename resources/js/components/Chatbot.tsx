@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { Send, User, RefreshCcw, MessageSquare, X, Info } from 'lucide-react';
+import { Send, User, RefreshCcw, MessageSquare, X, Info, ShieldAlert } from 'lucide-react';
 import React, { useState, useRef, useEffect } from 'react';
 import { route } from 'ziggy-js';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -42,7 +42,7 @@ export default function Chatbot({ className, onClose }: ChatbotProps) {
     const welcomeMessage: Message = {
         id: 'welcome',
         role: 'assistant',
-        content: "Magandang araw! Welcome to the Women & Family Helpdesk.\n\nI can assist you with public procedures, office schedules, filing requirements, officials directory, and barangay hotlines.\n\nHow may I help you today?",
+        content: "Magandang araw! Welcome to The Sentinel — Barangay 183 Women & Family Helpdesk.\n\n⚠️ IMPORTANT NOTICE:\nThe Sentinel provides general information and navigation assistance for Barangay 183 services only. It does not provide legal advice, legal counsel, legal determinations, or professional assessment. For case-specific concerns, please consult authorized Barangay personnel or the appropriate professional or government agency.\n\nFor life-threatening emergencies, please dial 911 or PNP WCPC at 177 immediately.\n\nHow may I help you navigate our barangay services today?",
         timestamp: new Date()
     };
 
@@ -183,9 +183,12 @@ export default function Chatbot({ className, onClose }: ChatbotProps) {
             </div>
 
             {/* ── COMPACT ADVISORY NOTICE (ATTACHED DIRECTLY UNDER HEADER) ── */}
-            <div className="bg-muted/50 border-b border-border/50 px-3.5 py-1.5 flex items-center gap-2 text-[11px] text-muted-foreground shrink-0">
-                <Info className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                <span className="truncate">For life-threatening emergencies, dial <strong>911</strong> immediately.</span>
+            <div className="bg-muted/60 border-b border-border/60 px-3.5 py-1.5 flex items-center justify-between gap-2 text-[11px] text-muted-foreground shrink-0">
+                <div className="flex items-center gap-1.5 min-w-0">
+                    <Info className="h-3.5 w-3.5 text-primary shrink-0" />
+                    <span className="truncate">Informational guidance only &bull; Does not provide legal advice</span>
+                </div>
+                <span className="shrink-0 font-bold text-rose-600 dark:text-rose-400">Emergency: 911</span>
             </div>
 
             {/* Offline Engine Notice */}
@@ -265,10 +268,16 @@ export default function Chatbot({ className, onClose }: ChatbotProps) {
             </div>
 
             {/* ── INPUT FOOTER (SEAMLESSLY ATTACHED AT BOTTOM, NO GAP) ── */}
-            <div className="p-3 bg-card shrink-0 border-t border-border/70 flex flex-col gap-1.5">
+            <div className="p-3 bg-card shrink-0 border-t border-border/70 flex flex-col gap-2">
+                {/* Privacy Warning */}
+                <div className="flex items-start gap-1.5 px-2.5 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-800 dark:text-amber-300 text-[10.5px] leading-tight">
+                    <ShieldAlert className="h-3.5 w-3.5 shrink-0 text-amber-600 dark:text-amber-400 mt-0.5" />
+                    <span><strong>Privacy Warning:</strong> For your privacy, do not enter real names of victims or children, exact addresses, phone numbers, detailed incident narratives, or other sensitive personal information.</span>
+                </div>
+
                 <form onSubmit={(e) => handleSend(e)} className="flex w-full gap-2 items-center">
                     <Input
-                        placeholder="Type your message..."
+                        placeholder="Type your question or inquiry..."
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
                         className="flex-1 h-10 bg-muted/40 border-border/80 focus-visible:ring-1 focus-visible:ring-primary rounded-xl px-3.5 text-sm"
@@ -285,7 +294,7 @@ export default function Chatbot({ className, onClose }: ChatbotProps) {
                     </Button>
                 </form>
                 <p className="text-[10px] text-center text-muted-foreground leading-tight w-full">
-                    Informational public assistance &bull; In-person services available at the Barangay Hall
+                    The Sentinel &bull; Automated Informational Guidance and Navigation Assistant
                 </p>
             </div>
         </div>

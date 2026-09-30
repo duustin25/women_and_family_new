@@ -95,7 +95,10 @@ class PrivacyAndAuditCorrectionTest extends TestCase
 
         $response = $this->actingAs($admin)->get('/admin/bcpc/cases/' . $child->id . '/photo');
         $response->assertStatus(200);
-        $this->assertEquals('fake-image-binary-data', $response->streamedContent());
+        $content = $response->baseResponse instanceof \Symfony\Component\HttpFoundation\BinaryFileResponse
+            ? file_get_contents($response->getFile()->getPathname())
+            : $response->streamedContent();
+        $this->assertEquals('fake-image-binary-data', $content);
     }
 
     /**

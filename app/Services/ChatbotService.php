@@ -72,6 +72,12 @@ class ChatbotService
                         'Nutrition Program',
                         'Who are the officials?'
                     ];
+                } elseif ($intent === 'emergency') {
+                    $payload['suggestions'] = [
+                        'Emergency Hotlines',
+                        'Barangay Officials',
+                        'File VAWC Case'
+                    ];
                 } elseif ($intent === 'unknown') {
                     $payload['suggestions'] = [
                         'How do I file a VAWC case?',
@@ -193,17 +199,12 @@ class ChatbotService
 
     private function fetchLaws(): array
     {
-        // Hardcoded for now as Laws might not be in DB, or fetch if in DB
-        // Assuming static for now or maybe create a Law model later if requested
-        // Prompt implies "Admin can CRUD... Laws", so assume Law model exists or use static if not found
-        // Let's check if Law model exists, otherwise static.
-        // Returning static for safety + standard laws mentioned in intents.
-
         return [
-            'response' => "Here are some key laws protecting women and children:\n\n" .
-                "RA 9262 (Anti-VAWC Act): Protects women and children from violence.\n" .
-                "RA 7610: Special Protection of Children Against Abuse, Exploitation and Discrimination Act.\n" .
-                "RA 11313 (Safe Spaces Act): Penalizes gender-based sexual harassment in public spaces and online.\n\n" .
+            'response' => "Here are general public statutory references protecting women and children in the Philippines:\n\n" .
+                "• Republic Act No. 9262: Anti-Violence Against Women and Their Children Act of 2004\n" .
+                "• Republic Act No. 7610: Special Protection of Children Against Abuse, Exploitation and Discrimination Act\n" .
+                "• Republic Act No. 11313: Safe Spaces Act (Bawal Bastos Law)\n\n" .
+                "NOTICE: This information provides statutory titles and general public references only. The Sentinel cannot interpret these laws for individual cases or determine legal eligibility. For legal advice or case evaluation, please consult the Public Attorney's Office (PAO), Barangay Legal Counsel, or a licensed attorney.\n\n" .
                 "For more details, please visit the 'Laws' page."
         ];
     }
@@ -278,10 +279,18 @@ class ChatbotService
     {
         $q = strtolower(trim($query));
 
-        // 1. Greetings & General Help
-        if (Str::contains($q, ['hi', 'hello', 'hey', 'kamusta', 'kumusta', 'magandang', 'greetings', 'help', 'tulong'])) {
+        // 1. Immediate Emergency Distress Detection (HIGHEST PRIORITY)
+        if (preg_match('/\b(saklolo|tulong|emergency|emergensya|911|177|binubugbog|sinasaktan|patalim|kutsilyo|baril|papatayin|sasaksakin|in danger|danger|save me|rescue|police|pulis)\b/i', $q)) {
             return [
-                'response' => "Mabuhay! I am the Barangay 183 Helpdesk assistant. I can assist you with barangay procedures, hotlines, filing VAWC or BCPC reports, officials directory, and accredited organizations.",
+                'response' => "🚨 EMERGENCY HOTLINE NOTICE:\n\nIf you or someone else is in immediate physical danger, call emergency services immediately:\n\n• National Emergency Hotline: 911\n• PNP Women and Children Protection Center (WCPC): 177 / (02) 8532-6690\n• Pasay City Police Station: (02) 8831-1544\n• Barangay 183 Desk: Please go to a safe location or contact the Barangay Operations Center immediately.\n\n(SA EMERGENCY: Tumawag agad sa 911 o PNP WCPC 177! Magtungo agad sa pinakamalapit na ligtas na lugar o himpilan ng pulisya.)",
+                'suggestions' => ['Emergency Hotlines', 'Barangay Officials', 'File VAWC Case']
+            ];
+        }
+
+        // 2. Greetings & General Help
+        if (Str::contains($q, ['hi', 'hello', 'hey', 'kamusta', 'kumusta', 'magandang', 'greetings', 'help'])) {
+            return [
+                'response' => "Mabuhay! I am The Sentinel — Barangay 183 Helpdesk assistant. I provide general information on barangay procedures, hotlines, filing intakes, officials directory, and accredited organizations. (Note: I do not provide legal advice.)",
                 'suggestions' => [
                     'How do I file a VAWC case?',
                     'Report child abuse',
@@ -292,11 +301,15 @@ class ChatbotService
             ];
         }
 
-        // 2. VAWC filing & Domestic Violence
+        // 3. VAWC Intake & BPO Procedural Guidance (Accurate Boundary)
         if (Str::contains($q, ['vawc', 'bpo', 'protection order', 'asawa', 'sinasaktan', 'pambubugbog', 'domestic violence', 'babae'])) {
             return [
-                'response' => "To report a Violence Against Women and Children (VAWC) incident or request a Barangay Protection Order (BPO):\n\n1. Visit the VAWC Desk at our Barangay Hall.\n2. Or file a confidential report online via the 'VAWC Desk > File a Report' section.\n3. In case of immediate physical danger, please dial 911 or PNP WCPC at 177.",
-                'suggestions' => ['File VAWC Case', 'Emergency Hotlines', 'What is RA 9262?']
+                'response' => "Regarding VAWC incidents and Barangay Protection Orders (BPO):\n\n" .
+                    "1. Official BPO Application: Under RA 9262, formal applications for a Barangay Protection Order must be personally made and processed before the Punong Barangay or authorized Barangay Kagawad at the Barangay Hall.\n" .
+                    "2. System Role: This online system provides preliminary intake recording and appointment assistance only. The system does NOT autonomously issue, approve, or grant protection orders.\n" .
+                    "3. In-Person Desk: Please visit the Barangay 183 VAW Desk for confidential sworn intake with an authorized VAW Desk Officer.\n" .
+                    "4. Immediate Danger: In emergency situations involving active threats, please call 911 or PNP WCPC at 177 immediately.",
+                'suggestions' => ['Emergency Hotlines', 'Barangay Officials', 'What is RA 9262?']
             ];
         }
 

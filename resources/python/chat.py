@@ -97,6 +97,31 @@ def predict_class(sentence, model):
     
     return return_list
 
+def check_emergency_distress(sentence):
+    """
+    Emergency Distress Rule-Based Pre-filter:
+    Ensures that acute distress cries, life threats, and emergency appeals
+    immediately trigger emergency guidance and hotlines, bypassing BoW neural net dilution.
+    """
+    import re
+    s = sentence.lower()
+    
+    # Priority keywords & phrase patterns in English and Filipino
+    patterns = [
+        r'\b(saklolo|tulong|tulungan nyo ko|tulungan ninyo ako)\b',
+        r'\b(emergency|emergensya|rescue|danger|in danger|panganib|nasa panganib)\b',
+        r'\b(binubugbog|sinasaktan ako|sinasaktan po ako|pambubugbog)\b',
+        r'\b(patalim|kutsilyo|baril|armado|sasaksakin|papatayin|banta sa buhay)\b',
+        r'\b(help me|save me|threatened|threat to life|being beaten|under attack)\b',
+        r'\b(police|pulis|police hotline|911|177|ambulance|ambulansya)\b'
+    ]
+    
+    for pat in patterns:
+        if re.search(pat, s):
+            return True
+            
+    return False
+
 def get_response(ints, intents_json):
     if not ints:
         return "I apologize, I do not understand that yet. Can you rephrase? (Paumanhin, hindi ko po ito naiintindihan. Maaari mo bang baguhin ang iyong tanong?)"
@@ -117,11 +142,28 @@ if __name__ == "__main__":
         query = sys.argv[1]
         
         try:
+            # 1. Deterministic Emergency Distress Pre-Filter
+            if check_emergency_distress(query):
+                res = get_response([{"intent": "emergency"}], intents)
+                print(json.dumps({
+                    "response": res,
+                    "intent": "emergency",
+                    "confidence": "1.00",
+                    "method": "rule_based_emergency_prefilter"
+                }))
+                sys.exit(0)
+
+            # 2. Ordinary MLP Bag-of-Words Intent Classification (> 0.70 Threshold)
             ints = predict_class(query, model)
             res = get_response(ints, intents)
             
             # Output JSON for Laravel
-            print(json.dumps({"response": res, "intent": ints[0]['intent'] if ints else "unknown"}))
+            print(json.dumps({
+                "response": res,
+                "intent": ints[0]['intent'] if ints else "unknown",
+                "confidence": ints[0]['probability'] if ints else "0.00",
+                "method": "mlp_classifier"
+            }))
             
         except Exception as e:
              print(json.dumps({"response": "I encountered an error processing your request.", "error": str(e)}))
