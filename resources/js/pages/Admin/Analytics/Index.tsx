@@ -24,9 +24,7 @@ import GadMembershipTrendsChart from '@/components/Admin/Analytics/Gad/GadMember
 import GadProjectPipelineChart from '@/components/Admin/Analytics/Gad/GadProjectPipelineChart';
 import OrgBacklogKpiCard from '@/components/Admin/Analytics/Organizations/OrgBacklogKpiCard';
 import VawcGeographicalDensityChart from '@/components/Admin/Analytics/Vawc/VawcGeographicalDensityChart';
-import VawcLegalSafeguardsCard from '@/components/Admin/Analytics/Vawc/VawcLegalSafeguardsCard';
 import VawcMonthlyAbuseChart from '@/components/Admin/Analytics/Vawc/VawcMonthlyAbuseChart';
-import VawcRiskDistributionChart from '@/components/Admin/Analytics/Vawc/VawcRiskDistributionChart';
 
 // BCPC Components
 
@@ -408,20 +406,6 @@ export default function Index({
                                                 data={zoneDistribution || []}
                                                 onSelectZone={handleOpenZoneInspector}
                                             />
-                                        </div>
-
-                                        {/* Row 2 Left: Statutory Safeguards & Repeat Tracking (60% width) */}
-                                        <div className="lg:col-span-3 min-w-0">
-                                            <VawcLegalSafeguardsCard
-                                                bpoMetrics={bpoMetrics}
-                                                dossierAnalytics={dossierAnalytics}
-                                                stats={stats}
-                                            />
-                                        </div>
-
-                                        {/* Row 2 Right: Risk Assessment Severity Donut (40% width, below Zone) */}
-                                        <div className="lg:col-span-2 min-w-0">
-                                            <VawcRiskDistributionChart data={riskDistribution || []} />
                                         </div>
                                     </div>
                                 </div>

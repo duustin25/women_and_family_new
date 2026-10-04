@@ -32,11 +32,11 @@ class OrganizationGovernanceService
         // Trigger email notification sequence to resident
         event(new \App\Events\ApplicationDisapproved($application));
 
-        // Dispatch notification to Barangay Admins so it shows in notification bell
-        $admins = \App\Models\User::where('role', 'admin')->get();
-        if ($admins->isNotEmpty()) {
+        // Dispatch notification to Head Committee and Admins so it shows in notification bell
+        $reviewers = \App\Models\User::whereIn('role', ['admin', 'head'])->get();
+        if ($reviewers->isNotEmpty()) {
             \Illuminate\Support\Facades\Notification::send(
-                $admins,
+                $reviewers,
                 new \App\Notifications\MembershipApplicationStatusChanged($application, 'Rejected', $rejectedBy)
             );
         }
@@ -69,13 +69,13 @@ class OrganizationGovernanceService
             'appealed_at' => now(),
         ]);
 
-        Log::info("Resident {$application->fullname} submitted an appeal for application ID {$application->id}. Escalated to Admin Command Center.");
+        Log::info("Resident {$application->fullname} submitted an appeal for application ID {$application->id}. Escalated to Head Committee for review.");
 
-        // Dispatch notification to Barangay Admins so it shows in notification bell
-        $admins = \App\Models\User::where('role', 'admin')->get();
-        if ($admins->isNotEmpty()) {
+        // Dispatch notification to Head Committee and Admins so it shows in notification bell
+        $reviewers = \App\Models\User::whereIn('role', ['admin', 'head'])->get();
+        if ($reviewers->isNotEmpty()) {
             \Illuminate\Support\Facades\Notification::send(
-                $admins,
+                $reviewers,
                 new \App\Notifications\MembershipApplicationStatusChanged($application, 'Appealed', $application->fullname)
             );
         }

@@ -273,46 +273,46 @@ class MembershipApplicationController extends Controller
             return redirect()->back()->withErrors(['appeal_reason' => $e->getMessage()]);
         }
 
-        return redirect()->back()->with('success', "Appeal submitted successfully! Escalated to Barangay Admin Command Center.");
+        return redirect()->back()->with('success', "Appeal submitted successfully! Escalated to Head Committee for Review.");
     }
 
     /**
-     * Barangay Admin overrules rejection and force-approves application.
+     * Head Committee / Admin overrules rejection and force-approves application.
      */
     public function overrule(Request $request, $id, \App\Services\OrganizationGovernanceService $service)
     {
         if ($request->user()->isPresident()) {
-            abort(403, 'Unauthorized. Only Barangay Administrators can overrule organization rejections.');
+            abort(403, 'Unauthorized. Only Head Committee and Administrators can overrule organization rejections.');
         }
 
         $application = MembershipApplication::findOrFail($id);
         $service->overruleAndApprove($application, $request->user()->name);
 
-        return redirect()->back()->with('success', "Barangay Admin overruled rejection and approved the application.");
+        return redirect()->back()->with('success', "Head Committee overruled rejection and approved the application.");
     }
 
     /**
-     * Barangay Admin sustains officer rejection decision after reviewing resident appeal.
+     * Head Committee / Admin sustains officer rejection decision after reviewing resident appeal.
      */
     public function sustain(Request $request, $id, \App\Services\OrganizationGovernanceService $service)
     {
         if ($request->user()->isPresident()) {
-            abort(403, 'Unauthorized. Only Barangay Administrators can action appeals.');
+            abort(403, 'Unauthorized. Only Head Committee and Administrators can action appeals.');
         }
 
         $application = MembershipApplication::findOrFail($id);
         $service->sustainDisapproval($application, $request->user()->name);
 
-        return redirect()->back()->with('success', "Disapproval sustained. Resident appeal resolved and closed.");
+        return redirect()->back()->with('success', "Disapproval sustained by Head Committee. Resident appeal resolved and closed.");
     }
 
     /**
-     * Display Appeals Queue for Barangay Admin.
+     * Display Appeals Queue for Head Committee / Admin.
      */
     public function appeals(Request $request)
     {
         if ($request->user()->isPresident()) {
-            abort(403, 'Unauthorized. Governance Appeals Queue is strictly managed by Barangay Administrators.');
+            abort(403, 'Unauthorized. Governance Appeals Queue is strictly managed by Head Committee and Administrators.');
         }
 
         $tab = $request->input('tab', 'active');

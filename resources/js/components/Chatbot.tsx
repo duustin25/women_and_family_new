@@ -42,7 +42,7 @@ export default function Chatbot({ className, onClose }: ChatbotProps) {
     const welcomeMessage: Message = {
         id: 'welcome',
         role: 'assistant',
-        content: "Magandang araw! Welcome to The Sentinel — Barangay 183 Women & Family Helpdesk.\n\n⚠️ IMPORTANT NOTICE:\nThe Sentinel provides general information and navigation assistance for Barangay 183 services only. It does not provide legal advice, legal counsel, legal determinations, or professional assessment. For case-specific concerns, please consult authorized Barangay personnel or the appropriate professional or government agency.\n\nFor life-threatening emergencies, please dial 911 or PNP WCPC at 177 immediately.\n\nHow may I help you navigate our barangay services today?",
+        content: "Magandang araw! Welcome to Villa-Bot — Barangay 183 Villamor Women & Family Helpdesk.\n\n⚠️ IMPORTANT NOTICE:\nVilla-Bot provides general information and navigation assistance for Barangay 183 services only. It does not provide legal advice, legal counsel, legal determinations, or professional assessment. For case-specific concerns, please consult authorized Barangay personnel or the appropriate professional or government agency.\n\nFor life-threatening emergencies, please dial 911 or PNP WCPC at 177 immediately.\n\nHow may I help you navigate our barangay services today?",
         timestamp: new Date()
     };
 
@@ -148,10 +148,10 @@ export default function Chatbot({ className, onClose }: ChatbotProps) {
                 </div>
                 <div className="flex flex-col min-w-0">
                     <h3 className="text-sm font-bold text-foreground tracking-tight truncate leading-tight">
-                        Chatbot
+                        Villa-Bot
                     </h3>
                     <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground font-medium mt-0.5">
-                        <span>Online Citizen Assistance</span>
+                        <span>Barangay 183 Villamor Citizen Assistance</span>
                     </div>
                 </div>
                 <div className="ml-auto flex items-center gap-1">
@@ -294,7 +294,7 @@ export default function Chatbot({ className, onClose }: ChatbotProps) {
                     </Button>
                 </form>
                 <p className="text-[10px] text-center text-muted-foreground leading-tight w-full">
-                    The Sentinel &bull; Automated Informational Guidance and Navigation Assistant
+                    Villa-Bot &bull; Barangay 183 Villamor Informational Guidance &amp; Navigation Assistant
                 </p>
             </div>
         </div>

@@ -204,7 +204,7 @@ class ChatbotService
                 "• Republic Act No. 9262: Anti-Violence Against Women and Their Children Act of 2004\n" .
                 "• Republic Act No. 7610: Special Protection of Children Against Abuse, Exploitation and Discrimination Act\n" .
                 "• Republic Act No. 11313: Safe Spaces Act (Bawal Bastos Law)\n\n" .
-                "NOTICE: This information provides statutory titles and general public references only. The Sentinel cannot interpret these laws for individual cases or determine legal eligibility. For legal advice or case evaluation, please consult the Public Attorney's Office (PAO), Barangay Legal Counsel, or a licensed attorney.\n\n" .
+                "NOTICE: This information provides statutory titles and general public references only. Villa-Bot cannot interpret these laws for individual cases or determine legal eligibility. For legal advice or case evaluation, please consult the Public Attorney's Office (PAO), Barangay Legal Counsel, or a licensed attorney.\n\n" .
                 "For more details, please visit the 'Laws' page."
         ];
     }
@@ -288,9 +288,9 @@ class ChatbotService
         }
 
         // 2. Greetings & General Help
-        if (Str::contains($q, ['hi', 'hello', 'hey', 'kamusta', 'kumusta', 'magandang', 'greetings', 'help'])) {
+        if (Str::contains($q, ['hi', 'hello', 'hey', 'kamusta', 'kumusta', 'magandang', 'greetings', 'help', 'villa-bot', 'villabot'])) {
             return [
-                'response' => "Mabuhay! I am The Sentinel — Barangay 183 Helpdesk assistant. I provide general information on barangay procedures, hotlines, filing intakes, officials directory, and accredited organizations. (Note: I do not provide legal advice.)",
+                'response' => "Mabuhay! I am Villa-Bot — Barangay 183 Villamor Helpdesk assistant. I provide general information on barangay procedures, hotlines, filing intakes, officials directory, and accredited organizations. (Note: I do not provide legal advice.)",
                 'suggestions' => [
                     'How do I file a VAWC case?',
                     'Report child abuse',

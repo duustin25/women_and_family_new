@@ -109,7 +109,8 @@ export default function ChatbotWidget() {
                         ? "bg-primary text-primary-foreground hover:bg-primary/90 hover:shadow-xl hover:scale-105 active:scale-95"
                         : "bg-amber-600 hover:bg-amber-700 text-white"
                 )}
-                aria-label={isOpen ? "Close Helpdesk" : "Open Helpdesk"}
+                aria-label={isOpen ? "Close Villa-Bot Helpdesk" : "Open Villa-Bot Helpdesk"}
+                title={isOpen ? "Close Villa-Bot" : "Open Villa-Bot Helpdesk"}
             >
                 {isOpen ? (
                     <X className="h-5 w-5" />

@@ -10,16 +10,16 @@ export default function ChatbotPage() {
 
     return (
         <PublicLayout>
-            <Head title="Chatbot W&F Desk" />
+            <Head title="Villa-Bot Helpdesk" />
 
             <div className="py-12">
                 <div className="w-[92%] sm:w-[88%] lg:w-[80%] max-w-7xl mx-auto px-1 sm:px-2">
                     <div className="flex flex-col items-center justify-center mb-8 text-center">
                         <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white tracking-tight">
-                            Chatbot W&F Desk
+                            Villa-Bot Helpdesk
                         </h1>
                         <p className="mt-2 text-sm text-gray-500 dark:text-gray-400 max-w-2xl">
-                            Official virtual assistance for citizen inquiries, service schedules, filing procedures, and barangay contacts.
+                            Official virtual assistance for Barangay 183 Villamor citizen inquiries, service schedules, filing procedures, and barangay contacts.
                         </p>
                     </div>
 

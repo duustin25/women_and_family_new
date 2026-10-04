@@ -29,15 +29,21 @@
                 "Magandang araw",
                 "Tao po",
                 "Hello po",
-                "Hi po"
+                "Hi po",
+                "Who are you?",
+                "Sino ka?",
+                "Who is Villa-Bot?",
+                "Ano si Villa-Bot?",
+                "Villa-Bot",
+                "Villabot"
             ],
             "responses": [
-                "Hello! I am The Sentinel. How can I assist you with VAWC or women's protection services today?",
+                "Hello! I am Villa-Bot, your virtual assistant for Barangay 183 Villamor. How can I assist you with VAWC or women's protection services today?",
                 "Greetings! I am here to help. Maaari kang magtanong tungkol sa VAWC, Officials, o mga Anunsyo.",
                 "Hello there! I'm doing well, thank you. How can I help you navigate our barangay services today?",
                 "Kumusta! Mabuti naman ako. Ano ang maitutulong ko sa iyo ngayon tungkol sa mga serbisyo ng barangay?",
                 "Hi! I am here to guide you with VAWC reports, BCPC, or announcements. What would you like to know?",
-                "Mabuhay! I am The Sentinel. Paano ko kayo magagabayan sa inyong mga katanungan ngayon?"
+                "Mabuhay! I am Villa-Bot, the Barangay 183 Villamor virtual guide. Paano ko kayo magagabayan sa inyong mga katanungan ngayon?"
             ]
         },
         {
