@@ -155,7 +155,7 @@ export default function Index({ organization, filters }: PageProps) {
                         >
                             <Link href="/admin/members">
                                 <Users className="w-3.5 h-3.5 text-muted-foreground" />
-                                Accredited Members CRM
+                                Accredited Members
                             </Link>
                         </Button>
                         {isStaff && (
@@ -371,7 +371,7 @@ export default function Index({ organization, filters }: PageProps) {
                                                     <DropdownMenuContent align="end" className="w-52">
                                                         <DropdownMenuItem asChild>
                                                             <Link href={`/admin/members?organization_id=${org.id}`} className="flex items-center gap-2 cursor-pointer">
-                                                                <Users className="h-3.5 w-3.5 text-primary" /> Member Aid CRM
+                                                                <Users className="h-3.5 w-3.5 text-primary" /> Registered Members
                                                             </Link>
                                                         </DropdownMenuItem>
                                                         <DropdownMenuItem asChild>
@@ -424,11 +424,10 @@ export default function Index({ organization, filters }: PageProps) {
                                     if (link.url) router.get(link.url, {}, { preserveState: true, preserveScroll: true });
                                 }}
                                 dangerouslySetInnerHTML={{ __html: link.label }}
-                                className={`px-3 py-1 text-xs font-semibold rounded-md border transition-all cursor-pointer ${
-                                    link.active
-                                        ? 'bg-primary text-primary-foreground border-primary'
-                                        : 'bg-background hover:bg-muted text-muted-foreground'
-                                } ${!link.url ? 'opacity-40 cursor-not-allowed pointer-events-none' : ''}`}
+                                className={`px-3 py-1 text-xs font-semibold rounded-md border transition-all cursor-pointer ${link.active
+                                    ? 'bg-primary text-primary-foreground border-primary'
+                                    : 'bg-background hover:bg-muted text-muted-foreground'
+                                    } ${!link.url ? 'opacity-40 cursor-not-allowed pointer-events-none' : ''}`}
                             />
                         ))}
                     </div>

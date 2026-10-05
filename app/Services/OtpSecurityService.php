@@ -25,9 +25,9 @@ class OtpSecurityService
     }
 
     /**
-     * Phase 1: Create a provisional account activation OTP (10-minute validity).
+     * Phase 1: Create a provisional account activation OTP (10-minute validity) + High-Entropy Single-Use Token.
      */
-    public function createProvisionalActivationOtp(User $user): string
+    public function createProvisionalActivationOtp(User $user): array
     {
         // 1. Invalidate any older unused activation tokens for this user
         EmailOtp::where('user_id', $user->id)
@@ -39,18 +39,25 @@ class OtpSecurityService
         $rawOtp = sprintf('%06d', random_int(100000, 999999));
         $otpHash = $this->hashToken($rawOtp);
 
+        // 3. High-entropy single-use invitation token (64 characters)
+        $rawToken = Str::random(64);
+        $tokenHash = $this->hashToken($rawToken);
+
         EmailOtp::create([
             'user_id' => $user->id,
             'action' => EmailOtp::ACTION_ACTIVATION,
             'target_value' => $user->email,
             'otp_hash' => $otpHash,
-            'panic_token_hash' => null,
+            'panic_token_hash' => $tokenHash,
             'attempts' => 0,
             'is_used' => false,
             'expires_at' => now()->addMinutes(self::ACTIVATION_EXPIRY_MINUTES),
         ]);
 
-        return $rawOtp;
+        return [
+            'otp' => $rawOtp,
+            'token' => $rawToken,
+        ];
     }
 
     /**
@@ -239,10 +246,11 @@ class OtpSecurityService
             throw new Exception("Please wait {$secondsRemaining} seconds before requesting a new code.");
         }
 
-        $rawOtp = $this->createProvisionalActivationOtp($user);
+        $otpData = $this->createProvisionalActivationOtp($user);
 
         return [
-            'otp' => $rawOtp,
+            'otp' => $otpData['otp'],
+            'token' => $otpData['token'],
             'expires_in_minutes' => self::ACTIVATION_EXPIRY_MINUTES,
         ];
     }
@@ -251,7 +259,7 @@ class OtpSecurityService
      * Admin Unlock & Resend Recovery:
      * Resets a locked user to pending_verification and issues a fresh code.
      */
-    public function adminUnlockUser(User $user): string
+    public function adminUnlockUser(User $user): array
     {
         return DB::transaction(function () use ($user) {
             $user->update([
@@ -261,6 +269,54 @@ class OtpSecurityService
 
             return $this->createProvisionalActivationOtp($user);
         });
+    }
+
+    /**
+     * Validate an activation invitation link token.
+     */
+    public function validateActivationToken(string $rawToken): array
+    {
+        $tokenHash = $this->hashToken($rawToken);
+
+        /** @var EmailOtp|null $record */
+        $record = EmailOtp::where('panic_token_hash', $tokenHash)
+            ->where('action', EmailOtp::ACTION_ACTIVATION)
+            ->first();
+
+        if (!$record) {
+            return [
+                'valid' => false,
+                'reason' => 'invalid',
+                'message' => 'This invitation link is invalid or does not exist.',
+                'record' => null,
+            ];
+        }
+
+        if ($record->is_used) {
+            return [
+                'valid' => false,
+                'reason' => 'used',
+                'message' => 'This invitation link has expired or has been replaced by a newer verification code.',
+                'record' => $record,
+            ];
+        }
+
+        if ($record->expires_at->isPast()) {
+            $record->update(['is_used' => true]);
+            return [
+                'valid' => false,
+                'reason' => 'expired',
+                'message' => 'This invitation link expired after 10 minutes. Please request a new verification code.',
+                'record' => $record,
+            ];
+        }
+
+        return [
+            'valid' => true,
+            'reason' => null,
+            'message' => null,
+            'record' => $record,
+        ];
     }
 
     const UNLOCK_EXPIRY_MINUTES = 15;

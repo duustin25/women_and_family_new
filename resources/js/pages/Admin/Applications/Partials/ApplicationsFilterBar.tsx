@@ -89,11 +89,10 @@ export function ApplicationsFilterBar({
                         <SelectTrigger className="h-9 w-full sm:w-[150px] text-xs font-medium">
                             <div className="flex items-center gap-1.5 truncate">
                                 <Filter className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-                                <SelectValue placeholder="All Statuses" />
+                                <SelectValue placeholder="Pending" />
                             </div>
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="All">All Statuses</SelectItem>
                             <SelectItem value="Pending">Pending</SelectItem>
                             <SelectItem value="Approved">Approved</SelectItem>
                             <SelectItem value="Disapproved">Disapproved</SelectItem>

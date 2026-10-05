@@ -1,5 +1,5 @@
 import { Transition } from '@headlessui/react';
-import { Form, Head, Link, usePage } from '@inertiajs/react';
+import { Form, Head, Link, usePage, router } from '@inertiajs/react';
 import { Clock } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileController';
@@ -9,8 +9,10 @@ import { SecurityOtpModal, type StepUpData } from '@/components/security-otp-mod
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useConfirm } from '@/hooks/use-confirm';
 import AppLayout from '@/layouts/app-layout';
 import SettingsLayout from '@/layouts/settings/layout';
+import { cn } from '@/lib/utils';
 import { edit } from '@/routes/profile';
 import { send } from '@/routes/verification';
 import type { BreadcrumbItem, SharedData } from '@/types';
@@ -31,9 +33,10 @@ export default function Profile({
     status?: string;
     pending_email?: string | null;
 }) {
-    const { auth, flash } = usePage<SharedData & { flash?: { step_up_required?: StepUpData } }>().props;
+    const { auth, flash } = usePage<SharedData & { flash?: { step_up_required?: StepUpData; success?: string; error?: string } }>().props;
     const [stepUpOpen, setStepUpOpen] = useState(false);
     const [stepUpData, setStepUpData] = useState<StepUpData | null>(null);
+    const confirm = useConfirm();
 
     useEffect(() => {
         if (flash?.step_up_required) {
@@ -41,6 +44,20 @@ export default function Profile({
             setStepUpOpen(true);
         }
     }, [flash?.step_up_required]);
+
+    const handleCancelPendingEmail = () => {
+        confirm({
+            title: "Cancel Pending Verification",
+            message: `Are you sure you want to cancel the pending verification for ${pending_email}? You will be able to enter a new email address.`,
+            confirmText: "Cancel Verification",
+            variant: "destructive",
+            onConfirm: () => {
+                router.post('/settings/profile/cancel-email-change', {}, {
+                    preserveScroll: true,
+                });
+            },
+        });
+    };
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -55,6 +72,17 @@ export default function Profile({
                         title="Profile information"
                         description="Update your name and email address"
                     />
+
+                    {flash?.success && (
+                        <div className="p-3 rounded-lg border border-emerald-200 bg-emerald-50 dark:border-emerald-900/50 dark:bg-emerald-950/20 text-xs text-emerald-800 dark:text-emerald-200 font-medium">
+                            {flash.success}
+                        </div>
+                    )}
+                    {flash?.error && (
+                        <div className="p-3 rounded-lg border border-rose-200 bg-rose-50 dark:border-rose-900/50 dark:bg-rose-950/20 text-xs text-rose-800 dark:text-rose-200 font-medium">
+                            {flash.error}
+                        </div>
+                    )}
 
                     <Form
                         {...((ProfileController.update as any).form ? (ProfileController.update as any).form() : { action: ProfileController.update.url(), method: 'patch' })}
@@ -90,10 +118,14 @@ export default function Profile({
                                     <Input
                                         id="email"
                                         type="email"
-                                        className="mt-1 block w-full"
+                                        className={cn(
+                                            "mt-1 block w-full",
+                                            pending_email && "bg-muted/60 text-muted-foreground cursor-not-allowed selection:bg-transparent"
+                                        )}
                                         defaultValue={auth.user.email}
                                         name="email"
                                         required
+                                        readOnly={Boolean(pending_email)}
                                         autoComplete="username"
                                         placeholder="Email address"
                                     />
@@ -104,30 +136,46 @@ export default function Profile({
                                     />
 
                                     {pending_email && (
-                                        <div className="mt-3 flex items-center justify-between p-3 rounded-lg border border-amber-200 bg-amber-50 dark:border-amber-900/50 dark:bg-amber-950/20 text-xs">
-                                            <div className="flex items-center gap-2 text-amber-900 dark:text-amber-200">
+                                        <div className="mt-3 flex flex-col sm:flex-row sm:items-center justify-between p-3.5 rounded-lg border border-amber-200 bg-amber-50 dark:border-amber-900/50 dark:bg-amber-950/20 text-xs gap-3">
+                                            <div className="flex items-center gap-2.5 text-amber-900 dark:text-amber-200">
                                                 <Clock className="w-4 h-4 text-amber-600 shrink-0" />
                                                 <div>
-                                                    <span className="font-semibold">Pending Verification:</span>{' '}
-                                                    <span className="font-mono">{pending_email}</span>
+                                                    <div>
+                                                        <span className="font-semibold">Pending Verification:</span>{' '}
+                                                        <span className="font-mono font-medium">{pending_email}</span>
+                                                    </div>
+                                                    <p className="text-[11px] text-amber-700/80 dark:text-amber-400/80 mt-0.5">
+                                                        Email updates are locked while this verification is active.
+                                                    </p>
                                                 </div>
                                             </div>
-                                            <Button
-                                                type="button"
-                                                size="sm"
-                                                variant="outline"
-                                                onClick={() => {
-                                                    setStepUpData({
-                                                        action: 'EMAIL_CHANGE',
-                                                        target_value: pending_email,
-                                                        endpoint: '/settings/profile/verify-email-change',
-                                                    });
-                                                    setStepUpOpen(true);
-                                                }}
-                                                className="text-xs font-semibold shrink-0 ml-2 h-7 px-2.5"
-                                            >
-                                                Enter Code
-                                            </Button>
+                                            <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+                                                <Button
+                                                    type="button"
+                                                    size="sm"
+                                                    variant="outline"
+                                                    onClick={() => {
+                                                        setStepUpData({
+                                                            action: 'EMAIL_CHANGE',
+                                                            target_value: pending_email,
+                                                            endpoint: '/settings/profile/verify-email-change',
+                                                        });
+                                                        setStepUpOpen(true);
+                                                    }}
+                                                    className="text-xs font-semibold h-7 px-2.5 cursor-pointer"
+                                                >
+                                                    Enter Code
+                                                </Button>
+                                                <Button
+                                                    type="button"
+                                                    size="sm"
+                                                    variant="ghost"
+                                                    onClick={handleCancelPendingEmail}
+                                                    className="text-xs text-rose-600 hover:text-rose-700 hover:bg-rose-100/60 dark:text-rose-400 dark:hover:bg-rose-950/40 h-7 px-2.5 cursor-pointer font-medium"
+                                                >
+                                                    Cancel
+                                                </Button>
+                                            </div>
                                         </div>
                                     )}
                                 </div>

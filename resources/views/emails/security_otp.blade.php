@@ -1,68 +1,36 @@
-@extends('emails.layouts.master')
+<x-mail::message>
+# {{ $actionTitle }}
 
-@section('title', $actionTitle ?? 'Security Verification')
+Hello **{{ $user->name }}**,
 
-@section('content')
-    <div style="text-align: center; margin-bottom: 20px;">
-        <span class="purpose-badge">Security &bull; Authorization</span>
-        <h2 style="font-size: 20px; font-weight: 800; color: #1e1b4b; margin: 6px 0 0 0; text-transform: uppercase; letter-spacing: -0.02em;">
-            {{ $actionTitle }}
-        </h2>
-    </div>
+We received a security request to **{{ $actionDescription }}**.
+@if(!empty($targetValue))
 
-    <!-- Objective Summary -->
-    <table class="summary-card" cellpadding="0" cellspacing="0">
-        <tr>
-            <td class="summary-label">Recipient</td>
-            <td class="summary-val">{{ $user->name }}</td>
-        </tr>
-        <tr>
-            <td class="summary-label">Request</td>
-            <td class="summary-val" style="color: #6b21a8; font-weight: 700;">
-                {{ $actionTitle }}
-            </td>
-        </tr>
-        @if(!empty($targetValue))
-        <tr>
-            <td class="summary-label">New Detail</td>
-            <td class="summary-val" style="color: #0f172a; font-weight: 700;">
-                {{ $targetValue }}
-            </td>
-        </tr>
-        @endif
-        <tr>
-            <td class="summary-label">Timestamp</td>
-            <td class="summary-val" style="color: #475569; font-size: 12px;">
-                {{ now()->timezone('Asia/Manila')->format('M d, Y • h:i A') }} (PHT)
-            </td>
-        </tr>
-        <tr>
-            <td class="summary-label">Objective</td>
-            <td class="summary-val" style="color: #475569;">
-                Verify account identity to authorize sensitive credential modification.
-            </td>
-        </tr>
-    </table>
+* **Current Registered Email:** `{{ $user->email }}`
+* **Requested New Email:** `{{ $targetValue }}`
+@endif
 
-    <!-- OTP Code Display -->
-    <div class="otp-box">
-        <div class="otp-label">One-Time Security Code</div>
-        <div class="otp-number">{{ $otp }}</div>
-        <div class="otp-pill">
-            ⏱ Valid for 5 minutes &bull; Maximum 3 attempts before account lock
-        </div>
-    </div>
+To confirm this change, please enter the one-time security code below:
 
-    <!-- Unauthorized Alert & Panic Button -->
-    <div class="danger-card">
-        <div class="danger-title">Did not request this change?</div>
-        <div class="danger-desc">
-            If you did not initiate this change, someone may be attempting unauthorized access. Freeze your account immediately to secure your data.
-        </div>
-        <div>
-            <a href="{{ $panicUrl }}" class="btn-danger">
-                Freeze Account Immediately
-            </a>
-        </div>
-    </div>
-@endsection
+<x-mail::panel>
+### Your One-Time Security Code
+
+# `{{ $otp }}`
+
+This code is valid for **5 minutes**. Never share this code with anyone.
+</x-mail::panel>
+
+If you did **not** request this change, someone may be attempting to access your account. You can immediately freeze your account to protect your information:
+
+<x-mail::button :url="$panicUrl" color="error">
+Freeze Account Immediately
+</x-mail::button>
+
+Warm regards,  
+**Barangay 183 Administration**  
+📍 Pasay City
+
+<x-mail::subcopy>
+**Data Privacy Notice:** This official communication is processed under Republic Act 10173 (Data Privacy Act of 2012) and RA 9262. Your account credentials and personal records are kept strictly confidential.
+</x-mail::subcopy>
+</x-mail::message>

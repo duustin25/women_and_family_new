@@ -28,14 +28,14 @@ class SecurityOtpMail extends Mailable
         $this->action = $action;
         $this->targetValue = $targetValue;
         $this->panicUrl = $panicToken ? url('/auth/security/panic/' . $panicToken) : url('/login');
-        
+
         $normalized = strtoupper($action);
         if ($normalized === \App\Models\EmailOtp::ACTION_EMAIL_CHANGE || $normalized === 'EMAIL_CHANGE') {
             $this->actionTitle = 'Email Address Update';
-            $this->actionDescription = $targetValue ? "Change primary email address to: {$targetValue}" : 'Change primary email address';
+            $this->actionDescription = 'change your primary email address';
         } elseif ($normalized === \App\Models\EmailOtp::ACTION_PASSWORD_CHANGE || $normalized === 'PASSWORD_CHANGE') {
             $this->actionTitle = 'Account Password Change';
-            $this->actionDescription = 'Update account login password';
+            $this->actionDescription = 'update your account login password';
         } else {
             $this->actionTitle = 'Account Security Verification';
             $this->actionDescription = 'Sensitive Account Security Verification';
@@ -52,7 +52,7 @@ class SecurityOtpMail extends Mailable
     public function content(): Content
     {
         return new Content(
-            view: 'emails.security_otp',
+            markdown: 'emails.security_otp',
         );
     }
 

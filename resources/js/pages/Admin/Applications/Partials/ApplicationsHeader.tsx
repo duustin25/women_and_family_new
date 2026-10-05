@@ -38,7 +38,7 @@ export function ApplicationsHeader() {
                 >
                     <Link href="/admin/members">
                         <Users className="w-3.5 h-3.5 text-muted-foreground" />
-                        Accredited Members CRM
+                        Accredited Members
                     </Link>
                 </Button>
                 <Button asChild size="sm" className="min-h-[38px] px-4 font-bold shadow-xs">

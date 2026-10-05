@@ -1,6 +1,6 @@
 import { Head, router } from '@inertiajs/react';
 import { format } from "date-fns";
-import { MoreHorizontal, Pencil, MapPin, Calendar, Plus, X, Search, FileText, Activity, AlertCircle, Calendar as CalendarIcon } from "lucide-react";
+import { MoreHorizontal, Pencil, MapPin, Calendar, Plus, X, Search, FileText, Activity, AlertCircle, Calendar as CalendarIcon, CheckCircle, Lock } from "lucide-react";
 import { useState } from 'react';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -33,7 +33,8 @@ interface GadEvent {
 
 interface PageProps {
     events: { data: GadEvent[]; links: any[]; };
-    filters: { search?: string; status?: string; }
+    filters: { search?: string; status?: string; };
+    flash?: { success?: string; error?: string; message?: string; };
 }
 
 const STATUS_CONFIG = {
@@ -43,7 +44,7 @@ const STATUS_CONFIG = {
     reschedule_requested: { label: 'Action Required', className: 'bg-orange-100/50 text-orange-700 hover:bg-orange-100 border-orange-200' },
 };
 
-export default function Index({ events, filters }: PageProps) {
+export default function Index({ events, filters, flash }: PageProps) {
     const [searchQuery, setSearchQuery] = useState(filters?.search ?? '');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingEvent, setEditingEvent] = useState<GadEvent | null>(null);
@@ -58,6 +59,7 @@ export default function Index({ events, filters }: PageProps) {
         router.get('/admin/organization/events', params, { preserveState: true, replace: true });
 
     const handleDelete = (event: GadEvent) => {
+        if (event.status === 'approved') return;
         confirm({
             title: "Delete Proposal",
             message: `Are you sure you want to delete proposal "${event.title}"? This cannot be undone.`,
@@ -75,6 +77,7 @@ export default function Index({ events, filters }: PageProps) {
     };
 
     const openEdit = (event: GadEvent) => {
+        if (event.status === 'approved' || event.status === 'rejected') return;
         setEditingEvent(event);
         setFormData({
             title: event.title, description: event.description,
@@ -121,6 +124,20 @@ export default function Index({ events, filters }: PageProps) {
             <Head title="Event Proposals" />
 
             <div className="p-6 space-y-6">
+                {/* Flash Messages */}
+                {flash?.success && (
+                    <div className="flex items-center gap-3 px-4 py-3 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-lg text-emerald-700 dark:text-emerald-400 text-sm font-medium">
+                        <CheckCircle className="w-4 h-4 shrink-0" />
+                        <span>{flash.success}</span>
+                    </div>
+                )}
+                {flash?.error && (
+                    <div className="flex items-center gap-3 px-4 py-3 bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800 rounded-lg text-rose-700 dark:text-rose-400 text-sm font-medium">
+                        <AlertCircle className="w-4 h-4 shrink-0" />
+                        <span>{flash.error}</span>
+                    </div>
+                )}
+
                 {/* Header */}
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <div>
@@ -243,25 +260,34 @@ export default function Index({ events, filters }: PageProps) {
                                                 </TableCell>
 
                                                 <TableCell className="text-right pr-6">
-                                                    <div className="flex items-center justify-end gap-2">
-                                                        {item.status !== 'rejected' && (
-                                                            <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => openEdit(item)}>
-                                                                <Pencil className="h-3.5 w-3.5" />
-                                                            </Button>
-                                                        )}
-                                                        <DropdownMenu>
-                                                            <DropdownMenuTrigger asChild>
-                                                                <Button variant="ghost" size="icon" className="h-8 w-8">
-                                                                    <MoreHorizontal className="h-4 w-4" />
+                                                    {item.status === 'approved' ? (
+                                                        <div className="flex items-center justify-end gap-1.5">
+                                                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-semibold bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+                                                                <Lock className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+                                                                Approved & Locked
+                                                            </span>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="flex items-center justify-end gap-2">
+                                                            {(item.status === 'pending' || item.status === 'reschedule_requested') && (
+                                                                <Button variant="outline" size="icon" className="h-8 w-8 cursor-pointer" title="Edit Proposal" onClick={() => openEdit(item)}>
+                                                                    <Pencil className="h-3.5 w-3.5" />
                                                                 </Button>
-                                                            </DropdownMenuTrigger>
-                                                            <DropdownMenuContent align="end" className="w-40">
-                                                                <DropdownMenuItem onClick={() => handleDelete(item)} className="text-destructive font-bold cursor-pointer focus:text-destructive">
-                                                                    Delete Proposal
-                                                                </DropdownMenuItem>
-                                                            </DropdownMenuContent>
-                                                        </DropdownMenu>
-                                                    </div>
+                                                            )}
+                                                            <DropdownMenu>
+                                                                <DropdownMenuTrigger asChild>
+                                                                    <Button variant="ghost" size="icon" className="h-8 w-8 cursor-pointer">
+                                                                        <MoreHorizontal className="h-4 w-4" />
+                                                                    </Button>
+                                                                </DropdownMenuTrigger>
+                                                                <DropdownMenuContent align="end" className="w-40">
+                                                                    <DropdownMenuItem onClick={() => handleDelete(item)} className="text-destructive font-bold cursor-pointer focus:text-destructive">
+                                                                        Delete Proposal
+                                                                    </DropdownMenuItem>
+                                                                </DropdownMenuContent>
+                                                            </DropdownMenu>
+                                                        </div>
+                                                    )}
                                                 </TableCell>
                                             </TableRow>
                                         );

@@ -89,8 +89,8 @@ class SystemUserController extends Controller
         ]);
 
         // Generate 6-digit activation OTP and send invitation email
-        $otp = $otpService->createProvisionalActivationOtp($user);
-        \Illuminate\Support\Facades\Mail::to($user->email)->send(new \App\Mail\UserInvitationMail($user, $otp));
+        $otpData = $otpService->createProvisionalActivationOtp($user);
+        \Illuminate\Support\Facades\Mail::to($user->email)->send(new \App\Mail\UserInvitationMail($user, $otpData['otp'], $otpData['token']));
 
         return redirect()->route('admin.settings.index', ['tab' => 'users'])->with('success', "Provisional account created for {$user->name}. An activation OTP has been dispatched to {$user->email}.");
     }
@@ -106,7 +106,7 @@ class SystemUserController extends Controller
 
         try {
             $otpData = $otpService->resendActivationOtp($system_user);
-            \Illuminate\Support\Facades\Mail::to($system_user->email)->send(new \App\Mail\UserInvitationMail($system_user, $otpData['otp']));
+            \Illuminate\Support\Facades\Mail::to($system_user->email)->send(new \App\Mail\UserInvitationMail($system_user, $otpData['otp'], $otpData['token']));
 
             return back()->with('success', "A fresh activation code was emailed to {$system_user->email}.");
         } catch (\Exception $e) {
@@ -119,8 +119,8 @@ class SystemUserController extends Controller
      */
     public function unlockUser(User $system_user, \App\Services\OtpSecurityService $otpService)
     {
-        $rawOtp = $otpService->adminUnlockUser($system_user);
-        \Illuminate\Support\Facades\Mail::to($system_user->email)->send(new \App\Mail\UserInvitationMail($system_user, $rawOtp));
+        $otpData = $otpService->adminUnlockUser($system_user);
+        \Illuminate\Support\Facades\Mail::to($system_user->email)->send(new \App\Mail\UserInvitationMail($system_user, $otpData['otp'], $otpData['token']));
 
         return back()->with('success', "User {$system_user->name} has been unlocked. A new activation OTP was dispatched to their email.");
     }

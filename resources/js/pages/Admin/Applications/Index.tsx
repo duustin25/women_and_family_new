@@ -26,7 +26,7 @@ export default function ApplicationsIndex({
     const [selectedOrg, setSelectedOrg] = useState(
         filters?.organization_id || (isPresident && userOrgId ? String(userOrgId) : 'All')
     );
-    const [selectedStatus, setSelectedStatus] = useState(filters?.status || 'All');
+    const [selectedStatus, setSelectedStatus] = useState(filters?.status || 'Pending');
 
     const debouncedSearch = useDebounce(searchQuery, 300);
     const isInitialMount = useRef(true);
@@ -42,7 +42,7 @@ export default function ApplicationsIndex({
             {
                 search: debouncedSearch || undefined,
                 organization_id: selectedOrg !== 'All' ? selectedOrg : undefined,
-                status: selectedStatus !== 'All' ? selectedStatus : undefined,
+                status: selectedStatus || 'Pending',
             },
             {
                 preserveState: true,
@@ -55,8 +55,8 @@ export default function ApplicationsIndex({
     const handleClearFilters = () => {
         setSearchQuery('');
         setSelectedOrg(isPresident && userOrgId ? String(userOrgId) : 'All');
-        setSelectedStatus('All');
-        router.get('/admin/applications', {}, { preserveState: true, replace: true });
+        setSelectedStatus('Pending');
+        router.get('/admin/applications', { status: 'Pending' }, { preserveState: true, replace: true });
     };
 
     const breadcrumbs: BreadcrumbItem[] = [
@@ -68,7 +68,7 @@ export default function ApplicationsIndex({
     const totalCount = applications?.meta?.total ?? appsData.length;
     const paginationLinks = applications?.meta?.links || applications?.links;
     const hasActiveFilters = Boolean(
-        searchQuery || (selectedOrg && selectedOrg !== 'All') || (selectedStatus && selectedStatus !== 'All')
+        searchQuery || (selectedOrg && selectedOrg !== 'All') || (selectedStatus && selectedStatus !== 'Pending')
     );
 
     return (

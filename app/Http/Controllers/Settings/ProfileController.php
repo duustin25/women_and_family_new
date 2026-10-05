@@ -42,8 +42,32 @@ class ProfileController extends Controller
         $validated = $request->validated();
 
         // Check if email is being changed
-        if (isset($validated['email']) && $validated['email'] !== $user->email) {
-            $newEmail = $validated['email'];
+        if (isset($validated['email']) && strtolower(trim($validated['email'])) !== strtolower(trim($user->email))) {
+            $newEmail = strtolower(trim($validated['email']));
+
+            // Security check: Block changing email if there is already an active pending verification
+            $activePendingOtp = \App\Models\EmailOtp::where('user_id', $user->id)
+                ->where('action', \App\Models\EmailOtp::ACTION_EMAIL_CHANGE)
+                ->where('is_used', false)
+                ->where('expires_at', '>', now())
+                ->latest('id')
+                ->first();
+
+            if ($activePendingOtp) {
+                // If the user submitted the exact same pending email, re-open modal without spamming a new OTP
+                if (strtolower(trim($activePendingOtp->target_value)) === $newEmail) {
+                    return back()->with('step_up_required', [
+                        'action' => \App\Models\EmailOtp::ACTION_EMAIL_CHANGE,
+                        'endpoint' => route('profile.verify-email-change'),
+                        'target_value' => $newEmail,
+                        'message' => 'A verification code was already sent for this email. Please enter the 6-digit confirmation code.',
+                    ]);
+                }
+
+                return back()->withErrors([
+                    'email' => "Cannot change to another email while a verification for {$activePendingOtp->target_value} is currently pending. Please enter the verification code or cancel the pending request first.",
+                ]);
+            }
 
             // Update other allowed attributes first (like name)
             if (isset($validated['name'])) {
@@ -71,5 +95,18 @@ class ProfileController extends Controller
         $user->save();
 
         return to_route('profile.edit')->with('success', 'Profile information updated successfully.');
+    }
+
+    /**
+     * Cancel any active pending email change verification for the authenticated user.
+     */
+    public function cancelEmailChange(Request $request): RedirectResponse
+    {
+        \App\Models\EmailOtp::where('user_id', $request->user()->id)
+            ->where('action', \App\Models\EmailOtp::ACTION_EMAIL_CHANGE)
+            ->where('is_used', false)
+            ->update(['is_used' => true]);
+
+        return to_route('profile.edit')->with('success', 'Pending email verification has been cancelled. You may now enter a new email address.');
     }
 }

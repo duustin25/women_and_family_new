@@ -21,6 +21,9 @@ class MembershipApplicationController extends Controller
         // RBAC: Use Service to scope applications (President sees only their Org, Admin sees all)
         // Pass query params as filters
         $filters = $request->only(['search', 'status', 'organization_id', 'income']);
+        if (empty($filters['status']) || $filters['status'] === 'All') {
+            $filters['status'] = 'Pending';
+        }
         $applications = $service->getScopedApplications($request->user(), $filters);
 
         // Fetch organizations for filter dropdown

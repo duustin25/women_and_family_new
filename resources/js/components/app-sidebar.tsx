@@ -167,7 +167,6 @@ export function AppSidebar() {
                         'VAWC Cases',
                         'BCPC Nutrition',
                         'GAD Events',
-                        'Analytics & Reports',
                         'System Settings',
                     ];
                     if (hiddenFromPresident.includes(item.title)) return false;

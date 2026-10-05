@@ -17,6 +17,9 @@ Route::middleware(['auth'])->group(function () {
     Route::post('settings/profile/verify-email-change', [OtpSecurityController::class, 'verifyEmailChange'])
         ->middleware('throttle:6,1')
         ->name('profile.verify-email-change');
+    Route::post('settings/profile/cancel-email-change', [ProfileController::class, 'cancelEmailChange'])
+        ->middleware('throttle:6,1')
+        ->name('profile.cancel-email-change');
 });
 
 Route::middleware(['auth', 'verified'])->group(function () {

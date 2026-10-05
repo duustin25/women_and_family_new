@@ -83,6 +83,15 @@ class OrganizationEventController extends Controller
         $event = GadEvent::where('organization_id', Auth::user()->organization_id)
             ->findOrFail($id);
 
+        // Security check: Approved events cannot be edited by organization presidents
+        if ($event->status === 'approved') {
+            return redirect()->back()->with('error', 'This event has already been approved and published to the Public Calendar. Approved events are locked and cannot be edited. Please coordinate with the Head Committee or Admin for any amendments.');
+        }
+
+        if ($event->status === 'rejected') {
+            return redirect()->back()->with('error', 'Rejected event proposals cannot be edited. Please submit a new event proposal.');
+        }
+
         $rules = [
             'title'       => 'required|string|max:255',
             'description' => 'required|string',
@@ -132,6 +141,11 @@ class OrganizationEventController extends Controller
     {
         $event = GadEvent::where('organization_id', Auth::user()->organization_id)
             ->findOrFail($id);
+
+        // Security check: Approved events cannot be deleted by organization presidents
+        if ($event->status === 'approved') {
+            return redirect()->back()->with('error', 'Approved events cannot be deleted as they are officially scheduled and published. Please coordinate with the Head Committee or Admin.');
+        }
 
         if ($event->image_path) {
             Storage::disk('public')->delete($event->image_path);

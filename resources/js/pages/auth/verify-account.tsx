@@ -1,5 +1,5 @@
-import { Head, useForm, router } from '@inertiajs/react';
-import { ShieldCheck, RefreshCw, KeyRound, Lock, AlertTriangle } from 'lucide-react';
+import { Head, useForm, router, Link } from '@inertiajs/react';
+import { ShieldCheck, RefreshCw, KeyRound, Lock, AlertTriangle, Clock, ArrowLeft, Mail } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import InputError from '@/components/input-error';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -10,11 +10,20 @@ import AuthWomenFamilyLayout from '@/layouts/auth/auth-women-family-layout';
 
 interface Props {
     email: string;
+    token?: string | null;
+    isExpired?: boolean;
+    expiredReason?: string | null;
 }
 
-export default function VerifyAccount({ email: initialEmail }: Props) {
+export default function VerifyAccount({
+    email: initialEmail,
+    token: initialToken,
+    isExpired = false,
+    expiredReason,
+}: Props) {
     const [cooldown, setCooldown] = useState(0);
     const [resending, setResending] = useState(false);
+    const [resendEmail, setResendEmail] = useState(initialEmail || '');
 
     const { data, setData, post, processing, errors } = useForm({
         email: initialEmail || '',
@@ -36,19 +45,104 @@ export default function VerifyAccount({ email: initialEmail }: Props) {
         post('/verify-account');
     };
 
-    const handleResend = () => {
-        if (cooldown > 0 || resending || !data.email) return;
+    const handleResend = (targetEmail?: string) => {
+        const emailToSend = targetEmail || data.email || resendEmail;
+        if (cooldown > 0 || resending || !emailToSend) return;
 
         setResending(true);
-        router.post('/verify-account/resend', { email: data.email }, {
-            preserveScroll: true,
-            onFinish: () => {
-                setResending(false);
-                setCooldown(60);
-            },
-        });
+        router.post(
+            '/verify-account/resend',
+            { email: emailToSend },
+            {
+                preserveScroll: true,
+                onFinish: () => {
+                    setResending(false);
+                    setCooldown(60);
+                },
+            }
+        );
     };
 
+    // If the invitation link or session is expired, show the security expired screen
+    if (isExpired) {
+        return (
+            <AuthWomenFamilyLayout
+                title="Invitation Link Expired"
+                description="This invitation link or verification session is no longer active."
+            >
+                <Head title="Invitation Expired - Verify Account" />
+
+                <div className="space-y-6">
+                    <div className="rounded-xl border border-rose-200 bg-rose-50/70 p-5 text-center space-y-3">
+                        <div className="w-12 h-12 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center mx-auto shadow-sm">
+                            <Clock className="w-6 h-6" />
+                        </div>
+                        <div className="space-y-1">
+                            <h3 className="text-base font-bold text-rose-950">Security Session Expired</h3>
+                            <p className="text-xs text-rose-700 leading-relaxed max-w-sm mx-auto">
+                                {expiredReason ||
+                                    'For your security, invitation links and 6-digit codes are valid strictly for 10 minutes and expire once used or replaced by a newer request.'}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="space-y-4 pt-1">
+                        <div className="space-y-2">
+                            <Label htmlFor="resend_email">Official Account Email</Label>
+                            <div className="relative">
+                                <Mail className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                                <Input
+                                    id="resend_email"
+                                    type="email"
+                                    value={resendEmail}
+                                    onChange={(e) => setResendEmail(e.target.value)}
+                                    required
+                                    placeholder="Enter your registered email address"
+                                    className="pl-9 text-sm"
+                                />
+                            </div>
+                        </div>
+
+                        <Button
+                            type="button"
+                            onClick={() => handleResend(resendEmail)}
+                            disabled={cooldown > 0 || resending || !resendEmail}
+                            className="w-full font-semibold flex items-center justify-center gap-2"
+                        >
+                            <RefreshCw className={`w-4 h-4 ${resending ? 'animate-spin' : ''}`} />
+                            {cooldown > 0
+                                ? `Wait ${cooldown}s to Resend`
+                                : resending
+                                ? 'Sending New Invitation...'
+                                : 'Send Fresh Verification Code & Link'}
+                        </Button>
+
+                        <div className="text-center pt-2">
+                            <Link
+                                href="/login"
+                                className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground font-medium transition-colors"
+                            >
+                                <ArrowLeft className="w-3.5 h-3.5" />
+                                Return to Sign In
+                            </Link>
+                        </div>
+                    </div>
+
+                    <div className="p-3 rounded-lg bg-muted/50 border text-[11px] text-muted-foreground space-y-1">
+                        <div className="flex items-center gap-1.5 font-medium text-foreground">
+                            <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />
+                            Official Barangay IT Security Note
+                        </div>
+                        <p>
+                            Previous invitation links are automatically invalidated whenever a new invitation is dispatched. Always use the latest email link in your inbox.
+                        </p>
+                    </div>
+                </div>
+            </AuthWomenFamilyLayout>
+        );
+    }
+
+    // Active, valid invitation flow
     return (
         <AuthWomenFamilyLayout
             title="Account Activation & Setup"
@@ -60,22 +154,28 @@ export default function VerifyAccount({ email: initialEmail }: Props) {
                 <Alert className="border-amber-200 bg-amber-50/70 text-amber-900 text-xs">
                     <ShieldCheck className="h-4 w-4 text-amber-600" />
                     <AlertDescription>
-                        A 6-digit confirmation code was sent to your registered email. Codes are valid for 10 minutes and strictly single-use.
+                        A 6-digit confirmation code was sent to your registered email. Codes are valid strictly for 10 minutes and single-use.
                     </AlertDescription>
                 </Alert>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div className="space-y-2">
                         <Label htmlFor="email">Official Email</Label>
-                        <Input
-                            id="email"
-                            type="email"
-                            value={data.email}
-                            onChange={(e) => setData('email', e.target.value)}
-                            required
-                            placeholder="user@example.com"
-                            className="text-sm"
-                        />
+                        <div className="relative">
+                            <Input
+                                id="email"
+                                type="email"
+                                value={data.email}
+                                onChange={(e) => setData('email', e.target.value)}
+                                required
+                                readOnly={!!initialToken && !!data.email}
+                                placeholder="user@example.com"
+                                className={`text-sm ${initialToken && data.email ? 'bg-muted/40 cursor-not-allowed font-medium' : ''}`}
+                            />
+                            {initialToken && data.email && (
+                                <Lock className="absolute right-3 top-2.5 h-4 w-4 text-muted-foreground/60" />
+                            )}
+                        </div>
                         <InputError message={errors.email} />
                     </div>
 
@@ -84,7 +184,7 @@ export default function VerifyAccount({ email: initialEmail }: Props) {
                             <Label htmlFor="otp">6-Digit Verification Code</Label>
                             <button
                                 type="button"
-                                onClick={handleResend}
+                                onClick={() => handleResend()}
                                 disabled={cooldown > 0 || resending || !data.email}
                                 className="text-xs text-primary font-medium hover:underline disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
                             >

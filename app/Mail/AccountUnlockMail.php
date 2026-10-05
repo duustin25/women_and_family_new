@@ -32,7 +32,7 @@ class AccountUnlockMail extends Mailable
     public function content(): Content
     {
         return new Content(
-            view: 'emails.account_unlock',
+            markdown: 'emails.account_unlock',
         );
     }
 

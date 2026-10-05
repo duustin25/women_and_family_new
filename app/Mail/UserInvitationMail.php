@@ -15,13 +15,17 @@ class UserInvitationMail extends Mailable
 
     public User $user;
     public string $otp;
+    public ?string $token;
     public string $activationUrl;
 
-    public function __construct(User $user, string $otp)
+    public function __construct(User $user, string $otp, ?string $token = null)
     {
         $this->user = $user;
         $this->otp = $otp;
-        $this->activationUrl = url('/verify-account?email=' . urlencode($user->email ?? ''));
+        $this->token = $token;
+        $this->activationUrl = $token
+            ? url('/verify-account?token=' . $token)
+            : url('/verify-account?email=' . urlencode($user->email ?? ''));
     }
 
     public function envelope(): Envelope
@@ -34,7 +38,7 @@ class UserInvitationMail extends Mailable
     public function content(): Content
     {
         return new Content(
-            view: 'emails.user_invitation',
+            markdown: 'emails.user_invitation',
         );
     }
 
