@@ -107,8 +107,17 @@ export default function BackupTab({ backups = [], storageQuota = null }: BackupT
                 setIsUploading(false);
                 e.target.value = '';
             },
-            onSuccess: () => toast.success(`Backup file '${file.name}' uploaded successfully.`),
-            onError: () => toast.error('Failed to upload backup file. Supported formats: .sql, .sql.gz, .enc, or .zip.'),
+            onSuccess: (page: any) => {
+                if (page?.props?.flash?.error) {
+                    toast.error(page.props.flash.error);
+                } else {
+                    toast.success(`Backup file '${file.name}' uploaded successfully.`);
+                }
+            },
+            onError: (errs: any) => {
+                const msg = errs?.backup_file || errs?.error || 'Failed to upload backup file. Please check file format and server size limits.';
+                toast.error(msg);
+            },
         });
     };
 

@@ -134,6 +134,22 @@ class DatabaseBackupController extends Controller implements HasMiddleware
      */
     public function upload(Request $request)
     {
+        if (function_exists('set_time_limit')) {
+            @set_time_limit(300);
+        }
+        @ini_set('max_execution_time', '300');
+        @ini_set('memory_limit', '512M');
+
+        if (!$request->hasFile('backup_file')) {
+            return redirect()->back()->with('error', 'No backup file was received by the server. If this is a large backup, it may have exceeded PHP upload limits.');
+        }
+
+        $file = $request->file('backup_file');
+        if (!$file || !$file->isValid()) {
+            $errorMsg = $file ? $file->getErrorMessage() : 'Unknown file upload error.';
+            return redirect()->back()->with('error', "Upload failed: {$errorMsg}");
+        }
+
         $request->validate([
             'backup_file' => ['required', 'file', 'max:256000'],
         ], [
@@ -141,7 +157,6 @@ class DatabaseBackupController extends Controller implements HasMiddleware
         ]);
 
         try {
-            $file = $request->file('backup_file');
             $filename = $file->getClientOriginalName();
             $fileSize = $file->getSize();
             $quota = $this->backupService->getStorageQuota();
@@ -168,21 +183,24 @@ class DatabaseBackupController extends Controller implements HasMiddleware
             $file->storeAs('backups', $filename, 'local');
 
             // Audit Trail: Record Snapshot Upload
-            AuditLog::create([
-                'user_id' => $request->user()->id,
-                'action' => 'DATABASE_BACKUP_UPLOADED',
-                'auditable_type' => 'DatabaseBackup',
-                'auditable_id' => 0,
-                'ip_address' => $request->ip(),
-                'user_agent' => $request->userAgent(),
-                'new_values' => [
-                    'filename' => $filename,
-                    'uploaded_by' => $request->user()->name,
-                ],
-            ]);
+            $user = $request->user();
+            if ($user) {
+                AuditLog::create([
+                    'user_id' => $user->id,
+                    'action' => 'DATABASE_BACKUP_UPLOADED',
+                    'auditable_type' => 'DatabaseBackup',
+                    'auditable_id' => 0,
+                    'ip_address' => $request->ip(),
+                    'user_agent' => $request->userAgent(),
+                    'new_values' => [
+                        'filename' => $filename,
+                        'uploaded_by' => $user->name,
+                    ],
+                ]);
+            }
 
             return redirect()->back()->with('success', "Backup file '{$filename}' uploaded successfully.");
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
             return redirect()->back()->with('error', "Backup upload failed: " . $e->getMessage());
         }
     }
