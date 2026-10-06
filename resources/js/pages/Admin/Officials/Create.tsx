@@ -9,12 +9,15 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import AppLayout from '@/layouts/app-layout';
 
+import { useState } from 'react';
+
 interface User {
     id: number;
     name: string;
 }
 
 export default function Create({ users }: { users: User[] }) {
+    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const form = useForm({
         user_id: 'none' as string | number,
         name: '',
@@ -170,19 +173,46 @@ export default function Create({ users }: { users: User[] }) {
 
                                 {/* OFFICIAL PHOTO */}
                                 <div className="space-y-3">
-                                    <Label className="text-xs font-bold uppercase tracking-wide text-neutral-700 dark:text-neutral-300">Official Photo</Label>
-                                    <div className="flex items-center gap-3 border rounded-xl p-3 bg-neutral-50 dark:bg-neutral-900 border-dashed border-neutral-300 dark:border-neutral-700">
-                                        <div className="bg-white dark:bg-neutral-800 p-2 rounded-lg shadow-sm border border-neutral-200 dark:border-neutral-700">
-                                            <ImageIcon className="w-5 h-5 text-neutral-400" />
+                                    <Label className="flex items-center justify-between text-xs font-bold uppercase tracking-wide text-neutral-700 dark:text-neutral-300">
+                                        Official Photo
+                                        {previewUrl && (
+                                            <span className="text-[10px] text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full font-bold">Photo Selected</span>
+                                        )}
+                                    </Label>
+                                    <div className="flex items-center gap-4 border rounded-2xl p-4 bg-neutral-50 dark:bg-neutral-900 border-dashed border-neutral-300 dark:border-neutral-700">
+                                        <div className="w-14 h-14 rounded-xl overflow-hidden bg-white dark:bg-neutral-800 p-1 shadow-sm border border-neutral-200 dark:border-neutral-700 flex items-center justify-center shrink-0">
+                                            {previewUrl ? (
+                                                <img src={previewUrl} className="w-full h-full object-cover rounded-lg" alt="" />
+                                            ) : (
+                                                <ImageIcon className="w-6 h-6 text-neutral-400" />
+                                            )}
                                         </div>
-                                        <input
-                                            type="file"
-                                            accept="image/*"
-                                            className="text-sm cursor-pointer w-full text-neutral-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-xs file:font-bold file:bg-neutral-200 dark:file:bg-neutral-800 file:text-neutral-700 dark:file:text-neutral-300 hover:file:bg-neutral-300 transition-colors"
-                                            onChange={e => form.setData('image_path', e.currentTarget.files ? e.currentTarget.files[0] : null)}
-                                        />
+                                        <div className="flex-1 space-y-1">
+                                            <input
+                                                type="file"
+                                                accept="image/jpeg,image/png,image/webp,image/jpg"
+                                                className="text-sm cursor-pointer w-full text-neutral-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-xs file:font-bold file:bg-neutral-200 dark:file:bg-neutral-800 file:text-neutral-700 dark:file:text-neutral-300 hover:file:bg-neutral-300 transition-colors"
+                                                onChange={e => {
+                                                    const file = e.currentTarget.files?.[0];
+                                                    if (file) {
+                                                        if (file.size > 5 * 1024 * 1024) {
+                                                            toast.error(`Image is too large (${(file.size / (1024 * 1024)).toFixed(1)}MB). Please choose a photo under 5MB.`);
+                                                            e.currentTarget.value = '';
+                                                            return;
+                                                        }
+                                                        form.setData('image_path', file);
+                                                        setPreviewUrl(URL.createObjectURL(file));
+                                                    } else {
+                                                        form.setData('image_path', null);
+                                                        setPreviewUrl(null);
+                                                    }
+                                                }}
+                                            />
+                                            <p className="text-[10px] text-neutral-400 font-bold uppercase tracking-wide">
+                                                JPG, PNG, or WEBP (Square aspect ratio recommended, Max 5MB).
+                                            </p>
+                                        </div>
                                     </div>
-                                    <p className="text-[10px] text-neutral-400 uppercase tracking-wide font-bold">Recommended: Square Aspect Ratio (1:1), Max 10MB.</p>
                                     {form.errors.image_path && (
                                         <p className="text-red-500 text-xs mt-1 font-bold">{form.errors.image_path}</p>
                                     )}

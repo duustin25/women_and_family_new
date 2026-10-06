@@ -103,6 +103,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             return redirect()->route('admin.settings.index', array_merge(['tab' => 'officials'], $request->query()));
         })->name('officials.index');
         Route::resource('officials', OfficialController::class)->except(['index']);
+        Route::post('officials/{official}', [OfficialController::class, 'update'])->name('officials.update.post');
 
 
         // 2. Membership Applications (Manual Order Fix)
