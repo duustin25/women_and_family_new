@@ -49,6 +49,9 @@ export default function Step3BaselineMeasurement({
                         value={data.date_of_weighing}
                         onChange={e => setData('date_of_weighing', e.target.value)}
                     />
+                    <p className="text-[11px] text-muted-foreground">
+                        Defaults to today. Select a past date if logging previous paper records.
+                    </p>
                     {errors.date_of_weighing && <p className="text-xs text-destructive font-bold">{errors.date_of_weighing}</p>}
                 </div>
 
@@ -138,7 +141,7 @@ export default function Step3BaselineMeasurement({
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-                        {/* Supplemental Feeding with Dynamic Guardrail */}
+                        {/* Supplementary Feeding with Dynamic Guardrail */}
                         <div className={`flex flex-col justify-between p-3 rounded-xl border transition-all ${
                             isLiveOverweight
                                 ? 'bg-muted/60 border-muted opacity-60 cursor-not-allowed'
@@ -148,12 +151,12 @@ export default function Step3BaselineMeasurement({
                                 <Checkbox
                                     id="feeding"
                                     disabled={isLiveOverweight}
-                                    checked={!isLiveOverweight && data.intervention_logs.includes('Supplemental Feeding (SFP)')}
-                                    onCheckedChange={() => toggleIntervention('Supplemental Feeding (SFP)')}
+                                    checked={!isLiveOverweight && (data.intervention_logs.includes('Supplementary Feeding (SFP)') || data.intervention_logs.includes('Supplemental Feeding (SFP)'))}
+                                    onCheckedChange={() => toggleIntervention('Supplementary Feeding (SFP)')}
                                 />
                                 <div>
                                     <label htmlFor="feeding" className={`text-xs font-bold leading-tight block ${isLiveOverweight ? 'text-muted-foreground cursor-not-allowed' : 'text-foreground cursor-pointer'}`}>
-                                        Enroll in Supplemental Feeding (SFP)
+                                        Enroll in Supplementary Feeding (SFP)
                                     </label>
                                     <span className="text-[10px] text-muted-foreground block mt-0.5">
                                         {isLiveOverweight ? 'Disabled: Caloric feeding is contraindicated for elevated body mass' : 'Requires guardian consent & BNS validation (120-Day Program)'}

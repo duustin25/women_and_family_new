@@ -109,7 +109,7 @@ When an extreme outlier is detected, the UI prompts:
 
 ## 🍲 5. 120-Day SFP Lifecycle & Velocity Tracking
 
-In compliance with Republic Act No. 11037, undernourished children identified by screening may be enrolled into the barangay's 120-Day Supplemental Feeding Program (SFP).
+In compliance with Republic Act No. 11037, undernourished children identified by screening may be enrolled into the barangay's 120-Day Supplementary Feeding Program (SFP).
 
 ### 5.1 Enrollment Protocol (Human-in-the-Loop)
 - Enrollment is **never automatic**.

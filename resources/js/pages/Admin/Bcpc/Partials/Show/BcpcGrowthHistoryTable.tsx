@@ -43,20 +43,44 @@ export default function BcpcGrowthHistoryTable({ assessments = [] }: BcpcGrowthH
                                         </td>
                                         <td className="p-3 text-center">
                                             <div className="flex flex-wrap justify-center gap-1">
-                                                <Badge variant={ast.wfa_status === 'Normal' ? 'outline' : 'destructive'} className="text-[9px] px-2 py-0.5 rounded">
+                                                <Badge
+                                                    variant="outline"
+                                                    className={`text-[9px] px-2 py-0.5 rounded font-bold shadow-2xs ${
+                                                        ast.wfa_status === 'Severely Underweight'
+                                                            ? 'bg-red-600 text-white border-red-600'
+                                                            : ast.wfa_status === 'Underweight'
+                                                            ? 'bg-amber-500 text-white border-amber-600'
+                                                            : ast.wfa_status === 'Normal'
+                                                            ? 'border-emerald-500 text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/30'
+                                                            : 'bg-rose-500 text-white border-rose-600'
+                                                    }`}
+                                                >
                                                     WFA: {ast.wfa_status}
                                                 </Badge>
-                                                <Badge variant={ast.hfa_status === 'Normal' ? 'outline' : 'secondary'} className={`text-[9px] px-2 py-0.5 rounded ${ast.hfa_status !== 'Normal' ? 'bg-amber-500 text-white' : ''}`}>
+                                                <Badge
+                                                    variant="outline"
+                                                    className={`text-[9px] px-2 py-0.5 rounded font-bold shadow-2xs ${
+                                                        ast.hfa_status === 'Severely Stunted'
+                                                            ? 'bg-red-600 text-white border-red-600'
+                                                            : ast.hfa_status === 'Stunted'
+                                                            ? 'bg-amber-500 text-white border-amber-600'
+                                                            : ast.hfa_status === 'Normal'
+                                                            ? 'border-emerald-500 text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/30'
+                                                            : 'bg-blue-600 text-white border-blue-600'
+                                                    }`}
+                                                >
                                                     HFA: {ast.hfa_status}
                                                 </Badge>
                                                 <Badge
-                                                    variant={!ast.wflh_status || ast.wflh_status === 'Normal' ? 'outline' : 'destructive'}
-                                                    className={`text-[9px] px-2 py-0.5 rounded ${
+                                                    variant="outline"
+                                                    className={`text-[9px] px-2 py-0.5 rounded font-bold shadow-2xs ${
                                                         !ast.wflh_status || ast.wflh_status === 'Normal'
-                                                            ? ''
-                                                            : ['Overweight', 'Obese'].includes(ast.wflh_status)
-                                                            ? 'bg-rose-500 text-white'
-                                                            : 'bg-red-600 text-white'
+                                                            ? 'border-emerald-500 text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/30'
+                                                            : ast.wflh_status === 'Severely Wasted'
+                                                            ? 'bg-red-600 text-white border-red-600'
+                                                            : ast.wflh_status === 'Wasted'
+                                                            ? 'bg-amber-500 text-white border-amber-600'
+                                                            : 'bg-rose-500 text-white border-rose-600'
                                                     }`}
                                                 >
                                                     WFL/H: {ast.wflh_status || 'Normal'}

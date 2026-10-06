@@ -13,7 +13,7 @@
 > [!IMPORTANT]
 > **Decision Support Mandate (Human-in-the-Loop Authority):**  
 > 1. **No Autonomous Clinical Diagnoses:** The system calculates preliminary Z-score thresholds and flags nutritional anomalies to assist authorized human health workers. It does **not** provide definitive medical diagnoses.
-> 2. **No Automatic SFP Enrollment:** Supplemental Feeding Program (SFP) enrollment is strictly an authorized clinical and administrative decision requiring parental/guardian consent and manual activation by the BNS/health committee. The system only provides recommendation guidance based on WHO triage cutoffs.
+> 2. **No Automatic SFP Enrollment:** Supplementary Feeding Program (SFP) enrollment is strictly an authorized clinical and administrative decision requiring parental/guardian consent and manual activation by the BNS/health committee. The system only provides recommendation guidance based on WHO triage cutoffs.
 > 3. **No Unilateral Medical Referrals:** The system drafts official referral slips with telemetry data, but formal transmission to the Pasay City Health Office (CHO) requires review and physical signature by the BNS and the Kagawad on Health & Sanitation.
 > 4. **No Automated Legal/Census Certification:** The e-OPT Plus Masterlist requires manual review and tripartite physical certification by the BNS, BCPC Committee Chair, and Punong Barangay.
 

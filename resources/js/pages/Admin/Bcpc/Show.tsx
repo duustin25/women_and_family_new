@@ -31,10 +31,40 @@ export default function BcpcShow({ child, computedAge }: BcpcShowProps) {
 
     const latest: BcpcAssessment | null = child.assessments && child.assessments.length > 0 ? child.assessments[0] : null;
 
+    const initialIntakeRecord: BcpcAssessment | null = child.assessments && child.assessments.length > 0
+        ? child.assessments[child.assessments.length - 1]
+        : null;
+
     // SFP 5-Milestone Tracking
     const findMilestoneRecord = (targetDay: number): BcpcAssessment | null => {
-        if (!child.assessments) return null;
-        return child.assessments.find((a: BcpcAssessment) => a.sfp_day_number === targetDay) || null;
+        if (!child.assessments || child.assessments.length === 0) return null;
+
+        // 1. Explicit sfp_day_number
+        const exact = child.assessments.find((a: BcpcAssessment) => a.sfp_day_number === targetDay);
+        if (exact) return exact;
+
+        if (!child.sfp_start_date) return null;
+        const startTime = new Date(child.sfp_start_date).getTime();
+
+        // 2. Day 1: assessment on sfp_start_date
+        if (targetDay === 1) {
+            const startDateStr = new Date(child.sfp_start_date).toISOString().split('T')[0];
+            const startMatch = child.assessments.find((a: BcpcAssessment) =>
+                new Date(a.date_of_weighing).toISOString().split('T')[0] === startDateStr
+            );
+            if (startMatch) return startMatch;
+        }
+
+        // 3. Clinical interval continuous window match (continuous bins without gaps)
+        return child.assessments.find((a: BcpcAssessment) => {
+            const diffDays = Math.round((new Date(a.date_of_weighing).getTime() - startTime) / (24 * 3600 * 1000));
+            if (targetDay === 1) return diffDays < 16 && diffDays >= 0;
+            if (targetDay === 30) return diffDays >= 16 && diffDays < 46;
+            if (targetDay === 60) return diffDays >= 46 && diffDays < 76;
+            if (targetDay === 90) return diffDays >= 76 && diffDays < 106;
+            if (targetDay === 120) return diffDays >= 106;
+            return false;
+        }) || null;
     };
 
     const day1Record = findMilestoneRecord(1);
@@ -42,6 +72,15 @@ export default function BcpcShow({ child, computedAge }: BcpcShowProps) {
     const day60Record = findMilestoneRecord(60);
     const day90Record = findMilestoneRecord(90);
     const day120Record = findMilestoneRecord(120);
+
+    const sfpDaysElapsed = child.sfp_start_date && child.sfp_status !== 'None'
+        ? Math.max(1, Math.min(120, Math.floor((new Date().getTime() - new Date(child.sfp_start_date).getTime()) / (1000 * 60 * 60 * 24)) + 1))
+        : 1;
+
+    // Mathematical alignment along the 120-Day continuum (0% at Day 1, 25% at Day 30, 50% at Day 60, 75% at Day 90, 100% at Day 120)
+    const cyclePercent = child.sfp_status === 'Graduated' || child.sfp_status === 'Completed'
+        ? 100
+        : Math.min(100, Math.max(0, ((sfpDaysElapsed - 1) / 119) * 100));
 
     const getMilestoneStatus = (day: number, record: BcpcAssessment | null): MilestoneStatus => {
         if (record) {
@@ -52,6 +91,15 @@ export default function BcpcShow({ child, computedAge }: BcpcShowProps) {
         }
         if (!child.sfp_start_date || child.sfp_status === 'None') {
             return { status: 'pending', text: 'Not scheduled' };
+        }
+        if (child.sfp_status === 'Graduated') {
+            return { status: 'pending', text: 'Graduated' };
+        }
+        if (child.sfp_status === 'Completed') {
+            return { status: 'completed', text: 'Cycle Done' };
+        }
+        if (child.sfp_status === 'Terminated') {
+            return { status: 'pending', text: 'Terminated' };
         }
         const start = new Date(child.sfp_start_date);
         const targetDate = new Date(start.getTime() + (day - 1) * 24 * 60 * 60 * 1000);
@@ -67,9 +115,6 @@ export default function BcpcShow({ child, computedAge }: BcpcShowProps) {
         };
     };
 
-    const completedMilestones = [day1Record, day30Record, day60Record, day90Record, day120Record].filter(Boolean).length;
-    const activeWidth = (completedMilestones / 5) * 100;
-
     // Measurement Form State
     const { data: updateData, setData: setUpdateData, put, processing, errors } = useForm({
         date_of_weighing: new Date().toISOString().split('T')[0],
@@ -80,23 +125,29 @@ export default function BcpcShow({ child, computedAge }: BcpcShowProps) {
         bns_assessor: child.bns_name || '',
         sfp_status: child.sfp_status || 'None',
         confirm_outlier: false,
+        is_acute_emergency: false,
     });
 
     const openMeasurementModal = () => {
+        const isEnrolled = child.sfp_status === 'Enrolled';
         setUpdateData({
             date_of_weighing: new Date().toISOString().split('T')[0],
             weight_kg: '',
             height_cm: '',
-            intervention_logs: [],
+            intervention_logs: isEnrolled ? ['Supplementary Feeding (SFP)'] : [],
             remarks: '',
             bns_assessor: child.bns_name || '',
             sfp_status: child.sfp_status || 'None',
             confirm_outlier: false,
+            is_acute_emergency: false,
         });
         setIsModalOpen(true);
     };
 
     const getAutoMilestoneText = (): string => {
+        if (updateData.is_acute_emergency) {
+            return 'Unscheduled Acute / Medical Re-check (Intermediate)';
+        }
         if (!child.sfp_start_date || child.sfp_status === 'None') {
             return 'Standard Monthly Check-in';
         }
@@ -104,13 +155,11 @@ export default function BcpcShow({ child, computedAge }: BcpcShowProps) {
         const weighDate = new Date(updateData.date_of_weighing);
         const daysElapsed = Math.max(0, Math.floor((weighDate.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)));
 
-        if (daysElapsed <= 7) return 'Day 1 (Baseline Enrollment Intake)';
-        if (daysElapsed >= 20 && daysElapsed <= 40) return 'Day 30 (1st Month SFP Check-in)';
-        if (daysElapsed >= 50 && daysElapsed <= 70) return 'Day 60 (Mid-Term SFP Check-in)';
-        if (daysElapsed >= 80 && daysElapsed <= 100) return 'Day 90 (3rd Month SFP Check-in)';
-        if (daysElapsed >= 110 && daysElapsed <= 130) return 'Day 120 (Final SFP Evaluation & Graduation)';
-
-        return `Day ${daysElapsed} Check-in (Active 120-Day Cycle)`;
+        if (daysElapsed < 16) return 'Day 1 (Baseline Enrollment Intake)';
+        if (daysElapsed < 46) return 'Day 30 (1st Month SFP Check-in)';
+        if (daysElapsed < 76) return 'Day 60 (Mid-Term SFP Check-in)';
+        if (daysElapsed < 106) return 'Day 90 (3rd Month SFP Check-in)';
+        return 'Day 120 (Final SFP Evaluation & Graduation)';
     };
 
     const submitForm = (isConfirmed = false) => {
@@ -224,7 +273,7 @@ export default function BcpcShow({ child, computedAge }: BcpcShowProps) {
             case 'Severely Wasted': return '🚨 Critical acute malnutrition. Priority enrollment into SFP or CHO SAM transfer.';
             case 'Wasted': return '🟠 Moderate acute malnutrition. Caloric feeding & monthly growth checks.';
             case 'Overweight':
-            case 'Obese': return '🚫 High BMI/mass. Supplemental Feeding is contraindicated.';
+            case 'Obese': return '🚫 High BMI/mass. Supplementary Feeding is contraindicated.';
             default: return '🟢 Proportionate weight-for-length.';
         }
     };
@@ -256,7 +305,7 @@ export default function BcpcShow({ child, computedAge }: BcpcShowProps) {
         if (isStunted && isElevatedBodyMass) {
             return {
                 title: 'ALERT: Double Burden of Malnutrition (Stunted + Overweight/Obese)',
-                description: 'Child exhibits chronic height deficit combined with excess body mass. Caloric Supplemental Feeding is contraindicated.',
+                description: 'Child exhibits chronic height deficit combined with excess body mass. Caloric Supplementary Feeding is contraindicated.',
                 badge: 'Double Burden / Priority 2',
                 bgColor: 'bg-purple-500/10 dark:bg-purple-950/30',
                 borderColor: 'border-purple-500/30',
@@ -315,7 +364,7 @@ export default function BcpcShow({ child, computedAge }: BcpcShowProps) {
             date_of_weighing: new Date().toISOString().split('T')[0],
             weight_kg: latest?.weight_kg || 10,
             height_cm: latest?.height_cm || 80,
-            intervention_logs: ['Supplemental Feeding (SFP)'],
+            intervention_logs: ['Supplementary Feeding (SFP)'],
             remarks: `Re-enrolled into SFP Cycle ${(child.sfp_cycle_number || 1) + 1} following persistent non-responder status.`,
             bns_assessor: child.bns_name || '',
         }, {
@@ -343,6 +392,9 @@ export default function BcpcShow({ child, computedAge }: BcpcShowProps) {
     };
 
     const toggleIntervention = (item: string) => {
+        if ((item === 'Supplementary Feeding (SFP)' || item === 'Supplemental Feeding (SFP)') && child.sfp_status === 'Enrolled') {
+            return; // SFP is mandatory/locked on during active enrollment
+        }
         const current = [...updateData.intervention_logs];
         const index = current.indexOf(item);
         if (index > -1) {
@@ -374,6 +426,7 @@ export default function BcpcShow({ child, computedAge }: BcpcShowProps) {
                 {/* ── 1. EXECUTIVE PROFILE HEADER CARD ── */}
                 <BcpcProfileHeader
                     child={child}
+                    latest={latest}
                     computedAge={computedAge}
                     hasAgedOut={hasAgedOut}
                     isNonResp={isNonResp}
@@ -409,7 +462,10 @@ export default function BcpcShow({ child, computedAge }: BcpcShowProps) {
                         <BcpcSfpTimelineCard
                             child={child}
                             day1Record={day1Record}
+                            initialIntakeRecord={initialIntakeRecord}
                             latest={latest}
+                            daysElapsed={sfpDaysElapsed}
+                            cyclePercent={cyclePercent}
                             milestones={[
                                 { day: 1, record: day1Record },
                                 { day: 30, record: day30Record },
@@ -418,11 +474,11 @@ export default function BcpcShow({ child, computedAge }: BcpcShowProps) {
                                 { day: 120, record: day120Record },
                             ]}
                             getMilestoneStatus={getMilestoneStatus}
-                            activeWidth={activeWidth}
                         />
 
                         <BcpcDiagnosticsCard
                             latest={latest}
+                            child={child}
                             hasAgedOut={hasAgedOut}
                             onOpenMeasurementModal={openMeasurementModal}
                             getWfaAction={getWfaAction}
@@ -472,6 +528,7 @@ export default function BcpcShow({ child, computedAge }: BcpcShowProps) {
             <BcpcMeasurementModal
                 open={isModalOpen}
                 onOpenChange={setIsModalOpen}
+                child={child}
                 updateData={updateData}
                 setUpdateData={setUpdateData}
                 errors={errors}

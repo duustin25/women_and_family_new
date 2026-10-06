@@ -136,6 +136,7 @@
                 "How to apply for nutritional support",
                 "Nutritional program registry",
                 "Where to get child supplements",
+                "Supplementary feeding program",
                 "Supplemental feeding program",
                 "Registry for malnutrition",
                 "May programa ba para sa mga batang kulang sa timbang?",
@@ -146,7 +147,7 @@
                 "tulong para sa kulang sa timbang"
             ],
             "responses": [
-                "For child nutrition monitoring (e-OPT Plus), checking your child's height/weight status, or registering for the Supplemental Feeding Program and receiving vitamin supplements, please navigate to the BCPC Nutrition module under 'Services' > 'BCPC' or visit the Barangay Health Center. (Para sa child nutrition monitoring, pagpaparehistro sa feeding programs, o paghingi ng bitamina at supplements para sa malnourished na bata, pumunta sa BCPC module sa 'Services' > 'BCPC' o magsadya sa Barangay Health Center.)"
+                "For child nutrition monitoring (e-OPT Plus), checking your child's height/weight status, or registering for the Supplementary Feeding Program and receiving vitamin supplements, please navigate to the BCPC Nutrition module under 'Services' > 'BCPC' or visit the Barangay Health Center. (Para sa child nutrition monitoring, pagpaparehistro sa feeding programs, o paghingi ng bitamina at supplements para sa malnourished na bata, pumunta sa BCPC module sa 'Services' > 'BCPC' o magsadya sa Barangay Health Center.)"
             ]
         },
         {

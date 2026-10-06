@@ -221,7 +221,7 @@ export default function BcpcTriageQueueSection({
                                             <div className="min-w-0">
                                                 <p className="font-bold text-xs sm:text-sm text-foreground truncate">{child.child_first_name} {child.child_last_name}</p>
                                                 <p className="text-[11px] text-muted-foreground font-medium truncate">
-                                                    Height: <strong className="text-amber-600">{child.latest_assessment?.hfa_status}</strong> • Weight: <strong className="text-rose-600">{child.latest_assessment?.wflh_status}</strong>
+                                                    Height: <strong className={child.latest_assessment?.hfa_status === 'Severely Stunted' ? 'text-red-600' : 'text-amber-600'}>{child.latest_assessment?.hfa_status}</strong> • Weight: <strong className="text-rose-600">{child.latest_assessment?.wflh_status}</strong>
                                                 </p>
                                             </div>
                                         </div>
@@ -331,33 +331,30 @@ export default function BcpcTriageQueueSection({
                 </CardContent>
             </div>
 
-            {/* Pagination Controls for Queue */}
-            {currentQueueList.length > itemsPerPage && (
-                <CardFooter className="p-3 border-t bg-muted/20 flex items-center justify-between">
-                    <span className="text-xs text-muted-foreground font-medium">
-                        Showing {(queuePage - 1) * itemsPerPage + 1}–{Math.min(queuePage * itemsPerPage, currentQueueList.length)} of {currentQueueList.length}
+            {/* Pagination / Footer */}
+            {totalQueuePages > 1 && (
+                <CardFooter className="p-2.5 border-t bg-muted/20 flex items-center justify-between text-xs text-muted-foreground">
+                    <span className="font-medium text-[11px]">
+                        Page {queuePage} of {totalQueuePages} ({currentQueueList.length} cases)
                     </span>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1">
                         <Button
                             variant="outline"
-                            size="sm"
-                            onClick={() => onPageChange(Math.max(1, queuePage - 1))}
+                            size="icon"
+                            className="h-6 w-6 rounded-lg"
                             disabled={queuePage === 1}
-                            className="h-8 px-2.5 rounded-lg text-xs font-bold"
+                            onClick={() => onPageChange(Math.max(1, queuePage - 1))}
                         >
-                            <ChevronLeft className="w-3.5 h-3.5 mr-1" /> Prev
+                            <ChevronLeft className="h-3.5 w-3.5" />
                         </Button>
-                        <span className="text-xs font-black text-foreground px-2">
-                            {queuePage} / {totalQueuePages}
-                        </span>
                         <Button
                             variant="outline"
-                            size="sm"
+                            size="icon"
+                            className="h-6 w-6 rounded-lg"
+                            disabled={queuePage >= totalQueuePages}
                             onClick={() => onPageChange(Math.min(totalQueuePages, queuePage + 1))}
-                            disabled={queuePage === totalQueuePages}
-                            className="h-8 px-2.5 rounded-lg text-xs font-bold"
                         >
-                            Next <ChevronRight className="w-3.5 h-3.5 ml-1" />
+                            <ChevronRight className="h-3.5 w-3.5" />
                         </Button>
                     </div>
                 </CardFooter>

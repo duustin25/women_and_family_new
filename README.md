@@ -43,7 +43,7 @@ A highly confidential intake and lifecycle tracking engine for desk officers.
 ### 👶 3. BCPC Nutrition Monitoring (e-OPT Plus)
 An automated community health module tracking child growth under the Barangay Council for the Protection of Children.
 *   **WHO Standards Integration:** Evaluates child growth indices (Weight-for-Age and Height-for-Age) by calculating Z-scores based on WHO Child Growth curves.
-*   **90-Day Supplemental Feeding Program (SFP):** Automatically enrolls malnourished children (Underweight/Stunted) into the SFP, logs weekly assessments, and tracks graduation/relapse statuses.
+*   **120-Day Supplementary Feeding Program (SFP):** Enrolls malnourished children (Underweight/Stunted) into the SFP with guardian consent, logs assessments, and tracks graduation/relapse statuses.
 *   **Zone Hotspots:** Generates analytics of malnutrition hotspots by Zone (Purok) to help direct targeted feeding interventions.
 
 ### 📋 4. Dynamic Organization Accreditor

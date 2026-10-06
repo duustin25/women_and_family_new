@@ -58,13 +58,13 @@ export default function BcpcNutritionalDistributions({
                     </div>
                     <div className="h-2 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden flex">
                         <div style={{ width: `${getPercent(distributions?.hfa?.Normal || 0, totalChildren)}%` }} className="bg-emerald-500 h-full" title="Normal" />
-                        <div style={{ width: `${getPercent(distributions?.hfa?.Stunted || 0, totalChildren)}%` }} className="bg-cyan-600 h-full" title="Stunted" />
-                        <div style={{ width: `${getPercent(distributions?.hfa?.['Severely Stunted'] || 0, totalChildren)}%` }} className="bg-purple-600 h-full" title="Severely Stunted" />
+                        <div style={{ width: `${getPercent(distributions?.hfa?.Stunted || 0, totalChildren)}%` }} className="bg-amber-500 h-full" title="Stunted" />
+                        <div style={{ width: `${getPercent(distributions?.hfa?.['Severely Stunted'] || 0, totalChildren)}%` }} className="bg-red-600 h-full" title="Severely Stunted" />
                     </div>
                     <div className="flex justify-between text-[9px] text-muted-foreground mt-1">
                         <span className="text-emerald-600 font-bold">{distributions?.hfa?.Normal || 0} Normal</span>
-                        <span className="text-cyan-600 font-bold">{distributions?.hfa?.Stunted || 0} Stunted</span>
-                        <span className="text-purple-600 font-bold">{distributions?.hfa?.['Severely Stunted'] || 0} SSt</span>
+                        <span className="text-amber-600 font-bold">{distributions?.hfa?.Stunted || 0} Stunted</span>
+                        <span className="text-red-600 font-bold">{distributions?.hfa?.['Severely Stunted'] || 0} SSt</span>
                     </div>
                 </div>
 

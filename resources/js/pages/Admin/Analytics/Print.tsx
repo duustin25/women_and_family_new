@@ -716,7 +716,7 @@ export default function Print({
                                 </div>
 
                                 <div>
-                                    <h4 className="text-[9px] font-black uppercase text-slate-500 mb-2">V-B. 120-Day Supplemental Feeding Program (SFP) Outcomes (RA 11037)</h4>
+                                    <h4 className="text-[9px] font-black uppercase text-slate-500 mb-2">V-B. 120-Day Supplementary Feeding Program (SFP) Outcomes (RA 11037)</h4>
                                     <table className="w-full text-[8px] border border-slate-300">
                                         <thead className="bg-slate-50">
                                             <tr className="border-b border-slate-300">
@@ -726,7 +726,7 @@ export default function Print({
                                         </thead>
                                         <tbody>
                                             {[
-                                                { label: 'Active Supplemental Feeding (Enrolled)', value: bcpcSummary.sfp_breakdown?.Enrolled || 0 },
+                                                { label: 'Active Supplementary Feeding (Enrolled)', value: bcpcSummary.sfp_breakdown?.Enrolled || 0 },
                                                 { label: 'Successfully Rehabilitated (Graduated)', value: bcpcSummary.sfp_breakdown?.Graduated || 0 },
                                                 { label: 'Completed 120-Day Cycle (Ongoing)', value: bcpcSummary.sfp_breakdown?.Completed || 0 },
                                                 { label: 'Discharged / Non-Enrolled', value: bcpcSummary.sfp_breakdown?.None || 0 },

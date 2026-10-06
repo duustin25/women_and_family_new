@@ -1,5 +1,5 @@
 import { Link } from '@inertiajs/react';
-import { Award, CheckCircle2, ChevronLeft, ChevronRight, Info, UserCheck } from 'lucide-react';
+import { Award, CheckCircle2, ChevronLeft, ChevronRight, Info, Ruler, Scale, UserCheck } from 'lucide-react';
 import React from 'react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -86,6 +86,19 @@ export default function BcpcChildrenTable({
                                                 <p className="text-xs text-muted-foreground">
                                                     {child.sex} • {calculateAge(child.date_of_birth)} {child.zone ? `• ${child.zone.name}` : ''}
                                                 </p>
+                                                {latest?.weight_kg != null && (
+                                                    <p className="text-[11px] font-bold text-foreground flex items-center gap-1.5 mt-0.5">
+                                                        <Scale className="w-3 h-3 text-emerald-600 shrink-0" />
+                                                        <span>{Number(latest.weight_kg).toFixed(1)} kg</span>
+                                                        {latest.height_cm != null && (
+                                                            <>
+                                                                <span className="text-muted-foreground">•</span>
+                                                                <Ruler className="w-3 h-3 text-teal-600 shrink-0" />
+                                                                <span>{Number(latest.height_cm).toFixed(1)} cm</span>
+                                                            </>
+                                                        )}
+                                                    </p>
+                                                )}
                                             </div>
                                         </div>
                                         {isSAM ? (
@@ -298,6 +311,19 @@ export default function BcpcChildrenTable({
                                                 <span className="text-foreground">
                                                     {lastDate ? lastDate.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : 'No record'}
                                                 </span>
+                                                {latest?.weight_kg != null && (
+                                                    <span className="text-[11px] font-bold text-foreground flex items-center gap-1 mt-0.5">
+                                                        <Scale className="w-3 h-3 text-emerald-600 shrink-0" />
+                                                        <span className="text-emerald-700 dark:text-emerald-400 font-extrabold">{Number(latest.weight_kg).toFixed(1)} kg</span>
+                                                        {latest.height_cm != null && (
+                                                            <>
+                                                                <span className="text-muted-foreground font-normal">/</span>
+                                                                <Ruler className="w-3 h-3 text-teal-600 shrink-0" />
+                                                                <span className="text-teal-700 dark:text-teal-400 font-extrabold">{Number(latest.height_cm).toFixed(1)} cm</span>
+                                                            </>
+                                                        )}
+                                                    </span>
+                                                )}
                                                 {isOverdue && (
                                                     <Badge variant="outline" className="w-fit text-[8px] font-black uppercase border-rose-400 bg-rose-50 text-rose-700 mt-1">
                                                         {daysSinceWeighed}d Overdue

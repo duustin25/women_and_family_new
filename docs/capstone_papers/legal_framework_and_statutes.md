@@ -43,7 +43,7 @@ graph TD
 
 ### 2.2 Republic Act No. 11037 (Masustansyang Pagkain para sa Batang Pilipino Act)
 * **Target Beneficiaries (0–59 Months):**
-  - *Statutory Boundary:* LGU supplemental feeding applies strictly to preschoolers aged 0 to 59 months.
+  - *Statutory Boundary:* LGU supplementary feeding applies strictly to preschoolers aged 0 to 59 months.
   - *System Enforcement:* At 60 months (5 years), the system locks new assessment entries and issues an automated notice redirecting the child to DepEd's School-Based Feeding Program (SBFP).
 * **120-Day Feeding Cycle:**
   - *Statutory Rule:* Mandates 120 consecutive feeding days for undernourished preschoolers.

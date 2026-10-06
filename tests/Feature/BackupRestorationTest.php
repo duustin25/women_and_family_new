@@ -50,7 +50,7 @@ class BackupRestorationTest extends TestCase
                 'name' => 'Child Carl D.',
                 'category' => 'BCPC_SFP',
                 'risk_score' => 7,
-                'incident_notes' => 'SAM cohort monitoring and supplemental feeding enrolment.',
+                'incident_notes' => 'SAM cohort monitoring and supplementary feeding enrolment.',
                 'created_at' => '2026-10-01 11:30:00',
             ],
             [

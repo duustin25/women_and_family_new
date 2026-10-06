@@ -9,12 +9,12 @@
 
 ## 📌 1. Module Overview & Decision Support System (DSS) Framework
 
-The **BCPC Child Nutrition Module** operates strictly as a **Clinical & Administrative Decision Support System (DSS)** engineered for Barangay 183, Pasay City. It assists human health workers (Barangay Nutrition Scholars, Barangay Health Workers, and Committee Officials) during the annual **Operation Timbang Plus (OPT+)** preschooler census, provides preliminary WHO growth screening across 3 axes, assists with the administrative monitoring of the statutory **120-Day Supplemental Feeding Program (SFP)**, prevents clerical error via biological range sanity checks, and prepares formatted documents for executive sign-off (COA, DOH, NNC).
+The **BCPC Child Nutrition Module** operates strictly as a **Clinical & Administrative Decision Support System (DSS)** engineered for Barangay 183, Pasay City. It assists human health workers (Barangay Nutrition Scholars, Barangay Health Workers, and Committee Officials) during the annual **Operation Timbang Plus (OPT+)** preschooler census, provides preliminary WHO growth screening across 3 axes, assists with the administrative monitoring of the statutory **120-Day Supplementary Feeding Program (SFP)**, prevents clerical error via biological range sanity checks, and prepares formatted documents for executive sign-off (COA, DOH, NNC).
 
 > [!IMPORTANT]
 > **Core Decision Support System (DSS) Mandate:**  
 > 1. **No Autonomous Diagnoses:** Software calculations serve as decision-support telemetry to guide authorized personnel; they do **not** replace professional clinical judgment.
-> 2. **No Automatic SFP Enrollment:** Supplemental Feeding Program (SFP) enrollment is strictly an authorized clinical decision requiring guardian consent and human activation by the BNS.
+> 2. **No Automatic SFP Enrollment:** Supplementary Feeding Program (SFP) enrollment is strictly an authorized clinical decision requiring guardian consent and human activation by the BNS.
 > 3. **No Unilateral Referrals or Certifications:** The system generates draft documents (CHO Referral Slips and e-OPT Plus Masterlists) which require physical review and handwritten/tripartite certification by the BNS, Kagawad on Health, and Punong Barangay.
 
 ### 🎯 Key System Highlights
@@ -32,7 +32,7 @@ The **BCPC Child Nutrition Module** operates strictly as a **Clinical & Administ
 
 | Legal / Policy Basis | Statutory Mandate | System Implementation |
 | :--- | :--- | :--- |
-| **Republic Act No. 11037** | Mandates 120-day supplemental feeding for undernourished children aged 0–59 months in LGUs. | SFP Engine creates 120-day milestone schedule and monitors net weight gain velocity ($\Delta \text{kg}$, $\text{g/day}$) with guardian consent. |
+| **Republic Act No. 11037** | Mandates 120-day supplementary feeding for undernourished children aged 0–59 months in LGUs. | SFP Engine creates 120-day milestone schedule and monitors net weight gain velocity ($\Delta \text{kg}$, $\text{g/day}$) with guardian consent. |
 | **Presidential Decree No. 1567** | Institutionalizes Barangay Nutrition Scholars (BNS) as primary grassroots health workers. | Dedicated BNS role-based access for field weighing data entry and clinic logs. |
 | **DOH AO No. 2015-0055** | National guidelines for Severe Acute Malnutrition (SAM) identification and immediate clinical triage. | WFL/H z-score $<-3\text{ SD}$ or Bilateral Pitting Oedema triggers urgent Pasay Health Office referral slip generator. |
 | **Statutory Exclusion: RA 7610** | External child abuse/exploitation cases are non-mediable public crimes under court jurisdiction. | BCPC module **excludes** a child abuse blotter; provides emergency hotlines to PNP WCPD and DSWD. |

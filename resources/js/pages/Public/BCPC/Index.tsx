@@ -63,7 +63,7 @@ export default function BcpcIndex() {
                                 </CardHeader>
                                 <CardContent className="p-6 pt-1">
                                     <p className="text-slate-700 dark:text-slate-300 text-base leading-relaxed">
-                                        Targeted supplemental feeding for children identified as underweight or undernourished to restore healthy weight and overall wellness.
+                                        Targeted supplementary feeding for children identified as underweight or undernourished to restore healthy weight and overall wellness.
                                     </p>
                                 </CardContent>
                             </Card>
@@ -96,7 +96,7 @@ export default function BcpcIndex() {
                                 { step: "01", title: "Registration", desc: "Enrolling children into the community BCPC Health & Nutrition registry through Barangay Health Workers (BHWs)." },
                                 { step: "02", title: "Assessment", desc: "Precise measurement of weight, height, and age to evaluate Body Mass Index (BMI) and developmental growth." },
                                 { step: "03", title: "Categorization", desc: "Standardized classification into Normal, Underweight, Stunted, or Wasted according to WHO international growth standards." },
-                                { step: "04", title: "Intervention", desc: "Timely delivery of supplemental feeding, Vitamin A supplementation, micronutrient powder, and deworming treatments." }
+                                { step: "04", title: "Intervention", desc: "Timely delivery of supplementary feeding, Vitamin A supplementation, micronutrient powder, and deworming treatments." }
                             ].map((item, index) => (
                                 <div key={index} className="relative pl-8 md:pl-0 pt-0 md:pt-12 group">
                                     <div className="hidden md:block absolute top-0 left-0 w-full h-1 bg-slate-200 dark:bg-neutral-700 group-hover:bg-emerald-400 transition-colors"></div>

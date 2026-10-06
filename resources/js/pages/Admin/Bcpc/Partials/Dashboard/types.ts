@@ -38,5 +38,16 @@ export interface BcpcUpcomingBirthday {
     child_first_name: string;
     child_last_name: string;
     date_of_birth: string;
+    birth_day?: number;
+    birth_month_name?: string;
+    turning_age?: number;
+    is_today?: boolean;
+    is_past?: boolean;
+    days_diff?: number;
+    days_until?: number;
+    status?: string;
+    sfp_status?: string;
+    bns_name?: string;
+    zone?: { name: string } | null;
 }
 

@@ -12,7 +12,7 @@
 The **Women and Family Protection Information System (WFPIS)** is an enterprise-grade, role-based public administration and clinical decision support system. Built with a modern **TALL + React 19** stack (Laravel 11, Inertia.js, React 19, TypeScript, Tailwind CSS, Shadcn UI, Python NLP/MLP, MySQL 8.0), the platform digitizes and unifies four critical barangay governance sectors:
 
 1. **🛡️ VAWC Module:** Domestic violence case management, **VAWC-RAVE** lethal danger scoring, and statutory 24-hour Barangay Protection Order (BPO) SLA automation under **Republic Act No. 9262**.
-2. **👶 BCPC Module:** Child malnutrition census and growth monitoring adhering to **NNC Operation Timbang (e-OPT) Plus** and **WHO 3-Axis Child Growth Standards**, with 120-Day Supplemental Feeding Program (SFP) milestone tracking under **Republic Act No. 11037**.
+2. **👶 BCPC Module:** Child malnutrition census and growth monitoring adhering to **NNC Operation Timbang (e-OPT) Plus** and **WHO 3-Axis Child Growth Standards**, with 120-Day Supplementary Feeding Program (SFP) milestone tracking under **Republic Act No. 11037**.
 3. **🌸 GAD Module:** Community seminar scheduling, GAD Plan execution tracking ($\ge 5\%$ budget allocation), proposal vetting, and asynchronous resident alerts under **Republic Act No. 9710**.
 4. **👥 Organizations Module:** Multi-tenant civil society governance (KALIPI, Solo Parents under **RA 11861**, PWDs under **RA 7277**, Senior Citizens under **RA 9994**), public application portal with Email OTP, 14-day auto-approval SLA, and resident appeals channels.
 

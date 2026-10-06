@@ -5,11 +5,9 @@ import AppLayout from '@/layouts/app-layout';
 import { BcpcBirthdaysWidget } from './Partials/Dashboard/BcpcBirthdaysWidget';
 import BcpcDashboardHeader from './Partials/Dashboard/BcpcDashboardHeader';
 import BcpcKpiStrip from './Partials/Dashboard/BcpcKpiStrip';
-import BcpcNutritionalDistributions from './Partials/Dashboard/BcpcNutritionalDistributions';
 import BcpcSfpRosterSection from './Partials/Dashboard/BcpcSfpRosterSection';
 import BcpcTriageQueueSection from './Partials/Dashboard/BcpcTriageQueueSection';
-import BcpcZoneHeatmapTable from './Partials/Dashboard/BcpcZoneHeatmapTable';
-import type { ZoneBreakdownItem, DashboardDistributions, DashboardMetrics, BcpcUpcomingBirthday } from './Partials/Dashboard/types';
+import type { DashboardMetrics, BcpcUpcomingBirthday } from './Partials/Dashboard/types';
 
 interface BcpcDashboardProps {
     monitoredChildren?: any[];
@@ -20,8 +18,7 @@ interface BcpcDashboardProps {
     activeSfp?: any[];
     overdueWeighings?: any[];
     upcomingBirthdays?: BcpcUpcomingBirthday[];
-    zonesBreakdown?: ZoneBreakdownItem[];
-    distributions?: DashboardDistributions;
+    currentMonthName?: string;
     metrics?: DashboardMetrics;
 }
 
@@ -34,16 +31,15 @@ export default function BcpcDashboard({
     activeSfp = [],
     overdueWeighings = [],
     upcomingBirthdays = [],
-    zonesBreakdown = [],
-    distributions = { wfa: {}, hfa: {}, wflh: {}, sfp: {} },
+    currentMonthName,
     metrics = {},
 }: BcpcDashboardProps) {
     const [activeQueueTab, setActiveQueueTab] = useState<'sam' | 'mam' | 'double_burden' | 'stunted' | 'overdue'>('sam');
     const [queuePage, setQueuePage] = useState(1);
     const [sfpPage, setSfpPage] = useState(1);
-    const itemsPerPage = 6;
+    const itemsPerPage = 5;
 
-    // 🔄 Real-time Autoloader: Polls BCPC metrics every 10s
+    // 🔄 Real-time Autoloader: Polls BCPC metrics & celebrants every 10s
     usePoll(10000, {
         only: [
             'monitoredChildren',
@@ -54,8 +50,7 @@ export default function BcpcDashboard({
             'activeSfp',
             'overdueWeighings',
             'upcomingBirthdays',
-            'zonesBreakdown',
-            'distributions',
+            'currentMonthName',
             'metrics',
         ],
     });
@@ -100,7 +95,7 @@ export default function BcpcDashboard({
             ]}
         >
             <Head title="BCPC Nutrition Action Center" />
-            <div className="flex h-full flex-1 flex-col gap-5 sm:gap-6 p-4 sm:p-6 w-full">
+            <div className="flex h-full flex-1 flex-col gap-3.5 sm:gap-4 p-3.5 sm:p-5 w-full max-w-[1700px] mx-auto">
                 {/* ── HEADER ── */}
                 <BcpcDashboardHeader />
 
@@ -116,10 +111,10 @@ export default function BcpcDashboard({
                     onTabChange={handleTabChange}
                 />
 
-                {/* ── 2. CLINICAL ACTION QUEUE & SFP ROSTER ── */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    {/* Clinical Action Queue (2 cols) */}
-                    <div className="lg:col-span-2">
+                {/* ── 2. CLINICAL ACTION QUEUE, SFP ROSTER & BIRTHDAYS (COMPACT NO-SCROLL LAYOUT) ── */}
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-4 flex-1">
+                    {/* Clinical Action Queue (6 cols on lg/xl) */}
+                    <div className="lg:col-span-6 xl:col-span-6 flex flex-col">
                         <BcpcTriageQueueSection
                             activeQueueTab={activeQueueTab}
                             onTabChange={handleTabChange}
@@ -137,8 +132,8 @@ export default function BcpcDashboard({
                         />
                     </div>
 
-                    {/* SFP Active Roster (1 col) */}
-                    <div>
+                    {/* SFP Active Roster (3 cols on lg/xl) */}
+                    <div className="lg:col-span-3 xl:col-span-3 flex flex-col">
                         <BcpcSfpRosterSection
                             activeSfp={activeSfp}
                             paginatedSfp={paginatedSfp}
@@ -148,13 +143,14 @@ export default function BcpcDashboard({
                             onPageChange={setSfpPage}
                         />
                     </div>
-                </div>
 
-                {/* ── 3. ZONE HOTSPOTS & HEALTH STATUS ── */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-                    <BcpcZoneHeatmapTable zonesBreakdown={zonesBreakdown} />
-                    <BcpcNutritionalDistributions distributions={distributions} totalChildren={totalChildren} />
-                    <BcpcBirthdaysWidget upcomingBirthdays={upcomingBirthdays} />
+                    {/* Real-Time Upcoming Birthdays in Current Month (3 cols on lg/xl) */}
+                    <div className="lg:col-span-3 xl:col-span-3 flex flex-col">
+                        <BcpcBirthdaysWidget
+                            upcomingBirthdays={upcomingBirthdays}
+                            currentMonthName={currentMonthName}
+                        />
+                    </div>
                 </div>
             </div>
         </AppLayout>

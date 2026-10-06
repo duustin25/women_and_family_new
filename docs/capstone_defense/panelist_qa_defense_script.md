@@ -35,7 +35,7 @@
 > **Candidate Answer:**
 > *"Preschool children do not get weighed on their exact monthly birthdays. If a child is 14 months and 28 days old (14.93 months), rounding down to 14 months compares them against reference standards for a younger child, while rounding up to 15 months compares them against older standards.
 >
-> In public health, this 1-month rounding error can misdiagnose a child with **Moderate Acute Malnutrition (MAM)** as 'Normal' (a false negative), thereby denying them enrollment into the 120-Day Supplemental Feeding Program (SFP). Our `NutritionCalculatorService` applies decimal continuous linear interpolation between monthly lookup milestones, ensuring medical-grade accuracy."*
+> In public health, this 1-month rounding error can misdiagnose a child with **Moderate Acute Malnutrition (MAM)** as 'Normal' (a false negative), thereby denying them enrollment into the 120-Day Supplementary Feeding Program (SFP). Our `NutritionCalculatorService` applies decimal continuous linear interpolation between monthly lookup milestones, ensuring medical-grade accuracy."*
 
 ### Q5: *"What happens if a tired BNS worker accidentally enters a typo, such as entering 115 kg instead of 11.5 kg?"*
 > **Candidate Answer:**

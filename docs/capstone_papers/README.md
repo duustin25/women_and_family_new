@@ -13,7 +13,7 @@ Local government units (LGUs), particularly at the barangay level, serve as the 
 
 To address these empirical challenges, this study presents the development and rigorous evaluation of a **Web-Based Women and Family Protection and Support Management System (WFPIS)**. Developed using the Research and Development (R&D) methodology coupled with the Software Development Life Cycle (SDLC), the platform integrates four core municipal operations:
 1. **Violence Against Women and Children (VAWC) Management** with the **VAWC-RAVE (Risk Assessment for Vulnerability Emergencies)** scoring engine and 24-hour Barangay Protection Order (BPO) SLA automation.
-2. **Barangay Council for the Protection of Children (BCPC)** preschooler nutrition monitoring adhering to **NNC e-OPT Plus** and **WHO Child Growth Standards** with 120-Day Supplemental Feeding Program (SFP) milestone tracking.
+2. **Barangay Council for the Protection of Children (BCPC)** preschooler nutrition monitoring adhering to **NNC e-OPT Plus** and **WHO Child Growth Standards** with 120-Day Supplementary Feeding Program (SFP) milestone tracking.
 3. **Gender and Development (GAD)** activity coordination and community seminar management.
 4. **Community Organizations & Beneficiary Governance** featuring citizen self-service application, 14-day SLA enforcement, and resident appeals channels.
 

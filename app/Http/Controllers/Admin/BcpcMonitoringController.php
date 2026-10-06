@@ -234,6 +234,7 @@ class BcpcMonitoringController extends Controller
             'activeSfp' => $cohorts['activeSfp'],
             'overdueWeighings' => $timeSensitive['overdueWeighings'],
             'upcomingBirthdays' => $timeSensitive['upcomingBirthdays'],
+            'currentMonthName' => Carbon::now()->format('F'),
             'zonesBreakdown' => $zonesBreakdown,
             'distributions' => $distributions,
             'metrics' => [
@@ -304,7 +305,7 @@ class BcpcMonitoringController extends Controller
             return $isStunted && !$isObese;
         })->values();
 
-        // 5. Active Supplemental Feeding Program (SFP) Roster
+        // 5. Active Supplementary Feeding Program (SFP) Roster
         $activeSfp = $children->filter(function ($child) {
             return $child->sfp_status === 'Enrolled';
         })->values();
@@ -356,21 +357,42 @@ class BcpcMonitoringController extends Controller
             return $latest ? Carbon::parse($latest->date_of_weighing)->timestamp : 0;
         })->values();
 
-        // Upcoming Birthdays (Next 30 Days)
+        // Current Month Birthdays in Real-Time (Same Month Born and Current Month)
         $today = Carbon::now();
-        $upcomingBirthdays = $children->filter(function ($child) use ($today) {
+        $currentMonth = (int) $today->month;
+        $currentDay = (int) $today->day;
+        $currentMonthName = $today->format('F');
+
+        $upcomingBirthdays = $children->filter(function ($child) use ($currentMonth) {
             if (!$child->date_of_birth) return false;
-            $birthdayThisYear = $child->date_of_birth->copy()->year($today->year);
-            if ($birthdayThisYear->isPast()) {
-                $birthdayThisYear->addYear();
-            }
-            return $today->diffInDays($birthdayThisYear) <= 30;
-        })->sortBy(function ($child) use ($today) {
-            $birthdayThisYear = $child->date_of_birth->copy()->year($today->year);
-            if ($birthdayThisYear->isPast()) {
-                $birthdayThisYear->addYear();
-            }
-            return $birthdayThisYear->timestamp;
+            return (int) $child->date_of_birth->month === $currentMonth;
+        })->sortBy(function ($child) {
+            return (int) $child->date_of_birth->day;
+        })->map(function ($child) use ($today, $currentDay, $currentMonthName) {
+            $birthDay = (int) $child->date_of_birth->day;
+            $birthYear = (int) $child->date_of_birth->year;
+            $turningAge = max(1, $today->year - $birthYear);
+            $isToday = ($birthDay === $currentDay);
+            $isPast = ($birthDay < $currentDay);
+            $daysDiff = $birthDay - $currentDay;
+
+            return [
+                'id' => $child->id,
+                'child_first_name' => $child->child_first_name,
+                'child_last_name' => $child->child_last_name,
+                'date_of_birth' => $child->date_of_birth->toDateString(),
+                'birth_day' => $birthDay,
+                'birth_month_name' => $currentMonthName,
+                'turning_age' => $turningAge,
+                'is_today' => $isToday,
+                'is_past' => $isPast,
+                'days_diff' => $daysDiff,
+                'days_until' => max(0, $daysDiff),
+                'status' => $child->status,
+                'sfp_status' => $child->sfp_status ?? 'None',
+                'bns_name' => $child->bns_name,
+                'zone' => $child->zone ? ['name' => $child->zone->name] : null,
+            ];
         })->values();
 
         return [
@@ -554,24 +576,30 @@ class BcpcMonitoringController extends Controller
             $wflh = $this->nutritionService->evaluateWeightForLengthHeight($ageInMonths, $validated['sex'], $validated['weight_kg'], $validated['height_cm']);
 
             // NNC Bilateral Oedema (Fluid Retention) SAM Protocol Override (NNC Page 23)
-            $interventionLogs = $validated['intervention_logs'] ?? [];
+            $interventionLogs = array_map(function ($log) {
+                return $log === 'Supplemental Feeding (SFP)' ? 'Supplementary Feeding (SFP)' : $log;
+            }, $validated['intervention_logs'] ?? []);
+
             if (in_array('Bilateral Oedema (Fluid Retention) [SAM PIMAM]', $interventionLogs)) {
                 $wfa = 'Severely Underweight';
                 $wflh = 'Severely Wasted';
             }
 
-            // Supplemental Feeding Program (SFP) Triage (Decision-Support / Opt-in with Consent)
+            // Supplementary Feeding Program (SFP) Triage (Decision-Support / Opt-in with Consent)
             // SFP is contraindicated for Overweight / Obese children (Double Burden Protocol)
             $isOverweightOrObese = in_array($wflh, ['Overweight', 'Obese']);
             $requestedEnrollment = ($validated['sfp_status'] ?? 'None') === 'Enrolled'
                 || $request->boolean('enroll_in_sfp')
-                || in_array('Supplemental Feeding (SFP)', $interventionLogs);
+                || in_array('Supplementary Feeding (SFP)', $interventionLogs);
 
             $sfpStatus = 'None';
             $sfpStartDate = null;
             if (!$isOverweightOrObese && $requestedEnrollment) {
                 $sfpStatus = 'Enrolled';
                 $sfpStartDate = $validated['date_of_weighing'];
+                if (!in_array('Supplementary Feeding (SFP)', $interventionLogs)) {
+                    $interventionLogs[] = 'Supplementary Feeding (SFP)';
+                }
             }
 
             // 3. Create Child Profile
@@ -628,29 +656,6 @@ class BcpcMonitoringController extends Controller
             'sfp_status' => $child->sfp_status,
         ]);
 
-        // Auto-heal SFP state for enrollees if latest assessment recovered or completed 120 days
-        if ($child->sfp_status === 'Enrolled' && $child->latestAssessment) {
-            $latest = $child->latestAssessment;
-            $weighingDate = Carbon::parse($latest->date_of_weighing);
-            $startDate = $child->sfp_start_date ? Carbon::parse($child->sfp_start_date) : $weighingDate;
-            $daysElapsed = $startDate->diffInDays($weighingDate);
-
-            $wfa = $latest->wfa_status;
-            $wflh = $latest->wflh_status ?? 'Normal';
-
-            if ($wfa === 'Normal' && $wflh === 'Normal') {
-                $child->update([
-                    'sfp_status' => 'Graduated',
-                    'sfp_end_date' => $latest->date_of_weighing,
-                ]);
-            } elseif ($daysElapsed >= 115) {
-                $child->update([
-                    'sfp_status' => ($wfa === 'Normal' && $wflh === 'Normal') ? 'Graduated' : 'Completed',
-                    'sfp_end_date' => $latest->date_of_weighing,
-                ]);
-            }
-        }
-
         $ageInMonths = $this->nutritionService->calculateAgeInMonths($child->date_of_birth->format('Y-m-d'), Carbon::now()->format('Y-m-d'));
         $years = floor($ageInMonths / 12);
         $months = $ageInMonths % 12;
@@ -678,6 +683,7 @@ class BcpcMonitoringController extends Controller
             'sfp_day_number' => 'nullable|integer',
             'sfp_status' => 'nullable|string|in:None,Enrolled,Completed,Graduated,Terminated',
             'confirm_outlier' => 'nullable|boolean',
+            'is_acute_emergency' => 'nullable|boolean',
         ]);
 
         // 0-59 Months Lockout Check (OPT Plus Guideline)
@@ -686,6 +692,49 @@ class BcpcMonitoringController extends Controller
             throw \Illuminate\Validation\ValidationException::withMessages([
                 'date_of_weighing' => 'Child has aged out of the Barangay e-OPT Plus program (0-59 months). Nutritional monitoring is now handled by the school sector.'
             ]);
+        }
+
+        // 1. Same-Day Duplicate Measurement Prevention
+        $existingSameDay = $child->assessments()
+            ->whereDate('date_of_weighing', $validated['date_of_weighing'])
+            ->exists();
+
+        if ($existingSameDay) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'date_of_weighing' => 'A physical growth measurement is already recorded for this child on ' . Carbon::parse($validated['date_of_weighing'])->format('M d, Y') . '. Duplicate same-day measurements are not permitted.'
+            ]);
+        }
+
+        // 2. Option A Hard Lock: SFP Monthly Cadence Enforcement (RA 11037 & NNC Protocol)
+        $isCurrentlyEnrolled = $child->sfp_status === 'Enrolled';
+        $latestAssessment = $child->latestAssessment;
+
+        if ($isCurrentlyEnrolled && $latestAssessment) {
+            $lastWeighDate = Carbon::parse($latestAssessment->date_of_weighing);
+            $newWeighDate = Carbon::parse($validated['date_of_weighing']);
+            $daysSinceLastWeighing = $lastWeighDate->diffInDays($newWeighDate);
+
+            // Regular SFP follow-up weigh-ins occur at ~30 day intervals (Minimum 21 days required between monthly milestones)
+            if ($daysSinceLastWeighing < 21 && $newWeighDate->greaterThanOrEqualTo($lastWeighDate)) {
+                $isAcuteEmergency = $request->boolean('is_acute_emergency');
+
+                if (!$isAcuteEmergency) {
+                    $nextMilestoneDue = $lastWeighDate->copy()->addDays(30);
+                    $daysRemaining = Carbon::now()->diffInDays($nextMilestoneDue, false);
+                    $daysRemainingText = $daysRemaining > 0 ? "in {$daysRemaining} day(s)" : "soon";
+
+                    throw \Illuminate\Validation\ValidationException::withMessages([
+                        'date_of_weighing' => "SFP Monthly Cadence Protocol Lock (RA 11037): Under National Nutrition Council rules, regular feeding program weigh-ins must be conducted monthly (~30 days). Only {$daysSinceLastWeighing} day(s) have elapsed since the last weighing on " . $lastWeighDate->format('M d, Y') . ". Next scheduled monthly milestone is due on " . $nextMilestoneDue->format('M d, Y') . " ({$daysRemainingText}). If conducting an unscheduled acute clinical assessment, enable 'Acute Clinical Re-check' and specify clinical reasons in remarks."
+                    ]);
+                }
+
+                // If emergency override is checked, clinical justification remarks are mandatory
+                if (empty($validated['remarks'])) {
+                    throw \Illuminate\Validation\ValidationException::withMessages([
+                        'remarks' => 'Clinical Audit Requirement: Justification in Remarks is strictly mandatory when conducting an unscheduled acute clinical re-check before the 30-day milestone.'
+                    ]);
+                }
+            }
         }
 
         // Secondary Backend Outlier Safeguard (unless user explicitly confirmed override)
@@ -705,7 +754,7 @@ class BcpcMonitoringController extends Controller
             }
         }
 
-        return DB::transaction(function () use ($validated, $child, $ageInMonths) {
+        return DB::transaction(function () use ($validated, $child, $ageInMonths, $request) {
             $wfa = $this->nutritionService->evaluateWeightForAge($ageInMonths, $child->sex, $validated['weight_kg']);
             $hfa = $this->nutritionService->evaluateHeightForAge($ageInMonths, $child->sex, $validated['height_cm']);
             $wflh = $this->nutritionService->evaluateWeightForLengthHeight($ageInMonths, $child->sex, $validated['weight_kg'], $validated['height_cm']);
@@ -720,48 +769,81 @@ class BcpcMonitoringController extends Controller
             // SFP Guardrail: SFP is contraindicated for Overweight / Obese children (Double Burden Protocol)
             $isOverweightOrObese = in_array($wflh, ['Overweight', 'Obese']);
 
-            // 1. Auto-graduation & 120-Day Cycle Completion Rules (RA 11037 / NNC OPT+)
+            // 1. Calculate active feeding duration
             $weighingDate = Carbon::parse($validated['date_of_weighing']);
             $sfpStartDate = $child->sfp_start_date;
             $sfpEndDate = $child->sfp_end_date;
-            $daysElapsed = $sfpStartDate ? Carbon::parse($sfpStartDate)->diffInDays($weighingDate) : 0;
+            $daysElapsed = $sfpStartDate ? max(1, Carbon::parse($sfpStartDate)->diffInDays($weighingDate) + 1) : 0;
             $sfpStatus = $child->sfp_status;
             $isRelapse = false;
 
-            if ($child->sfp_status === 'Enrolled') {
-                if ($isOverweightOrObese) {
-                    // Overnutrition detected -> Discharge from SFP to prevent overfeeding
-                    $sfpStatus = 'Graduated';
-                    $sfpEndDate = $validated['date_of_weighing'];
-                } elseif ($wfa === 'Normal' && $wflh === 'Normal') {
-                    // Child fully recovered to Normal status -> Graduated!
-                    $sfpStatus = 'Graduated';
-                    $sfpEndDate = $validated['date_of_weighing'];
-                } elseif ($daysElapsed >= 115) {
-                    // Completed full 120-Day Feeding Cycle
-                    $sfpStatus = ($wfa === 'Normal' && $wflh === 'Normal') ? 'Graduated' : 'Completed';
+            // 2. Strict Clinical Governance on Manual SFP Status Overrides
+            if (isset($validated['sfp_status']) && !empty($validated['sfp_status']) && $validated['sfp_status'] !== $child->sfp_status) {
+                $requestedStatus = $validated['sfp_status'];
+
+                // Safety Rule A: Cannot manually graduate if child is malnourished or feeding duration is premature (< 30 days)
+                if ($requestedStatus === 'Graduated') {
+                    if ($wfa !== 'Normal' || $wflh !== 'Normal') {
+                        throw \Illuminate\Validation\ValidationException::withMessages([
+                            'sfp_status' => "Clinical Safety Error: Cannot graduate child into 'Recovered'. Current assessment is WFA: {$wfa}, WFL/H: {$wflh}. Under RA 11037 / NNC guidelines, graduation strictly requires confirmed Normal nutritional classification."
+                        ]);
+                    }
+                    if ($daysElapsed < 30) {
+                        throw \Illuminate\Validation\ValidationException::withMessages([
+                            'sfp_status' => "Premature Graduation Error: Child has only completed Day {$daysElapsed} of the 120-Day Feeding Program. A minimum of 30 days of active feeding and observation is required before graduation can be approved."
+                        ]);
+                    }
+                }
+
+                // Safety Rule B: Cannot mark cycle as completed prematurely (< 110 days)
+                if ($requestedStatus === 'Completed') {
+                    if ($daysElapsed < 110) {
+                        throw \Illuminate\Validation\ValidationException::withMessages([
+                            'sfp_status' => "Invalid Completion Error: Child has only completed Day {$daysElapsed} of the 120-Day Feeding Program. Marking cycle as completed requires reaching at least Day 110."
+                        ]);
+                    }
+                }
+
+                // Safety Rule C: SFP cannot be manually enrolled if child is overweight or obese
+                if ($requestedStatus === 'Enrolled' && $isOverweightOrObese) {
+                    throw \Illuminate\Validation\ValidationException::withMessages([
+                        'sfp_status' => 'Contraindication Error: Supplementary Feeding (SFP) is strictly contraindicated for children with elevated body mass (Overweight/Obese).'
+                    ]);
+                }
+
+                // Safety Rule D: Discharge or Termination from active SFP requires clinical justification
+                if (in_array($requestedStatus, ['Terminated', 'None']) && $child->sfp_status === 'Enrolled' && empty($validated['remarks'])) {
+                    throw \Illuminate\Validation\ValidationException::withMessages([
+                        'remarks' => 'Clinical Audit Requirement: Please specify the reason in Remarks when discharging or terminating a child from active Supplementary Feeding.'
+                    ]);
+                }
+
+                $sfpStatus = $requestedStatus;
+                if ($sfpStatus === 'Enrolled' && !$sfpStartDate) {
+                    $sfpStartDate = $validated['date_of_weighing'];
+                }
+                if (in_array($sfpStatus, ['Graduated', 'Completed', 'Terminated', 'None'])) {
                     $sfpEndDate = $validated['date_of_weighing'];
                 }
             }
 
-            // 2. Respect manual user dropdown overrides or explicit intervention selection if specified
-            if (isset($validated['sfp_status']) && !empty($validated['sfp_status']) && $validated['sfp_status'] !== $child->sfp_status) {
-                // SFP cannot be manually enrolled if child is overweight or obese
-                if ($validated['sfp_status'] === 'Enrolled' && $isOverweightOrObese) {
-                    // Do not allow enrolling an overweight/obese child into caloric feeding
-                } else {
-                    $sfpStatus = $validated['sfp_status'];
-                    if ($sfpStatus === 'Enrolled' && !$sfpStartDate) {
-                        $sfpStartDate = $validated['date_of_weighing'];
-                    }
-                    if (in_array($sfpStatus, ['Graduated', 'Completed', 'Terminated', 'None'])) {
-                        $sfpEndDate = $validated['date_of_weighing'];
-                    }
-                }
-            } elseif (in_array('Supplemental Feeding (SFP)', $interventionLogs) && $sfpStatus === 'None' && !$isOverweightOrObese) {
+            // Two-way synchronization: If SFP is selected in interventions and child is currently not enrolled, enroll them!
+            $hasSfpIntervention = in_array('Supplementary Feeding (SFP)', $interventionLogs) || in_array('Supplemental Feeding (SFP)', $interventionLogs);
+            if ($hasSfpIntervention && $sfpStatus === 'None' && !$isOverweightOrObese) {
                 $sfpStatus = 'Enrolled';
                 if (!$sfpStartDate) {
                     $sfpStartDate = $validated['date_of_weighing'];
+                }
+            }
+
+            // Lock SFP intervention log for enrolled children (normalize to Supplementary Feeding)
+            if ($sfpStatus === 'Enrolled') {
+                $interventionLogs = array_map(function ($log) {
+                    return $log === 'Supplemental Feeding (SFP)' ? 'Supplementary Feeding (SFP)' : $log;
+                }, $interventionLogs);
+
+                if (!in_array('Supplementary Feeding (SFP)', $interventionLogs)) {
+                    $interventionLogs[] = 'Supplementary Feeding (SFP)';
                 }
             }
 
@@ -779,21 +861,26 @@ class BcpcMonitoringController extends Controller
                 $sfpDayNum = 1;
             }
 
-            // Smart Auto-resolution for SFP milestone node if left unselected
-            if (!$sfpDayNum && $sfpStartDate) {
-                $daysElapsed = Carbon::parse($sfpStartDate)->diffInDays(Carbon::parse($validated['date_of_weighing']));
-                if ($daysElapsed <= 7) {
-                    $sfpDayNum = 1;
-                } elseif ($daysElapsed >= 20 && $daysElapsed <= 40) {
-                    $sfpDayNum = 30;
-                } elseif ($daysElapsed >= 50 && $daysElapsed <= 70) {
-                    $sfpDayNum = 60;
-                } elseif ($daysElapsed >= 80 && $daysElapsed <= 100) {
-                    $sfpDayNum = 90;
-                } elseif ($daysElapsed >= 110 && $daysElapsed <= 130) {
-                    $sfpDayNum = 120;
+            $isAcuteEmergency = !empty($validated['is_acute_emergency']);
+
+            // Smart Auto-resolution for SFP milestone node if left unselected (continuous bins without gaps)
+            if (!$sfpDayNum && $sfpStartDate && $sfpStatus === 'Enrolled') {
+                if ($isAcuteEmergency) {
+                    // Acute emergency check-ins do not advance official monthly milestone nodes
+                    $sfpDayNum = null;
                 } else {
-                    $sfpDayNum = min(120, max(1, $daysElapsed));
+                    $daysElapsed = Carbon::parse($sfpStartDate)->diffInDays(Carbon::parse($validated['date_of_weighing']));
+                    if ($daysElapsed < 16) {
+                        $sfpDayNum = 1;
+                    } elseif ($daysElapsed < 46) {
+                        $sfpDayNum = 30;
+                    } elseif ($daysElapsed < 76) {
+                        $sfpDayNum = 60;
+                    } elseif ($daysElapsed < 106) {
+                        $sfpDayNum = 90;
+                    } else {
+                        $sfpDayNum = 120;
+                    }
                 }
             }
 
@@ -811,7 +898,7 @@ class BcpcMonitoringController extends Controller
                 'wfa_status' => $wfa,
                 'hfa_status' => $hfa,
                 'wflh_status' => $wflh,
-                'intervention_logs' => $validated['intervention_logs'] ?? [],
+                'intervention_logs' => $interventionLogs,
                 'remarks' => $validated['remarks'] ?? null,
                 'bns_assessor' => $validated['bns_assessor'] ?? null,
                 'sfp_day_number' => $sfpDayNum,

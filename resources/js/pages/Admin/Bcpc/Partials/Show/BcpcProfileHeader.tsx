@@ -1,13 +1,14 @@
 import { Link } from '@inertiajs/react';
-import { ArrowLeft, Camera, Printer, PlusCircle } from 'lucide-react';
+import { ArrowLeft, Camera, Printer, PlusCircle, Ruler, Scale } from 'lucide-react';
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import type { BcpcChild } from './types';
+import type { BcpcAssessment, BcpcChild } from './types';
 
 interface BcpcProfileHeaderProps {
     child: BcpcChild;
+    latest?: BcpcAssessment | null;
     computedAge: string;
     hasAgedOut: boolean;
     isNonResp: boolean;
@@ -18,6 +19,7 @@ interface BcpcProfileHeaderProps {
 
 export default function BcpcProfileHeader({
     child,
+    latest,
     computedAge,
     hasAgedOut,
     isNonResp,
@@ -93,6 +95,27 @@ export default function BcpcProfileHeader({
                                     </>
                                 )}
                             </div>
+
+                            {/* Live Physical Measurements Row */}
+                            {latest?.weight_kg != null && (
+                                <div className="flex items-center gap-2 pt-1 flex-wrap">
+                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-800 dark:text-emerald-200 text-xs font-black shadow-2xs">
+                                        <Scale className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                                        <span>{Number(latest.weight_kg).toFixed(1)} kg</span>
+                                    </span>
+                                    {latest.height_cm != null && (
+                                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-teal-500/10 border border-teal-500/30 text-teal-800 dark:text-teal-200 text-xs font-black shadow-2xs">
+                                            <Ruler className="w-3.5 h-3.5 text-teal-600 shrink-0" />
+                                            <span>{Number(latest.height_cm).toFixed(1)} cm</span>
+                                        </span>
+                                    )}
+                                    {latest.date_of_weighing && (
+                                        <span className="text-[11px] text-muted-foreground font-semibold">
+                                            (Weighed: {new Date(latest.date_of_weighing).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })})
+                                        </span>
+                                    )}
+                                </div>
+                            )}
                         </div>
                     </div>
 
