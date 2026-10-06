@@ -46,9 +46,11 @@ class DatabaseBackupController extends Controller implements HasMiddleware
     public function index(): Response
     {
         $backups = $this->backupService->getBackups();
+        $storageQuota = $this->backupService->getStorageQuota();
 
         return Inertia::render('Admin/BackupRecovery/Index', [
             'backups' => $backups,
+            'storageQuota' => $storageQuota,
         ]);
     }
 
@@ -80,7 +82,7 @@ class DatabaseBackupController extends Controller implements HasMiddleware
                 ],
             ]);
 
-            return redirect()->back()->with('success', "Database backup '{$backup['filename']}' ({$backup['size']}) created successfully!");
+            return redirect()->back()->with('success', "Database backup created successfully ({$backup['size']}).");
         } catch (Exception $e) {
             return redirect()->back()->with('error', "Backup failed: " . $e->getMessage());
         }
@@ -88,22 +90,22 @@ class DatabaseBackupController extends Controller implements HasMiddleware
 
     /**
      * Download Backup File
-     * If a password parameter is supplied, it streams a Password-Protected AES-256 encrypted ZIP archive.
+     * Streams a Password-Protected AES-256 encrypted ZIP archive.
      */
     public function download(Request $request, string $filename): SymfonyResponse
     {
         $request->validate([
             'password' => ['required', 'string', 'min:6'],
         ], [
-            'password.required' => 'An encryption passphrase is strictly required to download a database backup.',
-            'password.min' => 'Encryption passphrase must be at least 6 characters.',
+            'password.required' => 'A password is required to download this backup.',
+            'password.min' => 'Password must be at least 6 characters.',
         ]);
 
         try {
             $user = $request->user();
             $archivePassword = $request->input('password');
 
-            // Audit Trail: Critical Data Exfiltration Accountability
+            // Audit Trail
             if ($user) {
                 AuditLog::create([
                     'user_id' => $user->id,
@@ -128,17 +130,26 @@ class DatabaseBackupController extends Controller implements HasMiddleware
     }
 
     /**
-     * Upload an external backup snapshot file (.sql, .sql.gz, .enc, or .zip)
+     * Upload an external backup file (.sql, .sql.gz, .enc, or .zip)
      */
     public function upload(Request $request)
     {
         $request->validate([
-            'backup_file' => ['required', 'file'],
+            'backup_file' => ['required', 'file', 'max:256000'],
+        ], [
+            'backup_file.max' => 'The uploaded file exceeds the 250 MB maximum backup limit.',
         ]);
 
         try {
             $file = $request->file('backup_file');
             $filename = $file->getClientOriginalName();
+            $fileSize = $file->getSize();
+            $quota = $this->backupService->getStorageQuota();
+
+            // Enforce 250 MB Storage Quota Limit
+            if ($quota['used_bytes'] + $fileSize > DatabaseBackupService::MAX_STORAGE_BYTES) {
+                return redirect()->back()->with('error', "Cannot upload file ({$this->backupService->formatBytes($fileSize)}): Exceeds the 250 MB total backup storage limit ({$quota['available_formatted']} remaining). Please delete older backups first.");
+            }
 
             // Validate extension
             $validExtensions = ['.sql', '.sql.gz', '.enc', '.zip'];
@@ -151,7 +162,7 @@ class DatabaseBackupController extends Controller implements HasMiddleware
             }
 
             if (!$isValid) {
-                return redirect()->back()->with('error', "Invalid backup file format. Supported formats: .sql, .sql.gz, .enc, and .zip (AES-256).");
+                return redirect()->back()->with('error', "Invalid backup file format. Supported formats: .sql, .sql.gz, .enc, and .zip.");
             }
 
             $file->storeAs('backups', $filename, 'local');
@@ -170,7 +181,7 @@ class DatabaseBackupController extends Controller implements HasMiddleware
                 ],
             ]);
 
-            return redirect()->back()->with('success', "Backup file '{$filename}' uploaded successfully! It is now available in the archives list for 1-click restoration.");
+            return redirect()->back()->with('success', "Backup file '{$filename}' uploaded successfully.");
         } catch (Exception $e) {
             return redirect()->back()->with('error', "Backup upload failed: " . $e->getMessage());
         }
@@ -189,10 +200,12 @@ class DatabaseBackupController extends Controller implements HasMiddleware
         $request->validate([
             'password' => ['required', 'string'],
             'archive_password' => ['nullable', 'string'],
+        ], [
+            'password.required' => 'Admin password is required to restore the database.',
         ]);
 
         if (!Hash::check($request->password, $request->user()->password)) {
-            return redirect()->back()->withErrors(['password' => 'Incorrect admin password authorization.']);
+            return redirect()->back()->withErrors(['password' => 'Incorrect administrator password.']);
         }
 
         $user = $request->user();
@@ -208,7 +221,10 @@ class DatabaseBackupController extends Controller implements HasMiddleware
             $this->backupService->restoreBackup($filename, $archivePassword);
 
             // Re-authenticate admin so their session persists smoothly
-            Auth::loginUsingId($userId);
+            $restoredUser = \App\Models\User::find($userId);
+            if ($restoredUser) {
+                Auth::login($restoredUser);
+            }
 
             // Audit Trail: Log restoration event into the freshly restored database
             AuditLog::create([
@@ -227,7 +243,7 @@ class DatabaseBackupController extends Controller implements HasMiddleware
                 ],
             ]);
 
-            return redirect()->back()->with('success', "Database successfully restored from snapshot '{$filename}'!");
+            return redirect()->back()->with('success', "Database successfully restored from '{$filename}'.");
         } catch (Exception $e) {
             return redirect()->back()
                 ->withErrors(['password' => "Database restoration failed: " . $e->getMessage()])
@@ -260,7 +276,7 @@ class DatabaseBackupController extends Controller implements HasMiddleware
                     ]);
                 }
 
-                return redirect()->back()->with('success', "Backup file '{$filename}' deleted successfully.");
+                return redirect()->back()->with('success', "Backup '{$filename}' deleted successfully.");
             }
             return redirect()->back()->with('error', "File not found or already deleted.");
         } catch (Exception $e) {

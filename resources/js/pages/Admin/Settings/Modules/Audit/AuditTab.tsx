@@ -429,7 +429,7 @@ export default function AuditTab({ logs, filters = {}, baseUrl = '/admin/audit-l
                                 <SelectItem value="vawc">VAWC (Confidential)</SelectItem>
                                 <SelectItem value="bcpc">BCPC Nutrition</SelectItem>
                                 <SelectItem value="security">Security & Users</SelectItem>
-                                <SelectItem value="backup">Disaster Recovery</SelectItem>
+                                <SelectItem value="backup">Database Backups</SelectItem>
                                 <SelectItem value="organizations">Organizations</SelectItem>
                             </SelectContent>
                         </Select>

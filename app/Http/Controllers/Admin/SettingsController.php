@@ -113,6 +113,7 @@ class SettingsController extends Controller implements HasMiddleware
         // 5. Backup Tab
         if ($activeTab === 'backup') {
             $data['backups'] = $this->backupService->getBackups();
+            $data['storageQuota'] = $this->backupService->getStorageQuota();
         }
 
         // 6. Audit Tab (Redirect to dedicated sidebar page)

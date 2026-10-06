@@ -13,12 +13,59 @@ class DatabaseBackupService
     protected string $disk = 'local';
     protected string $backupDir = 'backups';
 
+    /**
+     * Storage Quota Limit: 250 Megabytes as recommended by panel evaluation
+     */
+    public const MAX_STORAGE_MB = 250;
+    public const MAX_STORAGE_BYTES = 262144000; // 250 * 1024 * 1024 bytes
+
     public function __construct()
     {
         // Ensure storage/app/backups directory exists
         if (!Storage::disk($this->disk)->exists($this->backupDir)) {
             Storage::disk($this->disk)->makeDirectory($this->backupDir);
         }
+    }
+
+    /**
+     * Calculate total bytes consumed by database backups
+     */
+    public function getTotalStorageBytes(): int
+    {
+        $files = Storage::disk($this->disk)->files($this->backupDir);
+        $total = 0;
+        foreach ($files as $file) {
+            $total += Storage::disk($this->disk)->size($file);
+        }
+        return $total;
+    }
+
+    /**
+     * Get storage quota details (250 MB ceiling)
+     */
+    public function getStorageQuota(): array
+    {
+        $usedBytes = $this->getTotalStorageBytes();
+        $maxBytes = self::MAX_STORAGE_BYTES;
+        $maxMb = self::MAX_STORAGE_MB;
+        $availableBytes = max(0, $maxBytes - $usedBytes);
+        $percentage = $maxBytes > 0 ? round(($usedBytes / $maxBytes) * 100, 1) : 0;
+
+        return [
+            'used_bytes' => $usedBytes,
+            'used_mb' => round($usedBytes / (1024 * 1024), 2),
+            'used_formatted' => $this->formatBytes($usedBytes),
+            'max_bytes' => $maxBytes,
+            'max_mb' => $maxMb,
+            'max_formatted' => "{$maxMb} MB",
+            'available_bytes' => $availableBytes,
+            'available_mb' => round($availableBytes / (1024 * 1024), 2),
+            'available_formatted' => $this->formatBytes($availableBytes),
+            'percentage' => min(100, $percentage),
+            'is_near_limit' => $percentage >= 80,
+            'is_full' => $usedBytes >= $maxBytes,
+            'total_files' => count(Storage::disk($this->disk)->files($this->backupDir)),
+        ];
     }
 
     /**
@@ -31,6 +78,12 @@ class DatabaseBackupService
         }
         @ini_set('max_execution_time', '300');
         @ini_set('memory_limit', '512M');
+
+        // Enforce 250 MB Storage Quota
+        $quota = $this->getStorageQuota();
+        if ($quota['is_full']) {
+            throw new Exception("Storage limit reached! The total database backups storage has reached the 250 MB limit ({$quota['used_formatted']} used). Please delete older backups before creating a new one.");
+        }
 
         $timestamp = date('Y-m-d_H-i-s');
         $dbName = config('database.connections.mysql.database', 'forge');
@@ -370,7 +423,7 @@ class DatabaseBackupService
         return $prunedCount;
     }
 
-    protected function formatBytes(int $bytes): string
+    public function formatBytes(int $bytes): string
     {
         if ($bytes >= 1073741824) {
             return number_format($bytes / 1073741824, 2) . ' GB';

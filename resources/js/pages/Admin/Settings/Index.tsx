@@ -32,6 +32,7 @@ interface PageProps {
     officials?: any[];
     availableUsers?: any[];
     backups?: BackupFile[];
+    storageQuota?: any;
     logs?: any;
     logFilters?: any;
 }
@@ -47,6 +48,7 @@ export default function Index({
     officials = [],
     availableUsers = [],
     backups = [],
+    storageQuota = null,
     logs = null,
     logFilters = {},
 }: PageProps) {
@@ -72,7 +74,7 @@ export default function Index({
         { id: 'users', label: 'System Users', icon: Users },
         { id: 'officials', label: 'Barangay Officials', icon: Award },
         { id: 'features', label: 'Feature Switches', icon: ToggleLeft },
-        { id: 'backup', label: 'Disaster Recovery', icon: Database },
+        { id: 'backup', label: 'Database Backup', icon: Database },
         { id: 'appearance', label: 'Display & Theme', icon: Palette },
     ];
 
@@ -108,7 +110,7 @@ export default function Index({
                             </h1>
                         </div>
                         <p className="text-sm sm:text-base text-muted-foreground mt-0.5">
-                            Centralized administration for user access, disaster recovery, zone taxonomies, and compliance audit records.
+                            Centralized administration for user access, database backups, zone taxonomies, and compliance audit records.
                         </p>
                     </div>
                 </div>
@@ -175,10 +177,10 @@ export default function Index({
                             </div>
                         )}
 
-                        {/* 5. Database Disaster Recovery & Backups */}
+                        {/* 5. Database Backups */}
                         {activeTab === 'backup' && (
                             <div className="w-full">
-                                <BackupTab backups={backups} />
+                                <BackupTab backups={backups} storageQuota={storageQuota} />
                             </div>
                         )}
 
