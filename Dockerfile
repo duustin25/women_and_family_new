@@ -115,8 +115,11 @@ RUN mkdir -p /var/www/html/storage/framework/sessions \
              /var/www/html/bootstrap/cache \
              /var/log/nginx \
              /run/nginx \
-    && chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache /var/log/nginx /run/nginx \
-    && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
+             /var/lib/nginx/tmp/client_body \
+             /var/lib/nginx/tmp/fastcgi \
+             /var/lib/nginx/tmp/proxy \
+    && chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache /var/log/nginx /run/nginx /var/lib/nginx \
+    && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache /var/lib/nginx
 
 # Production environment defaults
 ENV APP_ENV=production \

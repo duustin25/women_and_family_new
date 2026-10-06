@@ -72,14 +72,22 @@ class GadEventController extends Controller
         ];
 
         if ($request->hasFile('image_path')) {
-            $rules['image_path'] = 'required|image|max:2048';
+            $rules['image_path'] = 'required|file|mimes:jpeg,png,jpg,webp,gif|max:5120';
         }
 
         $validated = $request->validate($rules);
 
         if ($request->hasFile('image_path')) {
-            $path = $request->file('image_path')->store('gad_events', 'public');
-            $validated['image_path'] = $path;
+            try {
+                if (!Storage::disk('public')->exists('gad_events')) {
+                    Storage::disk('public')->makeDirectory('gad_events');
+                }
+                $path = $request->file('image_path')->store('gad_events', 'public');
+                $validated['image_path'] = $path;
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::error("GAD event image upload failed: " . $e->getMessage());
+                return back()->withErrors(['image_path' => 'Unable to save the uploaded image. Please ensure the file is under 5MB.']);
+            }
         } else {
             $validated['image_path'] = null;
         }
@@ -108,17 +116,29 @@ class GadEventController extends Controller
         ];
 
         if ($request->hasFile('image_path')) {
-            $rules['image_path'] = 'required|image|max:2048';
+            $rules['image_path'] = 'required|file|mimes:jpeg,png,jpg,webp,gif|max:5120';
         }
 
         $validated = $request->validate($rules);
 
         if ($request->hasFile('image_path')) {
-            if ($event->image_path) {
-                Storage::disk('public')->delete($event->image_path);
+            try {
+                if ($event->image_path) {
+                    try {
+                        Storage::disk('public')->delete($event->image_path);
+                    } catch (\Throwable $e) {
+                        \Illuminate\Support\Facades\Log::warning("Could not delete old GAD event image: " . $e->getMessage());
+                    }
+                }
+                if (!Storage::disk('public')->exists('gad_events')) {
+                    Storage::disk('public')->makeDirectory('gad_events');
+                }
+                $path = $request->file('image_path')->store('gad_events', 'public');
+                $validated['image_path'] = $path;
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::error("GAD event image update failed: " . $e->getMessage());
+                return back()->withErrors(['image_path' => 'Unable to save the uploaded image. Please ensure the file is under 5MB.']);
             }
-            $path = $request->file('image_path')->store('gad_events', 'public');
-            $validated['image_path'] = $path;
         } else {
             // CRITICAL: Preserve existing image when no new file is uploaded
             unset($validated['image_path']);

@@ -9,11 +9,19 @@ mkdir -p /var/www/html/storage/framework/sessions \
          /var/www/html/storage/framework/cache \
          /var/www/html/storage/logs \
          /var/www/html/storage/app/public \
-         /var/www/html/bootstrap/cache
+         /var/www/html/storage/app/public/officials \
+         /var/www/html/storage/app/public/gad_events \
+         /var/www/html/storage/app/public/announcements \
+         /var/www/html/bootstrap/cache \
+         /var/lib/nginx/tmp/client_body \
+         /var/lib/nginx/tmp/fastcgi \
+         /var/lib/nginx/tmp/proxy \
+         /var/log/nginx \
+         /run/nginx
 
-# Fix permissions
-chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
-chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
+# Fix permissions for PHP and Nginx worker
+chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache /var/lib/nginx /var/log/nginx /run/nginx
+chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache /var/lib/nginx /var/log/nginx /run/nginx
 
 # Ensure APP_KEY exists
 if [ -z "$APP_KEY" ]; then
