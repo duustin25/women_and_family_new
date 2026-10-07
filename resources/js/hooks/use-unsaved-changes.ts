@@ -23,18 +23,49 @@ export function useUnsavedChanges({ isDirty, onSave, onReset }: UseUnsavedChange
         window.addEventListener('beforeunload', handleBeforeUnload);
 
         const unbind = router.on('before', (event) => {
-            // Check if navigation is a GET request to a different page
-            if (
-                isDirty && 
-                !bypassWarningRef.current && 
-                event.detail.visit.method === 'get' && 
-                !event.detail.visit.completed && 
-                !event.detail.visit.cancelled
-            ) {
-                event.preventDefault();
-                setPendingUrl(event.detail.visit.url.href);
-                setShowWarningModal(true);
+            // 1. If not dirty or bypass is active, do not block
+            if (!isDirty || bypassWarningRef.current) {
+                return;
             }
+
+            const visit = event.detail.visit;
+
+            // 2. Ignore completed or cancelled visits
+            if (visit.completed || visit.cancelled) {
+                return;
+            }
+
+            // 3. Only intercept standard GET page navigations (never block POST/PUT/PATCH/DELETE)
+            if (visit.method !== 'get') {
+                return;
+            }
+
+            // 4. CRITICAL FIX: Ignore background polling and partial reloads (e.g. usePoll in NotificationBell)
+            // Inertia partial reloads specify prop keys in 'only' (e.g. only: ['auth'])
+            if (Array.isArray(visit.only) && visit.only.length > 0) {
+                return;
+            }
+
+            // 5. CRITICAL FIX: Never block if the destination is on the same page!
+            // Prevents popup on internal tabs, component re-renders, hash changes, and same-page reloads.
+            try {
+                const targetUrl = new URL(visit.url.href, window.location.origin);
+                const currentUrl = new URL(window.location.href);
+
+                const targetPath = targetUrl.pathname.replace(/\/+$/, '') || '/';
+                const currentPath = currentUrl.pathname.replace(/\/+$/, '') || '/';
+
+                if (targetPath === currentPath) {
+                    return;
+                }
+            } catch {
+                return;
+            }
+
+            // 6. User is genuinely attempting to navigate away to a DIFFERENT page with unsaved changes
+            event.preventDefault();
+            setPendingUrl(visit.url.href);
+            setShowWarningModal(true);
         });
 
         return () => {
@@ -45,15 +76,19 @@ export function useUnsavedChanges({ isDirty, onSave, onReset }: UseUnsavedChange
 
     const handleSaveAndLeave = () => {
         setShowWarningModal(false);
-        onSave(pendingUrl);
+        const url = pendingUrl;
+        setPendingUrl(null);
+        onSave(url);
     };
 
     const handleDiscardChanges = () => {
         bypassWarningRef.current = true;
         onReset();
         setShowWarningModal(false);
-        if (pendingUrl) {
-            router.visit(pendingUrl);
+        const url = pendingUrl;
+        setPendingUrl(null);
+        if (url) {
+            router.visit(url);
         }
     };
 

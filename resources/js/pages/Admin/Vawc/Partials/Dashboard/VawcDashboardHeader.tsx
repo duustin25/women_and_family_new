@@ -18,14 +18,14 @@ export default function VawcDashboardHeader({
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
             <div>
                 <div className="flex items-center gap-2.5 flex-wrap">
-                    <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
+                    <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
                         VAWC Action Center
                     </h1>
-                    <Badge variant="outline" className="text-xs font-semibold py-0.5 px-2">
+                    <Badge variant="outline" className="text-xs sm:text-sm font-semibold">
                         RA 9262
                     </Badge>
                 </div>
-                <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
+                <p className="text-sm text-muted-foreground mt-0.5">
                     Real-time lethality triage priority queues and statutory protection order monitoring.
                 </p>
             </div>

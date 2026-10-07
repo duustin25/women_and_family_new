@@ -2,7 +2,7 @@
 {{-- Header --}}
 <x-slot:header>
 <x-mail::header :url="config('app.url')">
-{{ config('app.name') }}
+Barangay 183 Women & Family Protection System
 </x-mail::header>
 </x-slot:header>
 
@@ -21,7 +21,9 @@
 {{-- Footer --}}
 <x-slot:footer>
 <x-mail::footer>
-© {{ date('Y') }} Barangay 183 Women & Family Protection System. All rights reserved.
+**Barangay 183 Administration** &bull; Pasay City, Metro Manila  
+Official Digital Notification Service &bull; Republic Act 10173 Compliant  
+&copy; {{ date('Y') }} Barangay 183 Women & Family Protection System. All rights reserved.
 </x-mail::footer>
 </x-slot:footer>
 </x-mail::layout>

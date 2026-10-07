@@ -1,6 +1,5 @@
-import { AlertCircle, Clock, HeartHandshake, ShieldAlert, Sparkles, Users } from 'lucide-react';
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
 import type { DashboardMetrics } from './types';
 
 interface BcpcKpiStripProps {
@@ -11,6 +10,7 @@ interface BcpcKpiStripProps {
     doubleBurdenCount: number;
     activeSfpCount: number;
     overdueCount: number;
+    activeTab?: 'sam' | 'mam' | 'double_burden' | 'stunted' | 'overdue';
     onTabChange: (tab: 'sam' | 'mam' | 'double_burden' | 'stunted' | 'overdue') => void;
 }
 
@@ -22,130 +22,107 @@ export default function BcpcKpiStrip({
     doubleBurdenCount,
     activeSfpCount,
     overdueCount,
+    activeTab,
     onTabChange,
 }: BcpcKpiStripProps) {
     return (
-        <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-2.5 sm:gap-3.5 w-full">
 
             {/* KPI 1: Monitored */}
-            <Card className="border-border shadow-xs hover:shadow-md transition-all rounded-2xl overflow-hidden relative">
-                <CardHeader className="pb-1 p-3 sm:p-3.5">
-                    <CardTitle className="text-[11px] sm:text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5 truncate">
-                        <Users className="w-3.5 h-3.5 text-slate-500 shrink-0" />
-                        <span className="truncate">Monitored (0-59m)</span>
-                    </CardTitle>
-                </CardHeader>
-                <CardContent className="p-3 sm:p-3.5 pt-0">
-                    <div className="text-2xl sm:text-3xl font-black text-foreground">
-                        {metrics?.total_monitored || totalChildren}
-                    </div>
-                    <div className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 mt-0.5 truncate">
-                        Active Census
-                    </div>
-                </CardContent>
-            </Card>
+            <div className="text-left p-3 sm:p-3.5 rounded-xl border border-border border-l-4 border-l-slate-400 bg-card min-h-[96px] sm:min-h-[102px] flex flex-col justify-between shadow-xs">
+                <span className="text-xs sm:text-sm font-bold uppercase tracking-normal text-muted-foreground leading-tight min-h-[28px] sm:min-h-[32px] flex items-center">
+                    Monitored
+                </span>
+                <div className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-foreground font-mono mt-1">
+                    {metrics?.total_monitored || totalChildren}
+                </div>
+            </div>
 
             {/* KPI 2: SAM */}
-            <Card
-                className="border-red-500/30 bg-red-500/5 shadow-xs hover:shadow-md transition-all rounded-2xl overflow-hidden relative cursor-pointer"
+            <button
+                type="button"
                 onClick={() => onTabChange('sam')}
+                className={cn(
+                    "text-left p-3 sm:p-3.5 rounded-xl border transition-all cursor-pointer bg-card min-h-[96px] sm:min-h-[102px] flex flex-col justify-between shadow-xs",
+                    activeTab === 'sam'
+                        ? "border-red-500 ring-2 ring-red-500/20 bg-red-50/40 dark:bg-red-950/20 border-l-4 border-l-red-500"
+                        : "border-border border-l-4 border-l-red-500 hover:border-red-300 dark:hover:border-red-800"
+                )}
             >
-                <CardHeader className="pb-1 p-3 sm:p-3.5">
-                    <CardTitle className="text-[11px] sm:text-xs font-bold text-red-600 dark:text-red-400 uppercase tracking-wider flex items-center gap-1.5 truncate">
-                        <ShieldAlert className="w-3.5 h-3.5 text-red-500 animate-pulse shrink-0" />
-                        <span className="truncate">Severe Malnutrition</span>
-                    </CardTitle>
-                </CardHeader>
-                <CardContent className="p-3 sm:p-3.5 pt-0">
-                    <div className="text-2xl sm:text-3xl font-black text-red-600 dark:text-red-400">
-                        {metrics?.sam_cases ?? topPriorityCount}
-                    </div>
-                    <div className="text-[11px] font-bold text-red-600/80 mt-0.5 truncate">
-                        Urgent Medical Action
-                    </div>
-                </CardContent>
-            </Card>
+                <span className="text-xs sm:text-sm font-bold uppercase tracking-normal text-muted-foreground leading-tight min-h-[28px] sm:min-h-[32px] flex items-center">
+                    Severe (SAM)
+                </span>
+                <div className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-red-600 dark:text-red-400 font-mono mt-1">
+                    {metrics?.sam_cases ?? topPriorityCount}
+                </div>
+            </button>
 
             {/* KPI 3: MAM */}
-            <Card
-                className="border-amber-500/30 bg-amber-500/5 shadow-xs hover:shadow-md transition-all rounded-2xl overflow-hidden relative cursor-pointer"
+            <button
+                type="button"
                 onClick={() => onTabChange('mam')}
+                className={cn(
+                    "text-left p-3 sm:p-3.5 rounded-xl border transition-all cursor-pointer bg-card min-h-[96px] sm:min-h-[102px] flex flex-col justify-between shadow-xs",
+                    activeTab === 'mam'
+                        ? "border-amber-500 ring-2 ring-amber-500/20 bg-amber-50/40 dark:bg-amber-950/20 border-l-4 border-l-amber-500"
+                        : "border-border border-l-4 border-l-amber-500 hover:border-amber-300 dark:hover:border-amber-800"
+                )}
             >
-                <CardHeader className="pb-1 p-3 sm:p-3.5">
-                    <CardTitle className="text-[11px] sm:text-xs font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider flex items-center gap-1.5 truncate">
-                        <AlertCircle className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-                        <span className="truncate">Moderate (MAM)</span>
-                    </CardTitle>
-                </CardHeader>
-                <CardContent className="p-3 sm:p-3.5 pt-0">
-                    <div className="text-2xl sm:text-3xl font-black text-amber-600 dark:text-amber-400">
-                        {metrics?.mam_cases ?? secondPriorityCount}
-                    </div>
-                    <div className="text-[11px] font-bold text-amber-600/80 mt-0.5 truncate">
-                        Feeding Program Queue
-                    </div>
-                </CardContent>
-            </Card>
+                <span className="text-xs sm:text-sm font-bold uppercase tracking-normal text-muted-foreground leading-tight min-h-[28px] sm:min-h-[32px] flex items-center">
+                    Moderate (MAM)
+                </span>
+                <div className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-amber-600 dark:text-amber-400 font-mono mt-1">
+                    {metrics?.mam_cases ?? secondPriorityCount}
+                </div>
+            </button>
 
             {/* KPI 4: Double Burden */}
-            <Card
-                className="border-purple-500/30 bg-purple-500/5 shadow-xs hover:shadow-md transition-all rounded-2xl overflow-hidden relative cursor-pointer"
+            <button
+                type="button"
                 onClick={() => onTabChange('double_burden')}
+                className={cn(
+                    "text-left p-3 sm:p-3.5 rounded-xl border transition-all cursor-pointer bg-card min-h-[96px] sm:min-h-[102px] flex flex-col justify-between shadow-xs",
+                    activeTab === 'double_burden'
+                        ? "border-purple-500 ring-2 ring-purple-500/20 bg-purple-50/40 dark:bg-purple-950/20 border-l-4 border-l-purple-500"
+                        : "border-border border-l-4 border-l-purple-500 hover:border-purple-300 dark:hover:border-purple-800"
+                )}
             >
-                <CardHeader className="pb-1 p-3 sm:p-3.5">
-                    <CardTitle className="text-[11px] sm:text-xs font-bold text-purple-600 dark:text-purple-400 uppercase tracking-wider flex items-center gap-1.5 truncate">
-                        <Sparkles className="w-3.5 h-3.5 text-purple-500 shrink-0" />
-                        <span className="truncate">Double Burden</span>
-                    </CardTitle>
-                </CardHeader>
-                <CardContent className="p-3 sm:p-3.5 pt-0">
-                    <div className="text-2xl sm:text-3xl font-black text-purple-600 dark:text-purple-400">
-                        {metrics?.double_burden_cases ?? doubleBurdenCount}
-                    </div>
-                    <div className="text-[11px] font-bold text-purple-600/80 mt-0.5 truncate">
-                        Stunted + Heavy Mass
-                    </div>
-                </CardContent>
-            </Card>
+                <span className="text-xs sm:text-sm font-bold uppercase tracking-normal text-muted-foreground leading-tight min-h-[28px] sm:min-h-[32px] flex items-center">
+                    Double Burden
+                </span>
+                <div className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-purple-600 dark:text-purple-400 font-mono mt-1">
+                    {metrics?.double_burden_cases ?? doubleBurdenCount}
+                </div>
+            </button>
 
             {/* KPI 5: Active Feeding */}
-            <Card className="border-emerald-500/30 bg-emerald-500/5 shadow-xs hover:shadow-md transition-all rounded-2xl overflow-hidden relative">
-                <CardHeader className="pb-1 p-3 sm:p-3.5">
-                    <CardTitle className="text-[11px] sm:text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider flex items-center gap-1.5 truncate">
-                        <HeartHandshake className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-                        <span className="truncate">Feeding Program</span>
-                    </CardTitle>
-                </CardHeader>
-                <CardContent className="p-3 sm:p-3.5 pt-0">
-                    <div className="text-2xl sm:text-3xl font-black text-emerald-600 dark:text-emerald-400">
-                        {metrics?.active_sfp ?? activeSfpCount}
-                    </div>
-                    <div className="text-[11px] font-bold text-emerald-600/80 mt-0.5 truncate">
-                        {metrics?.graduated_sfp || 0} Recovered
-                    </div>
-                </CardContent>
-            </Card>
+            <div className="text-left p-3 sm:p-3.5 rounded-xl border border-border border-l-4 border-l-emerald-500 bg-card min-h-[96px] sm:min-h-[102px] flex flex-col justify-between shadow-xs">
+                <span className="text-xs sm:text-sm font-bold uppercase tracking-normal text-muted-foreground leading-tight min-h-[28px] sm:min-h-[32px] flex items-center">
+                    Feeding (SFP)
+                </span>
+                <div className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-emerald-600 dark:text-emerald-400 font-mono mt-1">
+                    {metrics?.active_sfp ?? activeSfpCount}
+                </div>
+            </div>
 
             {/* KPI 6: Overdue */}
-            <Card
-                className="border-rose-500/30 bg-rose-500/5 shadow-xs hover:shadow-md transition-all rounded-2xl overflow-hidden relative cursor-pointer"
+            <button
+                type="button"
                 onClick={() => onTabChange('overdue')}
+                className={cn(
+                    "text-left p-3 sm:p-3.5 rounded-xl border transition-all cursor-pointer bg-card min-h-[96px] sm:min-h-[102px] flex flex-col justify-between shadow-xs",
+                    activeTab === 'overdue'
+                        ? "border-rose-500 ring-2 ring-rose-500/20 bg-rose-50/40 dark:bg-rose-950/20 border-l-4 border-l-rose-500"
+                        : "border-border border-l-4 border-l-rose-500 hover:border-rose-300 dark:hover:border-rose-800"
+                )}
             >
-                <CardHeader className="pb-1 p-3 sm:p-3.5">
-                    <CardTitle className="text-[11px] sm:text-xs font-bold text-rose-600 dark:text-rose-400 uppercase tracking-wider flex items-center gap-1.5 truncate">
-                        <Clock className="w-3.5 h-3.5 text-rose-500 shrink-0" />
-                        <span className="truncate">Overdue Check-ins</span>
-                    </CardTitle>
-                </CardHeader>
-                <CardContent className="p-3 sm:p-3.5 pt-0">
-                    <div className="text-2xl sm:text-3xl font-black text-rose-600 dark:text-rose-400">
-                        {metrics?.overdue_weighing ?? overdueCount}
-                    </div>
-                    <div className="text-[11px] font-bold text-rose-600/80 mt-0.5 truncate">
-                        Needs Weighing (&gt;30d)
-                    </div>
-                </CardContent>
-            </Card>
+                <span className="text-xs sm:text-sm font-bold uppercase tracking-normal text-muted-foreground leading-tight min-h-[28px] sm:min-h-[32px] flex items-center">
+                    Overdue Weighing
+                </span>
+                <div className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-rose-600 dark:text-rose-400 font-mono mt-1">
+                    {metrics?.overdue_weighing ?? overdueCount}
+                </div>
+            </button>
         </div>
     );
 }

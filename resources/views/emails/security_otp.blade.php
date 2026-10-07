@@ -13,9 +13,8 @@ We received a security request to **{{ $actionDescription }}**.
 To confirm this change, please enter the one-time security code below:
 
 <x-mail::panel>
-### Your One-Time Security Code
-
-# `{{ $otp }}`
+**Your One-Time Security Code:**  
+`{{ $otp }}`
 
 This code is valid for **5 minutes**. Never share this code with anyone.
 </x-mail::panel>
@@ -28,7 +27,7 @@ Freeze Account Immediately
 
 Warm regards,  
 **Barangay 183 Administration**  
-📍 Pasay City
+Pasay City
 
 <x-mail::subcopy>
 **Data Privacy Notice:** This official communication is processed under Republic Act 10173 (Data Privacy Act of 2012) and RA 9262. Your account credentials and personal records are kept strictly confidential.

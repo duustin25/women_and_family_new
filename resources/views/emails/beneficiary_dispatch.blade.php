@@ -24,7 +24,7 @@ View Official Portal
 
 Warm regards,  
 **Barangay 183 Administration**  
-📍 Pasay City
+Pasay City
 
 <x-mail::subcopy>
 **Data Privacy Notice:** This notification is intended solely for {{ $member->fullname }}. Your data is protected under Republic Act 10173 (Data Privacy Act of 2012).

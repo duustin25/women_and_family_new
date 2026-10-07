@@ -1,31 +1,16 @@
 @props(['url'])
-@php
-$appUrl = config('app.url') ?? '';
-$isLocal = app()->environment('local') || str_contains($appUrl, 'localhost') || str_contains($appUrl, '.test') || str_contains($appUrl, '127.0.0.1');
-
-$brgyLogo = $isLocal
-? 'https://raw.githubusercontent.com/duustin25/women_and_family_new/main/public/Logo/barangay183LOGO.png'
-: asset('Logo/barangay183LOGO.png');
-
-$wfpLogo = $isLocal
-? 'https://raw.githubusercontent.com/duustin25/women_and_family_new/main/public/Logo/women%26family_logo.png'
-: asset('Logo/women&family_logo.png');
-@endphp
 <tr>
-    <td class="header" style="padding: 28px 0 16px 0; text-align: center;">
+    <td class="header" style="padding: 24px 0 16px 0; text-align: center;">
         <a href="{{ $url }}" style="display: inline-block; text-decoration: none; color: inherit;">
             <table cellpadding="0" cellspacing="0" border="0" style="margin: 0 auto; text-align: center;">
                 <tr>
-                    <td style="vertical-align: middle; padding-right: 14px;">
-                        <img src="{{ $brgyLogo }}" alt="Barangay 183 Seal" width="52" height="52" style="width: 52px; height: 52px; border-radius: 50%; display: block; border: 1px solid #e5e7eb;" />
-                    </td>
-                    <td style="vertical-align: middle; text-align: center; padding: 0 10px;">
-                        <span style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 17px; font-weight: 700; color: #111827; letter-spacing: -0.01em; line-height: 1.25; display: block;">
-                            Barangay 183 Women & Family Protection System
+                    <td style="text-align: center; padding: 0 16px;">
+                        <span style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 11px; font-weight: 700; color: #64748b; letter-spacing: 0.08em; text-transform: uppercase; display: block; margin-bottom: 4px;">
+                            Republic of the Philippines &bull; City of Pasay
                         </span>
-                    </td>
-                    <td style="vertical-align: middle; padding-left: 14px;">
-                        <img src="{{ $wfpLogo }}" alt="Women & Family Logo" width="52" height="52" style="width: 52px; height: 52px; border-radius: 50%; display: block; border: 1px solid #e5e7eb;" />
+                        <span style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 18px; font-weight: 700; color: #0f172a; letter-spacing: -0.01em; line-height: 1.3; display: block;">
+                            Barangay 183 Women &amp; Family Protection System
+                        </span>
                     </td>
                 </tr>
             </table>

@@ -50,9 +50,9 @@ class OrganizationController extends Controller
 
     public function create(Request $request)
     {
-        // Only Admin can create new Organizations
-        if (!$request->user()->isAdmin()) {
-            abort(403, 'Only Admins can create organizations.');
+        // Admin and Head Committee (Staff) can create new Organizations
+        if (!$request->user()->isStaff()) {
+            abort(403, 'Only Administrators and Committee Heads can create organizations.');
         }
 
         // Fetch potential presidents (users with role 'president')
@@ -65,6 +65,11 @@ class OrganizationController extends Controller
 
     public function store(Request $request)
     {
+        // Admin and Head Committee (Staff) can create new Organizations
+        if (!$request->user()->isStaff()) {
+            abort(403, 'Only Administrators and Committee Heads can create organizations.');
+        }
+
         $validated = $request->validate([
             'name' => 'required|string|unique:organizations',
             'description' => 'required|string',
@@ -101,15 +106,19 @@ class OrganizationController extends Controller
         // If 'requirements' is not in the request, we force it to be an empty array
         $validated['requirements'] = $request->input('requirements', []);
 
-        // Remove president_name from validated array since it's no longer in the DB
+        // Remove president_name from validated array since it's stored on the User model
         $presidentName = $validated['president_name'] ?? null;
         unset($validated['president_name']);
 
         $org = Organization::create($validated);
 
-        // Assign the user as president by matching names
+        // Assign the user as president by matching names or ID
         if ($presidentName) {
-            $user = \App\Models\User::where('role', 'president')->where('name', $presidentName)->first();
+            $user = \App\Models\User::where('role', 'president')
+                ->where(function ($q) use ($presidentName) {
+                    $q->where('name', $presidentName)
+                      ->orWhere('id', $presidentName);
+                })->first();
             if ($user) {
                 $user->update(['organization_id' => $org->id]);
             }
@@ -118,8 +127,13 @@ class OrganizationController extends Controller
         return redirect()->route('admin.organizations.index')->with('success', 'Organization Created!');
     }
 
-    public function edit(Organization $organization)
+    public function edit(Request $request, Organization $organization)
     {
+        $user = $request->user();
+        if ($user->isPresident() && $user->organization_id !== $organization->id) {
+            abort(403, 'You can only edit your own organization.');
+        }
+
         $users = \App\Models\User::where('role', 'president')->orderBy('name')->get(['id', 'name', 'role']);
 
         // Load president so the Resource maps it properly
@@ -190,23 +204,29 @@ class OrganizationController extends Controller
         // Handle requirements mapping (prevent empty errors)
         $validated['requirements'] = $request->input('requirements', []);
 
-        // Handle president mapping
+        // Handle president mapping (Only Staff - Admin & Head Committee - can assign/reassign presidents)
         $presidentName = $validated['president_name'] ?? null;
         unset($validated['president_name']);
 
         $organization->update($validated);
 
-        // Unset old president if changed
-        $currentPresident = $organization->president;
-        if ($currentPresident && $currentPresident->name !== $presidentName) {
-            $currentPresident->update(['organization_id' => null]);
-        }
+        if ($user->isStaff()) {
+            // Unset old president if changed
+            $currentPresident = $organization->president;
+            if ($currentPresident && $currentPresident->name !== $presidentName && $currentPresident->id != $presidentName) {
+                $currentPresident->update(['organization_id' => null]);
+            }
 
-        // Set new president
-        if ($presidentName) {
-            $newUser = \App\Models\User::where('role', 'president')->where('name', $presidentName)->first();
-            if ($newUser) {
-                $newUser->update(['organization_id' => $organization->id]);
+            // Set new president
+            if ($presidentName) {
+                $newUser = \App\Models\User::where('role', 'president')
+                    ->where(function ($q) use ($presidentName) {
+                        $q->where('name', $presidentName)
+                          ->orWhere('id', $presidentName);
+                    })->first();
+                if ($newUser) {
+                    $newUser->update(['organization_id' => $organization->id]);
+                }
             }
         }
 

@@ -1,7 +1,7 @@
-import { Activity, CheckCircle2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { CheckCircle2, ChevronLeft, ChevronRight } from 'lucide-react';
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import type { CaseQueueItem, QueueTab } from '../../types';
 import VawcActionQueueRow from './VawcActionQueueRow';
@@ -44,27 +44,21 @@ export default function VawcActionQueueSection({
     isPrivacyRedacted,
 }: VawcActionQueueSectionProps) {
     return (
-        <Card className="border-border shadow-xs rounded-2xl overflow-hidden flex flex-col justify-between">
+        <Card className="border border-border shadow-xs rounded-xl overflow-hidden flex flex-col justify-between bg-card">
             <div>
-                <CardHeader className="pb-3 border-b bg-muted/20">
-                    <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3">
-                        <div>
-                            <CardTitle className="text-sm sm:text-base font-black uppercase tracking-tight flex items-center gap-2">
-                                <Activity className="h-4.5 w-4.5 text-red-600 shrink-0" />
-                                <span>Lethality Action Queue</span>
-                            </CardTitle>
-                            <CardDescription className="text-xs sm:text-sm text-muted-foreground mt-0.5">
-                                Survivors requiring immediate safety planning, statutory BPO issuance, or threat assessment.
-                            </CardDescription>
-                        </div>
+                <CardHeader className="p-3.5 sm:p-4 border-b border-border bg-muted/20">
+                    <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-2.5">
+                        <CardTitle className="text-sm sm:text-base font-black uppercase tracking-tight text-foreground">
+                            Lethality Action Queue
+                        </CardTitle>
 
-                        {/* Queue Tab Selectors matching BCPC */}
-                        <div className="flex flex-wrap items-center gap-1 bg-muted/60 p-1 rounded-xl border max-w-full">
+                        {/* Queue Tab Selectors matching BCPC style */}
+                        <div className="flex flex-wrap items-center gap-1 bg-muted/60 p-1 rounded-lg border border-border max-w-full">
                             <button
                                 type="button"
                                 onClick={() => onTabChange('CRITICAL')}
                                 className={cn(
-                                    "px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg text-xs font-black uppercase transition-all whitespace-nowrap cursor-pointer",
+                                    "px-2.5 sm:px-3 py-1 rounded text-xs font-bold uppercase transition-all whitespace-nowrap cursor-pointer",
                                     activeTab === 'CRITICAL'
                                         ? "bg-red-600 text-white shadow-xs"
                                         : "text-muted-foreground hover:text-foreground"
@@ -78,7 +72,7 @@ export default function VawcActionQueueSection({
                                     type="button"
                                     onClick={() => onTabChange('HIGH')}
                                     className={cn(
-                                        "px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg text-xs font-black uppercase transition-all whitespace-nowrap cursor-pointer",
+                                        "px-2.5 sm:px-3 py-1 rounded text-xs font-bold uppercase transition-all whitespace-nowrap cursor-pointer",
                                         activeTab === 'HIGH'
                                             ? "bg-orange-600 text-white shadow-xs"
                                             : "text-muted-foreground hover:text-foreground"
@@ -92,7 +86,7 @@ export default function VawcActionQueueSection({
                                 type="button"
                                 onClick={() => onTabChange('MOD')}
                                 className={cn(
-                                    "px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg text-xs font-black uppercase transition-all whitespace-nowrap cursor-pointer",
+                                    "px-2.5 sm:px-3 py-1 rounded text-xs font-bold uppercase transition-all whitespace-nowrap cursor-pointer",
                                     activeTab === 'MOD'
                                         ? "bg-amber-500 text-white shadow-xs"
                                         : "text-muted-foreground hover:text-foreground"
@@ -105,7 +99,7 @@ export default function VawcActionQueueSection({
                                 type="button"
                                 onClick={() => onTabChange('LOW')}
                                 className={cn(
-                                    "px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg text-xs font-black uppercase transition-all whitespace-nowrap cursor-pointer",
+                                    "px-2.5 sm:px-3 py-1 rounded text-xs font-bold uppercase transition-all whitespace-nowrap cursor-pointer",
                                     activeTab === 'LOW'
                                         ? "bg-blue-600 text-white shadow-xs"
                                         : "text-muted-foreground hover:text-foreground"
@@ -118,7 +112,7 @@ export default function VawcActionQueueSection({
                                 type="button"
                                 onClick={() => onTabChange('PENDING')}
                                 className={cn(
-                                    "px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg text-xs font-black uppercase transition-all whitespace-nowrap cursor-pointer",
+                                    "px-2.5 sm:px-3 py-1 rounded text-xs font-bold uppercase transition-all whitespace-nowrap cursor-pointer",
                                     activeTab === 'PENDING'
                                         ? "bg-slate-700 text-white shadow-xs"
                                         : "text-muted-foreground hover:text-foreground"
@@ -131,7 +125,7 @@ export default function VawcActionQueueSection({
                                 type="button"
                                 onClick={() => onTabChange('BPOS')}
                                 className={cn(
-                                    "px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg text-xs font-black uppercase transition-all whitespace-nowrap cursor-pointer",
+                                    "px-2.5 sm:px-3 py-1 rounded text-xs font-bold uppercase transition-all whitespace-nowrap cursor-pointer",
                                     activeTab === 'BPOS'
                                         ? "bg-emerald-600 text-white shadow-xs"
                                         : "text-muted-foreground hover:text-foreground"
@@ -144,7 +138,7 @@ export default function VawcActionQueueSection({
                                 type="button"
                                 onClick={() => onTabChange('REPEAT')}
                                 className={cn(
-                                    "px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg text-xs font-black uppercase transition-all whitespace-nowrap cursor-pointer",
+                                    "px-2.5 sm:px-3 py-1 rounded text-xs font-bold uppercase transition-all whitespace-nowrap cursor-pointer",
                                     activeTab === 'REPEAT'
                                         ? "bg-purple-600 text-white shadow-xs"
                                         : "text-muted-foreground hover:text-foreground"
@@ -168,7 +162,7 @@ export default function VawcActionQueueSection({
                             </p>
                         </div>
                     ) : (
-                        <div className="divide-y divide-border/60">
+                        <div className="divide-y divide-border">
                             {paginatedQueue.map((item) => (
                                 <VawcActionQueueRow
                                     key={item.id}
@@ -181,51 +175,30 @@ export default function VawcActionQueueSection({
                 </CardContent>
             </div>
 
-            {/* Pagination for Queue matching shadcn/GAD/Announcements style */}
+            {/* Pagination for Queue matching clean locked BCPC style */}
             {totalQueuePages > 1 && (
-                <CardFooter className="py-3 px-4 sm:px-6 border-t bg-muted/10 flex flex-col sm:flex-row items-center justify-between gap-3">
-                    <span className="text-xs text-muted-foreground font-medium order-2 sm:order-1">
-                        Showing {(queuePage - 1) * itemsPerPage + 1} to{' '}
-                        {Math.min(queuePage * itemsPerPage, currentQueueList.length)} of{' '}
-                        {currentQueueList.length} cases
+                <CardFooter className="p-2 sm:p-2.5 border-t border-border bg-muted/10 h-10 flex items-center justify-between text-xs text-muted-foreground">
+                    <span className="font-medium text-xs">
+                        Page {queuePage} of {totalQueuePages} ({currentQueueList.length} cases)
                     </span>
-                    <div className="flex items-center gap-1 order-1 sm:order-2 flex-wrap justify-center">
+                    <div className="flex items-center gap-1">
                         <Button
                             variant="outline"
-                            size="sm"
+                            size="icon"
+                            className="h-6 w-6 rounded-md"
                             onClick={() => onPageChange(Math.max(1, queuePage - 1))}
                             disabled={queuePage === 1}
-                            className="h-8 px-2.5 text-xs font-semibold gap-1 cursor-pointer"
                         >
-                            <ChevronLeft className="w-3.5 h-3.5" />
-                            <span>Previous</span>
+                            <ChevronLeft className="h-3 w-3" />
                         </Button>
-
-                        {Array.from({ length: totalQueuePages }, (_, i) => i + 1).map((p) => (
-                            <button
-                                key={p}
-                                type="button"
-                                onClick={() => onPageChange(p)}
-                                className={cn(
-                                    "h-8 min-w-[32px] px-2.5 flex items-center justify-center text-xs font-semibold rounded-lg border transition-all cursor-pointer",
-                                    queuePage === p
-                                        ? "bg-primary text-primary-foreground border-primary shadow-xs font-bold"
-                                        : "bg-background hover:bg-muted text-muted-foreground border-border"
-                                )}
-                            >
-                                {p}
-                            </button>
-                        ))}
-
                         <Button
                             variant="outline"
-                            size="sm"
+                            size="icon"
+                            className="h-6 w-6 rounded-md"
                             onClick={() => onPageChange(Math.min(totalQueuePages, queuePage + 1))}
                             disabled={queuePage === totalQueuePages}
-                            className="h-8 px-2.5 text-xs font-semibold gap-1 cursor-pointer"
                         >
-                            <span>Next</span>
-                            <ChevronRight className="w-3.5 h-3.5" />
+                            <ChevronRight className="h-3 w-3" />
                         </Button>
                     </div>
                 </CardFooter>

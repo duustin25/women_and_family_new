@@ -98,7 +98,7 @@ export default function Dashboard({
         ]}>
             <Head title="VAWC Case Management Center - RA 9262" />
 
-            <div className="space-y-6 pb-12 max-w-[1600px] mx-auto p-4 sm:p-6 w-full">
+            <div className="flex h-full flex-1 flex-col gap-3.5 sm:gap-4 p-3.5 sm:p-5 w-full max-w-[1700px] mx-auto">
                 {/* Header with Title, RA 9262 Badge, Privacy Toggle & Intake Action */}
                 <VawcDashboardHeader
                     isPrivacyRedacted={privacyMode}

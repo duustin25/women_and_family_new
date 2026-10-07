@@ -1,4 +1,4 @@
-import { Head, useForm, Link, router } from '@inertiajs/react';
+import { Head, useForm, Link, router, usePage } from '@inertiajs/react';
 import { ArrowLeft, Save, LayoutTemplate, Settings, FileText, Loader2, Eye } from "lucide-react";
 import React, { useState, useRef } from 'react';
 import { UnsavedChangesDialog } from '@/components/Admin/UnsavedChangesDialog';
@@ -21,6 +21,8 @@ interface Props {
 }
 
 export default function Edit({ organization, users = [] }: Props) {
+    const { auth } = usePage<any>().props;
+    const canAssign = ['admin', 'head'].includes(auth?.user?.role);
     const record = organization?.data ?? organization;
     const [activeTab, setActiveTab] = useState<'profile' | 'form' | 'print'>('profile');
     const [showPreviewOnWide, setShowPreviewOnWide] = useState(true);
@@ -228,6 +230,7 @@ export default function Edit({ organization, users = [] }: Props) {
                                         errors={errors}
                                         onPresidentChange={(val) => setData('president_name', val)}
                                         onColorThemeChange={(val) => setData('color_theme', val)}
+                                        canAssign={canAssign}
                                     />
 
                                     <BrandingSection

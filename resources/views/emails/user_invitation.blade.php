@@ -12,9 +12,8 @@ Activate Account & Set Password
 </x-mail::button>
 
 <x-mail::panel>
-### Your 6-Digit Activation Code
-
-# `{{ $otp }}`
+**Your 6-Digit Activation Code:**  
+`{{ $otp }}`
 
 Enter this code on the activation page. It is valid for **10 minutes** and can only be used once.
 </x-mail::panel>
@@ -23,7 +22,7 @@ Enter this code on the activation page. It is valid for **10 minutes** and can o
 
 Warm regards,  
 **Barangay 183 Administration**  
-📍 Pasay City
+Pasay City
 
 <x-mail::subcopy>
 **Data Privacy Notice:** This official communication is processed under Republic Act 10173 (Data Privacy Act of 2012) and RA 9262. Your records and credentials are kept strictly confidential.

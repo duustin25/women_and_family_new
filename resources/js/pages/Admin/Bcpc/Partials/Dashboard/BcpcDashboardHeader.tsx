@@ -1,5 +1,5 @@
 import { Link } from '@inertiajs/react';
-import { FileText, Printer, UserPlus } from 'lucide-react';
+import { FileText, UserPlus } from 'lucide-react';
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -16,19 +16,12 @@ export default function BcpcDashboardHeader() {
                         RA 11037
                     </Badge>
                 </div>
-                <p className="text-sm sm:text-base text-muted-foreground mt-0.5">
+                <p className="text-sm text-muted-foreground mt-0.5">
                     Child growth monitoring, clinical triage queues, and 120-day feeding program oversight.
                 </p>
             </div>
 
             <div className="flex items-center gap-2 sm:gap-2.5 flex-wrap">
-                <Button asChild variant="outline" size="sm" className="text-sm min-h-[44px] sm:min-h-[40px] gap-2 font-semibold px-4">
-                    <a href="/admin/bcpc/print" target="_blank" rel="noopener noreferrer">
-                        <Printer className="w-4 h-4 text-teal-600" />
-                        <span className="hidden sm:inline">Export Masterlist</span>
-                        <span className="sm:hidden">Export</span>
-                    </a>
-                </Button>
                 <Button asChild variant="outline" size="sm" className="text-sm min-h-[44px] sm:min-h-[40px] gap-2 font-semibold px-4">
                     <Link href="/admin/bcpc/cases">
                         <FileText className="w-4 h-4 text-emerald-600" />

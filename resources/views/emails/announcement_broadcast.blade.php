@@ -21,7 +21,7 @@ Read Full Announcement
 
 Warm regards,  
 **{{ $announcement->organization->name ?? 'Barangay 183' }} Administrative Team**  
-📍 Pasay City
+Pasay City
 
 <x-mail::subcopy>
 **Data Privacy Notice:** This broadcast was sent to you as a registered member in accordance with Republic Act 10173 (Data Privacy Act of 2012).

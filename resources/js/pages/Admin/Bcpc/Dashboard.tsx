@@ -108,13 +108,14 @@ export default function BcpcDashboard({
                     doubleBurdenCount={doubleBurden.length}
                     activeSfpCount={activeSfp.length}
                     overdueCount={overdueWeighings.length}
+                    activeTab={activeQueueTab}
                     onTabChange={handleTabChange}
                 />
 
-                {/* ── 2. CLINICAL ACTION QUEUE, SFP ROSTER & BIRTHDAYS (COMPACT NO-SCROLL LAYOUT) ── */}
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-4 flex-1">
+                {/* ── 2. CLINICAL ACTION QUEUE, SFP ROSTER & BIRTHDAYS (LOCKED HEIGHT ROW) ── */}
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-3.5 sm:gap-4 flex-1 items-stretch">
                     {/* Clinical Action Queue (6 cols on lg/xl) */}
-                    <div className="lg:col-span-6 xl:col-span-6 flex flex-col">
+                    <div className="lg:col-span-6 xl:col-span-6 flex flex-col h-full">
                         <BcpcTriageQueueSection
                             activeQueueTab={activeQueueTab}
                             onTabChange={handleTabChange}
@@ -133,7 +134,7 @@ export default function BcpcDashboard({
                     </div>
 
                     {/* SFP Active Roster (3 cols on lg/xl) */}
-                    <div className="lg:col-span-3 xl:col-span-3 flex flex-col">
+                    <div className="lg:col-span-3 xl:col-span-3 flex flex-col h-full">
                         <BcpcSfpRosterSection
                             activeSfp={activeSfp}
                             paginatedSfp={paginatedSfp}
@@ -145,7 +146,7 @@ export default function BcpcDashboard({
                     </div>
 
                     {/* Real-Time Upcoming Birthdays in Current Month (3 cols on lg/xl) */}
-                    <div className="lg:col-span-3 xl:col-span-3 flex flex-col">
+                    <div className="lg:col-span-3 xl:col-span-3 flex flex-col h-full">
                         <BcpcBirthdaysWidget
                             upcomingBirthdays={upcomingBirthdays}
                             currentMonthName={currentMonthName}

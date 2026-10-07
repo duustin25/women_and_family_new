@@ -24,7 +24,7 @@ View Event Calendar
 
 Warm regards,  
 **{{ $event->organization->name ?? 'Barangay 183' }} Administrative Team**  
-📍 Pasay City
+Pasay City
 
 <x-mail::subcopy>
 **Data Privacy Notice:** This invitation is processed in compliance with Republic Act 10173 (Data Privacy Act of 2012).

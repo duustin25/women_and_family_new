@@ -9,7 +9,7 @@ Visit Official Hub
 
 Warm regards,  
 **Barangay 183 Administration**  
-📍 Pasay City
+Pasay City
 
 <x-mail::subcopy>
 **Data Privacy Notice:** This official communication is processed under Republic Act 10173 (Data Privacy Act of 2012). If you received this in error, please disregard or notify the Barangay Hall.

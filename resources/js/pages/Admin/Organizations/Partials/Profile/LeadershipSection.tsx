@@ -11,6 +11,7 @@ interface Props {
     errors?: Record<string, string>;
     onPresidentChange: (val: string) => void;
     onColorThemeChange: (val: string) => void;
+    canAssign?: boolean;
 }
 
 export const colorOptions = [
@@ -31,6 +32,7 @@ export default function LeadershipSection({
     errors = {},
     onPresidentChange,
     onColorThemeChange,
+    canAssign = true,
 }: Props) {
     return (
         <Card className="shadow-xs border bg-card">
@@ -52,8 +54,9 @@ export default function LeadershipSection({
                     <Select
                         value={presidentName || "none"}
                         onValueChange={(val) => onPresidentChange(val === "none" ? "" : val)}
+                        disabled={!canAssign}
                     >
-                        <SelectTrigger className={`w-full bg-background h-10 ${errors.president_name ? 'border-destructive' : ''}`}>
+                        <SelectTrigger className={`w-full bg-background h-10 ${errors.president_name ? 'border-destructive' : ''} ${!canAssign ? 'opacity-80 cursor-not-allowed bg-muted/40' : ''}`}>
                             <div className="flex items-center gap-2">
                                 <Users className="w-4 h-4 text-muted-foreground" />
                                 <SelectValue placeholder="Select or unassign leader" />
@@ -80,6 +83,11 @@ export default function LeadershipSection({
                             )}
                         </SelectContent>
                     </Select>
+                    {!canAssign && (
+                        <p className="text-[11px] text-muted-foreground italic">
+                            Only System Administrators and Committee Heads are authorized to assign or reassign Chapter Presidents.
+                        </p>
+                    )}
                 </div>
 
                 <div className="space-y-2">
