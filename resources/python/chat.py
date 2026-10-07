@@ -104,16 +104,38 @@ def check_emergency_distress(sentence):
     immediately trigger emergency guidance and hotlines, bypassing BoW neural net dilution.
     """
     import re
-    s = sentence.lower()
+    s = sentence.lower().strip()
     
     # Priority keywords & phrase patterns in English and Filipino
     patterns = [
-        r'\b(saklolo|tulong|tulungan nyo ko|tulungan ninyo ako)\b',
+        r'\b(saklolo|tulungan nyo ko|tulungan ninyo ako)\b',
+        r'^\s*tulong\s*$',
         r'\b(emergency|emergensya|rescue|danger|in danger|panganib|nasa panganib)\b',
         r'\b(binubugbog|sinasaktan ako|sinasaktan po ako|pambubugbog)\b',
         r'\b(patalim|kutsilyo|baril|armado|sasaksakin|papatayin|banta sa buhay)\b',
-        r'\b(help me|save me|threatened|threat to life|being beaten|under attack)\b',
+        r'\b(save me|threatened|threat to life|being beaten|under attack)\b',
+        r'^\s*help me\b(?!.*(report|file|with|inquiry|understand))',
         r'\b(police|pulis|police hotline|911|177|ambulance|ambulansya)\b'
+    ]
+    
+    for pat in patterns:
+        if re.search(pat, s):
+            return True
+            
+    return False
+
+def check_general_help(sentence):
+    """
+    General Help & Guidance Rule-Based Pre-filter:
+    Ensures queries asking for general help, assistance, or chatbot capabilities
+    reliably trigger the greeting/guidance intent with interactive category options.
+    """
+    import re
+    s = sentence.lower().strip()
+    
+    patterns = [
+        r'^(help|help po|need help|i need help|help please|can you help|can you help me|patulong|patulong po|pahingi ng tulong|tulungan mo ako|what can you do|ano ang pwede mong gawin)\??$',
+        r'^(how can you help|how can you help me|how to use this|paano gamitin)\??$'
     ]
     
     for pat in patterns:
@@ -153,7 +175,18 @@ if __name__ == "__main__":
                 }))
                 sys.exit(0)
 
-            # 2. Ordinary MLP Bag-of-Words Intent Classification (> 0.70 Threshold)
+            # 2. Deterministic General Help & Guidance Pre-Filter
+            if check_general_help(query):
+                res = get_response([{"intent": "greeting"}], intents)
+                print(json.dumps({
+                    "response": res,
+                    "intent": "greeting",
+                    "confidence": "1.00",
+                    "method": "rule_based_general_help"
+                }))
+                sys.exit(0)
+
+            # 3. Ordinary MLP Bag-of-Words Intent Classification (> 0.70 Threshold)
             ints = predict_class(query, model)
             res = get_response(ints, intents)
             

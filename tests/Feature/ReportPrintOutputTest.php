@@ -35,10 +35,14 @@ class ReportPrintOutputTest extends TestCase
 
         $this->actingAs($this->adminUser);
 
-        if (\Illuminate\Support\Facades\DB::connection() instanceof \Illuminate\Database\SQLiteConnection) {
-            \Illuminate\Support\Facades\DB::connection()->getPdo()->sqliteCreateFunction('MONTH', function ($date) {
-                return $date ? (int) date('m', strtotime($date)) : null;
-            });
+        $connection = \Illuminate\Support\Facades\DB::connection();
+        if ($connection instanceof \Illuminate\Database\SQLiteConnection) {
+            $pdo = $connection->getPdo();
+            if (method_exists($pdo, 'sqliteCreateFunction')) {
+                call_user_func([$pdo, 'sqliteCreateFunction'], 'MONTH', function ($date) {
+                    return $date ? (int) date('m', strtotime($date)) : null;
+                });
+            }
         }
     }
 
@@ -195,7 +199,7 @@ class ReportPrintOutputTest extends TestCase
             ->component('Admin/Vawc/PrintBpo')
             ->where('case.uuid', $case->uuid)
             ->where('order.order_number', 'BPO-2026-0099-01')
-            ->where('order.status', 'Issued')
+            ->where('order.status', fn ($status) => $status === 'Issued')
             ->where('order.signatory_name', 'Hon. Punong Barangay Santos')
         );
 

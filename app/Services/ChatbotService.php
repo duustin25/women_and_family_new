@@ -69,8 +69,8 @@ class ChatbotService
                         'How do I file a VAWC case?',
                         'Report child abuse',
                         'Latest Announcements',
-                        'Nutrition Program',
-                        'Who are the officials?'
+                        'Who are the officials?',
+                        'Emergency Hotlines'
                     ];
                 } elseif ($intent === 'emergency') {
                     $payload['suggestions'] = [
@@ -288,7 +288,7 @@ class ChatbotService
         }
 
         // 2. Greetings & General Help
-        if (Str::contains($q, ['hi', 'hello', 'hey', 'kamusta', 'kumusta', 'magandang', 'greetings', 'help', 'villa-bot', 'villabot'])) {
+        if (Str::contains($q, ['hi', 'hello', 'hey', 'kamusta', 'kumusta', 'magandang', 'greetings', 'help', 'villa-bot', 'villabot', 'patulong', 'need help', 'tulong po', 'pahingi ng tulong'])) {
             return [
                 'response' => "Mabuhay! I am Villa-Bot — Barangay 183 Villamor Helpdesk assistant. I provide general information on barangay procedures, hotlines, filing intakes, officials directory, and accredited organizations. (Note: I do not provide legal advice.)",
                 'suggestions' => [
