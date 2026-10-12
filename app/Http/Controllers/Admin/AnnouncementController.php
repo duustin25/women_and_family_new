@@ -104,6 +104,13 @@ class AnnouncementController extends Controller
         return redirect()->route('admin.announcements.index')->with('message', 'Announcement Published. The announcement broadcast has been queued in the background.');
     }
 
+    public function show(Announcement $announcement)
+    {
+        return Inertia::render('Public/Announcements/Show', [
+            'announcement' => new AnnouncementResource($announcement)
+        ]);
+    }
+
     public function edit(Announcement $announcement)
     {
         return Inertia::render('Admin/Announcements/Edit', [

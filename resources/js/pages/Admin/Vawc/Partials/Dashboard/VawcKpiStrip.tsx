@@ -85,14 +85,14 @@ export default function VawcKpiStrip({
                 className={cn(
                     "text-left p-3 sm:p-3.5 rounded-xl border transition-all cursor-pointer bg-card min-h-[96px] sm:min-h-[102px] flex flex-col justify-between shadow-xs",
                     activeTab === 'REPEAT'
-                        ? "border-amber-500 ring-2 ring-amber-500/20 bg-amber-50/40 dark:bg-amber-950/20 border-l-4 border-l-amber-500"
-                        : "border-border border-l-4 border-l-amber-500 hover:border-amber-300 dark:hover:border-amber-800"
+                        ? "border-purple-500 ring-2 ring-purple-500/20 bg-purple-50/40 dark:bg-purple-950/20 border-l-4 border-l-purple-500"
+                        : "border-border border-l-4 border-l-purple-500 hover:border-purple-300 dark:hover:border-purple-800"
                 )}
             >
                 <span className="text-xs sm:text-sm font-bold uppercase tracking-normal text-muted-foreground leading-tight min-h-[28px] sm:min-h-[32px] flex items-center">
                     Repeat Cases
                 </span>
-                <div className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-amber-600 dark:text-amber-400 font-mono mt-1">
+                <div className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-purple-600 dark:text-purple-400 font-mono mt-1">
                     {repeatCount}
                 </div>
             </button>

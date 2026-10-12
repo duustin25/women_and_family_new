@@ -36,12 +36,12 @@ export default function VawcActionQueueRow({
                         item.risk_level === 'CRITICAL'
                             ? "bg-red-50 text-red-600 border-red-300 dark:bg-red-950/40 dark:border-red-800"
                             : item.risk_level === 'HIGH'
-                            ? "bg-orange-50 text-orange-600 border-orange-300 dark:bg-orange-950/40 dark:border-orange-800"
-                            : item.risk_level === 'MODERATE'
-                            ? "bg-amber-50 text-amber-600 border-amber-300 dark:bg-amber-950/40 dark:border-amber-800"
-                            : item.risk_level === 'LOW'
-                            ? "bg-blue-50 text-blue-600 border-blue-300 dark:bg-blue-950/40 dark:border-blue-800"
-                            : "bg-slate-100 text-slate-700 border-slate-300 dark:bg-slate-800 dark:text-slate-300"
+                                ? "bg-orange-50 text-orange-600 border-orange-300 dark:bg-orange-950/40 dark:border-orange-800"
+                                : item.risk_level === 'MODERATE'
+                                    ? "bg-amber-50 text-amber-600 border-amber-300 dark:bg-amber-950/40 dark:border-amber-800"
+                                    : item.risk_level === 'LOW'
+                                        ? "bg-blue-50 text-blue-600 border-blue-300 dark:bg-blue-950/40 dark:border-blue-800"
+                                        : "bg-slate-100 text-slate-700 border-slate-300 dark:bg-slate-800 dark:text-slate-300"
                     )}
                 >
                     {initial}
@@ -72,39 +72,39 @@ export default function VawcActionQueueRow({
                         item.has_weapon ||
                         (item.children_count && item.children_count > 0) ||
                         item.is_repeat) && (
-                        <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
-                            {item.is_multi_victim_offender && (
-                                <span className="text-[10px] sm:text-xs font-semibold px-2 py-0.5 rounded-md bg-amber-100 text-amber-800 border border-amber-300 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800">
-                                    Serial Offender
-                                </span>
-                            )}
-                            {item.bpo_info &&
-                                (item.bpo_info.is_expired ? (
-                                    <span className="text-[10px] sm:text-xs font-semibold px-2 py-0.5 rounded-md bg-amber-100 text-amber-900 border border-amber-300 dark:bg-amber-950/80 dark:text-amber-200 dark:border-amber-700">
-                                        15-Day BPO Lapsed
+                            <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
+                                {item.is_multi_victim_offender && (
+                                    <span className="text-[10px] sm:text-xs font-semibold px-2 py-0.5 rounded-md bg-amber-100 text-amber-800 border border-amber-300 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800">
+                                        Serial Offender
                                     </span>
-                                ) : (
-                                    <span className="text-[10px] sm:text-xs font-semibold px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 border border-emerald-300 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800">
-                                        BPO: {item.bpo_info.days_remaining}d left
+                                )}
+                                {item.bpo_info &&
+                                    (item.bpo_info.is_expired ? (
+                                        <span className="text-[10px] sm:text-xs font-semibold px-2 py-0.5 rounded-md bg-green-100 text-green-900 border border-green-300 dark:bg-green-950/80 dark:text-green-200 dark:border-green-700">
+                                            15-Day BPO Lapsed
+                                        </span>
+                                    ) : (
+                                        <span className="text-[10px] sm:text-xs font-semibold px-2 py-0.5 rounded-md bg-lime-100 text-lime-800 border border-lime-300 dark:bg-lime-950/60 dark:text-lime-300 dark:border-lime-800">
+                                            BPO: {item.bpo_info.days_remaining}d left
+                                        </span>
+                                    ))}
+                                {item.has_weapon && (
+                                    <span className="text-[10px] sm:text-xs font-semibold px-2 py-0.5 rounded-md bg-red-100 dark:bg-red-800 text-red-800 dark:text-red-200 border border-red-200/60 dark:border-red-700">
+                                        Weapon
                                     </span>
-                                ))}
-                            {item.has_weapon && (
-                                <span className="text-[10px] sm:text-xs font-semibold px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200/60 dark:border-slate-700">
-                                    Weapon
-                                </span>
-                            )}
-                            {Boolean(item.children_count && item.children_count > 0) && (
-                                <span className="text-[10px] sm:text-xs font-semibold px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200/60 dark:border-slate-700">
-                                    {item.children_count} {item.children_count === 1 ? 'Minor' : 'Minors'}
-                                </span>
-                            )}
-                            {item.is_repeat && (
-                                <span className="text-[10px] sm:text-xs font-semibold px-2 py-0.5 rounded-md bg-purple-100 dark:bg-purple-950/60 text-purple-800 dark:text-purple-300 border border-purple-200 dark:border-purple-800">
-                                    Repeat Offense
-                                </span>
-                            )}
-                        </div>
-                    )}
+                                )}
+                                {Boolean(item.children_count && item.children_count > 0) && (
+                                    <span className="text-[10px] sm:text-xs font-semibold px-2 py-0.5 rounded-md bg-[#cc0000] dark:bg-[#cc0000] text-white dark:text-white border border-[#cc0000] dark:border-[#cc0000]">
+                                        {item.children_count} {item.children_count === 1 ? 'Minor' : 'Minors'}
+                                    </span>
+                                )}
+                                {item.is_repeat && (
+                                    <span className="text-[10px] sm:text-xs font-semibold px-2 py-0.5 rounded-md bg-purple-100 dark:bg-purple-950/60 text-purple-800 dark:text-purple-300 border border-purple-200 dark:border-purple-800">
+                                        Repeat Offense
+                                    </span>
+                                )}
+                            </div>
+                        )}
                 </div>
             </div>
 
@@ -129,12 +129,12 @@ export default function VawcActionQueueRow({
                         item.risk_level === 'CRITICAL'
                             ? "text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30"
                             : item.risk_level === 'HIGH'
-                            ? "text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-950/30"
-                            : item.risk_level === 'MODERATE'
-                            ? "text-amber-700 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-950/30"
-                            : !item.risk_score
-                            ? "bg-red-600 hover:bg-red-700 text-white border-transparent"
-                            : "text-foreground hover:bg-muted"
+                                ? "text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-950/30"
+                                : item.risk_level === 'MODERATE'
+                                    ? "text-amber-700 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-950/30"
+                                    : !item.risk_score
+                                        ? "bg-red-600 hover:bg-red-700 text-white border-transparent"
+                                        : "text-foreground hover:bg-muted"
                     )}
                 >
                     <Link href={route('admin.vawc.show', item.uuid || item.id)}>
@@ -142,10 +142,10 @@ export default function VawcActionQueueRow({
                             {!item.risk_score
                                 ? 'Assess Case'
                                 : item.risk_level === 'CRITICAL'
-                                ? 'Triage & Protect'
-                                : item.risk_level === 'HIGH'
-                                ? 'Review & Plan'
-                                : 'View Dossier'}
+                                    ? 'Triage & Protect'
+                                    : item.risk_level === 'HIGH'
+                                        ? 'Review & Plan'
+                                        : 'View Dossier'}
                         </span>
                         <ChevronRight className="w-3.5 h-3.5 ml-0.5" />
                     </Link>

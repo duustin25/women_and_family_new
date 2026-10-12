@@ -29,8 +29,8 @@ export const Step2BpoApplication: React.FC<Props> = ({
     getNowLocalISO,
 }) => {
     return (
-        <form onSubmit={handleApplyBpo} className="max-w-xl mx-auto py-4 space-y-4">
-            <div className="p-4 rounded-xl border bg-card space-y-3 shadow-xs">
+        <form onSubmit={handleApplyBpo} className="max-w-2xl mx-auto py-4 space-y-4">
+            <div className="p-4 sm:p-5 rounded-xl border bg-card space-y-3 shadow-xs">
                 <div className="flex items-center justify-between gap-2 flex-wrap pb-2 border-b">
                     <div className="flex items-center gap-2">
                         <ShieldCheck className="w-5 h-5 text-red-600" />
@@ -63,7 +63,7 @@ export const Step2BpoApplication: React.FC<Props> = ({
 
                 {/* Historical Incident / Cold Case Statutory Advisory */}
                 {isColdCase && (
-                    <div className="p-4 rounded-xl border border-amber-500/40 bg-amber-500/10 dark:bg-amber-950/30 text-xs space-y-3">
+                    <div className="p-4 rounded-xl border border-amber-500/40 bg-amber-500/10 dark:bg-amber-950/30 text-xs space-y-3 overflow-hidden">
                         <div className="flex items-center justify-between gap-2 flex-wrap font-bold text-amber-800 dark:text-amber-300">
                             <span className="flex items-center gap-1.5 text-sm">
                                 <Scale className="w-4 h-4 text-amber-600 shrink-0" />
@@ -77,15 +77,15 @@ export const Step2BpoApplication: React.FC<Props> = ({
                             Under <strong>RA 9262 Sec. 14</strong>, an emergency BPO requires <em>imminent danger</em>. For historical incidents lacking active contact, an emergency order is legally inapplicable. However, under <strong>Sec. 24</strong>, crimes of VAWC remain fully actionable under the <strong>20-year prescriptive period</strong>—the barangay must accept the complaint and facilitate formal prosecution.
                         </p>
 
-                        <div className="pt-2 border-t border-amber-500/20 flex flex-col sm:flex-row gap-2.5">
+                        <div className="pt-2 border-t border-amber-500/20 flex flex-col gap-2 w-full">
                             <Button
                                 type="button"
                                 variant="destructive"
                                 onClick={handleColdCaseDirectReferral}
-                                className="flex-1 min-h-[44px] sm:min-h-[38px] text-xs font-bold flex items-center justify-center gap-1.5 shadow-xs"
+                                className="w-full min-h-[40px] h-auto py-2.5 px-3 text-xs font-bold flex items-center justify-center gap-1.5 shadow-xs whitespace-normal text-center leading-snug cursor-pointer"
                             >
                                 <Building2 className="w-4 h-4 shrink-0" />
-                                Refer Directly to PNP WCPD (Criminal Transmittal)
+                                <span>Refer Directly to PNP WCPD (Criminal Transmittal)</span>
                             </Button>
 
                             {vawcCase.dossier?.id && (
@@ -93,11 +93,11 @@ export const Step2BpoApplication: React.FC<Props> = ({
                                     type="button"
                                     variant="outline"
                                     asChild
-                                    className="flex-1 min-h-[44px] sm:min-h-[38px] text-xs font-bold border-amber-600/40 hover:bg-amber-100/50 dark:hover:bg-amber-950/50 text-amber-900 dark:text-amber-200"
+                                    className="w-full min-h-[40px] h-auto py-2.5 px-3 text-xs font-bold border-amber-600/40 hover:bg-amber-100/50 dark:hover:bg-amber-950/50 text-amber-900 dark:text-amber-200 whitespace-normal text-center leading-snug cursor-pointer"
                                 >
                                     <Link href={route('admin.vawc.create', { dossier_id: vawcCase.dossier?.uuid || vawcCase.dossier?.id })}>
                                         <Plus className="w-4 h-4 mr-1 shrink-0" />
-                                        Log New Threats Today (Subsequent Incident)
+                                        <span>Log New Threats Today (Subsequent Incident)</span>
                                     </Link>
                                 </Button>
                             )}

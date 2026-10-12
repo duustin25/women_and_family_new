@@ -46,6 +46,14 @@ class Organization extends Model
     }
 
     /**
+     * RELATIONSHIP: An organization has many registered members.
+     */
+    public function members(): HasMany
+    {
+        return $this->hasMany(Member::class);
+    }
+
+    /**
      * RELATIONSHIP: An organization has many events/proposals.
      */
     public function events(): HasMany

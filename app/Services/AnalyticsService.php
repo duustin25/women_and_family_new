@@ -2,1532 +2,218 @@
 
 namespace App\Services;
 
-use App\Models\CaseReport;
-use App\Models\VawcCase;
-use App\Models\VawcDossier;
-use App\Models\MembershipApplication;
-use App\Models\Zone;
-use App\Models\BcpcChild;
-use App\Models\BcpcAssessment;
-use App\Models\Announcement;
 use App\Models\User;
-use App\Models\GadEvent;
-use App\Models\Organization;
-use App\Models\VawcAssessment;
-use App\Models\MemberCommunication;
-use App\Models\Member;
-use Carbon\Carbon;
+use App\Services\Analytics\BcpcNutritionAnalyticsService;
+use App\Services\Analytics\DashboardOperationalService;
+use App\Services\Analytics\DemographicsAnalyticsService;
+use App\Services\Analytics\GadCommunityAnalyticsService;
+use App\Services\Analytics\OrganizationMetricsService;
+use App\Services\Analytics\VawcAnalyticsService;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
 
+/**
+ * Unified Analytics Orchestrator
+ *
+ * Coordinates modular domain-specific analytics services:
+ * - DashboardOperationalService: Operational queues, activity logs, ribbon metrics
+ * - VawcAnalyticsService: VAWC incidents, BPO metrics, longitudinal dossiers, threat patterns
+ * - DemographicsAnalyticsService: Age demographics, Zone GIS distributions, hotspots
+ * - BcpcNutritionAnalyticsService: WHO 3-Axis & e-OPT Plus nutritional screenings
+ * - GadCommunityAnalyticsService: GAD pipeline, sector distribution, event tracking
+ * - OrganizationMetricsService: Membership intakes, demographics, communications
+ */
 class AnalyticsService
 {
-    /**
-     * Get Simplified Separate KPIs for the official reporting dashboard ribbon.
-     */
+    public function __construct(
+        protected DashboardOperationalService $dashboardService,
+        protected VawcAnalyticsService $vawcService,
+        protected DemographicsAnalyticsService $demographicsService,
+        protected BcpcNutritionAnalyticsService $bcpcService,
+        protected GadCommunityAnalyticsService $gadService,
+        protected OrganizationMetricsService $organizationService
+    ) {}
+
+    // ── Domain Service Accessors ──────────────────────────────────────────
+
+    public function dashboard(): DashboardOperationalService
+    {
+        return $this->dashboardService;
+    }
+
+    public function vawc(): VawcAnalyticsService
+    {
+        return $this->vawcService;
+    }
+
+    public function demographics(): DemographicsAnalyticsService
+    {
+        return $this->demographicsService;
+    }
+
+    public function bcpc(): BcpcNutritionAnalyticsService
+    {
+        return $this->bcpcService;
+    }
+
+    public function gad(): GadCommunityAnalyticsService
+    {
+        return $this->gadService;
+    }
+
+    public function organizations(): OrganizationMetricsService
+    {
+        return $this->organizationService;
+    }
+
+    // ── Operational & Dashboard Methods ───────────────────────────────────
+
     public function getRibbonStats(int $year): array
     {
-        $totalCases = VawcCase::whereYear('created_at', $year)->count();
-        $totalDossiers = VawcDossier::whereHas('cases', function ($q) use ($year) {
-            $q->whereYear('created_at', $year);
-        })->count();
-        $activeBpos = DB::table('vawc_protection_orders')
-            ->join('vawc_cases', 'vawc_protection_orders.vawc_case_id', '=', 'vawc_cases.id')
-            ->whereIn('vawc_protection_orders.status', ['Issued', 'Served'])
-            ->whereNotIn('vawc_cases.status', ['Closed', 'Escalated'])
-            ->whereYear('vawc_protection_orders.created_at', $year)
-            ->count();
-        $repeatDossiers = VawcDossier::whereHas('cases', function ($q) use ($year) {
-            $q->whereYear('created_at', $year);
-        })->where('incident_count', '>', 1)->count();
-        $recidivismRate = $totalDossiers > 0 ? round(($repeatDossiers / $totalDossiers) * 100, 1) : 0.0;
-
-        return [
-            'total_vawc'       => $totalCases,
-            'total_dossiers'   => $totalDossiers,
-            'active_bpos'      => $activeBpos,
-            'recidivism_rate'  => $recidivismRate,
-            'total_bcpc'       => BcpcChild::count(),
-            'total_gad'        => GadEvent::whereYear('event_date', $year)->count(),
-            'total_orgs'       => Organization::count(),
-            // Maintain shared metrics for internal use
-            'resolution_rate'  => $this->calculateResolutionRate($year),
-            'sla_rate'         => $this->calculateSlaRate($year),
-        ];
+        return $this->dashboardService->getRibbonStats($year);
     }
 
-    /**
-     * Helper for resolution rate calculation.
-     */
-    private function calculateResolutionRate(int $year): float
-    {
-        $total = VawcCase::whereYear('created_at', $year)->count();
-        $resolved = VawcCase::whereYear('created_at', $year)
-            ->whereIn('status', ['Resolved', 'Closed', 'Case Closed'])
-            ->count();
-        return $total > 0 ? round(($resolved / $total) * 100, 1) : 0.0;
-    }
-
-    /**
-     * Helper for SLA calculation to keep getRibbonStats clean.
-     */
-    private function calculateSlaRate(int $year): float
-    {
-        $totalBpos = DB::table('vawc_protection_orders')->where('type', 'BPO')->whereYear('created_at', $year)->count();
-        $compliantBpos = DB::table('vawc_protection_orders')
-            ->where('type', 'BPO')
-            ->where('is_sla_breached', false)
-            ->whereNotNull('issued_datetime')
-            ->whereYear('created_at', $year)
-            ->count();
-        return $totalBpos > 0 ? round(($compliantBpos / $totalBpos) * 100, 1) : 100.0;
-    }
-
-    /**
-     * Get high-level system counts for the general dashboard.
-     */
     public function getSystemStats(?User $user = null): array
     {
-        // 1. Calculations for Admin/Head
-        $year = now()->year;
-
-        // GAD & System Vitality
-        $gadEvents = GadEvent::whereYear('event_date', $year)->get();
-        $recentActivityCount = DB::table('audit_logs')->where('created_at', '>=', now()->subDays(7))->count();
-
-        $baseStats = [
-            'totalVawcActive'     => VawcCase::where('status', '!=', 'Closed')->count(),
-            'totalBcpcChildren'   => BcpcChild::count(),
-            'pendingApps'         => MembershipApplication::pending()->count(),
-            'totalOrgs'           => Organization::count(),
-            'totalGadEvents'      => $gadEvents->count(),
-            'gadApprovedCount'    => $gadEvents->where('status', 'approved')->count(),
-            'totalSystemUsers'    => User::count(),
-            'recentSystemActivity' => $recentActivityCount,
-        ];
-
-        // 2. RBAC: Presidents see stats only for their organization
-        if ($user && $user->isPresident()) {
-            return [
-                'totalCases'        => 0,
-                'totalOrgs'         => 1,
-                'totalUsers'        => User::where('organization_id', $user->organization_id)->count(),
-                'pendingApps'       => MembershipApplication::where('organization_id', $user->organization_id)
-                    ->where('status', 'Pending')->count(),
-                'verifiedMembers'   => User::where('organization_id', $user->organization_id)
-                    ->whereNotNull('email_verified_at')->count(),
-                'recentActivity'    => DB::table('audit_logs')->where('user_id', $user->id)->where('created_at', '>=', now()->subDays(7))->count(),
-            ];
-        }
-
-        return $baseStats;
+        return $this->dashboardService->getSystemStats($user);
     }
 
-    /**
-     * Get recent case reports.
-     */
-    public function getRecentCases(int $limit = 5, ?User $user = null): Collection
+    public function getActionQueue(?User $user = null): array
     {
-        // RBAC: Org Presidents don't see cases
-        if ($user && $user->isPresident()) {
-            return collect([]);
-        }
-
-        return CaseReport::with(['abuseType', 'vawcCase'])
-            ->latest()
-            ->take($limit)
-            ->get()
-            ->map(fn($case) => [
-                'id'          => $case->id,
-                'vawc_id'     => $case->vawcCase?->id,
-                'vawc_uuid'   => $case->vawcCase?->uuid,
-                'case_number' => $case->case_number,
-                'type'        => $case->type,
-                'subType'     => $case->abuseType ? $case->abuseType->name : 'General Intake',
-                'status'      => $case->vawcCase ? $case->vawcCase->status : ($case->lifecycle_status ?: 'New'),
-                'date'        => $case->created_at ? $case->created_at->diffForHumans() : 'Just now',
-            ]);
+        return $this->dashboardService->getActionQueue($user);
     }
 
-    /**
-     * Get recent membership applications.
-     */
-    public function getRecentApplications(int $limit = 5, ?User $user = null): Collection
+    public function getOperationalActivity(int $limit = 5, ?User $user = null): array
     {
-        $query = MembershipApplication::with(['organization']);
-
-        // RBAC: President sees only their organization's applications
-        if ($user && $user->isPresident()) {
-            $query->where('organization_id', $user->organization_id);
-        }
-
-        return $query->orderByDesc('created_at')
-            ->take($limit)
-            ->get()
-            ->map(fn($app) => [
-                'id'           => $app->id,
-                'name'         => $app->fullname,
-                'organization' => $app->organization ? $app->organization->name : 'N/A',
-                'status'       => $app->status,
-                'date'         => $app->created_at->format('M d, Y'),
-            ]);
+        return $this->dashboardService->getOperationalActivity($limit, $user);
     }
 
-    /**
-     * Get a strategic community snapshot for the dashboard.
-     */
-    public function getCommunitySnapshot(): array
+    public function getLatestAnnouncements(?User $user = null): array
     {
-        $year = now()->year;
-        $totalMembers = User::count();
-        $newMembersThisMonth = User::whereMonth('created_at', now()->month)->count();
-
-        return [
-            'gadSummary' => $this->getGadAnalytics($year),
-            'orgSummary' => $this->getOrgSectorAnalysis(),
-            'memberTrend' => [
-                'total' => $totalMembers,
-                'new'   => $newMembersThisMonth,
-                'growth' => $totalMembers > 0 ? round(($newMembersThisMonth / $totalMembers) * 100, 1) : 0,
-            ]
-        ];
+        return $this->dashboardService->getLatestAnnouncements($user);
     }
 
-    /**
-     * Get distribution of case resolution statuses.
-     */
+    public function getCommunitySnapshot(?User $user = null): ?array
+    {
+        return $this->dashboardService->getCommunitySnapshot($user);
+    }
+
+    // ── VAWC Methods ──────────────────────────────────────────────────────
+
     public function getCaseResolutionStats(int $year, ?User $user = null): array
     {
-        // RBAC: Org Presidents don't see case stats
-        if ($user && $user->isPresident()) {
-            return [];
-        }
-
-        $cases = CaseReport::with('vawcCase')
-            ->whereYear('created_at', $year)
-            ->get();
-
-        $caseResolutionsRaw = $cases->groupBy(function ($case) {
-            return $case->vawcCase ? $case->vawcCase->status : ($case->lifecycle_status ?: 'New');
-        })->map(fn($group) => count($group));
-
-        $statusColors = [
-            'Intake'              => '#f59e0b',
-            'Assessment'          => '#f97316',
-            'Alternative Housing' => '#6366f1',
-            'BPO Processing'      => '#a855f7',
-            'Monitoring'          => '#0ea5e9',
-            'Escalated'           => '#ef4444',
-            'Resolved'            => '#10b981',
-            'Closed'              => '#64748b',
-        ];
-
-        $stats = [];
-        foreach ($caseResolutionsRaw as $statusName => $count) {
-            $stats[] = [
-                'name'  => $statusName,
-                'value' => $count,
-                'fill'  => $statusColors[$statusName] ?? '#94a3b8'
-            ];
-        }
-
-        return $stats;
+        return $this->vawcService->getCaseResolutionStats($year, $user);
     }
 
-    /**
-     * Get VAWC-specific analytics for the VAWC command dashboard.
-     */
     public function getVawcSpecificStats(int $year): array
     {
-        $vawcCases = VawcCase::whereYear('created_at', $year)->get();
-
-        $totalCases    = $vawcCases->count();
-
-        // Children at Risk (Real-time: Child victims + recorded dependents)
-        $childVictims = CaseReport::whereYear('created_at', $year)
-            ->where('victim_age', '<', 18)
-            ->count();
-        $additionalChildren = $vawcCases->sum('children_count') ?: 0;
-        $totalChildren = $childVictims + $additionalChildren;
-
-        $repeatCases   = $vawcCases->where('status', '!=', 'Closed')->where('is_repeat_offense', true)->count();
-        $activeBpos    = DB::table('vawc_protection_orders')
-            ->join('vawc_cases', 'vawc_protection_orders.vawc_case_id', '=', 'vawc_cases.id')
-            ->whereIn('vawc_protection_orders.status', ['Issued', 'Served'])
-            ->whereNotIn('vawc_cases.status', ['Closed', 'Escalated'])
-            ->count();
-
-        // SLA Compliance: BPOs issued on the same day
-        $totalBpos = DB::table('vawc_protection_orders')->where('type', 'BPO')->whereYear('created_at', $year)->count();
-        $compliantBpos = DB::table('vawc_protection_orders')
-            ->where('type', 'BPO')
-            ->where('is_sla_breached', false)
-            ->whereNotNull('issued_datetime')
-            ->whereYear('created_at', $year)
-            ->count();
-
-        $slaRate = $totalBpos > 0 ? round(($compliantBpos / $totalBpos) * 100, 1) : 100;
-
-        // Distributions (Use the raw collection for efficiency)
-        $status_distribution = $vawcCases->groupBy('status')->map(fn($g) => ['status' => $g->first()->status, 'count' => $g->count()])->values();
-        $intake_distribution = $vawcCases->groupBy('intake_type')->map(fn($g) => ['intake_type' => $g->first()->intake_type, 'count' => $g->count()])->values();
-
-        // Join with CaseReports for Abuse Type and Zone stats
-        $abuse_distribution = DB::table('vawc_cases')
-            ->join('case_reports', 'vawc_cases.case_report_id', '=', 'case_reports.id')
-            ->leftJoin('case_types', 'case_reports.abuse_type_id', '=', 'case_types.id')
-            ->whereYear('vawc_cases.created_at', $year)
-            ->select(DB::raw('COALESCE(case_types.name, "Uncategorized") as name'), DB::raw('count(*) as count'))
-            ->groupBy('name')
-            ->get();
-
-        $zone_distribution = DB::table('vawc_cases')
-            ->join('case_reports', 'vawc_cases.case_report_id', '=', 'case_reports.id')
-            ->leftJoin('zones', 'case_reports.zone_id', '=', 'zones.id')
-            ->whereYear('vawc_cases.created_at', $year)
-            ->select(DB::raw('COALESCE(zones.name, "Unknown Zone") as name'), DB::raw('count(*) as count'))
-            ->groupBy('name')
-            ->get();
-
-        return [
-            'total_cases'         => $totalCases,
-            'total_children'      => $totalChildren,
-            'repeat_cases'        => $repeatCases,
-            'active_bpos'         => $activeBpos,
-            'status_distribution' => $status_distribution,
-            'intake_distribution' => $intake_distribution,
-            'abuse_distribution'  => $abuse_distribution,
-            'zone_distribution'   => $zone_distribution,
-            'sla_compliance'      => [
-                'total'     => $totalBpos,
-                'compliant' => $compliantBpos,
-                'rate'      => $slaRate
-            ]
-        ];
+        return $this->vawcService->getVawcSpecificStats($year);
     }
 
-    /**
-     * Get VAWC-specific chart configuration.
-     */
     public function getVawcChartConfig(): Collection
     {
-        $defaultPalette = [
-            'physical'      => '#ef4444',
-            'sexual'        => '#2563eb',
-            'psychological' => '#16a34a',
-            'economic'      => '#eab308',
-        ];
-
-        return \App\Models\CaseAbuseType::where('is_active', true)
-            ->whereIn('category', ['VAWC', 'Both'])
-            ->orderBy('name')
-            ->get()
-            ->map(function ($t) use ($defaultPalette) {
-                $key = strtolower(trim($t->name));
-                $color = $t->color;
-                if ($color && str_starts_with($color, '#') && strlen($color) === 9) {
-                    $color = substr($color, 0, 7);
-                }
-
-                return [
-                    'key'   => $key,
-                    'label' => $t->name,
-                    'color' => !empty($color) ? $color : ($defaultPalette[$key] ?? '#64748b'),
-                ];
-            });
+        return $this->vawcService->getVawcChartConfig();
     }
 
-    /**
-     * Get case counts grouped by month and abuse type.
-     */
     public function getMonthlyCaseAnalytics(string $type, int $year, Collection $abuseTypes): array
     {
-        $reports = CaseReport::select('incident_date', 'created_at', 'abuse_type_id')
-            ->where('type', $type)
-            ->whereYear($type === 'VAWC' ? 'incident_date' : 'created_at', $year)
-            ->whereNotNull('abuse_type_id')
-            ->get()
-            ->groupBy(function ($report) use ($type) {
-                return Carbon::parse($type === 'VAWC' ? $report->incident_date : $report->created_at)->month;
-            })
-            ->map(fn($group) => $group->countBy('abuse_type_id'));
-
-        return $this->formatMonthlyData($reports, $abuseTypes);
+        return $this->vawcService->getMonthlyCaseAnalytics($type, $year, $abuseTypes);
     }
 
-    /**
-     * Get simple monthly trend for VAWC cases.
-     */
     public function getVawcMonthlyTrend(int $year): array
     {
-        $months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
-
-        $trends = VawcCase::select(
-            DB::raw('MONTH(created_at) as month'),
-            DB::raw('count(*) as count')
-        )
-            ->whereYear('created_at', $year)
-            ->groupBy('month')
-            ->orderBy('month')
-            ->get()
-            ->keyBy('month');
-
-        $data = [];
-        foreach ($months as $index => $monthName) {
-            $monthNum = $index + 1;
-            $data[] = [
-                'month' => $monthName,
-                'count' => $trends->has($monthNum) ? $trends->get($monthNum)->count : 0
-            ];
-        }
-        return $data;
+        return $this->vawcService->getVawcMonthlyTrend($year);
     }
 
-    /**
-     * Get demographic breakdown by age.
-     */
-    public function getAgeDemographics(int $year): array
-    {
-        $casesWithAge = CaseReport::select('victim_age')
-            ->whereNotNull('victim_age')
-            ->whereYear('created_at', $year)
-            ->get();
-
-        $ageCategories = [
-            '0-12 yrs (Child)'        => 0,
-            '13-17 yrs (Teen)'        => 0,
-            '18-35 yrs (Young Adult)' => 0,
-            '36-50 yrs (Adult)'       => 0,
-            '51+ yrs (Senior)'        => 0,
-        ];
-
-        foreach ($casesWithAge as $case) {
-            $age = (int) $case->victim_age;
-            if ($age <= 12) $ageCategories['0-12 yrs (Child)']++;
-            elseif ($age <= 17) $ageCategories['13-17 yrs (Teen)']++;
-            elseif ($age <= 35) $ageCategories['18-35 yrs (Young Adult)']++;
-            elseif ($age <= 50) $ageCategories['36-50 yrs (Adult)']++;
-            else $ageCategories['51+ yrs (Senior)']++;
-        }
-
-        return collect($ageCategories)->map(fn($count, $name) => ['name' => $name, 'count' => $count])->values()->toArray();
-    }
-
-    /**
-     * Get distribution of cases by Zone.
-     */
-    public function getZoneDistribution(int $year): array
-    {
-        return Zone::with([
-            'caseReports' => function ($query) use ($year) {
-                $query->whereYear('created_at', $year)
-                    ->with(['vawcCase' => function ($vQuery) {
-                        $vQuery->select('id', 'case_report_id', 'uuid')
-                            ->with('assessment:id,vawc_case_id,risk_level,risk_score');
-                    }]);
-            },
-            'children' => function ($query) {
-                $query->where('status', 'Active')
-                    ->with('latestAssessment');
-            }
-        ])
-            ->withCount(['caseReports' => function ($query) use ($year) {
-                $query->whereYear('created_at', $year);
-            }])
-            ->get()
-            ->map(function ($zone) {
-                $vawcCases = $zone->caseReports->map(function ($cr) {
-                    return [
-                        'id' => $cr->vawcCase?->id,
-                        'uuid' => $cr->vawcCase?->uuid,
-                        'case_number' => $cr->case_number,
-                        'location' => $cr->incident_location ?: 'Barangay 183',
-                        'risk_level' => $cr->vawcCase?->assessment?->risk_level ?? 'MODERATE',
-                        'risk_score' => $cr->vawcCase?->assessment?->risk_score ?? 0,
-                    ];
-                })->filter(fn($c) => !empty($c['id']))->values()->toArray();
-
-                $bcpcChildren = $zone->children ? $zone->children->map(function ($ch) {
-                    $latest = $ch->latestAssessment;
-                    $isMalnourished = $latest && (
-                        in_array($latest->wfa_status, ['Underweight', 'Severely Underweight']) ||
-                        in_array($latest->wflh_status ?? '', ['Wasted', 'Severely Wasted'])
-                    );
-                    return [
-                        'id' => $ch->id,
-                        'name' => $ch->full_name,
-                        'address' => $ch->address ?: 'Barangay 183',
-                        'is_malnourished' => $isMalnourished,
-                        'status' => $latest ? ($latest->wflh_status ?: $latest->wfa_status) : 'Active',
-                    ];
-                })->values()->toArray() : [];
-
-                return [
-                    'id'       => $zone->id,
-                    'name'     => $zone->name,
-                    'count'    => $zone->case_reports_count,
-                    'color'    => $zone->color_code,
-                    'cases'    => $vawcCases,
-                    'children' => $bcpcChildren,
-                ];
-            })
-            ->toArray();
-    }
-
-    /**
-     * Get distribution of cases by Location (Raw String).
-     */
-    public function getLocationDemographics(int $year, int $limit = 8): array
-    {
-        $locationRaw = CaseReport::select('incident_location')
-            ->whereNotNull('incident_location')
-            ->whereYear('created_at', $year)
-            ->get()
-            ->groupBy('incident_location')
-            ->map(fn($group) => count($group))
-            ->sortByDesc(fn($count) => $count)
-            ->take($limit);
-
-        $locationDemographics = [];
-        foreach ($locationRaw as $location => $count) {
-            $shortLoc = strlen($location) > 20 ? substr($location, 0, 20) . '...' : $location;
-            $locationDemographics[] = [
-                'name' => $shortLoc,
-                'count' => $count,
-                'fullName' => $location
-            ];
-        }
-        return $locationDemographics;
-    }
-
-    /**
-     * Get monthly BPO application and issuance trends.
-     */
     public function getVawcBpoTrends(int $year): array
     {
-        $months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
-        $data = [];
-
-        $applied = DB::table('vawc_protection_orders')
-            ->select(DB::raw('MONTH(created_at) as month_num'), DB::raw('COUNT(*) as total'))
-            ->where('type', 'BPO')
-            ->whereYear('created_at', $year)
-            ->groupBy('month_num')
-            ->pluck('total', 'month_num');
-
-        $issued = DB::table('vawc_protection_orders')
-            ->select(DB::raw('MONTH(created_at) as month_num'), DB::raw('COUNT(*) as total'))
-            ->where('type', 'BPO')
-            ->whereNotNull('issued_datetime')
-            ->whereYear('created_at', $year)
-            ->groupBy('month_num')
-            ->pluck('total', 'month_num');
-
-        foreach ($months as $i => $name) {
-            $m = $i + 1;
-            $data[] = [
-                'month'   => $name,
-                'applied' => $applied->get($m, 0),
-                'issued'  => $issued->get($m, 0),
-            ];
-        }
-
-        return $data;
+        return $this->vawcService->getVawcBpoTrends($year);
     }
 
-    /**
-     * Get VAWC case status distribution for a donut chart.
-     */
     public function getVawcStatusBreakdown(int $year): array
     {
-        $colors = [
-            'Intake'                        => '#f59e0b',
-            'Assessment'                    => '#f97316',
-            'Alternative Housing'           => '#6366f1',
-            'BPO Processing'                => '#a855f7',
-            'Monitoring'                    => '#0ea5e9',
-            'Escalated'                     => '#ef4444',
-            'Resolved'                      => '#10b981',
-            'Closed'                        => '#64748b',
-            'Intake / Assessment Pending'   => '#f59e0b',
-            'Application Pending'           => '#f97316',
-            'BPO Issuance Pending'          => '#ec4899',
-            'BPO Service Pending'           => '#a855f7',
-            'Under Monitoring (15-Day BPO)' => '#0ea5e9',
-            'Escalated to Court/PNP'        => '#ef4444',
-            'Archived / Concluded'          => '#64748b',
-        ];
-
-        return VawcCase::select('status', DB::raw('count(*) as total'))
-            ->whereYear('created_at', $year)
-            ->groupBy('status')
-            ->get()
-            ->map(fn($row) => [
-                'name'  => $row->status,
-                'value' => $row->total,
-                'fill'  => $colors[$row->status] ?? '#94a3b8',
-            ])
-            ->values()
-            ->toArray();
+        return $this->vawcService->getVawcStatusBreakdown($year);
     }
 
-    /**
-     * Get distribution of risk levels (CRITICAL, HIGH, MODERATE, LOW, PENDING).
-     * Aggregates the VAWC-RAVE algorithm's output across all recorded cases.
-     */
     public function getRiskSeverityDistribution(int $year): array
     {
-        $colors = [
-            'CRITICAL' => '#ef4444', // Red 500
-            'HIGH'     => '#f97316', // Orange 500
-            'MODERATE' => '#eab308', // Yellow 500
-            'LOW'      => '#3b82f6', // Blue 500
-        ];
-
-        $order = ['CRITICAL' => 1, 'HIGH' => 2, 'MODERATE' => 3, 'LOW' => 4];
-
-        $assessments = DB::table('vawc_cases')
-            ->join('vawc_assessments', 'vawc_cases.id', '=', 'vawc_assessments.vawc_case_id')
-            ->whereYear('vawc_cases.created_at', $year)
-            ->whereNotNull('vawc_assessments.risk_level')
-            ->where('vawc_assessments.risk_level', '!=', 'PENDING')
-            ->select('vawc_assessments.risk_level', DB::raw('count(*) as total'))
-            ->groupBy('vawc_assessments.risk_level')
-            ->get();
-
-        return $assessments
-            ->sortBy(fn($row) => $order[strtoupper($row->risk_level)] ?? 99)
-            ->map(fn($row) => [
-                'name'  => strtoupper($row->risk_level),
-                'value' => (int) $row->total,
-                'fill'  => $colors[strtoupper($row->risk_level)] ?? '#94a3b8',
-            ])->values()->toArray();
+        return $this->vawcService->getRiskSeverityDistribution($year);
     }
 
-    /**
-     * Get average risk scores per Zone to identify hotspots.
-     */
-    public function getZoneRiskImpact(int $year): array
-    {
-        return DB::table('vawc_assessments')
-            ->join('vawc_cases', 'vawc_assessments.vawc_case_id', '=', 'vawc_cases.id')
-            ->join('case_reports', 'vawc_cases.case_report_id', '=', 'case_reports.id')
-            ->join('zones', 'case_reports.zone_id', '=', 'zones.id')
-            ->whereYear('vawc_assessments.created_at', $year)
-            ->select('zones.name', DB::raw('AVG(vawc_assessments.risk_score) as avg_score'))
-            ->groupBy('zones.name')
-            ->orderByDesc('avg_score')
-            ->get()
-            ->map(fn($row) => [
-                'name'  => $row->name,
-                'score' => (float) round($row->avg_score, 2),
-            ])
-            ->toArray();
-    }
-
-    /**
-     * Get membership application growth trends.
-     */
-    public function getMembershipTrends(int $year, ?User $user = null): array
-    {
-        $query = MembershipApplication::approved()
-            ->whereYear('created_at', $year);
-
-        // RBAC: Scope for Presidents
-        if ($user && $user->isPresident()) {
-            $query->where('organization_id', $user->organization_id);
-        }
-
-        $memberships = $query->get()
-            ->groupBy(fn($m) => Carbon::parse($m->created_at)->month)
-            ->map(fn($group) => count($group));
-
-        $months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
-        $data = [];
-        foreach ($months as $index => $monthName) {
-            $data[] = [
-                'month' => $monthName,
-                'count' => $memberships->get($index + 1, 0),
-            ];
-        }
-
-        $totalThisYear = MembershipApplication::approved()->whereYear('created_at', $year)->count();
-        $totalLastYear = MembershipApplication::approved()->whereYear('created_at', $year - 1)->count();
-
-        $growth = '+0%';
-        if ($totalLastYear > 0) {
-            $percent = (($totalThisYear - $totalLastYear) / $totalLastYear) * 100;
-            $growth = ($percent >= 0 ? '+' : '') . number_format($percent, 1) . '%';
-        } elseif ($totalThisYear > 0) {
-            $growth = '+100%';
-        }
-
-        return [
-            'total'   => $totalThisYear,
-            'growth'  => $growth,
-            'monthly' => $data,
-        ];
-    }
-
-    /**
-     * Get BCPC nutrition status summary for the Strategic Analytics dashboard.
-     * Compliant with WHO 3-Axis & NNC e-OPT Plus Growth Standards.
-     */
-    public function getBcpcNutritionSummary(): array
-    {
-        $activeChildren = BcpcChild::with(['latestAssessment', 'zone'])
-            ->where('status', 'Active')
-            ->get();
-
-        $total = $activeChildren->count();
-
-        $samCount = 0;
-        $mamCount = 0;
-        $doubleBurdenCount = 0;
-        $doubleBurdenOverweightCount = 0;
-        $doubleBurdenObeseCount = 0;
-        $overweightOnlyCount = 0;
-        $obeseOnlyCount = 0;
-        $stuntedOnlyCount = 0;
-        $normalCount = 0;
-
-        // Individual WHO Axis Counters
-        $wfaCounts = ['Normal' => 0, 'Underweight' => 0, 'Severely Underweight' => 0, 'Overweight' => 0];
-        $hfaCounts = ['Normal' => 0, 'Stunted' => 0, 'Severely Stunted' => 0, 'Tall' => 0];
-        $wflhCounts = ['Normal' => 0, 'Wasted' => 0, 'Severely Wasted' => 0, 'Overweight' => 0, 'Obese' => 0];
-
-        foreach ($activeChildren as $child) {
-            $latest = $child->latestAssessment;
-            if (!$latest) {
-                $normalCount++;
-                $wfaCounts['Normal']++;
-                $hfaCounts['Normal']++;
-                $wflhCounts['Normal']++;
-                continue;
-            }
-
-            $wfa = $latest->wfa_status ?? 'Normal';
-            $hfa = $latest->hfa_status ?? 'Normal';
-            $wflh = $latest->wflh_status ?? 'Normal';
-            $logs = $latest->intervention_logs ?? [];
-            $hasOedema = in_array('Bilateral Oedema (Fluid Retention) [SAM PIMAM]', $logs);
-
-            // Tally individual WHO Axes
-            if (isset($wfaCounts[$wfa])) $wfaCounts[$wfa]++;
-            if (isset($hfaCounts[$hfa])) $hfaCounts[$hfa]++;
-            if (isset($wflhCounts[$wflh])) $wflhCounts[$wflh]++;
-
-            $isOverweight = ($wflh === 'Overweight' || $wfa === 'Overweight');
-            $isObese = ($wflh === 'Obese');
-            $isElevatedBodyMass = $isOverweight || $isObese;
-            $isStunted = in_array($hfa, ['Stunted', 'Severely Stunted']);
-
-            $isSAM = !$isElevatedBodyMass && ($hasOedema || in_array($wfa, ['Severely Underweight']) || in_array($wflh, ['Severely Wasted']));
-            $isMAM = !$isSAM && !$isElevatedBodyMass && (in_array($wfa, ['Underweight']) || in_array($wflh, ['Wasted']));
-            $isDoubleBurden = $isStunted && $isElevatedBodyMass;
-
-            if ($isSAM) {
-                $samCount++;
-            } elseif ($isDoubleBurden) {
-                $doubleBurdenCount++;
-                if ($isObese) {
-                    $doubleBurdenObeseCount++;
-                } else {
-                    $doubleBurdenOverweightCount++;
-                }
-            } elseif ($isMAM) {
-                $mamCount++;
-            } elseif ($isObese && !$isStunted) {
-                $obeseOnlyCount++;
-            } elseif ($isOverweight && !$isStunted) {
-                $overweightOnlyCount++;
-            } elseif ($isStunted && !$isElevatedBodyMass) {
-                $stuntedOnlyCount++;
-            } else {
-                $normalCount++;
-            }
-        }
-
-        // Malnutrition includes: SAM + MAM + Double Burden + Isolated Stunting + Isolated Obesity
-        $totalMalnourished = $samCount + $mamCount + $doubleBurdenCount;
-        $malnutritionRate = $total > 0 ? round(($totalMalnourished / $total) * 100, 1) : 0.0;
-
-        // SFP Breakdown
-        $sfpBreakdown = [
-            'Enrolled'   => $activeChildren->where('sfp_status', 'Enrolled')->count(),
-            'Graduated'  => BcpcChild::where('sfp_status', 'Graduated')->count(),
-            'Completed'  => BcpcChild::where('sfp_status', 'Completed')->count(),
-            'Terminated' => BcpcChild::where('sfp_status', 'Terminated')->count(),
-            'None'       => $activeChildren->where('sfp_status', 'None')->count(),
-        ];
-
-        // Zones Breakdown for Malnutrition Hotspots
-        $zones = Zone::all();
-        $zonesBreakdown = [];
-        foreach ($zones as $zone) {
-            $zoneChildren = $activeChildren->where('zone_id', $zone->id);
-            $zoneTotal = $zoneChildren->count();
-
-            $zSam = 0;
-            $zMam = 0;
-            $zDoubleBurden = 0;
-            $zStunted = 0;
-            $zOverweight = 0;
-            $zObese = 0;
-
-            foreach ($zoneChildren as $child) {
-                $l = $child->latestAssessment;
-                if (!$l) continue;
-                $wfa = $l->wfa_status ?? 'Normal';
-                $hfa = $l->hfa_status ?? 'Normal';
-                $wflh = $l->wflh_status ?? 'Normal';
-                $logs = $l->intervention_logs ?? [];
-                $hasOedema = in_array('Bilateral Oedema (Fluid Retention) [SAM PIMAM]', $logs);
-                $isOverweight = ($wflh === 'Overweight' || $wfa === 'Overweight');
-                $isObese = ($wflh === 'Obese');
-                $isElevatedBodyMass = $isOverweight || $isObese;
-                $isStunted = in_array($hfa, ['Stunted', 'Severely Stunted']);
-
-                if (!$isElevatedBodyMass && ($hasOedema || $wfa === 'Severely Underweight' || $wflh === 'Severely Wasted')) {
-                    $zSam++;
-                } elseif ($isStunted && $isElevatedBodyMass) {
-                    $zDoubleBurden++;
-                } elseif (!$isElevatedBodyMass && ($wfa === 'Underweight' || $wflh === 'Wasted')) {
-                    $zMam++;
-                } elseif ($isObese && !$isStunted) {
-                    $zObese++;
-                } elseif ($isOverweight && !$isStunted) {
-                    $zOverweight++;
-                }
-
-                if ($isStunted) {
-                    $zStunted++;
-                }
-            }
-
-            $zMalnourished = $zSam + $zMam + $zDoubleBurden;
-
-            $zonesBreakdown[] = [
-                'id'            => $zone->id,
-                'name'          => $zone->name,
-                'total'         => $zoneTotal,
-                'sam'           => $zSam,
-                'mam'           => $zMam,
-                'double_burden' => $zDoubleBurden,
-                'overweight'    => $zOverweight,
-                'obese'         => $zObese,
-                'malnourished'  => $zMalnourished,
-                'stunted'       => $zStunted,
-                'rate'          => $zoneTotal > 0 ? round(($zMalnourished / $zoneTotal) * 100, 1) : 0.0,
-            ];
-        }
-
-        // Sort zones by malnutrition count descending
-        usort($zonesBreakdown, function ($a, $b) {
-            return $b['malnourished'] <=> $a['malnourished'];
-        });
-
-        return [
-            'total'                       => $total,
-            'normal'                      => $normalCount,
-            'sam'                         => $samCount,
-            'mam'                         => $mamCount,
-            'double_burden'               => $doubleBurdenCount,
-            'double_burden_overweight'    => $doubleBurdenOverweightCount,
-            'double_burden_obese'         => $doubleBurdenObeseCount,
-            'overweight'                  => $overweightOnlyCount,
-            'obese'                       => $obeseOnlyCount,
-            'total_overweight_all'        => $wflhCounts['Overweight'],
-            'total_obese_all'             => $wflhCounts['Obese'],
-            'stunted'                     => $hfaCounts['Stunted'],
-            'severely_stunted'            => $hfaCounts['Severely Stunted'],
-            'normal_height'               => $hfaCounts['Normal'],
-            'malnutrition_rate'           => $malnutritionRate,
-            'sfp_breakdown'               => $sfpBreakdown,
-            'zones_breakdown'             => $zonesBreakdown,
-            'who_axes'                    => [
-                'wfa' => $wfaCounts,
-                'hfa' => $hfaCounts,
-                'wflh' => $wflhCounts,
-            ],
-            'distribution'                => [
-                ['name' => 'Normal',                  'value' => $normalCount,             'fill' => '#10b981'],
-                ['name' => 'MAM Priority',            'value' => $mamCount,                'fill' => '#f59e0b'],
-                ['name' => 'SAM Urgent',              'value' => $samCount,                'fill' => '#ef4444'],
-                ['name' => 'Double Burden (DB)',      'value' => $doubleBurdenCount,       'fill' => '#a855f7'],
-                ['name' => 'Overweight (Isolated)',   'value' => $overweightOnlyCount,     'fill' => '#f97316'],
-                ['name' => 'Obese (Isolated)',        'value' => $obeseOnlyCount,          'fill' => '#e11d48'],
-            ],
-            'height_distribution'         => [
-                ['name' => 'Normal Height',           'value' => $hfaCounts['Normal'],           'fill' => '#10b981'],
-                ['name' => 'Stunted (Moderate)',      'value' => $hfaCounts['Stunted'],          'fill' => '#06b6d4'],
-                ['name' => 'Severely Stunted',        'value' => $hfaCounts['Severely Stunted'], 'fill' => '#8b5cf6'],
-            ],
-            'wflh_distribution'           => [
-                ['name' => 'Normal WFL/H',            'value' => $wflhCounts['Normal'],          'fill' => '#10b981'],
-                ['name' => 'Wasted (MAM)',            'value' => $wflhCounts['Wasted'],          'fill' => '#f59e0b'],
-                ['name' => 'Severely Wasted (SAM)',   'value' => $wflhCounts['Severely Wasted'], 'fill' => '#ef4444'],
-                ['name' => 'Overweight (>+2SD)',      'value' => $wflhCounts['Overweight'],      'fill' => '#f97316'],
-                ['name' => 'Obese (>+3SD)',           'value' => $wflhCounts['Obese'],           'fill' => '#e11d48'],
-            ]
-        ];
-    }
-
-    /**
-     * GAD Impact: Group events by status and calculate engagement.
-     */
-    public function getGadAnalytics(int $year): array
-    {
-        $events = GadEvent::whereYear('event_date', $year)->get();
-
-        return [
-            'total_events' => $events->count(),
-            'approved'     => $events->where('status', 'approved')->count(),
-            'pending'      => $events->where('status', 'pending')->count(),
-            'rejected'     => $events->where('status', 'rejected')->count(),
-            'distribution' => [
-                ['name' => 'Approved', 'value' => $events->where('status', 'approved')->count(), 'fill' => '#10b981'],
-                ['name' => 'Pending',  'value' => $events->where('status', 'pending')->count(),  'fill' => '#f59e0b'],
-                ['name' => 'Rejected', 'value' => $events->where('status', 'rejected')->count(), 'fill' => '#ef4444'],
-            ]
-        ];
-    }
-
-    /**
-     * Organizational Sector Distribution: Group by keywords.
-     */
-    public function getOrgSectorAnalysis(): array
-    {
-        $orgs = Organization::all();
-        $sectors = [
-            'Youth'     => 0,
-            'Women'     => 0,
-            'Seniors'   => 0,
-            'Health'    => 0,
-            'Community' => 0,
-        ];
-
-        foreach ($orgs as $org) {
-            $name = strtolower($org->name);
-            if (str_contains($name, 'youth') || str_contains($name, 'sk')) $sectors['Youth']++;
-            elseif (str_contains($name, 'woman') || str_contains($name, 'women')) $sectors['Women']++;
-            elseif (str_contains($name, 'senior')) $sectors['Seniors']++;
-            elseif (str_contains($name, 'health') || str_contains($name, 'nutrition')) $sectors['Health']++;
-            else $sectors['Community']++;
-        }
-
-        return collect($sectors)->map(fn($val, $key) => ['name' => $key, 'value' => $val])->values()->toArray();
-    }
-
-    /**
-     * Strategic Threat Patterns: Aggregates risk factors from the VAWC-RAVE algorithm.
-     * Helps identify the nature and intensity of threats in the barangay.
-     */
     public function getThreatIndicatorPatterns(int $year): array
     {
-        $cases = VawcCase::whereYear('created_at', $year)->get();
-
-        if ($cases->isEmpty()) return [];
-
-        return [
-            ['name' => 'Weapons Involved',     'value' => $cases->where('has_weapon_involved', true)->count(), 'color' => '#ef4444'],
-            ['name' => 'Weapons Confiscated',  'value' => $cases->where('weapons_confiscated', true)->count(), 'color' => '#10b981'],
-            ['name' => 'Emergency Arrests',    'value' => $cases->where('warrantless_arrest_made', true)->count(), 'color' => '#ce1126'],
-            ['name' => 'Repeat Offense',       'value' => $cases->where('is_repeat_offense', true)->count(), 'color' => '#f97316'],
-            ['name' => 'Active Scene Threat',  'value' => $cases->where('perpetrator_present', true)->count(), 'color' => '#8b5cf6'],
-            ['name' => 'Children at Risk',     'value' => $cases->filter(fn($c) => ($c->children_count ?? 0) > 0)->count(), 'color' => '#06b6d4'],
-        ];
+        return $this->vawcService->getThreatIndicatorPatterns($year);
     }
 
-    /**
-     * Master Dossier Longitudinal Intelligence:
-     * Tracks recidivism, active vs dormant legal relationships, and serial offenders.
-     */
     public function getVawcDossierAnalytics(int $year): array
     {
-        $dossiers = VawcDossier::whereHas('cases', function ($q) use ($year) {
-            $q->whereYear('created_at', $year);
-        })->with(['cases' => fn($q) => $q->whereYear('created_at', $year)])->get();
-
-        $totalDossiers = $dossiers->count();
-        $totalCases = $dossiers->sum(fn($d) => $d->cases->count());
-        $activeDossiers = $dossiers->where('current_lifecycle', '!=', 'Dormant/Closed')->count();
-        $closedDossiers = $dossiers->where('current_lifecycle', 'Dormant/Closed')->count();
-
-        // Longitudinal recidivism: Dossiers with > 1 incident recorded
-        $repeatDossiers = $dossiers->filter(fn($d) => $d->cases->count() > 1);
-        $recidivismCount = $repeatDossiers->count();
-        $recidivismRate = $totalDossiers > 0 ? round(($recidivismCount / $totalDossiers) * 100, 1) : 0.0;
-
-        // Exact subsequent repeat incidents (incidents beyond the initial blotter: Total Cases - Total Dossiers)
-        $totalRepeatIncidents = max(0, $totalCases - $totalDossiers);
-
-        // Serial Perpetrators: Distinct respondent names appearing in > 1 master dossier
-        $serialPerpNames = VawcDossier::select('respondent_name')
-            ->whereHas('cases', fn($q) => $q->whereYear('created_at', $year))
-            ->groupBy('respondent_name')
-            ->havingRaw('count(*) > 1')
-            ->pluck('respondent_name');
-        $serialPerpetratorsCount = $serialPerpNames->count();
-
-        // Compound Survivors: Distinct survivor names appearing in > 1 master dossier
-        $compoundSurvivorNames = VawcDossier::select('survivor_name')
-            ->whereHas('cases', fn($q) => $q->whereYear('created_at', $year))
-            ->groupBy('survivor_name')
-            ->havingRaw('count(*) > 1')
-            ->pluck('survivor_name');
-        $compoundSurvivorsCount = $compoundSurvivorNames->count();
-
-        // Threat level distribution across dossiers
-        $threatColors = [
-            'CRITICAL' => '#ef4444',
-            'HIGH'     => '#f97316',
-            'MODERATE' => '#eab308',
-            'LOW'      => '#3b82f6',
-            'PENDING'  => '#94a3b8',
-        ];
-
-        $threatLevelDistribution = $dossiers->groupBy('highest_threat_level')->map(function ($group, $level) use ($threatColors) {
-            return [
-                'name'  => $level ?: 'PENDING',
-                'value' => $group->count(),
-                'fill'  => $threatColors[$level] ?? '#94a3b8',
-            ];
-        })->values()->toArray();
-
-        // Lifecycle distribution
-        $lifecycleColors = [
-            'Intake / Assessment Pending' => '#f59e0b',
-            'Application Pending'         => '#f97316',
-            'BPO Issuance Pending'        => '#ec4899',
-            'BPO Service Pending'         => '#a855f7',
-            'Under Monitoring (15-Day BPO)' => '#0ea5e9',
-            'Escalated to Court/PNP'      => '#ef4444',
-            'Dormant/Closed'              => '#64748b',
-        ];
-
-        $lifecycleDistribution = $dossiers->groupBy('current_lifecycle')->map(function ($group, $cycle) use ($lifecycleColors) {
-            return [
-                'name'  => $cycle ?: 'Unassigned',
-                'value' => $group->count(),
-                'fill'  => $lifecycleColors[$cycle] ?? '#94a3b8',
-            ];
-        })->values()->toArray();
-
-        return [
-            'total_cases'               => $totalCases,
-            'total_dossiers'            => $totalDossiers,
-            'active_dossiers'           => $activeDossiers,
-            'closed_dossiers'           => $closedDossiers,
-            'recidivism_count'          => $recidivismCount,
-            'recidivism_rate'           => $recidivismRate,
-            'total_repeat_incidents'    => $totalRepeatIncidents,
-            'serial_perpetrators_count' => $serialPerpetratorsCount,
-            'compound_survivors_count'  => $compoundSurvivorsCount,
-            'threat_level_distribution' => $threatLevelDistribution,
-            'lifecycle_distribution'    => $lifecycleDistribution,
-        ];
+        return $this->vawcService->getVawcDossierAnalytics($year);
     }
 
-    /**
-     * Statutory Relationship & Legal Protocol Classification:
-     * Analyzes intimacy qualifications under RA 9262 Sec. 3 vs RA 7610 and RPC.
-     */
     public function getVawcRelationshipAnalytics(int $year): array
     {
-        $dossiers = VawcDossier::all();
-        $cases = VawcCase::with(['caseReport', 'dossier'])->whereYear('created_at', $year)->get();
-
-        // 1. Relationship Distribution (RA 9262 Sec. 3 Intimate Partner Categories)
-        $relColors = [
-            'Spouse'          => '#ef4444',
-            'Ex-Spouse'       => '#f97316',
-            'Live-in Partner' => '#8b5cf6',
-            'Ex-Partner'      => '#a855f7',
-            'Dating Partner'  => '#ec4899',
-            'Co-Parent'       => '#06b6d4',
-            'Relative'        => '#3b82f6',
-            'Other'           => '#64748b',
-        ];
-
-        $normalizedRel = [
-            'Spouse'          => 0,
-            'Ex-Spouse'       => 0,
-            'Live-in Partner' => 0,
-            'Ex-Partner'      => 0,
-            'Dating Partner'  => 0,
-            'Co-Parent'       => 0,
-            'Relative'        => 0,
-            'Other'           => 0,
-        ];
-
-        foreach ($dossiers as $d) {
-            $rel = strtolower($d->relationship_type ?? '');
-            if (str_contains($rel, 'former spouse') || str_contains($rel, 'separated') || str_contains($rel, 'annulled')) {
-                $normalizedRel['Ex-Spouse']++;
-            } elseif (str_contains($rel, 'spouse') || str_contains($rel, 'husband') || str_contains($rel, 'wife')) {
-                $normalizedRel['Spouse']++;
-            } elseif (str_contains($rel, 'former live-in') || str_contains($rel, 'former dating')) {
-                $normalizedRel['Ex-Partner']++;
-            } elseif (str_contains($rel, 'common-law') || str_contains($rel, 'live-in')) {
-                $normalizedRel['Live-in Partner']++;
-            } elseif (str_contains($rel, 'dating') || str_contains($rel, 'romantic') || str_contains($rel, 'boyfriend') || str_contains($rel, 'girlfriend')) {
-                $normalizedRel['Dating Partner']++;
-            } elseif (str_contains($rel, 'common child') || str_contains($rel, 'parent')) {
-                $normalizedRel['Co-Parent']++;
-            } elseif (str_contains($rel, 'relative') || str_contains($rel, 'uncle') || str_contains($rel, 'cousin') || str_contains($rel, 'in-law')) {
-                $normalizedRel['Relative']++;
-            } else {
-                $normalizedRel['Other']++;
-            }
-        }
-
-        $relationshipDistribution = [];
-        foreach ($normalizedRel as $label => $count) {
-            if ($count > 0) {
-                $relationshipDistribution[] = [
-                    'name'  => $label,
-                    'value' => $count,
-                    'fill'  => $relColors[$label] ?? '#94a3b8',
-                ];
-            }
-        }
-
-        // 2. Statutory Legal Protocol Classification
-        $protocolCounts = [
-            'RA 9262 Protocol (Intimate Partner)' => 0,
-            'RA 7610 Protocol (Child Protection)' => 0,
-            'RPC / Non-Intimate Family Assault'   => 0,
-        ];
-
-        foreach ($cases as $c) {
-            $isChildVictim = ($c->caseReport && $c->caseReport->victim_age < 18);
-            $rel = strtolower($c->dossier?->relationship_type ?? '');
-            $isIntimate = str_contains($rel, 'spouse') || str_contains($rel, 'live-in') || str_contains($rel, 'dating') || str_contains($rel, 'common child') || str_contains($rel, 'husband') || str_contains($rel, 'wife');
-
-            if ($isIntimate) {
-                $protocolCounts['RA 9262 Protocol (Intimate Partner)']++;
-            } elseif ($isChildVictim) {
-                $protocolCounts['RA 7610 Protocol (Child Protection)']++;
-            } else {
-                $protocolCounts['RPC / Non-Intimate Family Assault']++;
-            }
-        }
-
-        $protocolDistribution = [
-            ['name' => 'RA 9262 Protocol', 'description' => 'Intimate Partner Violence', 'count' => $protocolCounts['RA 9262 Protocol (Intimate Partner)'], 'fill' => '#ce1126'],
-            ['name' => 'RA 7610 Protocol', 'description' => 'Special Child Protection', 'count' => $protocolCounts['RA 7610 Protocol (Child Protection)'], 'fill' => '#0d9488'],
-            ['name' => 'RPC / Family Law', 'description' => 'Revised Penal Code', 'count' => $protocolCounts['RPC / Non-Intimate Family Assault'], 'fill' => '#6366f1'],
-        ];
-
-        // 3. Intake Mode Distribution
-        $intakeDistribution = $cases->groupBy(fn($c) => $c->intake_type ?: 'Direct')
-            ->map(fn($group, $type) => ['name' => $type, 'count' => $group->count()])
-            ->values()
-            ->toArray();
-
-        return [
-            'relationships' => $relationshipDistribution,
-            'protocols'     => $protocolDistribution,
-            'intake_modes'  => $intakeDistribution,
-        ];
+        return $this->vawcService->getVawcRelationshipAnalytics($year);
     }
 
-    /**
-     * Comprehensive BPO Operational Metrics:
-     * Applications, Issuances, Service Records, 24-hr SLA Compliance, and 15-Day Exits.
-     */
     public function getVawcBpoOperationalMetrics(int $year): array
     {
-        $allBpos = DB::table('vawc_protection_orders')->where('type', 'BPO')->whereYear('created_at', $year)->get();
-        $totalApplied = $allBpos->count();
-        $totalIssued = $allBpos->whereNotNull('issued_datetime')->count();
-
-        $totalServed = DB::table('vawc_bpo_service_records')
-            ->join('vawc_protection_orders', 'vawc_bpo_service_records.protection_order_id', '=', 'vawc_protection_orders.id')
-            ->whereYear('vawc_protection_orders.created_at', $year)
-            ->count();
-
-        // 24-Hour SLA Compliance under RA 9262 Sec. 14
-        $compliantBpos = $allBpos->filter(function ($bpo) {
-            return !$bpo->is_sla_breached && !is_null($bpo->issued_datetime);
-        })->count();
-
-        $slaRate = $totalApplied > 0 ? round(($compliantBpos / $totalApplied) * 100, 1) : 100.0;
-
-        // Current Active Monitoring (within 15 days)
-        $activeMonitoring = DB::table('vawc_protection_orders')
-            ->whereIn('status', ['Issued', 'Served'])
-            ->where(function ($q) {
-                $q->whereNull('expiration_date')->orWhere('expiration_date', '>=', now()->toDateString());
-            })
-            ->count();
-
-        // Post-15-Day Exit Outcomes
-        $peacefulArchived = DB::table('vawc_cases')->where('status', 'Closed')->whereYear('created_at', $year)->count();
-        $violationsRecorded = DB::table('vawc_compliance_logs')->where('is_compliant', false)->whereYear('created_at', $year)->count();
-        $courtEscalations = DB::table('vawc_legal_escalations')->whereYear('created_at', $year)->count();
-
-        // Service Methods breakdown (Personal vs Substituted vs Tender of Service)
-        $serviceMethods = DB::table('vawc_bpo_service_records')
-            ->select('service_method', DB::raw('count(*) as count'))
-            ->groupBy('service_method')
-            ->get()
-            ->map(fn($row) => ['method' => $row->service_method ?: 'Direct Delivery', 'count' => $row->count])
-            ->toArray();
-
-        // Average issuance turnaround time in hours
-        $avgMinutes = $allBpos->filter(fn($b) => !is_null($b->application_datetime) && !is_null($b->issued_datetime))
-            ->map(fn($b) => \Carbon\Carbon::parse($b->application_datetime)->diffInMinutes(\Carbon\Carbon::parse($b->issued_datetime)))
-            ->average();
-        $avgHoursToIssue = $avgMinutes ? round($avgMinutes / 60, 1) : 1.9;
-
-        $lifecycleStages = [
-            ['stage' => 'Applied',   'count' => $totalApplied,       'label' => 'Applications Filed'],
-            ['stage' => 'Issued',    'count' => $totalIssued,        'label' => 'Issued < 24 Hours'],
-            ['stage' => 'Served',    'count' => $totalServed,        'label' => 'Served to Respondent'],
-            ['stage' => 'Monitored', 'count' => $activeMonitoring,   'label' => 'Active 15-Day Custody'],
-            ['stage' => 'Escalated', 'count' => $courtEscalations,   'label' => 'Elevated to Court/PNP'],
-        ];
-
-        return [
-            'total_applied'       => $totalApplied,
-            'total_issued'        => $totalIssued,
-            'total_served'        => $totalServed,
-            'active_monitoring'   => $activeMonitoring,
-            'peaceful_archived'   => $peacefulArchived,
-            'violations_recorded' => $violationsRecorded,
-            'court_escalations'   => $courtEscalations,
-            'sla_compliant_count' => $compliantBpos,
-            'sla_rate'            => $slaRate,
-            'avg_hours_to_issue'  => $avgHoursToIssue,
-            'lifecycle_stages'    => $lifecycleStages,
-            'service_methods'     => $serviceMethods,
-        ];
+        return $this->vawcService->getVawcBpoOperationalMetrics($year);
     }
 
-    /**
-     * Administrative Intervention Gaps: Required services identified via algorithmic flags.
-     */
     public function getInterventionGaps(int $year): array
     {
-        $assessments = VawcAssessment::whereYear('created_at', $year)->get();
-
-        if ($assessments->isEmpty()) return [];
-
-        return [
-            ['name' => 'Medical Referral',    'count' => $assessments->where('requires_medical', true)->count()],
-            ['name' => 'Alternative Housing', 'count' => $assessments->where('requires_alternative_housing', true)->count()],
-            ['name' => 'DSWD Referral',       'count' => $assessments->where('dswd_referral_made', true)->count()],
-            ['name' => 'Legal Intervention',   'count' => DB::table('vawc_protection_orders')->whereYear('created_at', $year)->count()],
-        ];
+        return $this->vawcService->getInterventionGaps($year);
     }
 
-    /**
-     * Get detailed analytics for GAD Organizations & Membership.
-     */
+    // ── Demographics & GIS Methods ────────────────────────────────────────
+
+    public function getAgeDemographics(int $year): array
+    {
+        return $this->demographicsService->getAgeDemographics($year);
+    }
+
+    public function getZoneDistribution(int $year): array
+    {
+        return $this->demographicsService->getZoneDistribution($year);
+    }
+
+    public function getLocationDemographics(int $year, int $limit = 8): array
+    {
+        return $this->demographicsService->getLocationDemographics($year, $limit);
+    }
+
+    public function getZoneRiskImpact(int $year): array
+    {
+        return $this->demographicsService->getZoneRiskImpact($year);
+    }
+
+    // ── BCPC Nutrition Methods ────────────────────────────────────────────
+
+    public function getBcpcNutritionSummary(): array
+    {
+        return $this->bcpcService->getBcpcNutritionSummary();
+    }
+
+    // ── GAD & Sector Methods ──────────────────────────────────────────────
+
+    public function getGadAnalytics(int $year): array
+    {
+        return $this->gadService->getGadAnalytics($year);
+    }
+
+    public function getOrgSectorAnalysis(): array
+    {
+        return $this->gadService->getOrgSectorAnalysis();
+    }
+
+    // ── Organization & Membership Methods ─────────────────────────────────
+
+    public function getMembershipTrends(int $year, ?User $user = null): array
+    {
+        return $this->organizationService->getMembershipTrends($year, $user);
+    }
+
     public function getOrganizationAnalytics(int $year, ?int $orgId = null): array
     {
-        $demographics = $this->extractMemberDemographics($orgId);
-
-        return [
-            'total_members'             => $demographics['total'],
-            'age_distribution'          => $demographics['age'],
-            'gender_distribution'       => $demographics['gender'],
-            'civil_status_distribution' => $demographics['civil_status'],
-            'purok_distribution'        => $demographics['purok'],
-            'applications'              => $this->getApplicationsAnalytics($year, $orgId),
-            'gad'                       => $this->getGadEventsAnalytics($year, $orgId),
-            'communications'           => $this->getCommunicationsAnalytics($year, $orgId),
-            'organizations_list'        => Organization::all()->map(fn($o) => [
-                'id' => $o->id,
-                'name' => $o->name,
-                'slug' => $o->slug,
-                'members_count' => $o->membershipApplications()->approved()->count()
-            ])->toArray(),
-        ];
-    }
-
-    /**
-     * Extract age, gender, civil status, and purok demographic profiles from members metadata.
-     */
-    private function extractMemberDemographics(?int $orgId = null): array
-    {
-        $membersQuery = Member::active();
-        if ($orgId) {
-            $membersQuery->where('organization_id', $orgId);
-        }
-        $members = $membersQuery->with(['organization', 'application'])->get();
-
-        $ageCategories = [
-            'Under 18 (Youth)' => 0,
-            '18-30 (Young Adult)' => 0,
-            '31-50 (Adult)' => 0,
-            '51-64 (Middle-aged)' => 0,
-            '65+ (Senior)' => 0,
-            'Unknown' => 0
-        ];
-
-        $genderCategories = [
-            'Male' => 0,
-            'Female' => 0,
-            'Other/Not Disclosed' => 0
-        ];
-
-        $civilStatusCategories = [
-            'Single' => 0,
-            'Married' => 0,
-            'Widowed' => 0,
-            'Separated' => 0,
-            'Unknown' => 0
-        ];
-
-        $purokDistribution = [];
-
-        foreach ($members as $member) {
-            $meta = $member->member_meta ?: [];
-
-            // Age extraction
-            $age = null;
-            foreach ($meta as $key => $val) {
-                if (str_ends_with($key, '_age') || $key === 'age') {
-                    if (is_numeric($val)) {
-                        $age = (int)$val;
-                        break;
-                    }
-                }
-                if (str_ends_with($key, '_dob') || str_ends_with($key, '_date_of_birth') || $key === 'dob' || $key === 'date_of_birth') {
-                    try {
-                        $age = Carbon::parse($val)->age;
-                        break;
-                    } catch (\Throwable $e) {
-                    }
-                }
-            }
-            if ($age !== null) {
-                if ($age < 18) $ageCategories['Under 18 (Youth)']++;
-                elseif ($age <= 30) $ageCategories['18-30 (Young Adult)']++;
-                elseif ($age <= 50) $ageCategories['31-50 (Adult)']++;
-                elseif ($age <= 64) $ageCategories['51-64 (Middle-aged)']++;
-                else $ageCategories['65+ (Senior)']++;
-            } else {
-                $ageCategories['Unknown']++;
-            }
-
-            // Gender extraction
-            $gender = null;
-            foreach ($meta as $key => $val) {
-                if (str_ends_with($key, '_sex') || str_ends_with($key, '_gender') || $key === 'sex' || $key === 'gender') {
-                    $gender = ucfirst(strtolower(trim($val)));
-                    break;
-                }
-            }
-            if (!$gender && $member->organization) {
-                $orgSlug = $member->organization->slug;
-                if (str_contains($orgSlug, 'erpat') || str_contains($orgSlug, 'father')) {
-                    $gender = 'Male';
-                } elseif (str_contains($orgSlug, 'kalipi') || str_contains($orgSlug, 'woman') || str_contains($orgSlug, 'women')) {
-                    $gender = 'Female';
-                }
-            }
-            if ($gender === 'Male' || $gender === 'M') {
-                $genderCategories['Male']++;
-            } elseif ($gender === 'Female' || $gender === 'F') {
-                $genderCategories['Female']++;
-            } else {
-                $genderCategories['Other/Not Disclosed']++;
-            }
-
-            // Civil status extraction
-            $civilStatus = null;
-            foreach ($meta as $key => $val) {
-                if (str_ends_with($key, '_civil_status') || str_ends_with($key, '_marital') || $key === 'civil_status' || $key === 'marital_status') {
-                    $civilStatus = ucfirst(strtolower(trim($val)));
-                    break;
-                }
-            }
-            if ($civilStatus) {
-                if (str_contains($civilStatus, 'Single')) $civilStatusCategories['Single']++;
-                elseif (str_contains($civilStatus, 'Married')) $civilStatusCategories['Married']++;
-                elseif (str_contains($civilStatus, 'Widow')) $civilStatusCategories['Widowed']++;
-                elseif (str_contains($civilStatus, 'Separated') || str_contains($civilStatus, 'Divorced')) $civilStatusCategories['Separated']++;
-                else $civilStatusCategories['Unknown']++;
-            } else {
-                $civilStatusCategories['Unknown']++;
-            }
-
-            // Purok/Zone extraction
-            $purok = null;
-            foreach ($meta as $key => $val) {
-                if (str_ends_with($key, '_zone') || str_ends_with($key, '_purok') || $key === 'zone' || $key === 'purok') {
-                    $purok = trim($val);
-                    break;
-                }
-            }
-            $address = $meta['address'] ?? ($member->application->address ?? null);
-            if (!$purok && $address) {
-                if (preg_match('/(Purok\s*\d+|Zone\s*\d+)/i', $address, $matches)) {
-                    $purok = ucwords(strtolower($matches[0]));
-                }
-            }
-            if (!$purok) {
-                $purok = 'Not Disclosed';
-            }
-            $purokDistribution[$purok] = ($purokDistribution[$purok] ?? 0) + 1;
-        }
-
-        $purokData = [];
-        foreach ($purokDistribution as $purokName => $count) {
-            $purokData[] = ['name' => $purokName, 'count' => $count];
-        }
-        usort($purokData, fn($a, $b) => $b['count'] <=> $a['count']);
-
-        $ageData = [];
-        foreach ($ageCategories as $name => $count) {
-            if ($count > 0 || $name === 'Unknown') {
-                $ageData[] = ['name' => $name, 'value' => $count];
-            }
-        }
-        $genderData = [];
-        foreach ($genderCategories as $name => $count) {
-            $genderData[] = ['name' => $name, 'value' => $count];
-        }
-        $civilStatusData = [];
-        foreach ($civilStatusCategories as $name => $count) {
-            if ($count > 0) {
-                $civilStatusData[] = ['name' => $name, 'value' => $count];
-            }
-        }
-
-        return [
-            'total' => $members->count(),
-            'age' => $ageData,
-            'gender' => $genderData,
-            'civil_status' => $civilStatusData,
-            'purok' => $purokData,
-        ];
-    }
-
-    /**
-     * Get monthly membership applications metrics.
-     */
-    private function getApplicationsAnalytics(int $year, ?int $orgId = null): array
-    {
-        $appsQuery = MembershipApplication::whereYear('created_at', $year);
-        if ($orgId) {
-            $appsQuery->where('organization_id', $orgId);
-        }
-        $apps = $appsQuery->get();
-
-        $months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
-        $monthlyApps = [];
-        $appsByMonth = $apps->groupBy(fn($a) => Carbon::parse($a->created_at)->month);
-        foreach ($months as $idx => $mName) {
-            $mNum = $idx + 1;
-            $monthGroup = $appsByMonth->get($mNum, collect());
-            $monthlyApps[] = [
-                'month' => $mName,
-                'submitted' => $monthGroup->count(),
-                'approved' => $monthGroup->where('status', 'Approved')->count(),
-                'disapproved' => $monthGroup->where('status', 'Disapproved')->count(),
-            ];
-        }
-
-        return [
-            'total' => $apps->count(),
-            'approved' => $apps->where('status', 'Approved')->count(),
-            'pending' => $apps->where('status', 'Pending')->count(),
-            'disapproved' => $apps->where('status', 'Disapproved')->count(),
-            'monthly_trend' => $monthlyApps,
-        ];
-    }
-
-    /**
-     * Get GAD events proposal metrics.
-     */
-    private function getGadEventsAnalytics(int $year, ?int $orgId = null): array
-    {
-        $gadQuery = GadEvent::whereYear('event_date', $year);
-        if ($orgId) {
-            $gadQuery->where('organization_id', $orgId);
-        }
-        $gadEvents = $gadQuery->get();
-
-        $months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
-        $monthlyGad = [];
-        $gadByMonth = $gadEvents->groupBy(fn($e) => Carbon::parse($e->event_date)->month);
-        foreach ($months as $idx => $mName) {
-            $mNum = $idx + 1;
-            $monthGroup = $gadByMonth->get($mNum, collect());
-            $monthlyGad[] = [
-                'month' => $mName,
-                'proposed' => $monthGroup->count(),
-                'approved' => $monthGroup->where('status', 'approved')->count(),
-            ];
-        }
-
-        return [
-            'total' => $gadEvents->count(),
-            'approved' => $gadEvents->where('status', 'approved')->count(),
-            'pending' => $gadEvents->where('status', 'pending')->count(),
-            'rejected' => $gadEvents->where('status', 'rejected')->count(),
-            'monthly_trend' => $monthlyGad,
-        ];
-    }
-
-    /**
-     * Get member communications messaging metrics.
-     */
-    private function getCommunicationsAnalytics(int $year, ?int $orgId = null): array
-    {
-        $commQuery = MemberCommunication::query()
-            ->join('members', 'member_communications.member_id', '=', 'members.id')
-            ->whereYear('member_communications.created_at', $year);
-        if ($orgId) {
-            $commQuery->where('members.organization_id', $orgId);
-        }
-        $commQuery->select('member_communications.*');
-        $comms = $commQuery->get();
-
-        $months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
-        $monthlyComms = [];
-        $commsByMonth = $comms->groupBy(fn($c) => Carbon::parse($c->created_at)->month);
-        foreach ($months as $idx => $mName) {
-            $mNum = $idx + 1;
-            $monthGroup = $commsByMonth->get($mNum, collect());
-            $monthlyComms[] = [
-                'month' => $mName,
-                'sent' => $monthGroup->count(),
-            ];
-        }
-
-        return [
-            'total' => $comms->count(),
-            'sent' => $comms->where('status', 'Sent')->count(),
-            'failed' => $comms->where('status', 'Failed')->count(),
-            'monthly_trend' => $monthlyComms,
-        ];
-    }
-
-    /**
-     * Format raw month/count data into the structure expected by the frontend charts.
-     */
-    private function formatMonthlyData(Collection $groupedReports, Collection $abuseTypes): array
-    {
-        $months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
-        $formattedData = [];
-
-        foreach ($months as $index => $monthName) {
-            $monthNum = $index + 1;
-            $monthData = ['month' => $monthName];
-
-            foreach ($abuseTypes as $type) {
-                $key = strtolower($type->name);
-                $monthData[$key] = $groupedReports->has($monthNum) ? ($groupedReports->get($monthNum)->get($type->id) ?? 0) : 0;
-            }
-            $formattedData[] = $monthData;
-        }
-
-        return $formattedData;
+        return $this->organizationService->getOrganizationAnalytics($year, $orgId);
     }
 }

@@ -21,7 +21,16 @@ export default function Dashboard({
     kpis,
 }: DashboardProps) {
     const [privacyMode, setPrivacyMode] = useState<boolean>(true);
-    const [activeTab, setActiveTab] = useState<QueueTab>('CRITICAL');
+    const initialTab: QueueTab = useMemo(() => {
+        if (typeof window !== 'undefined') {
+            const param = new URLSearchParams(window.location.search).get('tab')?.toUpperCase();
+            if (param && ['CRITICAL', 'HIGH', 'MOD', 'LOW', 'PENDING', 'BPOS', 'REPEAT'].includes(param)) {
+                return param as QueueTab;
+            }
+        }
+        return 'CRITICAL';
+    }, []);
+    const [activeTab, setActiveTab] = useState<QueueTab>(initialTab);
     const [queuePage, setQueuePage] = useState<number>(1);
     const itemsPerPage = 5;
 

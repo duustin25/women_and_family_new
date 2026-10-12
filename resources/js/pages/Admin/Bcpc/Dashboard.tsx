@@ -34,7 +34,16 @@ export default function BcpcDashboard({
     currentMonthName,
     metrics = {},
 }: BcpcDashboardProps) {
-    const [activeQueueTab, setActiveQueueTab] = useState<'sam' | 'mam' | 'double_burden' | 'stunted' | 'overdue'>('sam');
+    const initialTab = React.useMemo<'sam' | 'mam' | 'double_burden' | 'stunted' | 'overdue'>(() => {
+        if (typeof window !== 'undefined') {
+            const param = new URLSearchParams(window.location.search).get('tab')?.toLowerCase();
+            if (param && ['sam', 'mam', 'double_burden', 'stunted', 'overdue'].includes(param)) {
+                return param as any;
+            }
+        }
+        return 'sam';
+    }, []);
+    const [activeQueueTab, setActiveQueueTab] = useState<'sam' | 'mam' | 'double_burden' | 'stunted' | 'overdue'>(initialTab);
     const [queuePage, setQueuePage] = useState(1);
     const [sfpPage, setSfpPage] = useState(1);
     const itemsPerPage = 5;

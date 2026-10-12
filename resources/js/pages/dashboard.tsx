@@ -1,26 +1,5 @@
+import React from 'react';
 import { Head, router, Link } from '@inertiajs/react';
-import {
-    Users,
-    ShieldAlert,
-    Building2,
-    TrendingUp,
-    Clock,
-    Activity,
-    UserPlus,
-    AlertTriangle,
-    Baby,
-    CheckCircle2,
-    ArrowRight,
-    Wifi,
-    BarChart3,
-    Heart,
-    BrainCircuit,
-    CalendarCheck,
-} from 'lucide-react';
-import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from 'recharts';
-import { route } from 'ziggy-js';
-import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import AppLayout from '@/layouts/app-layout';
 import { cn } from '@/lib/utils';
 import { dashboard } from '@/routes';
@@ -30,357 +9,763 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Dashboard', href: dashboard().url },
 ];
 
-interface VawcSignal {
-    total_active: number;
-    critical_high: number;
-    needs_attention: boolean;
+interface OrganizationSummary {
+    id: number;
+    name: string;
+    slug: string;
+    members_count: number;
+    pending_count: number;
 }
 
-interface BcpcSignal {
-    total_monitored: number;
-    sam_count: number;
-    mam_count: number;
-    needs_attention: boolean;
+interface UpcomingEvent {
+    id: number;
+    title: string;
+    date_short: string;
+    date_full: string;
+    location: string;
+    organization: string;
+    status: string;
 }
 
 interface CommunitySnapshot {
-    gadSummary: {
-        total_events: number;
-        approved: number;
-        pending: number;
-        distribution: any[];
-    };
-    orgSummary: any[];
-    memberTrend: {
-        total: number;
-        new: number;
-        growth: number;
+    organizations: OrganizationSummary[];
+    upcomingEvents: UpcomingEvent[];
+    totalMembers: number;
+}
+
+interface AnnouncementItem {
+    id: number;
+    slug?: string;
+    title: string;
+    date: string;
+    audience: string;
+    url: string;
+}
+
+interface SystemStats {
+    // Admin / Head
+    pendingApps?: number;
+    pendingAppeals?: number;
+    totalVawcActive?: number;
+    vawcCriticalCount?: number;
+    vawcHighCount?: number;
+    vawcHighCriticalCount?: number;
+    vawcActiveBpos?: number;
+    totalBcpcChildren?: number;
+    bcpcSamCount?: number;
+    bcpcMamCount?: number;
+    bcpcOverdueCount?: number;
+    totalOrgs?: number;
+    totalMembers?: number;
+    totalUpcomingEvents?: number;
+    nextGadEvent?: {
+        id: number;
+        title: string;
+        date_short: string;
+        date_full: string;
+    } | null;
+
+    // President
+    myOrgName?: string;
+    verifiedMembers?: number;
+    totalEvents?: number;
+    upcomingEvents?: number;
+}
+
+interface DashboardProps {
+    systemStats: SystemStats;
+    communitySnapshot: CommunitySnapshot | null;
+    latestAnnouncements?: AnnouncementItem[];
+    canExportReport?: boolean;
+    auth: {
+        user: {
+            id: number;
+            name: string;
+            role: string;
+            organization_id?: number;
+        };
     };
 }
 
 export default function Dashboard({
     systemStats,
-    recentCases,
     communitySnapshot,
-    vawcSignal,
-    bcpcSignal,
+    latestAnnouncements = [],
+    canExportReport = false,
     auth,
-}: {
-    systemStats: any;
-    recentCases: any[];
-    communitySnapshot: CommunitySnapshot | null;
-    vawcSignal: VawcSignal | null;
-    bcpcSignal: BcpcSignal | null;
-    auth: any;
-}) {
+}: DashboardProps) {
     const isPresident = auth.user.role === 'president';
+    const isHead = auth.user.role === 'head';
+    const isAdmin = auth.user.role === 'admin';
 
-    // Stats Ribbon: Removed redundant VAWC/BCPC counters for Admin
-    const stats = isPresident
-        ? [
-            { label: 'Verified Members', value: systemStats.verifiedMembers, icon: Users, color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-900/20' },
-            { label: 'Pending Applications', value: systemStats.pendingApps, icon: UserPlus, color: 'text-orange-600', bg: 'bg-orange-50 dark:bg-orange-900/20' },
-            { label: 'Recent Activity', value: systemStats.recentActivity, icon: Activity, color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-900/20' },
-            { label: 'Organization Status', value: 'Active', icon: Building2, color: 'text-indigo-600', bg: 'bg-indigo-50 dark:bg-indigo-900/20' },
-        ]
-        : [
-            { label: 'Total Users', value: systemStats.totalSystemUsers, icon: Users, color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-900/20' },
-            { label: 'Pending Applications', value: systemStats.pendingApps, icon: UserPlus, color: 'text-amber-600', bg: 'bg-amber-50 dark:bg-amber-900/20' },
-            { label: 'Organizations', value: systemStats.totalOrgs, icon: Building2, color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-900/20' },
-            { label: 'GAD Events', value: `${systemStats.gadApprovedCount}/${systemStats.totalGadEvents}`, icon: CalendarCheck, color: 'text-indigo-600', bg: 'bg-indigo-50 dark:bg-indigo-900/20' },
-            { label: 'Recent System Activity', value: systemStats.recentSystemActivity, icon: Activity, color: 'text-rose-600', bg: 'bg-rose-50 dark:bg-rose-900/20' },
-        ];
-
-    const getStatusColor = (status: string) => {
-        switch (status) {
-            case 'New': return 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-500';
-            case 'Ongoing': return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-500';
-            case 'Referred': return 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-500';
-            case 'Resolved': return 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-500';
-            case 'Closed': return 'bg-slate-100 text-slate-700 dark:bg-slate-800/50 dark:text-slate-400';
-            case 'Dismissed': return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-500';
-            case 'Intake': return 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-500';
-            case 'Assessment': return 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-500';
-            case 'Alternative Housing': return 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-500';
-            case 'BPO Processing': return 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-500';
-            case 'Escalated': return 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-500';
-            case 'Active': return 'bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-500';
-            case 'Monitoring': return 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-500';
-            default: return 'bg-gray-100 text-gray-700 dark:bg-gray-800/50 dark:text-gray-400';
-        }
-    };
+    const roleTitle = isPresident
+        ? 'Organization President Portal'
+        : isHead
+            ? 'Committee Head Oversight'
+            : 'System Administrator Control';
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Admin Dashboard" />
+            <Head title="Operational Dashboard" />
 
-            <div className="flex h-full flex-1 flex-col gap-6 p-6">
+            <div className="flex h-full flex-1 flex-col gap-6 p-4 sm:p-6 max-w-8xl mx-auto w-full">
 
                 {/* ── HEADER ── */}
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border pb-4">
                     <div>
-                        <h1 className="text-2xl font-black uppercase tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+                        <h1 className="text-xl sm:text-2xl font-black uppercase tracking-tight text-foreground">
                             Dashboard Overview
                         </h1>
+                        <p className="text-xs font-semibold text-muted-foreground mt-0.5">
+                            {roleTitle} · Barangay 183 Villamor Women and Family Desk
+                        </p>
                     </div>
+
+                    {/* EXPORT BARANGAY COUNCIL REPORT (HEAD COMMITTEE ONLY) */}
+                    {canExportReport && (
+                        <div className="flex items-center gap-2">
+                            <a
+                                href="/admin/analytics/print"
+                                target="_blank"
+                                rel="noreferrer"
+                                className="px-3 py-2 text-xs font-bold uppercase rounded-lg border border-border bg-card hover:bg-muted text-foreground transition-all cursor-pointer shadow-xs inline-flex items-center justify-center text-center"
+                            >
+                                Export Barangay Council Report
+                            </a>
+                        </div>
+                    )}
                 </div>
 
-                {/* ── STATS RIBBON (No Duplicates) ── */}
-                <div className={`grid gap-4 grid-cols-2 ${isPresident ? 'md:grid-cols-4' : 'lg:grid-cols-5'}`}>
-                    {stats.map((stat, i) => {
-                        const href = stat.label === 'Pending Applications'
-                            ? '/admin/applications'
-                            : stat.label === 'Verified Members'
-                                ? '/admin/members'
-                                : stat.label === 'Organizations'
-                                    ? '/admin/organizations'
-                                    : undefined;
-
-                        const content = (
-                            <div className="flex justify-between items-start">
-                                <div>
-                                    <p className="text-[10px] font-black uppercase text-slate-400 dark:text-slate-500 tracking-widest mb-1 leading-tight">
-                                        {stat.label}
-                                    </p>
-                                    <h3 className="text-2xl font-black text-slate-900 dark:text-white mt-1">
-                                        {stat.value}
-                                    </h3>
-                                </div>
-                                <div className={`p-2.5 rounded-lg ${stat.bg} ${stat.color}`}>
-                                    <stat.icon size={20} className="stroke-[2.5]" />
-                                </div>
-                            </div>
-                        );
-
-                        if (href) {
-                            return (
-                                <Link
-                                    key={i}
-                                    href={href}
-                                    className="border p-5 rounded-xl shadow-sm transition-all hover:shadow-md hover:border-blue-500/50 bg-white dark:bg-slate-900 block cursor-pointer"
-                                >
-                                    {content}
-                                </Link>
-                            );
-                        }
-
-                        return (
-                            <div key={i} className="border p-5 rounded-xl shadow-sm transition-all hover:shadow-md bg-white dark:bg-slate-900">
-                                {content}
-                            </div>
-                        );
-                    })}
-                </div>
-
-                {/* ── MODULE HEALTH COMMAND CARDS ── */}
-                {!isPresident && vawcSignal && bcpcSignal && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-
-                        {/* VAWC Signal Card */}
-                        <Card
-                            className="border cursor-pointer hover:shadow-md transition-shadow h-full"
-                            onClick={() => router.visit('/admin/vawc/dashboard')}
+                {/* ── KPI TILES ROW ── */}
+                {!isPresident ? (
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 w-full">
+                        {/* KPI 1: Pending Applications */}
+                        <Link
+                            href="/admin/applications"
+                            className="p-3.5 sm:p-4 rounded-xl border border-border bg-card hover:border-foreground/25 hover:shadow-xs transition-all flex flex-col justify-between cursor-pointer group"
                         >
-                            <CardHeader className="pb-2">
-                                <CardTitle className="text-xs font-black uppercase tracking-widest flex items-center justify-between">
-                                    <span className={cn("flex items-center gap-2", vawcSignal.needs_attention ? "text-red-600" : "text-emerald-600")}>
-                                        VAWC Protection Operations
-                                    </span>
-                                    <ArrowRight className="w-4 h-4 text-slate-400" />
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-6">
-                                        <div>
-                                            <p className="text-3xl font-black text-slate-900 dark:text-white">{vawcSignal.total_active}</p>
-                                            <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Active Cases</p>
-                                        </div>
-                                        <div className={cn(
-                                            "flex items-center gap-2 px-3 py-2 rounded-lg",
-                                            vawcSignal.needs_attention ? "bg-red-100 text-red-700" : "bg-emerald-100 text-emerald-700"
-                                        )}>
-                                            {vawcSignal.needs_attention ? <AlertTriangle className="w-4 h-4" /> : <CheckCircle2 className="w-4 h-4" />}
-                                            <p className="text-lg font-black leading-none">{vawcSignal.critical_high}</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
+                            <span className="text-xs font-bold uppercase tracking-normal text-muted-foreground leading-tight block">
+                                Pending Applications
+                            </span>
+                            <div className="text-2xl sm:text-3xl font-black tracking-tight text-foreground mt-2">
+                                {systemStats.pendingApps ?? 0}
+                            </div>
+                        </Link>
 
-                        {/* BCPC Signal Card */}
-                        <Card
-                            className="border cursor-pointer hover:shadow-md transition-shadow h-full"
-                            onClick={() => router.visit('/admin/bcpc/dashboard')}
+                        {/* KPI 2: Application Appeals */}
+                        <Link
+                            href="/admin/applications/appeals"
+                            className="p-3.5 sm:p-4 rounded-xl border border-border bg-card hover:border-foreground/25 hover:shadow-xs transition-all flex flex-col justify-between cursor-pointer group"
                         >
-                            <CardHeader className="pb-2">
-                                <CardTitle className="text-xs font-black uppercase tracking-widest flex items-center justify-between">
-                                    <span className={cn("flex items-center gap-2", bcpcSignal.needs_attention ? "text-amber-600" : "text-emerald-600")}>
-                                        BCPC Nutrition Assessment
-                                    </span>
-                                    <ArrowRight className="w-4 h-4 text-slate-400" />
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-6">
-                                        <div>
-                                            <p className="text-3xl font-black text-slate-900 dark:text-white">{bcpcSignal.total_monitored}</p>
-                                            <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Total Monitored</p>
-                                        </div>
-                                        <div className="flex gap-2">
-                                            {bcpcSignal.sam_count > 0 && (
-                                                <div className="px-2 py-1 rounded bg-red-100 text-red-700 flex flex-col items-center">
-                                                    <span className="text-sm font-black leading-none">{bcpcSignal.sam_count}</span>
-                                                    <span className="text-[7px] font-black uppercase">SAM</span>
-                                                </div>
-                                            )}
-                                            {bcpcSignal.mam_count > 0 && (
-                                                <div className="px-2 py-1 rounded bg-amber-100 text-amber-700 flex flex-col items-center">
-                                                    <span className="text-sm font-black leading-none">{bcpcSignal.mam_count}</span>
-                                                    <span className="text-[7px] font-black uppercase">MAM</span>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
+                            <span className="text-xs font-bold uppercase tracking-normal text-muted-foreground leading-tight block">
+                                Application Appeals
+                            </span>
+                            <div className="text-2xl sm:text-3xl font-black tracking-tight text-foreground mt-2">
+                                {systemStats.pendingAppeals ?? 0}
+                            </div>
+                        </Link>
+
+                        {/* KPI 3: Members */}
+                        <Link
+                            href="/admin/members"
+                            className="p-3.5 sm:p-4 rounded-xl border border-border bg-card hover:border-foreground/25 hover:shadow-xs transition-all flex flex-col justify-between cursor-pointer group"
+                        >
+                            <span className="text-xs font-bold uppercase tracking-normal text-muted-foreground leading-tight block">
+                                Members
+                            </span>
+                            <div className="text-2xl sm:text-3xl font-black tracking-tight text-foreground mt-2">
+                                {systemStats.totalMembers ?? 0}
+                            </div>
+                        </Link>
+
+                        {/* KPI 4: Organizations */}
+                        <Link
+                            href="/admin/organizations"
+                            className="p-3.5 sm:p-4 rounded-xl border border-border bg-card hover:border-foreground/25 hover:shadow-xs transition-all flex flex-col justify-between cursor-pointer group"
+                        >
+                            <span className="text-xs font-bold uppercase tracking-normal text-muted-foreground leading-tight block">
+                                Organizations
+                            </span>
+                            <div className="text-2xl sm:text-3xl font-black tracking-tight text-foreground mt-2">
+                                {systemStats.totalOrgs ?? 0}
+                            </div>
+                        </Link>
+
+                        {/* KPI 5: GAD Events */}
+                        <Link
+                            href="/admin/gad/events"
+                            className="p-3.5 sm:p-4 rounded-xl border border-border bg-card hover:border-foreground/25 hover:shadow-xs transition-all flex flex-col justify-between cursor-pointer group"
+                        >
+                            <span className="text-xs font-bold uppercase tracking-normal text-muted-foreground leading-tight block">
+                                GAD Events
+                            </span>
+                            <div className="text-2xl sm:text-3xl font-black tracking-tight text-foreground mt-2">
+                                {systemStats.totalUpcomingEvents ?? 0}
+                            </div>
+                        </Link>
+                    </div>
+                ) : (
+                    /* ── PRESIDENT TOP KPI TILES ── */
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 w-full">
+                        <Link
+                            href="/admin/members"
+                            className="p-3.5 sm:p-4 rounded-xl border border-border bg-card hover:border-foreground/25 hover:shadow-xs transition-all flex flex-col justify-between cursor-pointer group"
+                        >
+                            <span className="text-xs font-bold uppercase tracking-normal text-muted-foreground leading-tight block">
+                                Verified Members
+                            </span>
+                            <div className="text-2xl sm:text-3xl font-black tracking-tight text-foreground mt-2">
+                                {systemStats.verifiedMembers ?? 0}
+                            </div>
+                        </Link>
+
+                        <Link
+                            href="/admin/applications"
+                            className="p-3.5 sm:p-4 rounded-xl border border-border bg-card hover:border-foreground/25 hover:shadow-xs transition-all flex flex-col justify-between cursor-pointer group"
+                        >
+                            <span className="text-xs font-bold uppercase tracking-normal text-muted-foreground leading-tight block">
+                                Pending Applications
+                            </span>
+                            <div className="text-2xl sm:text-3xl font-black tracking-tight text-foreground mt-2">
+                                {systemStats.pendingApps ?? 0}
+                            </div>
+                        </Link>
+
+                        <Link
+                            href="/admin/organization/events"
+                            className="p-3.5 sm:p-4 rounded-xl border border-border bg-card hover:border-foreground/25 hover:shadow-xs transition-all flex flex-col justify-between cursor-pointer group"
+                        >
+                            <span className="text-xs font-bold uppercase tracking-normal text-muted-foreground leading-tight block">
+                                Event Proposals
+                            </span>
+                            <div className="text-2xl sm:text-3xl font-black tracking-tight text-foreground mt-2">
+                                {systemStats.totalEvents ?? 0}
+                            </div>
+                        </Link>
+
+                        <Link
+                            href="/admin/organization/events"
+                            className="p-3.5 sm:p-4 rounded-xl border border-border bg-card hover:border-foreground/25 hover:shadow-xs transition-all flex flex-col justify-between cursor-pointer group"
+                        >
+                            <span className="text-xs font-bold uppercase tracking-normal text-muted-foreground leading-tight block">
+                                Upcoming Events
+                            </span>
+                            <div className="text-2xl sm:text-3xl font-black tracking-tight text-foreground mt-2">
+                                {systemStats.upcomingEvents ?? 0}
+                            </div>
+                        </Link>
                     </div>
                 )}
 
-                {/* ── STRATEGIC ACTIVITY & SUMMARIZATION ── */}
-                <div className="grid gap-6 lg:grid-cols-5">
+                {/* ── DEDICATED MODULE COMMAND CARDS: VAWC & BCPC ── */}
+                {!isPresident && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
 
-                    {/* Left: Recent Operational Activity */}
-                    <div className="lg:col-span-3 border rounded-xl shadow-sm overflow-hidden bg-white dark:bg-slate-900 flex flex-col">
-                        <div className="p-5 border-b flex justify-between items-center bg-slate-50/30 dark:bg-slate-800/20">
-                            <h3 className="font-black uppercase text-xs tracking-widest flex items-center gap-2 text-slate-900 dark:text-white">
-                                Recent Operational Activity
-                            </h3>
-                            <Button variant="ghost" onClick={() => router.visit('/admin/vawc/cases')} className="h-7 text-[12px] font-black uppercase">
-                                View
-                            </Button>
+                        {/* ── CARD 1: VAWC PROTECTION OPERATIONS ── */}
+                        <div
+                            onClick={() => router.visit('/admin/vawc/dashboard')}
+                            className="rounded-xl border border-border bg-card shadow-xs hover:border-foreground/25 transition-all cursor-pointer overflow-hidden flex flex-col justify-between group"
+                        >
+                            <div className="px-4 py-3 sm:px-5 sm:py-3.5 border-b border-border bg-muted/20 flex items-center justify-between">
+                                <div>
+                                    <h2 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-foreground">
+                                        VAWC Protection Operations
+                                    </h2>
+                                </div>
+                            </div>
+
+                            <div className="p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                                {/* Left: Active Cases */}
+                                <div>
+                                    <div className="text-3xl sm:text-4xl font-black tracking-tight text-foreground">
+                                        {systemStats.totalVawcActive ?? 0}
+                                    </div>
+                                    <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground mt-1 block">
+                                        Active Cases Monitored
+                                    </span>
+                                </div>
+
+                                {/* Right: Action Indicators (Separated Critical, High, and BPOs) */}
+                                <div className="grid grid-cols-3 gap-2 w-full sm:w-auto" onClick={(e) => e.stopPropagation()}>
+                                    {/* Critical Box */}
+                                    <Link
+                                        href="/admin/vawc/dashboard?tab=CRITICAL"
+                                        className={cn(
+                                            "p-2.5 sm:p-3 rounded-lg border transition-all text-center flex flex-col items-center justify-center min-w-[75px] sm:min-w-[90px] group/box",
+                                            (systemStats.vawcCriticalCount ?? 0) > 0
+                                                ? "bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-900/50 text-red-700 dark:text-red-400"
+                                                : "bg-muted/20 border-border text-muted-foreground"
+                                        )}
+                                    >
+                                        <span className="text-lg sm:text-xl font-black leading-none">
+                                            {systemStats.vawcCriticalCount ?? 0}
+                                        </span>
+                                        <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wide mt-1">
+                                            Critical
+                                        </span>
+                                    </Link>
+
+                                    {/* High Risk Box */}
+                                    <Link
+                                        href="/admin/vawc/dashboard?tab=HIGH"
+                                        className={cn(
+                                            "p-2.5 sm:p-3 rounded-lg border transition-all text-center flex flex-col items-center justify-center min-w-[75px] sm:min-w-[90px] group/box",
+                                            (systemStats.vawcHighCount ?? 0) > 0
+                                                ? "bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-900/50 text-amber-700 dark:text-amber-400"
+                                                : "bg-muted/20 border-border text-muted-foreground"
+                                        )}
+                                    >
+                                        <span className="text-lg sm:text-xl font-black leading-none">
+                                            {systemStats.vawcHighCount ?? 0}
+                                        </span>
+                                        <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wide mt-1">
+                                            High Risk
+                                        </span>
+                                    </Link>
+
+                                    {/* Active BPOs Box */}
+                                    <Link
+                                        href="/admin/vawc/dashboard?tab=BPOS"
+                                        className="p-2.5 sm:p-3 rounded-lg border border-border bg-muted/20 hover:bg-muted/40 transition-all text-center flex flex-col items-center justify-center min-w-[75px] sm:min-w-[90px] group/box"
+                                    >
+                                        <span className="text-lg sm:text-xl font-black text-foreground leading-none">
+                                            {systemStats.vawcActiveBpos ?? 0}
+                                        </span>
+                                        <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wide text-muted-foreground mt-1">
+                                            BPOs
+                                        </span>
+                                    </Link>
+                                </div>
+                            </div>
                         </div>
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-left">
-                                <thead className="text-[9px] font-black uppercase text-slate-400 tracking-widest border-b dark:border-neutral-800">
-                                    <tr>
-                                        <th className="px-5 py-3">Case ID</th>
-                                        <th className="px-5 py-3">Classification</th>
-                                        <th className="px-5 py-3 text-center">Status</th>
-                                        <th className="px-5 py-3 text-right">Activity Time</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="text-[11px] font-bold uppercase text-slate-700 dark:text-neutral-300">
-                                    {recentCases.length === 0 ? (
-                                        <tr><td colSpan={4} className="px-5 py-8 text-center text-slate-400">No recent activity detected.</td></tr>
-                                    ) : recentCases.map(c => (
-                                        <tr key={c.id} className="border-b last:border-0 hover:bg-slate-50 dark:hover:bg-neutral-800/50 transition-colors cursor-pointer" onClick={() => router.visit(route('admin.vawc.show', c.vawc_uuid || c.vawc_id || c.id))}>
-                                            <td className="px-5 py-3 font-black">{c.case_number}</td>
-                                            <td className="px-5 py-3 text-slate-500">{c.subType}</td>
-                                            <td className="px-5 py-3 text-center">
-                                                <span className={`px-2 py-0.5 rounded-full text-[8px] font-black tracking-widest uppercase ${getStatusColor(c.status)}`}>
-                                                    {c.status}
+
+                        {/* ── CARD 2: BCPC CHILD WELFARE & NUTRITION ── */}
+                        <div
+                            onClick={() => router.visit('/admin/bcpc/dashboard')}
+                            className="rounded-xl border border-border bg-card shadow-xs hover:border-foreground/25 transition-all cursor-pointer overflow-hidden flex flex-col justify-between group"
+                        >
+                            <div className="px-4 py-3 sm:px-5 sm:py-3.5 border-b border-border bg-muted/20 flex items-center justify-between">
+                                <div>
+                                    <h2 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-foreground">
+                                        BCPC Child Welfare & Nutrition
+                                    </h2>
+                                </div>
+                            </div>
+
+                            <div className="p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                                {/* Left: Total Monitored */}
+                                <div>
+                                    <div className="text-3xl sm:text-4xl font-black tracking-tight text-foreground">
+                                        {systemStats.totalBcpcChildren ?? 0}
+                                    </div>
+                                    <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground mt-1 block">
+                                        Children Monitored
+                                    </span>
+                                </div>
+
+                                {/* Right: SAM, MOD, Overdue Indicators */}
+                                <div className="grid grid-cols-3 gap-2 w-full sm:w-auto" onClick={(e) => e.stopPropagation()}>
+                                    {/* SAM Box */}
+                                    <Link
+                                        href="/admin/bcpc/dashboard?tab=sam"
+                                        className={cn(
+                                            "p-2.5 sm:p-3 rounded-lg border transition-all text-center flex flex-col items-center justify-center min-w-[75px] sm:min-w-[90px] group/box",
+                                            (systemStats.bcpcSamCount ?? 0) > 0
+                                                ? "bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-900/50 text-red-700 dark:text-red-400"
+                                                : "bg-muted/20 border-border text-muted-foreground"
+                                        )}
+                                    >
+                                        <span className="text-lg sm:text-xl font-black leading-none">
+                                            {systemStats.bcpcSamCount ?? 0}
+                                        </span>
+                                        <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wide mt-1">
+                                            SAM
+                                        </span>
+                                    </Link>
+
+                                    {/* MOD / MAM Box */}
+                                    <Link
+                                        href="/admin/bcpc/dashboard?tab=moderate"
+                                        className={cn(
+                                            "p-2.5 sm:p-3 rounded-lg border transition-all text-center flex flex-col items-center justify-center min-w-[75px] sm:min-w-[90px] group/box",
+                                            (systemStats.bcpcMamCount ?? 0) > 0
+                                                ? "bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-900/50 text-amber-700 dark:text-amber-400"
+                                                : "bg-muted/20 border-border text-muted-foreground"
+                                        )}
+                                    >
+                                        <span className="text-lg sm:text-xl font-black leading-none">
+                                            {systemStats.bcpcMamCount ?? 0}
+                                        </span>
+                                        <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wide mt-1">
+                                            MOD
+                                        </span>
+                                    </Link>
+
+                                    {/* Overdue Box */}
+                                    <Link
+                                        href="/admin/bcpc/dashboard?tab=overdue"
+                                        className={cn(
+                                            "p-2.5 sm:p-3 rounded-lg border transition-all text-center flex flex-col items-center justify-center min-w-[75px] sm:min-w-[90px] group/box",
+                                            (systemStats.bcpcOverdueCount ?? 0) > 0
+                                                ? "bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-900/50 text-amber-700 dark:text-amber-400"
+                                                : "bg-muted/20 border-border text-muted-foreground"
+                                        )}
+                                    >
+                                        <span className="text-lg sm:text-xl font-black leading-none">
+                                            {systemStats.bcpcOverdueCount ?? 0}
+                                        </span>
+                                        <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wide mt-1">
+                                            Overdue
+                                        </span>
+                                    </Link>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                )}
+
+                {/* ── LOWER STRATEGIC SECTION: ORGANIZATIONS + GAD + ANNOUNCEMENTS ── */}
+                <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+
+                    {/* ── LEFT COLUMN: ACCREDITED ORGANIZATIONS (COL-SPAN-3) ── */}
+                    <div className="lg:col-span-3 flex flex-col gap-6">
+
+                        {!isPresident && communitySnapshot && (
+                            <div className="rounded-xl border border-border bg-card shadow-xs overflow-hidden">
+                                <div className="p-4 sm:p-5 border-b border-border bg-muted/30 flex justify-between items-center">
+                                    <div>
+                                        <h2 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-foreground">
+                                            Accredited Organizations
+                                        </h2>
+                                    </div>
+                                    <Link
+                                        href="/admin/organizations"
+                                        className="text-xs font-bold text-primary hover:underline uppercase"
+                                    >
+                                        View all
+                                    </Link>
+                                </div>
+
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-left border-collapse">
+                                        <thead>
+                                            <tr className="border-b border-border bg-muted/20 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                                                <th className="px-4 py-2.5">Organization</th>
+                                                <th className="px-3 py-2.5 text-center">Active Members</th>
+                                                <th className="px-4 py-2.5 text-right">Pending Intake</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-border text-xs">
+                                            {communitySnapshot.organizations.length === 0 ? (
+                                                <tr>
+                                                    <td colSpan={3} className="px-4 py-6 text-center text-muted-foreground font-semibold">
+                                                        No organizations registered yet.
+                                                    </td>
+                                                </tr>
+                                            ) : (
+                                                communitySnapshot.organizations.map((org) => (
+                                                    <tr
+                                                        key={org.id}
+                                                        onClick={() => router.visit(`/admin/organizations/${org.slug}/members`)}
+                                                        className="hover:bg-muted/40 transition-colors cursor-pointer"
+                                                    >
+                                                        <td className="px-4 py-2.5 font-bold text-foreground">
+                                                            <span className="hover:underline">
+                                                                {org.name}
+                                                            </span>
+                                                        </td>
+                                                        <td className="px-3 py-2.5 text-center font-semibold text-muted-foreground">
+                                                            {org.members_count}
+                                                        </td>
+                                                        <td className="px-4 py-2.5 text-right">
+                                                            {org.pending_count > 0 ? (
+                                                                <Link
+                                                                    href={`/admin/applications?organization_id=${org.id}&status=Pending`}
+                                                                    onClick={(e) => e.stopPropagation()}
+                                                                    className="font-bold text-amber-600 dark:text-amber-400 hover:underline"
+                                                                >
+                                                                    {org.pending_count} Pending →
+                                                                </Link>
+                                                            ) : (
+                                                                <span className="text-muted-foreground font-normal">
+                                                                    0
+                                                                </span>
+                                                            )}
+                                                        </td>
+                                                    </tr>
+                                                ))
+                                            )}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* PRESIDENT ANNOUNCEMENTS */}
+                        {isPresident && latestAnnouncements && (
+                            <div className="rounded-xl border border-border bg-card shadow-xs overflow-hidden">
+                                <div className="p-4 sm:p-5 border-b border-border bg-muted/30 flex justify-between items-center">
+                                    <div>
+                                        <h2 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-foreground">
+                                            Latest Announcements
+                                        </h2>
+                                    </div>
+                                    <Link
+                                        href="/admin/announcements"
+                                        className="text-xs font-bold text-primary hover:underline uppercase"
+                                    >
+                                        View all
+                                    </Link>
+                                </div>
+                                <div className="divide-y divide-border">
+                                    {latestAnnouncements.length === 0 ? (
+                                        <div className="p-4 text-center text-xs text-muted-foreground">
+                                            No announcements published.
+                                        </div>
+                                    ) : (
+                                        latestAnnouncements.map((a) => (
+                                            <Link
+                                                key={a.id}
+                                                href={a.url}
+                                                className="p-3.5 sm:p-4 hover:bg-muted/40 transition-colors flex items-center justify-between gap-3 block"
+                                            >
+                                                <div className="min-w-0 flex-1">
+                                                    <div className="text-xs sm:text-sm font-bold text-foreground truncate">
+                                                        {a.title}
+                                                    </div>
+                                                    <div className="text-xs text-muted-foreground mt-0.5">
+                                                        {a.date} · Audience: {a.audience}
+                                                    </div>
+                                                </div>
+                                                <span className="text-xs font-bold text-primary uppercase shrink-0">
+                                                    Open →
                                                 </span>
-                                            </td>
-                                            <td className="px-5 py-3 text-right text-slate-400">{c.date}</td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
+                                            </Link>
+                                        ))
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
                     </div>
 
-                    {/* Right: Community & GAD Snapshot */}
-                    {!isPresident && communitySnapshot && (
-                        <div className="lg:col-span-2 flex flex-col h-full">
-                            <Card className="border shadow-sm flex flex-col h-full bg-white dark:bg-slate-900">
-                                <CardHeader className="pb-3 border-b bg-slate-50/30 dark:bg-slate-800/10">
-                                    <CardTitle className="text-xs font-black uppercase tracking-widest text-purple-700 dark:text-purple-400 flex items-center gap-2">
-                                        <Users className="w-4 h-4" /> Community & GAD Snapshot
-                                    </CardTitle>
-                                </CardHeader>
-                                <CardContent className="flex-1 flex flex-col justify-between p-6 gap-6">
-                                    {/* Member Growth Indicator */}
-                                    <div className="flex items-center justify-between p-3.5 bg-slate-50 dark:bg-slate-800/30 rounded-xl border border-slate-100 dark:border-slate-850">
+                    {/* ── RIGHT COLUMN: GAD CALENDAR + ANNOUNCEMENTS + SYSTEM (COL-SPAN-2) ── */}
+                    <div className="lg:col-span-2 flex flex-col gap-6">
+
+                        {!isPresident && communitySnapshot ? (
+                            <>
+                                {/* UPCOMING GAD CALENDAR */}
+                                <div className="rounded-xl border border-border bg-card shadow-xs overflow-hidden">
+                                    <div className="p-4 sm:p-5 border-b border-border bg-muted/30 flex justify-between items-center">
                                         <div>
-                                            <p className="text-[9px] font-black uppercase text-slate-400 tracking-wider">Member Growth</p>
-                                            <p className="text-xl font-black text-slate-950 dark:text-white mt-0.5">+{communitySnapshot.memberTrend.growth}%</p>
+                                            <h2 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-foreground">
+                                                Upcoming GAD Calendar
+                                            </h2>
                                         </div>
-                                        <div className="text-right">
-                                            <p className="text-[9px] font-black uppercase text-slate-400 tracking-wider">Total Members</p>
-                                            <p className="text-sm font-bold text-slate-600 dark:text-slate-400 mt-0.5">{communitySnapshot.memberTrend.total}</p>
-                                        </div>
+                                        <Link
+                                            href="/admin/gad/events"
+                                            className="text-xs font-bold text-primary hover:underline uppercase"
+                                        >
+                                            Calendar
+                                        </Link>
                                     </div>
 
-                                    {/* Sector Distribution Summary */}
-                                    <div className="space-y-3">
-                                        <h4 className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Sectors Distribution</h4>
-                                        <div className="h-[110px] w-full flex items-center justify-between">
-                                            <div className="w-[110px] h-[110px]">
-                                                <ResponsiveContainer width="100%" height="100%">
-                                                    <PieChart>
-                                                        <Pie
-                                                            data={communitySnapshot.orgSummary}
-                                                            cx="50%"
-                                                            cy="50%"
-                                                            innerRadius={22}
-                                                            outerRadius={38}
-                                                            paddingAngle={3}
-                                                            dataKey="value"
-                                                        >
-                                                            {communitySnapshot.orgSummary.map((entry: any, index: number) => (
-                                                                <Cell key={`cell-${index}`} fill={['#3b82f6', '#ec4899', '#8b5cf6', '#14b8a6', '#f59e0b'][index % 5]} />
-                                                            ))}
-                                                        </Pie>
-                                                        <Tooltip />
-                                                    </PieChart>
-                                                </ResponsiveContainer>
+                                    <div className="p-4 space-y-2.5">
+                                        {communitySnapshot.upcomingEvents.length === 0 ? (
+                                            <div className="py-4 text-center">
+                                                <p className="text-xs font-normal text-muted-foreground">
+                                                    No scheduled events
+                                                </p>
+                                                <Link
+                                                    href="/admin/gad/events"
+                                                    className="text-xs font-bold text-primary hover:underline mt-1 inline-block"
+                                                >
+                                                    Add event
+                                                </Link>
                                             </div>
-                                            <div className="flex-1 text-[9px] font-bold uppercase text-slate-500 dark:text-slate-450 space-y-1 pl-4">
-                                                {communitySnapshot.orgSummary.map((entry: any, index: number) => (
-                                                    <div key={index} className="flex items-center justify-between border-b border-slate-50 dark:border-neutral-800 pb-0.5 last:border-0">
-                                                        <span className="flex items-center gap-1.5">
-                                                            <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: ['#3b82f6', '#ec4899', '#8b5cf6', '#14b8a6', '#f59e0b'][index % 5] }} />
-                                                            {entry.name}
-                                                        </span>
-                                                        <span className="font-black text-slate-900 dark:text-white">{entry.value}</span>
+                                        ) : (
+                                            communitySnapshot.upcomingEvents.map((event) => (
+                                                <Link
+                                                    key={event.id}
+                                                    href="/admin/gad/events"
+                                                    className="p-3 rounded-lg border border-border bg-muted/20 hover:bg-muted/50 transition-all flex items-start gap-3 cursor-pointer block"
+                                                >
+                                                    <div className="px-2 py-1.5 rounded border border-border bg-card text-center shrink-0 min-w-[50px]">
+                                                        <div className="text-xs font-bold text-foreground">
+                                                            {event.date_short}
+                                                        </div>
                                                     </div>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    </div>
 
-                                    {/* GAD Programs status */}
-                                    <div className="border-t pt-4 dark:border-neutral-800 mt-auto">
-                                        <div className="flex justify-between items-center mb-2.5">
-                                            <h4 className="text-[10px] font-black uppercase text-slate-400 tracking-wider">GAD Advocacy Projects</h4>
-                                            <span className="text-[9px] font-black uppercase text-indigo-600 bg-indigo-50 dark:bg-indigo-900/30 dark:text-indigo-400 px-2 py-0.5 rounded">
-                                                {communitySnapshot.gadSummary.approved} Approved
-                                            </span>
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="text-xs sm:text-sm font-bold text-foreground truncate">
+                                                            {event.title}
+                                                        </div>
+                                                        <div className="text-xs font-semibold text-muted-foreground truncate">
+                                                            {event.organization} · {event.location}
+                                                        </div>
+                                                    </div>
+
+                                                    <span className="text-xs font-bold text-foreground shrink-0">
+                                                        {event.status}
+                                                    </span>
+                                                </Link>
+                                            ))
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* LATEST ANNOUNCEMENTS PREVIEW */}
+                                {latestAnnouncements && (
+                                    <div className="rounded-xl border border-border bg-card shadow-xs overflow-hidden">
+                                        <div className="p-4 sm:p-5 border-b border-border bg-muted/30 flex justify-between items-center">
+                                            <div>
+                                                <h2 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-foreground">
+                                                    Latest Announcements
+                                                </h2>
+                                            </div>
+                                            <Link
+                                                href="/admin/announcements"
+                                                className="text-xs font-bold text-primary hover:underline uppercase"
+                                            >
+                                                View all
+                                            </Link>
                                         </div>
-                                        <div className="flex items-center justify-between text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400">
-                                            <span>Total Events: {communitySnapshot.gadSummary.total_events}</span>
-                                            <span>Pending Proposals: {communitySnapshot.gadSummary.pending}</span>
+
+                                        <div className="divide-y divide-border">
+                                            {latestAnnouncements.length === 0 ? (
+                                                <div className="p-4 text-center text-xs text-muted-foreground">
+                                                    No announcements published.
+                                                </div>
+                                            ) : (
+                                                latestAnnouncements.map((a) => (
+                                                    <Link
+                                                        key={a.id}
+                                                        href={a.url}
+                                                        className="p-3.5 hover:bg-muted/40 transition-colors flex items-center justify-between gap-3 block"
+                                                    >
+                                                        <div className="min-w-0 flex-1">
+                                                            <div className="text-xs sm:text-sm font-bold text-foreground truncate">
+                                                                {a.title}
+                                                            </div>
+                                                            <div className="text-xs text-muted-foreground mt-0.5">
+                                                                {a.date} · Audience: {a.audience}
+                                                            </div>
+                                                        </div>
+                                                        <span className="text-xs font-bold text-primary uppercase shrink-0">
+                                                            Open →
+                                                        </span>
+                                                    </Link>
+                                                ))
+                                            )}
                                         </div>
                                     </div>
-                                </CardContent>
-                            </Card>
-                        </div>
-                    )}
+                                )}
+
+                                {/* ADMIN SYSTEM SHORTCUTS */}
+                                {isAdmin && (
+                                    <div className="rounded-xl border border-border bg-card shadow-xs overflow-hidden">
+                                        <div className="p-4 sm:p-5 border-b border-border bg-muted/30">
+                                            <h2 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-foreground">
+                                                System Management
+                                            </h2>
+                                            <p className="text-xs font-normal text-muted-foreground mt-0.5">
+                                                Administrator governance and master logs
+                                            </p>
+                                        </div>
+                                        <div className="p-4 grid grid-cols-2 gap-2.5">
+                                            <Link
+                                                href="/admin/system-users"
+                                                className="p-3 rounded-lg border border-border bg-muted/20 hover:bg-muted/50 transition-all text-center block"
+                                            >
+                                                <div className="text-xs font-bold text-foreground">
+                                                    User Accounts
+                                                </div>
+                                                <div className="text-xs text-muted-foreground mt-0.5">
+                                                    Manage Staff & Roles
+                                                </div>
+                                            </Link>
+                                            <Link
+                                                href="/admin/audit-logs"
+                                                className="p-3 rounded-lg border border-border bg-muted/20 hover:bg-muted/50 transition-all text-center block"
+                                            >
+                                                <div className="text-xs font-bold text-foreground">
+                                                    Audit Trails
+                                                </div>
+                                                <div className="text-xs text-muted-foreground mt-0.5">
+                                                    Executive Ledger
+                                                </div>
+                                            </Link>
+                                        </div>
+                                    </div>
+                                )}
+                            </>
+                        ) : (
+                            /* ── ORGANIZATION PRESIDENT RIGHT COLUMN ── */
+                            <div className="rounded-xl border border-border bg-card shadow-xs overflow-hidden">
+                                <div className="p-4 sm:p-5 border-b border-border bg-muted/30">
+                                    <h2 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-foreground">
+                                        Organization Actions
+                                    </h2>
+                                    <p className="text-xs font-normal text-muted-foreground mt-0.5">
+                                        Direct actions for {systemStats.myOrgName ?? 'your organization'}
+                                    </p>
+                                </div>
+
+                                <div className="p-4 space-y-3">
+                                    <Link
+                                        href="/admin/members"
+                                        className="w-full p-3 rounded-lg border border-border bg-muted/20 hover:bg-muted/50 transition-all flex items-center justify-between cursor-pointer block"
+                                    >
+                                        <div>
+                                            <span className="text-xs font-bold uppercase text-foreground">
+                                                Manage Member Roster
+                                            </span>
+                                            <p className="text-xs font-medium text-muted-foreground">
+                                                View verified members and export masterlist
+                                            </p>
+                                        </div>
+                                        <span className="text-xs font-bold text-primary">→</span>
+                                    </Link>
+
+                                    <Link
+                                        href="/admin/applications"
+                                        className="w-full p-3 rounded-lg border border-border bg-muted/20 hover:bg-muted/50 transition-all flex items-center justify-between cursor-pointer block"
+                                    >
+                                        <div>
+                                            <span className="text-xs font-bold uppercase text-foreground">
+                                                Intake Applications
+                                            </span>
+                                            <p className="text-xs font-medium text-muted-foreground">
+                                                Review applicant submissions for your organization
+                                            </p>
+                                        </div>
+                                        <span className="text-xs font-bold text-primary">→</span>
+                                    </Link>
+
+                                    <Link
+                                        href="/admin/organization/events"
+                                        className="w-full p-3 rounded-lg border border-border bg-muted/20 hover:bg-muted/50 transition-all flex items-center justify-between cursor-pointer block"
+                                    >
+                                        <div>
+                                            <span className="text-xs font-bold uppercase text-foreground">
+                                                Submit Event Proposal
+                                            </span>
+                                            <p className="text-xs font-medium text-muted-foreground">
+                                                Propose new community or GAD advocacy activity
+                                            </p>
+                                        </div>
+                                        <span className="text-xs font-bold text-primary">→</span>
+                                    </Link>
+                                </div>
+                            </div>
+                        )}
+
+                    </div>
 
                 </div>
 
             </div>
         </AppLayout>
-    );
-}
-
-function Badge({ children, className, ...props }: any) {
-    return (
-        <span className={cn("px-2 py-0.5 rounded font-bold tracking-tight", className)} {...props}>
-            {children}
-        </span>
     );
 }

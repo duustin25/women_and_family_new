@@ -71,12 +71,21 @@ class VawcController extends Controller
         // Filter by Status
         if ($request->filled('status') && $request->status !== 'all') {
             $statusFilter = $request->status;
-            $query->where(function ($q) use ($statusFilter) {
-                $q->where('current_lifecycle', $statusFilter)
-                  ->orWhereHas('cases', function ($cq) use ($statusFilter) {
-                      $cq->where('status', $statusFilter)
-                         ->orWhereHas('protectionOrders', function ($poq) use ($statusFilter) {
-                             $poq->where('status', $statusFilter);
+            $statuses = [$statusFilter];
+            if ($statusFilter === 'Under Monitoring' || $statusFilter === 'Monitoring') {
+                $statuses = ['Under Monitoring', 'Monitoring'];
+            } elseif ($statusFilter === 'Escalated to Court' || $statusFilter === 'Escalated') {
+                $statuses = ['Escalated to Court', 'Escalated'];
+            } elseif ($statusFilter === 'Closed' || $statusFilter === 'Dormant/Closed') {
+                $statuses = ['Closed', 'Dormant/Closed'];
+            }
+
+            $query->where(function ($q) use ($statuses) {
+                $q->whereIn('current_lifecycle', $statuses)
+                  ->orWhereHas('cases', function ($cq) use ($statuses) {
+                      $cq->whereIn('status', $statuses)
+                         ->orWhereHas('protectionOrders', function ($poq) use ($statuses) {
+                             $poq->whereIn('status', $statuses);
                          });
                   });
             });

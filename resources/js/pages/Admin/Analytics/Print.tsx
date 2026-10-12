@@ -2,94 +2,22 @@ import { Head, usePage } from '@inertiajs/react';
 import { Printer } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 
-interface ChartData {
-    month: string;
-    [key: string]: string | number;
-}
+import {
+    ChartData,
+    PrintChartConfig,
+    RibbonStats,
+    DossierAnalytics,
+    BpoMetrics,
+    RelationshipAnalytics,
+    BcpcSummary,
+} from './types';
 
-interface ChartConfig {
-    key: string;
-    label: string;
-}
-
-interface RibbonStats {
-    total_vawc: number;
-    total_bcpc: number;
-    total_gad: number;
-    total_orgs: number;
-    total_dossiers?: number;
-    active_bpos?: number;
-    recidivism_rate?: number;
-}
-
-interface DossierAnalytics {
-    total_dossiers: number;
-    active_dossiers: number;
-    closed_dossiers: number;
-    recidivism_count: number;
-    recidivism_rate: number;
-    repeat_incidents_count: number;
-    serial_perpetrators_count: number;
-    compound_survivors_count: number;
-    threat_level_distribution: { name: string; count: number }[];
-    lifecycle_distribution: { name: string; count: number }[];
-}
-
-interface BpoMetrics {
-    total_applied: number;
-    total_issued: number;
-    total_served: number;
-    active_monitoring: number;
-    peaceful_archived: number;
-    violations_recorded: number;
-    court_escalations: number;
-    sla_compliant_count: number;
-    sla_rate: number;
-    service_methods: { method: string; count: number }[];
-}
-
-interface RelationshipAnalytics {
-    relationships: { name: string; value: number; fill: string }[];
-    protocols: { name: string; description: string; count: number; fill: string }[];
-    intake_modes: { name: string; count: number }[];
-}
-
-interface BcpcSummary {
-    total: number;
-    normal: number;
-    sam: number;
-    mam: number;
-    double_burden?: number;
-    obese?: number;
-    overweight?: number;
-    stunted: number;
-    severely_stunted: number;
-    normal_height: number;
-    malnutrition_rate: number;
-    sfp_breakdown: {
-        Enrolled: number;
-        Graduated: number;
-        Completed: number;
-        Terminated: number;
-        None: number;
-    };
-    zones_breakdown: {
-        name: string;
-        total: number;
-        sam?: number;
-        mam?: number;
-        double_burden?: number;
-        malnourished: number;
-        stunted: number;
-        rate: number;
-    }[];
-}
 
 interface Props {
     year: number;
     generatedAt: string;
     analyticsData: ChartData[];
-    chartConfig: ChartConfig[];
+    chartConfig: PrintChartConfig[];
     ribbonStats?: RibbonStats;
     bcpcSummary?: BcpcSummary;
     vawcStatusBreakdown?: { name: string; value: number }[];
