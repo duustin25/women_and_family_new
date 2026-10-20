@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { Head, usePage, router } from '@inertiajs/react';
 import {
-    BarChart3, ShieldAlert, Baby, Sparkles, Users
+    BarChart3, ShieldAlert, Baby, Sparkles, Users,
+    Calendar1Icon
 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import AppLayout from '@/layouts/app-layout';
@@ -34,11 +35,13 @@ export default function Index({
     const [activeTab, setActiveTab] = useState<string>(isPresident ? 'organizations' : 'vawc');
     const [selectedZone, setSelectedZone] = useState<ZoneData | null>(null);
     const [isZoneInspectorOpen, setIsZoneInspectorOpen] = useState(false);
+    const [inspectorMode, setInspectorMode] = useState<'vawc' | 'bcpc'>('vawc');
 
-    const handleOpenZoneInspector = (zoneName: string) => {
+    const handleOpenZoneInspector = (zoneName: string, mode: 'vawc' | 'bcpc' = 'vawc') => {
         const found = zoneDistribution?.find((z) => z.name?.toLowerCase() === zoneName?.toLowerCase())
             || { id: 0, name: zoneName, count: 0, cases: [], children: [] };
         setSelectedZone(found);
+        setInspectorMode(mode);
         setIsZoneInspectorOpen(true);
     };
 
@@ -95,7 +98,7 @@ export default function Index({
         ]}>
             <Head title="Official Analytics & Compliance Dashboard" />
 
-            <div className="flex h-full flex-1 flex-col gap-5 p-4 sm:p-6 print:p-0 print:gap-4 print:bg-white">
+            <div className="flex h-full flex-1 flex-col gap-5 p-4 sm:p-6 print:p-0 print:gap-4 print:bg-white print:h-auto print:min-h-0 print:overflow-visible">
 
                 {/* ── PRINT-ONLY OFFICIAL LETTERHEAD ──────────────────── */}
                 <div className="hidden print:block text-center border-b pb-3 mb-2">
@@ -152,16 +155,16 @@ export default function Index({
                             <>
                                 <TabsTrigger
                                     value="vawc"
-                                    className="gap-1.5 font-bold text-xs uppercase tracking-wider data-[state=active]:bg-card data-[state=active]:text-rose-600 data-[state=active]:shadow-xs"
+                                    className="gap-1.5 font-bold text-xs uppercase tracking-wider data-[state=active]:bg-card data-[state=active]:text-primary data-[state=active]:shadow-xs"
                                 >
-                                    <ShieldAlert className="w-3.5 h-3.5 text-rose-600 shrink-0" />
+                                    <ShieldAlert className="w-3.5 h-3.5 text-primary shrink-0" />
                                     <span>VAWC</span>
                                 </TabsTrigger>
                                 <TabsTrigger
                                     value="bcpc"
-                                    className="gap-1.5 font-bold text-xs uppercase tracking-wider data-[state=active]:bg-card data-[state=active]:text-teal-600 data-[state=active]:shadow-xs"
+                                    className="gap-1.5 font-bold text-xs uppercase tracking-wider data-[state=active]:bg-card data-[state=active]:text-primary data-[state=active]:shadow-xs"
                                 >
-                                    <Baby className="w-3.5 h-3.5 text-teal-600 shrink-0" />
+                                    <Baby className="w-3.5 h-3.5 text-primary shrink-0" />
                                     <span>BCPC</span>
                                 </TabsTrigger>
                             </>
@@ -170,7 +173,7 @@ export default function Index({
                             value="gad"
                             className="gap-1.5 font-bold text-xs uppercase tracking-wider data-[state=active]:bg-card data-[state=active]:text-purple-600 data-[state=active]:shadow-xs"
                         >
-                            <Sparkles className="w-3.5 h-3.5 text-purple-600 shrink-0" />
+                            <Calendar1Icon className="w-3.5 h-3.5 text-primary shrink-0" />
                             <span>GAD</span>
                         </TabsTrigger>
                         <TabsTrigger
@@ -189,7 +192,7 @@ export default function Index({
                                 vawcData={vawcData}
                                 vawcChartConfig={vawcChartConfig}
                                 zoneDistribution={zoneDistribution}
-                                onSelectZone={handleOpenZoneInspector}
+                                onSelectZone={(zoneName) => handleOpenZoneInspector(zoneName, 'vawc')}
                             />
                         </TabsContent>
                     )}
@@ -199,7 +202,7 @@ export default function Index({
                         <TabsContent value="bcpc" key={`bcpc-${activeTab}`} className="space-y-5 mt-2">
                             <BcpcTab
                                 bcpcSummary={bcpcSummary}
-                                onSelectZone={handleOpenZoneInspector}
+                                onSelectZone={(zoneName) => handleOpenZoneInspector(zoneName, 'bcpc')}
                             />
                         </TabsContent>
                     )}
@@ -227,6 +230,7 @@ export default function Index({
                 isOpen={isZoneInspectorOpen}
                 onOpenChange={setIsZoneInspectorOpen}
                 zone={selectedZone}
+                mode={inspectorMode}
             />
         </AppLayout>
     );

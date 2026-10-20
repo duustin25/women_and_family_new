@@ -10,14 +10,14 @@ interface Props {
 
 const DEFAULT_COLORS = ['#10b981', '#6366f1', '#a855f7', '#f59e0b', '#ec4899', '#3b82f6'];
 
-export default function OrganizationSectorBreakdown({ sectorDistribution, colors = DEFAULT_COLORS }: Props) {
+export default function OrgSectorBreakdownChart({ sectorDistribution, colors = DEFAULT_COLORS }: Props) {
     return (
-        <Card className="shadow-sm border">
-            <CardHeader className="border-b bg-muted/20">
-                <CardTitle className="uppercase tracking-widest text-xs font-black text-emerald-700 flex items-center gap-2">
-                    <Building2 className="w-4 h-4 text-emerald-600" /> Sector Analysis
+        <Card className="shadow-xs border bg-card">
+            <CardHeader className="border-b bg-muted/20 px-4 py-3 sm:px-5">
+                <CardTitle className="text-sm font-bold text-foreground flex items-center gap-2">
+                    <Building2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" /> Sector Analysis
                 </CardTitle>
-                <CardDescription className="text-[10px] font-bold uppercase text-muted-foreground">
+                <CardDescription className="text-xs text-muted-foreground mt-0.5">
                     Partner Organization Classifications
                 </CardDescription>
             </CardHeader>
@@ -34,7 +34,7 @@ export default function OrganizationSectorBreakdown({ sectorDistribution, colors
                             dataKey="count"
                         >
                             {sectorDistribution?.map((entry: any, index: number) => (
-                                <Cell key={`sector-cell-${index}`} fill={colors[index % colors.length]} />
+                                <Cell key={`sector-cell-${index}`} fill={colors[index % colors.length]} stroke="var(--card)" />
                             ))}
                         </Pie>
                         <Tooltip />

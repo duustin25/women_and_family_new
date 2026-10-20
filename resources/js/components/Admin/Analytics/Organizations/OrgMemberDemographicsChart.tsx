@@ -1,7 +1,6 @@
-import { Users, Info } from 'lucide-react';
+import { Info } from 'lucide-react';
 import React, { useState, useMemo } from 'react';
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from 'recharts';
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { cn } from '@/lib/utils';
 
@@ -24,7 +23,31 @@ const DEFAULT_COLORS = [
     '#64748b', // Slate
 ];
 
-export default function GadMemberDemographicsChart({ demographics, colors = DEFAULT_COLORS }: Props) {
+const CustomDemographicsTooltip = ({ active, payload, totalCount }: any) => {
+    if (active && payload && payload.length) {
+        const item = payload[0];
+        const data = item?.payload;
+        const count = Number(data?.count ?? item?.value ?? 0);
+        const pct = totalCount > 0 ? Math.round((count / totalCount) * 100) : 0;
+        return (
+            <div className="bg-popover border border-border p-2.5 rounded-lg shadow-lg text-xs space-y-1 min-w-[170px]">
+                <p className="font-bold text-foreground border-b border-border/60 pb-1">
+                    {data?.name || item?.name}
+                </p>
+                <div className="flex items-center justify-between gap-3 pt-0.5">
+                    <span className="flex items-center gap-1.5 text-muted-foreground font-medium">
+                        <span className="w-2.5 h-2.5 rounded-full inline-block" style={{ backgroundColor: item?.color || item?.fill }} />
+                        Count:
+                    </span>
+                    <span className="font-bold text-foreground">{count} ({pct}%)</span>
+                </div>
+            </div>
+        );
+    }
+    return null;
+};
+
+export default function OrgMemberDemographicsChart({ demographics, colors = DEFAULT_COLORS }: Props) {
     const [demoTab, setDemoTab] = useState<'age' | 'gender' | 'civil'>('age');
 
     const rawData = useMemo(() => {
@@ -65,12 +88,9 @@ export default function GadMemberDemographicsChart({ demographics, colors = DEFA
             <CardHeader className="border-b bg-muted/20 px-4 py-3 sm:px-5">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                     <div>
-                        <div className="flex items-center gap-2">
-                            <Users className="w-4 h-4 text-primary shrink-0" />
-                            <CardTitle className="text-sm font-bold text-foreground">
-                                Member Demographics
-                            </CardTitle>
-                        </div>
+                        <CardTitle className="text-sm font-bold text-foreground">
+                            Member Demographics
+                        </CardTitle>
                         <CardDescription className="text-xs text-muted-foreground mt-0.5">
                             {tabMeta[demoTab].title} • {tabMeta[demoTab].description}
                         </CardDescription>
@@ -112,37 +132,24 @@ export default function GadMemberDemographicsChart({ demographics, colors = DEFA
                                         outerRadius={68}
                                         paddingAngle={activeChartData.length > 1 ? 3 : 0}
                                         dataKey="count"
+                                        nameKey="name"
                                     >
                                         {activeChartData.map((entry, index) => (
                                             <Cell
                                                 key={`cell-${index}`}
                                                 fill={colors[index % colors.length]}
-                                                stroke="hsl(var(--card))"
+                                                stroke="var(--card)"
                                                 strokeWidth={2}
                                             />
                                         ))}
                                     </Pie>
-                                    <Tooltip
-                                        contentStyle={{
-                                            borderRadius: '8px',
-                                            border: '1px solid hsl(var(--border))',
-                                            backgroundColor: '#ffffff',
-                                            color: '#0f172a',
-                                            fontSize: '12px',
-                                            fontWeight: 500,
-                                            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-                                        }}
-                                        formatter={(val: any, name: any) => [
-                                            `${val} members (${Math.round(((Number(val) || 0) / totalCount) * 100)}%)`,
-                                            name
-                                        ]}
-                                    />
+                                    <Tooltip content={<CustomDemographicsTooltip totalCount={totalCount} />} />
                                 </PieChart>
                             </ResponsiveContainer>
 
                             {/* Centered Number Overlay */}
                             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                                <span className="text-2xl font-black font-mono tracking-tight text-foreground leading-none">
+                                <span className="text-2xl font-black tracking-tight text-foreground leading-none">
                                     {totalCount}
                                 </span>
                                 <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mt-0.5">

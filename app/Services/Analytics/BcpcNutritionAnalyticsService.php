@@ -98,8 +98,8 @@ class BcpcNutritionAnalyticsService
             'None'       => $activeChildren->where('sfp_status', 'None')->count(),
         ];
 
-        // Zones Breakdown for Malnutrition Hotspots
-        $zones = Zone::all();
+        // Zones Breakdown for Malnutrition Hotspots - sorted naturally ascending matching Settings configuration
+        $zones = Zone::all()->sortBy('name', SORT_NATURAL | SORT_FLAG_CASE)->values();
         $zonesBreakdown = [];
         foreach ($zones as $zone) {
             $zoneChildren = $activeChildren->where('zone_id', $zone->id);
@@ -159,9 +159,9 @@ class BcpcNutritionAnalyticsService
             ];
         }
 
-        // Sort zones by malnutrition count descending
+        // Sort zones in natural ascending order (Zone 1, Zone 2 ... Zone 10, Zone 11) same as dynamic configuration
         usort($zonesBreakdown, function ($a, $b) {
-            return $b['malnourished'] <=> $a['malnourished'];
+            return strnatcasecmp($a['name'], $b['name']);
         });
 
         return [

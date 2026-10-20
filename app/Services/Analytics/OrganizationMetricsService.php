@@ -78,7 +78,8 @@ class OrganizationMetricsService
                 'id' => $o->id,
                 'name' => $o->name,
                 'slug' => $o->slug,
-                'members_count' => $o->membershipApplications()->approved()->count()
+                'members_count' => max($o->members()->active()->count(), $o->membershipApplications()->approved()->count()),
+                'pending_count' => $o->membershipApplications()->pending()->count(),
             ])->toArray(),
         ];
     }

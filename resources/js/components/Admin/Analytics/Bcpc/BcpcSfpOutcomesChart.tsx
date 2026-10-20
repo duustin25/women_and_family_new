@@ -1,4 +1,3 @@
-import { Heart } from 'lucide-react';
 import React from 'react';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Cell } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -6,6 +5,27 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 interface Props {
     bcpcSummary: any;
 }
+
+const CustomSfpTooltip = ({ active, payload }: any) => {
+    if (active && payload && payload.length) {
+        const item = payload[0]?.payload;
+        return (
+            <div className="bg-popover border border-border p-2.5 rounded-lg shadow-lg text-xs space-y-1 min-w-[170px]">
+                <p className="font-bold text-foreground border-b border-border/60 pb-1">
+                    {item?.name}
+                </p>
+                <div className="flex items-center justify-between gap-3 pt-0.5">
+                    <span className="flex items-center gap-1.5 text-muted-foreground font-medium">
+                        <span className="w-2.5 h-2.5 rounded-full inline-block" style={{ backgroundColor: item?.fill }} />
+                        Participants:
+                    </span>
+                    <span className="font-bold text-foreground">{item?.value ?? 0}</span>
+                </div>
+            </div>
+        );
+    }
+    return null;
+};
 
 export default function BcpcSfpOutcomesChart({ bcpcSummary }: Props) {
     const rawSfpData = [
@@ -19,34 +39,26 @@ export default function BcpcSfpOutcomesChart({ bcpcSummary }: Props) {
     const sfpData = rawSfpData.filter(d => d.value > 0);
 
     return (
-        <Card className="flex flex-col justify-between shadow-xs border bg-card print:break-inside-avoid">
+        <Card className="flex flex-col justify-between shadow-xs border bg-card print:break-inside-avoid print:w-full">
             <CardHeader className="border-b bg-muted/20 px-4 py-3 sm:px-5">
-                <CardTitle className="text-sm font-bold text-foreground flex items-center gap-2">
-                    <Heart className="w-4 h-4 text-emerald-600 shrink-0" />
+                <CardTitle className="text-sm font-bold text-foreground">
                     SFP Feeding Program Outcomes
                 </CardTitle>
                 <CardDescription className="text-xs text-muted-foreground mt-0.5">
                     Nutritional rehabilitation program metrics
                 </CardDescription>
             </CardHeader>
-            <CardContent className="h-[260px] flex flex-col justify-center p-4">
+            <CardContent className="h-[260px] print:h-[240px] flex flex-col justify-center p-4">
                 {sfpData.length > 0 ? (
                     <ResponsiveContainer width="100%" height="90%">
                         <BarChart data={sfpData} margin={{ top: 15, right: 10, left: -20, bottom: 0 }}>
-                            <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#64748b', fontWeight: 500 }} />
-                            <YAxis tickLine={false} axisLine={false} tick={{ fontSize: 11, fill: '#64748b' }} allowDecimals={false} />
+                            <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: 'var(--muted-foreground)', fontWeight: 500 }} />
+                            <YAxis tickLine={false} axisLine={false} tick={{ fontSize: 11, fill: 'var(--muted-foreground)' }} allowDecimals={false} />
                             <Tooltip
-                                contentStyle={{
-                                    borderRadius: '8px',
-                                    border: '1px solid #e2e8f0',
-                                    backgroundColor: '#ffffff',
-                                    color: '#0f172a',
-                                    fontSize: '12px',
-                                    fontWeight: 500,
-                                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-                                }}
+                                content={<CustomSfpTooltip />}
+                                cursor={{ fill: 'var(--muted)', opacity: 0.5 }}
                             />
-                            <Bar dataKey="value" radius={[4, 4, 0, 0]} maxBarSize={48} label={{ position: 'top', fontSize: 12, fontWeight: 'bold' }}>
+                            <Bar dataKey="value" radius={[4, 4, 0, 0]} maxBarSize={48} label={{ position: 'top', fontSize: 12, fontWeight: 'bold', fill: 'var(--foreground)' }}>
                                 {sfpData.map((entry, index) => (
                                     <Cell key={`sfp-cell-${index}`} fill={entry.fill} />
                                 ))}

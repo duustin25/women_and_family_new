@@ -15,6 +15,30 @@ interface Props {
     className?: string;
 }
 
+const CustomVawcAbuseTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+        const total = payload.reduce((acc: number, curr: any) => acc + (Number(curr.value) || 0), 0);
+        return (
+            <div className="bg-popover border border-border p-3 rounded-lg shadow-lg text-xs space-y-1.5 min-w-[190px]">
+                <div className="flex items-center justify-between border-b border-border/60 pb-1">
+                    <span className="font-bold text-foreground">{label}</span>
+                    <span className="text-[11px] font-semibold text-muted-foreground">{total} total</span>
+                </div>
+                {payload.map((entry: any, index: number) => (
+                    <div key={index} className="flex items-center justify-between gap-4">
+                        <span className="flex items-center gap-1.5 font-medium" style={{ color: entry.color }}>
+                            <span className="w-2.5 h-2.5 rounded-xs inline-block" style={{ backgroundColor: entry.color }} />
+                            {entry.name}:
+                        </span>
+                        <span className="font-bold font-mono text-foreground">{entry.value}</span>
+                    </div>
+                ))}
+            </div>
+        );
+    }
+    return null;
+};
+
 export default function VawcMonthlyAbuseChart({ data, config, className }: Props) {
     const defaultConfig: ChartConfig[] = [
         { key: 'physical', label: 'Physical', color: '#dc2626' },
@@ -26,61 +50,57 @@ export default function VawcMonthlyAbuseChart({ data, config, className }: Props
     const activeConfig = config && config.length > 0 ? config : defaultConfig;
 
     return (
-        <Card className={cn("shadow-xs border bg-card flex flex-col justify-between overflow-hidden h-full", className)}>
+        <Card className={cn("shadow-xs border bg-card flex flex-col justify-between overflow-hidden h-full print:break-inside-avoid print:w-full", className)}>
             <CardHeader className="border-b bg-muted/20 px-4 py-3 sm:px-5">
                 <div>
                     <CardTitle className="font-bold text-sm text-foreground">
-                        Women & Children Abuse Incidents by Month
+                        Women and Children Abuse by Month
                     </CardTitle>
                     <CardDescription className="text-xs text-muted-foreground mt-0.5">
-                        Barangay 183, Zone 20, Pasay City • Office of the Women and Family
+                        Monthly reported cases classified by abuse category under RA 9262
                     </CardDescription>
                 </div>
             </CardHeader>
-            <CardContent className="p-4 sm:p-5 flex-1 flex flex-col justify-center">
-                <div className="h-[320px] sm:h-[350px] w-full">
+            <CardContent className="p-4 sm:p-5 flex-1 flex flex-col justify-center print:p-3">
+                <div className="h-[300px] sm:h-[320px] print:h-[280px] w-full">
                     <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                         <BarChart
                             data={data}
                             margin={{
-                                top: 10,
-                                right: 16,
+                                top: 8,
+                                right: 30,
                                 left: -10,
-                                bottom: 5,
+                                bottom: 20,
                             }}
                         >
-                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" opacity={0.6} />
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" opacity={0.6} />
+                            <Legend
+                                verticalAlign="top"
+                                align="right"
+                                height={28}
+                                iconType="square"
+                                wrapperStyle={{
+                                    fontSize: '11px',
+                                    fontWeight: 600,
+                                    color: 'var(--muted-foreground)',
+                                    paddingBottom: '8px',
+                                }}
+                            />
                             <XAxis
                                 dataKey="month"
-                                tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))', fontWeight: 500 }}
+                                tick={{ fontSize: 12, fill: 'var(--muted-foreground)', fontWeight: 500 }}
                                 axisLine={false}
                                 tickLine={false}
                             />
                             <YAxis
-                                tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }}
+                                tick={{ fontSize: 12, fill: 'var(--muted-foreground)' }}
                                 axisLine={false}
                                 tickLine={false}
                                 allowDecimals={false}
                             />
                             <Tooltip
-                                contentStyle={{
-                                    borderRadius: '8px',
-                                    border: '1px solid hsl(var(--border))',
-                                    backgroundColor: 'hsl(var(--popover))',
-                                    color: 'hsl(var(--popover-foreground))',
-                                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-                                    fontSize: '12px',
-                                    fontWeight: 500,
-                                }}
-                                cursor={{ fill: 'rgba(148, 163, 184, 0.15)' }}
-                            />
-                            <Legend
-                                iconType="square"
-                                wrapperStyle={{
-                                    fontSize: '11px',
-                                    fontWeight: 700,
-                                    paddingTop: '12px',
-                                }}
+                                content={<CustomVawcAbuseTooltip />}
+                                cursor={{ fill: 'var(--muted)', opacity: 0.5 }}
                             />
 
                             {activeConfig.map((item) => (

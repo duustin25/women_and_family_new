@@ -142,6 +142,7 @@ export interface OrganizationInfo {
     name: string;
     slug: string;
     members_count?: number;
+    pending_count?: number;
 }
 
 export interface OrgAnalyticsData {

@@ -60,6 +60,8 @@ class DemographicsAnalyticsService
                 $query->whereYear('created_at', $year);
             }])
             ->get()
+            ->sortBy('name', SORT_NATURAL | SORT_FLAG_CASE)
+            ->values()
             ->map(function ($zone) {
                 $vawcCases = $zone->caseReports->map(function ($cr) {
                     return [

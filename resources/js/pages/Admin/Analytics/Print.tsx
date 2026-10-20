@@ -64,7 +64,7 @@ export default function Print({
     const grandTotal = analyticsData.reduce((acc, row) => acc + getRowTotal(row), 0);
 
     return (
-        <div className="min-h-screen bg-white text-black p-8 font-sans">
+        <div className="min-h-screen bg-white text-black p-8 font-sans print:p-0 print:m-0 print:min-h-0">
             <Head title={isPresident ? `Organization Performance Report — CY ${year}` : `Official Statistical Report — CY ${year}`} />
 
             {/* Print Controls */}
@@ -78,7 +78,7 @@ export default function Print({
             </div>
 
             {/* ── DOCUMENT HEADER ── */}
-            <div className="flex items-center justify-center gap-4 mb-8 border-b-2 border-slate-900 pb-6">
+            <div className="flex items-center justify-center gap-4 mb-6 border-b-2 border-slate-900 pb-5">
                 <img src="/Logo/women&family_logo.webp" alt="Logo" className="w-16 h-16 object-contain" />
                 <div className="text-center">
                     <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-600">Republic of the Philippines</h3>
@@ -90,7 +90,7 @@ export default function Print({
             </div>
 
             {/* ── REPORT TITLE ── */}
-            <div className="text-center mb-8">
+            <div className="text-center mb-6">
                 <h1 className="text-lg font-black uppercase text-slate-900 underline decoration-2 decoration-[#ce1126] underline-offset-4">
                     {isPresident
                         ? 'Barangay 183 Organization Performance & Member Registry Report'
@@ -99,26 +99,26 @@ export default function Print({
                 <p className="text-xs font-bold text-slate-600 mt-2 uppercase tracking-widest text-[9px]">
                     Calendar Year {year} — Comprehensive Operational Overview
                 </p>
-                <div className="mt-4 flex justify-center gap-8 text-[9px] font-mono text-slate-500 border-y border-slate-200 py-2">
+                <div className="mt-3 flex justify-center gap-8 text-[9px] font-mono text-slate-500 border-y border-slate-200 py-1.5">
                     <span>Generated: {generatedAt}</span>
                     <span>System: WFPMS Tactical v2.0</span>
                 </div>
             </div>
 
             {/* ── SECTION I: Scoped or Admin Ribbon metrics ── */}
-            <div className="mb-8">
-                <h3 className="text-xs font-black uppercase text-slate-700 mb-3 border-b border-slate-300 pb-1 flex justify-between">
+            <div className="mb-6">
+                <h3 className="text-xs font-black uppercase text-slate-700 mb-2.5 border-b border-slate-300 pb-1 flex justify-between">
                     <span>I. Executive Summary (System Integrity)</span>
                     <span className="text-[8px] text-slate-400">
                         {isPresident ? 'Active Organization Metrics' : 'RA 9262 / RA 11037 / GAD Registry'}
                     </span>
                 </h3>
-                <div className="grid grid-cols-4 gap-3">
+                <div className="grid grid-cols-4 gap-2.5">
                     {isPresident && orgAnalytics ? (
                         [
                             { label: 'Active Members', value: orgAnalytics.total_members },
                             { label: 'Pending Applications', value: orgAnalytics.applications.pending },
-                            { label: 'Proposed GAD Events', value: orgAnalytics.gad.total },
+                            { label: 'GAD Proposals', value: orgAnalytics.gad.total },
                             { label: 'Sent Messages', value: orgAnalytics.communications.total },
                         ].map((kpi, i) => (
                             <div key={i} className="border border-slate-300 rounded p-2 text-center bg-slate-50/50">
@@ -128,10 +128,10 @@ export default function Print({
                         ))
                     ) : ribbonStats ? (
                         [
-                            { label: 'Total VAWC Records', value: ribbonStats.total_vawc },
-                            { label: 'Child Health Registry', value: ribbonStats.total_bcpc },
-                            { label: 'GAD Activity Level', value: ribbonStats.total_gad },
-                            { label: 'Partner Organizations', value: ribbonStats.total_orgs },
+                            { label: 'VAWC Cases', value: ribbonStats.total_vawc },
+                            { label: 'BCPC Children', value: ribbonStats.total_bcpc },
+                            { label: 'GAD Proposals', value: ribbonStats.total_gad },
+                            { label: 'Organizations', value: ribbonStats.total_orgs },
                         ].map((kpi, i) => (
                             <div key={i} className="border border-slate-300 rounded p-2 text-center bg-slate-50/50">
                                 <p className="text-[8px] font-black uppercase text-slate-500 tracking-widest mb-1">{kpi.label}</p>
@@ -598,18 +598,19 @@ export default function Print({
 
                     {/* SECTION V: BCPC Child Nutrition & SFP Outcomes (Admin/Head) */}
                     {bcpcSummary && (
-                        <div className="mb-8 break-inside-avoid">
-                            <h3 className="text-xs font-black uppercase text-slate-700 mb-3 border-b border-slate-300 pb-1 flex justify-between">
+                        <div className="mb-6 break-inside-avoid">
+                            <h3 className="text-xs font-black uppercase text-slate-700 mb-2.5 border-b border-slate-300 pb-1 flex justify-between">
                                 <span>V. BCPC Child Nutrition Triage & SFP Outcomes (RA 11037)</span>
                                 <span className="text-[8px] text-slate-400">Barangay 183 Nutrition Registry</span>
                             </h3>
-                            <div className="grid grid-cols-5 gap-2 mb-4">
+                            <div className="grid grid-cols-6 gap-2 mb-3">
                                 {[
-                                    { label: 'Monitored Children', value: bcpcSummary.total },
+                                    { label: 'Total Monitored', value: bcpcSummary.total },
+                                    { label: 'Normal Status', value: bcpcSummary.normal ?? 0 },
+                                    { label: 'MAM (Moderate)', value: bcpcSummary.mam },
+                                    { label: 'SAM (Severe)', value: bcpcSummary.sam },
+                                    { label: 'Double Burden', value: bcpcSummary.double_burden || 0 },
                                     { label: 'Prevalence Rate', value: `${bcpcSummary.malnutrition_rate}%` },
-                                    { label: 'SAM (Urgent RUTF)', value: bcpcSummary.sam },
-                                    { label: 'MAM (SFP Priority)', value: bcpcSummary.mam },
-                                    { label: 'Double Burden (DB)', value: bcpcSummary.double_burden || 0 },
                                 ].map((kpi, i) => (
                                     <div key={i} className="border border-slate-300 rounded p-1.5 text-center bg-slate-50/50">
                                         <p className="text-[7.5px] font-black uppercase text-slate-500 tracking-wider mb-0.5">{kpi.label}</p>
@@ -631,14 +632,17 @@ export default function Print({
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {bcpcSummary.zones_breakdown?.slice(0, 8).map((zone, i) => (
-                                                <tr key={i} className="border-t border-slate-200">
-                                                    <td className="p-1 font-bold uppercase">{zone.name}</td>
-                                                    <td className="p-1 text-center font-bold text-rose-600">{zone.malnourished}</td>
-                                                    <td className="p-1 text-center font-bold text-purple-600">{zone.stunted}</td>
-                                                    <td className="p-1 text-right font-black">{zone.rate}%</td>
-                                                </tr>
-                                            ))}
+                                            {(bcpcSummary.zones_breakdown || [])
+                                                .slice()
+                                                .sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }))
+                                                .map((zone, i) => (
+                                                    <tr key={i} className="border-t border-slate-200">
+                                                        <td className="p-1 font-bold uppercase">{zone.name}</td>
+                                                        <td className="p-1 text-center font-bold text-rose-600">{zone.malnourished}</td>
+                                                        <td className="p-1 text-center font-bold text-purple-600">{zone.stunted}</td>
+                                                        <td className="p-1 text-right font-black">{zone.rate}%</td>
+                                                    </tr>
+                                                ))}
                                         </tbody>
                                     </table>
                                 </div>
@@ -671,19 +675,19 @@ export default function Print({
                         </div>
                     )}
 
-                    {/* SECTION VI: GAD Calendar & Accredited Orgs (Admin/Head) */}
+                    {/* SECTION VI: GAD Program Proposals (Admin/Head) */}
                     {gadAnalytics && (
-                        <div className="mb-8 break-inside-avoid">
-                            <h3 className="text-xs font-black uppercase text-slate-700 mb-3 border-b border-slate-300 pb-1 flex justify-between">
-                                <span>VI. Gender and Development (GAD) Activity Levels</span>
-                                <span className="text-[8px] text-slate-400">CY {year} Community Projects</span>
+                        <div className="mb-6 break-inside-avoid">
+                            <h3 className="text-xs font-black uppercase text-slate-700 mb-2.5 border-b border-slate-300 pb-1 flex justify-between">
+                                <span>VI. GAD Program Activity Proposals</span>
+                                <span className="text-[8px] text-slate-400">CY {year} Statutory Proposals</span>
                             </h3>
-                            <div className="grid grid-cols-4 gap-3 mb-6">
+                            <div className="grid grid-cols-4 gap-2.5 mb-4">
                                 {[
-                                    { label: 'Total GAD Projects Proposed', value: gadAnalytics.total_events },
-                                    { label: 'Approved Projects', value: gadAnalytics.approved },
-                                    { label: 'Pending Projects', value: gadAnalytics.pending },
-                                    { label: 'Rejected Projects', value: gadAnalytics.rejected },
+                                    { label: 'Total Proposals', value: gadAnalytics.total_events },
+                                    { label: 'Approved', value: gadAnalytics.approved },
+                                    { label: 'Under Review', value: gadAnalytics.pending },
+                                    { label: 'Disapproved', value: gadAnalytics.rejected },
                                 ].map((gad, i) => (
                                     <div key={i} className="border border-slate-300 rounded p-2 text-center bg-slate-50/50">
                                         <p className="text-[8px] font-black uppercase text-slate-500 tracking-widest mb-1">{gad.label}</p>
@@ -701,7 +705,7 @@ export default function Print({
                                 <span>VII. Accredited Organizations & Member Analytics</span>
                                 <span className="text-[8px] text-slate-400">GAD Organization Registry</span>
                             </h3>
-                            <div className="grid grid-cols-4 gap-3 mb-6">
+                            <div className="grid grid-cols-4 gap-3 mb-4">
                                 {[
                                     { label: 'Active Registered Members', value: orgAnalytics.total_members },
                                     { label: 'Total Membership Applications', value: orgAnalytics.applications.total },
@@ -714,6 +718,46 @@ export default function Print({
                                     </div>
                                 ))}
                             </div>
+
+                            {orgAnalytics.organizations_list && orgAnalytics.organizations_list.length > 0 && (
+                                <div className="mt-3">
+                                    <h4 className="text-[9px] font-black uppercase text-slate-500 mb-2">VII-A. Accredited Sector Organizations & Membership Roster</h4>
+                                    <table className="w-full text-[8px] border border-slate-300">
+                                        <thead className="bg-slate-50">
+                                            <tr className="border-b border-slate-300">
+                                                <th className="p-1.5 text-left uppercase">Organization Name</th>
+                                                <th className="p-1.5 text-center uppercase">Active Approved Members</th>
+                                                <th className="p-1.5 text-center uppercase">Pending Intake Applications</th>
+                                                <th className="p-1.5 text-right uppercase">Total Tracked</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {orgAnalytics.organizations_list.map((org: any, i: number) => (
+                                                <tr key={i} className="border-t border-slate-200">
+                                                    <td className="p-1.5 font-bold uppercase">{org.name}</td>
+                                                    <td className="p-1.5 text-center font-bold text-blue-700">{org.members_count ?? 0}</td>
+                                                    <td className="p-1.5 text-center font-bold text-amber-600">{org.pending_count ?? 0}</td>
+                                                    <td className="p-1.5 text-right font-black">{(org.members_count ?? 0) + (org.pending_count ?? 0)}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                        <tfoot>
+                                            <tr className="bg-slate-100 border-t-2 border-slate-900 font-bold">
+                                                <td className="p-1.5 uppercase text-slate-900">Total</td>
+                                                <td className="p-1.5 text-center font-black text-blue-700">
+                                                    {orgAnalytics.organizations_list.reduce((acc: number, org: any) => acc + (org.members_count ?? 0), 0)}
+                                                </td>
+                                                <td className="p-1.5 text-center font-black text-amber-600">
+                                                    {orgAnalytics.organizations_list.reduce((acc: number, org: any) => acc + (org.pending_count ?? 0), 0)}
+                                                </td>
+                                                <td className="p-1.5 text-right font-black text-slate-900">
+                                                    {orgAnalytics.organizations_list.reduce((acc: number, org: any) => acc + (org.members_count ?? 0) + (org.pending_count ?? 0), 0)}
+                                                </td>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+                                </div>
+                            )}
                         </div>
                     )}
                 </>
@@ -741,9 +785,13 @@ export default function Print({
 
             <style>{`
                 @media print {
-                    @page { margin: 0.5in; size: portrait; }
-                    body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-                    .break-inside-avoid { break-inside: avoid; }
+                    @page { margin: 0.4in; size: portrait; }
+                    body { -webkit-print-color-adjust: exact; print-color-adjust: exact; background: #fff !important; }
+                    .break-inside-avoid { break-inside: avoid !important; page-break-inside: avoid !important; }
+                    table { page-break-inside: avoid; border-collapse: collapse; }
+                    tr { page-break-inside: avoid; page-break-after: auto; }
+                    thead { display: table-header-group; }
+                    tfoot { display: table-footer-group; }
                 }
             `}</style>
         </div>

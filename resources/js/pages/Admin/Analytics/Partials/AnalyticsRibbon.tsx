@@ -1,9 +1,4 @@
 import React from 'react';
-import {
-    ShieldAlert, Baby, Calendar, Building2,
-    Users, Clock, Mail
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
 import { RibbonStats, OrgAnalyticsData } from '../types';
 
 interface AnalyticsRibbonProps {
@@ -19,36 +14,24 @@ export default function AnalyticsRibbon({
 }: AnalyticsRibbonProps) {
     const adminRibbonStats = stats ? [
         {
-            label: 'Total Incidents (RA 9262)',
-            value: stats.total_vawc.toString(),
-            icon: ShieldAlert,
-            color: 'text-rose-600 dark:text-rose-400',
-            bg: 'bg-rose-50 dark:bg-rose-950/30',
-            desc: stats.total_dossiers ? `Across ${stats.total_dossiers} Master Folders` : 'Recorded Incidents',
+            label: 'VAWC Cases',
+            value: (stats.total_vawc ?? 0).toString(),
+            desc: stats.total_dossiers ? `${stats.total_dossiers} Dossiers` : 'Recorded Incidents',
         },
         {
-            label: 'BCPC Child Registry',
-            value: stats.total_bcpc.toString(),
-            icon: Baby,
-            color: 'text-teal-600 dark:text-teal-400',
-            bg: 'bg-teal-50 dark:bg-teal-950/30',
+            label: 'BCPC Children',
+            value: (stats.total_bcpc ?? 0).toString(),
             desc: 'Monitored Nutrition Profiles',
         },
         {
-            label: 'Active GAD Programs',
-            value: stats.total_gad.toString(),
-            icon: Calendar,
-            color: 'text-purple-600 dark:text-purple-400',
-            bg: 'bg-purple-50 dark:bg-purple-950/30',
-            desc: 'Advocacy Projects',
+            label: 'GAD Proposals',
+            value: (stats.total_gad ?? 0).toString(),
+            desc: 'Activity Proposals',
         },
         {
-            label: 'Accredited Entities',
-            value: stats.total_orgs.toString(),
-            icon: Building2,
-            color: 'text-emerald-600 dark:text-emerald-400',
-            bg: 'bg-emerald-50 dark:bg-emerald-950/30',
-            desc: 'Active Community Partners',
+            label: 'Organizations',
+            value: (stats.total_orgs ?? 0).toString(),
+            desc: 'Accredited Sectors',
         },
     ] : [];
 
@@ -56,34 +39,22 @@ export default function AnalyticsRibbon({
         {
             label: 'Active Members',
             value: (orgAnalytics.total_members ?? 0).toString(),
-            icon: Users,
-            color: 'text-emerald-600 dark:text-emerald-400',
-            bg: 'bg-emerald-50 dark:bg-emerald-950/30',
-            desc: 'Verified Resident Members',
+            desc: 'Registered Residents',
         },
         {
             label: 'Pending Applications',
             value: (orgAnalytics.applications?.pending ?? 0).toString(),
-            icon: Clock,
-            color: 'text-amber-600 dark:text-amber-400',
-            bg: 'bg-amber-50 dark:bg-amber-950/30',
-            desc: 'Review Queue',
+            desc: 'Awaiting Review',
         },
         {
-            label: 'Proposed GAD Events',
+            label: 'GAD Proposals',
             value: (orgAnalytics.gad?.total ?? 0).toString(),
-            icon: Calendar,
-            color: 'text-purple-600 dark:text-purple-400',
-            bg: 'bg-purple-50 dark:bg-purple-950/30',
-            desc: 'Proposals Filed',
+            desc: 'Submitted Events',
         },
         {
-            label: 'Dispatched Outreach',
+            label: 'Sent Messages',
             value: (orgAnalytics.communications?.total ?? 0).toString(),
-            icon: Mail,
-            color: 'text-teal-600 dark:text-teal-400',
-            bg: 'bg-teal-50 dark:bg-teal-950/30',
-            desc: 'Broadcast Announcements',
+            desc: 'Dispatched Notices',
         },
     ] : [];
 
@@ -94,26 +65,23 @@ export default function AnalyticsRibbon({
     }
 
     return (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 print:grid-cols-4 print:gap-2">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 print:grid-cols-4 print:gap-2">
             {activeList.map((stat, i) => (
                 <div
                     key={i}
-                    className="border p-4 rounded-xl shadow-xs bg-card transition-all hover:shadow-sm flex items-center justify-between print:border-slate-300 print:shadow-none print:p-3"
+                    className="p-3.5 sm:p-4 rounded-xl border border-border bg-card shadow-xs transition-all flex flex-col justify-between print:border-slate-300 print:shadow-none print:p-3"
                 >
-                    <div className="space-y-0.5">
-                        <p className="text-[11px] font-bold uppercase text-muted-foreground tracking-wider">
-                            {stat.label}
-                        </p>
-                        <h3 className="text-2xl sm:text-3xl font-black font-mono tracking-tight text-foreground">
-                            {stat.value}
-                        </h3>
-                        <p className="text-[11px] font-medium text-muted-foreground">
+                    <span className="text-xs font-bold uppercase tracking-normal text-muted-foreground leading-tight block">
+                        {stat.label}
+                    </span>
+                    <div className="text-2xl sm:text-3xl font-black tracking-tight text-foreground mt-2">
+                        {stat.value}
+                    </div>
+                    {stat.desc && (
+                        <span className="text-xs font-semibold text-muted-foreground mt-1 block">
                             {stat.desc}
-                        </p>
-                    </div>
-                    <div className={cn("p-2.5 rounded-xl shrink-0 print:hidden", stat.bg, stat.color)}>
-                        <stat.icon size={20} className="stroke-[2.2]" />
-                    </div>
+                        </span>
+                    )}
                 </div>
             ))}
         </div>

@@ -14,6 +14,18 @@ class GadCommunityAnalyticsService
     public function getGadAnalytics(int $year): array
     {
         $events = GadEvent::whereYear('event_date', $year)->get();
+        $months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+        $monthlyGad = [];
+        $gadByMonth = $events->groupBy(fn($e) => Carbon::parse($e->event_date)->month);
+        foreach ($months as $idx => $mName) {
+            $mNum = $idx + 1;
+            $monthGroup = $gadByMonth->get($mNum, collect());
+            $monthlyGad[] = [
+                'month' => $mName,
+                'proposed' => $monthGroup->count(),
+                'approved' => $monthGroup->where('status', 'approved')->count(),
+            ];
+        }
 
         return [
             'total_events' => $events->count(),
@@ -24,7 +36,8 @@ class GadCommunityAnalyticsService
                 ['name' => 'Approved', 'value' => $events->where('status', 'approved')->count(), 'fill' => '#10b981'],
                 ['name' => 'Pending',  'value' => $events->where('status', 'pending')->count(),  'fill' => '#f59e0b'],
                 ['name' => 'Rejected', 'value' => $events->where('status', 'rejected')->count(), 'fill' => '#ef4444'],
-            ]
+            ],
+            'monthly_trend' => $monthlyGad,
         ];
     }
 

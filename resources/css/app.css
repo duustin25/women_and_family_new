@@ -246,3 +246,86 @@ input[type="number"] {
   -moz-appearance: textfield;
   appearance: textfield;
 }
+
+/* ── PRINT OPTIMIZATION FOR ANALYTICS VISUAL DASHBOARD & LGU REPORTS ── */
+@media print {
+  @page {
+    margin: 0.35in;
+    size: portrait;
+  }
+
+  /* Completely remove sidebar, navigation shell, headers, and UI controls */
+  aside,
+  header,
+  nav,
+  [data-slot="sidebar"],
+  [data-sidebar="sidebar"],
+  .peer[data-slot="sidebar"],
+  .print\:hidden {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Reset layout wrappers to full width and allow natural print scaling */
+  html,
+  body {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    font-size: 13px !important;
+    line-height: 1.4 !important;
+    overflow: visible !important;
+    overflow-x: visible !important;
+    overflow-y: visible !important;
+    height: auto !important;
+    min-height: 0 !important;
+    zoom: 0.88;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Shell content container full-width print reset */
+  [data-slot="sidebar-wrapper"],
+  [data-slot="sidebar-inset"],
+  [data-slot="content"],
+  main,
+  .overflow-x-hidden {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-height: 0 !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  /* Avoid cutting cards and table rows across page breaks */
+  .card,
+  [data-slot="card"],
+  .break-inside-avoid,
+  .print\:break-inside-avoid,
+  table,
+  tr {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  /* Card content containers should not clamp height or scroll in print */
+  [data-slot="card-content"],
+  .card-content {
+    overflow: visible !important;
+    max-height: none !important;
+  }
+
+  /* Ensure Recharts containers remain visible and fit smoothly */
+  .recharts-responsive-container {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+}
