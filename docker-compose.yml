@@ -45,6 +45,13 @@ services:
       BROADCAST_CONNECTION: log
       AUTORUN_MIGRATIONS: "true"
       AUTORUN_SEED: "true"
+      SEED_ADMIN_NAME: "${SEED_ADMIN_NAME:-Dus Empleo}"
+      SEED_ADMIN_EMAIL: "${SEED_ADMIN_EMAIL:-djkhalid1m@gmail.com}"
+      SEED_ADMIN_PASSWORD: "${SEED_ADMIN_PASSWORD:-Dustin_183@Women&Family2026}"
+      SEED_HEAD_NAME: "${SEED_HEAD_NAME:-Gerald Sobrevega}"
+      SEED_HEAD_EMAIL: "${SEED_HEAD_EMAIL:-djkhalid2m@gmail.com}"
+      SEED_HEAD_PASSWORD: "${SEED_HEAD_PASSWORD:-Head_183@Women&Family2026}"
+      SEED_PRESIDENT_PASSWORD: "${SEED_PRESIDENT_PASSWORD:-Org_183@Women&Family2026}"
       # Mail (defaults to log until SMTP credentials are provided in Coolify)
       MAIL_MAILER: "${MAIL_MAILER:-log}"
       MAIL_HOST: "${MAIL_HOST:-smtp.gmail.com}"

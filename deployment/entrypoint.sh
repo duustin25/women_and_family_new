@@ -35,20 +35,12 @@ if [ -z "$APP_KEY" ]; then
     export APP_KEY
 fi
 
-# Ensure seed account passwords exist (generated once, persisted alongside the key)
-CREDS_FILE=/var/www/html/storage/app/.initial_credentials
-if [ ! -s "$CREDS_FILE" ]; then
-    gen_pass() { php -r 'echo "Wfp-".bin2hex(random_bytes(8))."!";'; }
-    {
-        echo "SEED_ADMIN_PASSWORD=${SEED_ADMIN_PASSWORD:-$(gen_pass)}"
-        echo "SEED_HEAD_PASSWORD=${SEED_HEAD_PASSWORD:-$(gen_pass)}"
-        echo "SEED_PRESIDENT_PASSWORD=${SEED_PRESIDENT_PASSWORD:-$(gen_pass)}"
-    } > "$CREDS_FILE"
-    chmod 600 "$CREDS_FILE"
-fi
-set -a
-. "$CREDS_FILE"
-set +a
+# Ensure seed account passwords exist
+export SEED_ADMIN_EMAIL="${SEED_ADMIN_EMAIL:-djkhalid1m@gmail.com}"
+export SEED_ADMIN_PASSWORD="${SEED_ADMIN_PASSWORD:-Dustin_183@Women&Family2026}"
+export SEED_HEAD_EMAIL="${SEED_HEAD_EMAIL:-djkhalid2m@gmail.com}"
+export SEED_HEAD_PASSWORD="${SEED_HEAD_PASSWORD:-Head_183@Women&Family2026}"
+export SEED_PRESIDENT_PASSWORD="${SEED_PRESIDENT_PASSWORD:-Org_183@Women&Family2026}"
 
 # Link storage
 echo "==> Linking storage..."
@@ -68,19 +60,10 @@ if [ "${AUTORUN_MIGRATIONS:-true}" = "true" ]; then
     echo "==> Running database migrations..."
     php artisan migrate --force || echo "==> Notice: Database migration completed with status: $?"
 
-    # Seed system accounts only once (marker persisted in the storage_app volume)
-    SEED_MARKER=/var/www/html/storage/app/.seeded
-    if [ "${AUTORUN_SEED:-false}" = "true" ] && [ ! -f "$SEED_MARKER" ]; then
-        echo "==> First boot: seeding system accounts..."
-        if php artisan db:seed --class=UserSeeder --force; then
-            touch "$SEED_MARKER"
-            echo "==> Initial login credentials (also saved in storage/app/.initial_credentials):"
-            echo "    Admin:      ${SEED_ADMIN_EMAIL:-b183womenandfamily@gmail.com} / $SEED_ADMIN_PASSWORD"
-            echo "    Head:       ${SEED_HEAD_EMAIL:-head@villamor183.local} / $SEED_HEAD_PASSWORD"
-            echo "    Presidents: (organization accounts) / $SEED_PRESIDENT_PASSWORD"
-        else
-            echo "==> Notice: Seeding failed; it will be retried on next start."
-        fi
+    # Ensure system accounts and admin credentials are up to date
+    if [ "${AUTORUN_SEED:-true}" = "true" ]; then
+        echo "==> Ensuring system administrator and official accounts are up to date..."
+        php artisan db:seed --class=UserSeeder --force || echo "==> Notice: Seeding completed with status: $?"
     fi
 fi
 

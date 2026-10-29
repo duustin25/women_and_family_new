@@ -11,7 +11,9 @@
         "lint": "eslint . --fix",
         "types": "tsc --noEmit",
         "test": "vitest run",
-        "test:e2e": "playwright test"
+        "test:e2e": "playwright test",
+        "deploy": "node scripts/deploy.js",
+        "deploy:force": "node scripts/deploy.js --force"
     },
     "devDependencies": {
         "@eslint/js": "^9.19.0",
