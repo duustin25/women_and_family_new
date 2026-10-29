@@ -1,3 +1,13 @@
+# ==============================================================================
+# Barangay 183 WFP System - Zero-config Docker Compose (Coolify ready)
+# ------------------------------------------------------------------------------
+# No .env file is required. Everything below has working defaults:
+#   - MySQL is bundled; Coolify auto-generates its user/passwords (SERVICE_*).
+#   - APP_KEY is generated on first boot and persisted in the storage volume.
+#   - System accounts are seeded on first boot; their generated passwords are
+#     printed in the app logs and saved to storage/app/.initial_credentials.
+# Any value can still be overridden from Coolify's Environment Variables tab.
+# ==============================================================================
 services:
   app:
     build:
@@ -6,34 +16,71 @@ services:
     image: women-and-family-app:latest
     restart: unless-stopped
     ports:
-      - "${PORT:-8000}:8000"
+      - "9800:9800"
+    depends_on:
+      mysql:
+        condition: service_healthy
     environment:
-      - PORT=${PORT:-8000}
-      - APP_NAME=${APP_NAME:-Barangay 183 WFP System}
-      - APP_ENV=${APP_ENV:-production}
-      - APP_DEBUG=${APP_DEBUG:-false}
-      - APP_URL=${APP_URL:-http://localhost}
-      - APP_KEY=${APP_KEY}
-      - DB_CONNECTION=${DB_CONNECTION:-mysql}
-      - DB_URL=${DB_URL:-}
-      - DB_HOST=${DB_HOST}
-      - DB_PORT=${DB_PORT:-3306}
-      - DB_DATABASE=${DB_DATABASE:-default}
-      - DB_USERNAME=${DB_USERNAME:-mysql}
-      - DB_PASSWORD=${DB_PASSWORD}
-      - SESSION_DRIVER=${SESSION_DRIVER:-database}
-      - SESSION_LIFETIME=${SESSION_LIFETIME:-120}
-      - CACHE_STORE=${CACHE_STORE:-database}
-      - QUEUE_CONNECTION=${QUEUE_CONNECTION:-database}
-      - FILESYSTEM_DISK=${FILESYSTEM_DISK:-public}
-      - AUTORUN_MIGRATIONS=${AUTORUN_MIGRATIONS:-true}
-      - AUTORUN_SEED=${AUTORUN_SEED:-false}
+      PORT: 9800
+      APP_NAME: "${APP_NAME:-Barangay 183 WFP System}"
+      APP_ENV: production
+      APP_DEBUG: "false"
+      APP_URL: "${APP_URL:-http://localhost:9800}"
+      APP_KEY: "${APP_KEY:-}"
+      APP_TIMEZONE: Asia/Manila
+      LOG_CHANNEL: stack
+      LOG_STACK: single
+      LOG_LEVEL: info
+      DB_CONNECTION: mysql
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_DATABASE: wfp_system
+      DB_USERNAME: "${SERVICE_USER_MYSQL}"
+      DB_PASSWORD: "${SERVICE_PASSWORD_MYSQL}"
+      SESSION_DRIVER: database
+      SESSION_LIFETIME: 120
+      CACHE_STORE: database
+      QUEUE_CONNECTION: database
+      FILESYSTEM_DISK: public
+      BROADCAST_CONNECTION: log
+      AUTORUN_MIGRATIONS: "true"
+      AUTORUN_SEED: "true"
+      # Mail (defaults to log until SMTP credentials are provided in Coolify)
+      MAIL_MAILER: "${MAIL_MAILER:-log}"
+      MAIL_HOST: "${MAIL_HOST:-smtp.gmail.com}"
+      MAIL_PORT: "${MAIL_PORT:-587}"
+      MAIL_USERNAME: "${MAIL_USERNAME:-}"
+      MAIL_PASSWORD: "${MAIL_PASSWORD:-}"
+      MAIL_ENCRYPTION: "${MAIL_ENCRYPTION:-tls}"
+      MAIL_FROM_ADDRESS: "${MAIL_FROM_ADDRESS:-barangay183womenandfamily@gmail.com}"
+      MAIL_FROM_NAME: "${APP_NAME:-Barangay 183 WFP System}"
     volumes:
       - storage_app:/var/www/html/storage/app
       - storage_logs:/var/www/html/storage/logs
+
+  mysql:
+    image: mysql:8.4
+    restart: unless-stopped
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    environment:
+      MYSQL_DATABASE: wfp_system
+      MYSQL_USER: "${SERVICE_USER_MYSQL}"
+      MYSQL_PASSWORD: "${SERVICE_PASSWORD_MYSQL}"
+      MYSQL_ROOT_PASSWORD: "${SERVICE_PASSWORD_MYSQLROOT}"
+      TZ: Asia/Manila
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u root -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
 
 volumes:
   storage_app:
     driver: local
   storage_logs:
+    driver: local
+  mysql_data:
     driver: local

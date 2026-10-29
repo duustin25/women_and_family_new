@@ -23,11 +23,32 @@ mkdir -p /var/www/html/storage/framework/sessions \
 chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache /var/lib/nginx /var/log/nginx /run/nginx
 chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache /var/lib/nginx /var/log/nginx /run/nginx
 
-# Ensure APP_KEY exists
+# Ensure APP_KEY exists (generated once, persisted in the storage_app volume)
+KEY_FILE=/var/www/html/storage/app/.app_key
 if [ -z "$APP_KEY" ]; then
-    echo "==> Warning: APP_KEY is empty. Generating key..."
-    php artisan key:generate --force
+    if [ ! -s "$KEY_FILE" ]; then
+        echo "==> APP_KEY not provided. Generating a persistent key..."
+        php -r 'echo "base64:".base64_encode(random_bytes(32));' > "$KEY_FILE"
+        chmod 600 "$KEY_FILE"
+    fi
+    APP_KEY=$(cat "$KEY_FILE")
+    export APP_KEY
 fi
+
+# Ensure seed account passwords exist (generated once, persisted alongside the key)
+CREDS_FILE=/var/www/html/storage/app/.initial_credentials
+if [ ! -s "$CREDS_FILE" ]; then
+    gen_pass() { php -r 'echo "Wfp-".bin2hex(random_bytes(8))."!";'; }
+    {
+        echo "SEED_ADMIN_PASSWORD=${SEED_ADMIN_PASSWORD:-$(gen_pass)}"
+        echo "SEED_HEAD_PASSWORD=${SEED_HEAD_PASSWORD:-$(gen_pass)}"
+        echo "SEED_PRESIDENT_PASSWORD=${SEED_PRESIDENT_PASSWORD:-$(gen_pass)}"
+    } > "$CREDS_FILE"
+    chmod 600 "$CREDS_FILE"
+fi
+set -a
+. "$CREDS_FILE"
+set +a
 
 # Link storage
 echo "==> Linking storage..."
@@ -47,9 +68,19 @@ if [ "${AUTORUN_MIGRATIONS:-true}" = "true" ]; then
     echo "==> Running database migrations..."
     php artisan migrate --force || echo "==> Notice: Database migration completed with status: $?"
 
-    if [ "${AUTORUN_SEED:-false}" = "true" ]; then
-        echo "==> Running database seeders..."
-        php artisan db:seed --force || echo "==> Notice: Seeding completed with status: $?"
+    # Seed system accounts only once (marker persisted in the storage_app volume)
+    SEED_MARKER=/var/www/html/storage/app/.seeded
+    if [ "${AUTORUN_SEED:-false}" = "true" ] && [ ! -f "$SEED_MARKER" ]; then
+        echo "==> First boot: seeding system accounts..."
+        if php artisan db:seed --class=UserSeeder --force; then
+            touch "$SEED_MARKER"
+            echo "==> Initial login credentials (also saved in storage/app/.initial_credentials):"
+            echo "    Admin:      ${SEED_ADMIN_EMAIL:-b183womenandfamily@gmail.com} / $SEED_ADMIN_PASSWORD"
+            echo "    Head:       ${SEED_HEAD_EMAIL:-head@villamor183.local} / $SEED_HEAD_PASSWORD"
+            echo "    Presidents: (organization accounts) / $SEED_PRESIDENT_PASSWORD"
+        else
+            echo "==> Notice: Seeding failed; it will be retried on next start."
+        fi
     fi
 fi
 

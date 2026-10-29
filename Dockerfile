@@ -124,7 +124,7 @@ RUN mkdir -p /var/www/html/storage/framework/sessions \
 # Production environment defaults
 ENV APP_ENV=production \
     APP_DEBUG=false \
-    PORT=8000 \
+    PORT=9800 \
     DB_CONNECTION=mysql \
     SESSION_DRIVER=database \
     CACHE_STORE=database \
@@ -133,10 +133,10 @@ ENV APP_ENV=production \
     PYTHON_PATH=python3 \
     NLTK_DATA=/usr/share/nltk_data
 
-EXPOSE 8000
+EXPOSE 9800
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
-    CMD curl -f http://127.0.0.1:8000/up || exit 1
+    CMD curl -f http://127.0.0.1:9800/up || exit 1
 
 ENTRYPOINT ["/entrypoint.sh"]
 CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/supervisord.conf"]
