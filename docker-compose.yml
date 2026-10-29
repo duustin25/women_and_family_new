@@ -13,6 +13,17 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        VITE_APP_NAME: "${APP_NAME:-Barangay 183 WFP System}"
+        VITE_APP_BARANGAY_NAME: "${VITE_APP_BARANGAY_NAME:-Barangay 183}"
+        VITE_APP_CITY_NAME: "${VITE_APP_CITY_NAME:-Villamor, Pasay City}"
+        VITE_APP_ZONE: "${VITE_APP_ZONE:-Zone 20}"
+        VITE_HOTLINE_BRGY: "${VITE_HOTLINE_BRGY:-0952-235-6413}"
+        VITE_HOTLINE_VAWC: "${VITE_HOTLINE_VAWC:-0910-059-5240}"
+        VITE_OFFICIAL_EMAIL: "${VITE_OFFICIAL_EMAIL:-support@brgy183villamor.gov.ph}"
+        VITE_OFFICIAL_FB: "${VITE_OFFICIAL_FB:-https://www.facebook.com/profile.php?id=100084864033324}"
+        VITE_BARANGAY_ADDRESS: "${VITE_BARANGAY_ADDRESS:-Zone 20 District 1 Pasay City, Metro Manila}"
+        VITE_BARANGAY_LANDLINE: "${VITE_BARANGAY_LANDLINE:-Telephone No. (02) 853-0907 / (02) 835-1953}"
     image: women-and-family-app:latest
     restart: unless-stopped
     ports:
@@ -52,6 +63,8 @@ services:
       SEED_HEAD_EMAIL: "${SEED_HEAD_EMAIL:-djkhalid2m@gmail.com}"
       SEED_HEAD_PASSWORD: "${SEED_HEAD_PASSWORD:-Head_183@Women&Family2026}"
       SEED_PRESIDENT_PASSWORD: "${SEED_PRESIDENT_PASSWORD:-Org_183@Women&Family2026}"
+      SEED_SAMPLE_APPLICATIONS: "true"
+      SEED_SAMPLE_DATA: "true"
       # Mail (defaults to log until SMTP credentials are provided in Coolify)
       MAIL_MAILER: "${MAIL_MAILER:-log}"
       MAIL_HOST: "${MAIL_HOST:-smtp.gmail.com}"

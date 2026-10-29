@@ -60,10 +60,10 @@ if [ "${AUTORUN_MIGRATIONS:-true}" = "true" ]; then
     echo "==> Running database migrations..."
     php artisan migrate --force || echo "==> Notice: Database migration completed with status: $?"
 
-    # Ensure system accounts and admin credentials are up to date
+    # Ensure system tables, forms schemas, accounts, and application data are seeded
     if [ "${AUTORUN_SEED:-true}" = "true" ]; then
-        echo "==> Ensuring system administrator and official accounts are up to date..."
-        php artisan db:seed --class=UserSeeder --force || echo "==> Notice: Seeding completed with status: $?"
+        echo "==> Running full database seeder (Zones, Form Schemas, Accounts, Sample Applications)..."
+        php artisan db:seed --force || echo "==> Notice: Seeding completed with status: $?"
     fi
 fi
 

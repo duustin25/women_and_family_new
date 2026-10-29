@@ -14,10 +14,10 @@ import ChatbotWidget from '@/components/ChatbotWidget';
 import { useAppearance } from '@/hooks/use-appearance';
 
 const brgyName = import.meta.env.VITE_APP_BARANGAY_NAME || 'Barangay 183';
-const cityName = import.meta.env.VITE_APP_CITY_NAME || 'Pasay City';
-const brgyNum = import.meta.env.VITE_HOTLINE_BRGY || '(02) 8854-1234';
-const vawcNum = import.meta.env.VITE_HOTLINE_VAWC || '911 / 1343';
-const brgyMail = import.meta.env.VITE_OFFICIAL_EMAIL || 'support@pasay.gov.ph';
+const cityName = import.meta.env.VITE_APP_CITY_NAME || 'Villamor, Pasay City';
+const brgyNum = import.meta.env.VITE_HOTLINE_BRGY || '0952-235-6413';
+const vawcNum = import.meta.env.VITE_HOTLINE_VAWC || '0910-059-5240';
+const brgyMail = import.meta.env.VITE_OFFICIAL_EMAIL || 'support@brgy183villamor.gov.ph';
 const offcialFb = import.meta.env.VITE_OFFICIAL_FB || 'https://www.facebook.com/profile.php?id=100084864033324';
 const brgyZone = import.meta.env.VITE_APP_ZONE || 'Zone 20';
 

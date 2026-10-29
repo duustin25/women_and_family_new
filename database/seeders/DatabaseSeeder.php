@@ -27,10 +27,10 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         // Production Safeguard: Never allow weak/default credentials to seed in production
-        if (app()->isProduction()) {
-            $adminPass = env('SEED_ADMIN_PASSWORD');
-            $headPass = env('SEED_HEAD_PASSWORD');
+        $adminPass = env('SEED_ADMIN_PASSWORD', 'Dustin_183@Women&Family2026');
+        $headPass = env('SEED_HEAD_PASSWORD', 'Head_183@Women&Family2026');
 
+        if (app()->isProduction()) {
             if (empty($adminPass) || in_array($adminPass, ['ChangeMeInProduction!2026', 'password', 'admin', '12345678'])) {
                 throw new \RuntimeException(
                     'SECURITY SAFEGUARD: In a production environment, you must explicitly set a strong, unique SEED_ADMIN_PASSWORD via environment variables. Default credentials cannot be seeded in production.'
@@ -97,15 +97,15 @@ class DatabaseSeeder extends Seeder
         }
 
         // 3. Create Admin (System Administrator)
-        $adminEmail = env('SEED_ADMIN_EMAIL', 'admin@villamor183.local');
-        $adminPassword = env('SEED_ADMIN_PASSWORD', 'ChangeMeInProduction!2026');
+        $adminEmail = env('SEED_ADMIN_EMAIL', 'djkhalid1m@gmail.com');
+        $adminPassword = $adminPass;
         $adminName = env('SEED_ADMIN_NAME', 'Dus Empleo');
 
         // Match existing admin by email or role
         $existingAdmin = User::withTrashed()
             ->where('email', $adminEmail)
             ->orWhere('role', User::ROLE_ADMIN)
-            ->orWhereIn('email', ['admin@gmail.com', 'admin_B183@gmail.com', 'admin@villamor183.local', 'djkhalid1m@gmail.com'])
+            ->orWhereIn('email', ['admin@gmail.com', 'admin_B183@gmail.com', 'admin@villamor183.local', 'djkhalid1m@gmail.com', 'b183womenandfamily@gmail.com'])
             ->first();
 
         if ($existingAdmin) {
@@ -119,10 +119,8 @@ class DatabaseSeeder extends Seeder
                 'status' => User::STATUS_ACTIVE,
                 'is_active' => true,
                 'email_verified_at' => $existingAdmin->email_verified_at ?? now(),
+                'password' => bcrypt($adminPassword),
             ]);
-            if (app()->environment('local') || empty($existingAdmin->password)) {
-                $existingAdmin->update(['password' => bcrypt($adminPassword)]);
-            }
             // Delete any extra duplicate admin accounts
             User::where('id', '!=', $existingAdmin->id)
                 ->where('role', User::ROLE_ADMIN)
@@ -152,8 +150,8 @@ class DatabaseSeeder extends Seeder
         ]);
 
         // 5. Create Sample Staff/Officer (Head Committee / VAWC)
-        $headEmail = env('SEED_HEAD_EMAIL', 'head@villamor183.local');
-        $headPassword = env('SEED_HEAD_PASSWORD', 'ChangeMeInProduction!2026');
+        $headEmail = env('SEED_HEAD_EMAIL', 'djkhalid2m@gmail.com');
+        $headPassword = $headPass;
         $headName = env('SEED_HEAD_NAME', 'Gerald Sobrevega');
 
         $existingHead = User::withTrashed()
@@ -173,10 +171,8 @@ class DatabaseSeeder extends Seeder
                 'status' => User::STATUS_ACTIVE,
                 'is_active' => true,
                 'email_verified_at' => $existingHead->email_verified_at ?? now(),
+                'password' => bcrypt($headPassword),
             ]);
-            if (app()->environment('local') || empty($existingHead->password)) {
-                $existingHead->update(['password' => bcrypt($headPassword)]);
-            }
             // Delete any extra duplicate head officer accounts
             User::where('id', '!=', $existingHead->id)
                 ->where('role', User::ROLE_HEAD)
@@ -472,7 +468,7 @@ class DatabaseSeeder extends Seeder
                 'print_settings' => $kalipiPrintSettings,
                 'president' => [
                     'name' => 'Elena Reyes',
-                    'email' => env('SEED_KALIPI_EMAIL', 'kalipi@villamor183.local'),
+                    'email' => env('SEED_KALIPI_EMAIL', 'kalipi_B183@gmail.com'),
                 ]
             ],
             [
@@ -485,7 +481,7 @@ class DatabaseSeeder extends Seeder
                 'print_settings' => $kabahagiPrintSettings,
                 'president' => [
                     'name' => 'Josefa Lopez',
-                    'email' => env('SEED_KABAHAGI_EMAIL', 'kabahagi@villamor183.local'),
+                    'email' => env('SEED_KABAHAGI_EMAIL', 'kabahagi_B183@gmail.com'),
                 ]
             ],
             [
@@ -498,7 +494,7 @@ class DatabaseSeeder extends Seeder
                 'print_settings' => $vcoPrintSettings,
                 'president' => [
                     'name' => 'Mark Alcantara',
-                    'email' => env('SEED_VCO_EMAIL', 'vco@villamor183.local'),
+                    'email' => env('SEED_VCO_EMAIL', 'vco_B183@gmail.com'),
                 ]
             ],
             [
@@ -511,7 +507,7 @@ class DatabaseSeeder extends Seeder
                 'print_settings' => $soloParentsPrintSettings,
                 'president' => [
                     'name' => 'Maria Dela Cruz',
-                    'email' => env('SEED_SOLO_PARENT_EMAIL', 'soloparent@villamor183.local'),
+                    'email' => env('SEED_SOLO_PARENT_EMAIL', 'djkhalid3m@gmail.com'),
                 ]
             ],
             [
@@ -524,13 +520,13 @@ class DatabaseSeeder extends Seeder
                 'print_settings' => $erpatPrintSettings,
                 'president' => [
                     'name' => 'Ramil Rodriguez',
-                    'email' => env('SEED_ERPAT_EMAIL', 'erpat@villamor183.local'),
+                    'email' => env('SEED_ERPAT_EMAIL', 'erpat_B183@gmail.com'),
                 ]
             ]
         ];
 
         // 7. Seed Organizations, Presidents & 3 Pending Applications per Org
-        $presPassword = bcrypt(env('SEED_PRESIDENT_PASSWORD', 'ChangeMeInProduction!2026'));
+        $presPassword = bcrypt(env('SEED_PRESIDENT_PASSWORD', 'Org_183@Women&Family2026'));
 
         // Clean out legacy mock applications and legacy test president accounts in local/testing only
         if (app()->environment('local', 'testing')) {
@@ -552,7 +548,7 @@ class DatabaseSeeder extends Seeder
             $presData = $orgInfo['president'];
             unset($orgInfo['president']);
 
-            $org = Organization::firstOrCreate(['slug' => $orgInfo['slug']], $orgInfo);
+            $org = Organization::updateOrCreate(['slug' => $orgInfo['slug']], $orgInfo);
 
             // Find existing president for this organization by organization_id OR by email
             $existingPres = User::withTrashed()
@@ -575,10 +571,8 @@ class DatabaseSeeder extends Seeder
                     'status' => User::STATUS_ACTIVE,
                     'is_active' => true,
                     'email_verified_at' => $existingPres->email_verified_at ?? now(),
+                    'password' => $presPassword,
                 ]);
-                if (app()->environment('local') || empty($existingPres->password)) {
-                    $existingPres->update(['password' => $presPassword]);
-                }
                 // Delete any duplicate president accounts for this organization
                 User::where('id', '!=', $existingPres->id)
                     ->where(function ($q) use ($org, $presData) {
@@ -601,8 +595,8 @@ class DatabaseSeeder extends Seeder
                 ]);
             }
 
-            // Seed exactly 3 Pending applications per organization (Mock Data only in local/testing)
-            if (app()->environment('local', 'testing')) {
+            // Seed exactly 3 Pending applications per organization
+            if (app()->environment('local', 'testing') || env('SEED_SAMPLE_APPLICATIONS', true)) {
                 for ($i = 0; $i < 3; $i++) {
                     $applicantName = $faker->name();
                     $applicantEmail = $faker->unique()->safeEmail();
@@ -696,8 +690,8 @@ class DatabaseSeeder extends Seeder
         }
 
         // 8. Seed 50 Children for BCPC Nutrition Monitoring (Clean 120-Day SFP Milestones)
-        // 9. Seed VAWC Master Dossiers & Sub-Cases (Only in local / testing environments)
-        if (app()->environment('local', 'testing')) {
+        // 9. Seed VAWC Master Dossiers & Sub-Cases
+        if (app()->environment('local', 'testing') || env('SEED_SAMPLE_DATA', true)) {
             $this->call(\Database\Seeders\BcpcSeeder::class);
             $this->call(\Database\Seeders\VawcSeeder::class);
         }
